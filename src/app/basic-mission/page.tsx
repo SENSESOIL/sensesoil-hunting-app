@@ -235,7 +235,7 @@ export default function BasicMissionPage() {
     const maxAllowedTime = maxAllowedDate.getTime();
 
     // 計算每天的冠軍
-    const championsByDate = new Map<string, string>();
+    const championsByDate = new Map<string, { display: string, first: string }>();
     const validDates: string[] = [];
 
     for (const date of sortedDates) {
@@ -243,25 +243,26 @@ export default function BasicMissionPage() {
       const records = dateMap.get(date)!;
       const maxScore = Math.max(...records.map(r => r.score));
       if (maxScore > 0) {
-        // 尋找最高分的人 (若有同分則取第一位)
-        const champ = records.find(r => r.score === maxScore)?.name || "";
-        championsByDate.set(date, champ);
+        // 尋找最高分的人 (若有同分則全部列出)
+        const champs = records.filter(r => r.score === maxScore).map(r => r.name);
+        const champStr = champs.join("、");
+        championsByDate.set(date, { display: champStr, first: champs[0] });
         validDates.push(date);
       }
     }
 
     if (validDates.length === 0) {
-      return { name: "無數據", weeks: "00", completionRate: "0.0", averageScore: "0.0" };
+      return { name: "無數據", firstChamp: "", weeks: "00", completionRate: "0.0", averageScore: "0.0" };
     }
 
     // 取得最新一週的有效數據
     const targetDate = validDates[validDates.length - 1];
-    const currentChamp = championsByDate.get(targetDate)!;
+    const currentChampData = championsByDate.get(targetDate)!;
 
-    // 往前推算蟬聯週數
+    // 往前推算蟬聯週數 (以顯示名稱完全一致為蟬聯標準)
     let consecutiveWeeks = 0;
     for (let i = validDates.length - 1; i >= 0; i--) {
-      if (championsByDate.get(validDates[i]) === currentChamp) {
+      if (championsByDate.get(validDates[i])?.display === currentChampData.display) {
         consecutiveWeeks++;
       } else {
         break;
@@ -278,7 +279,8 @@ export default function BasicMissionPage() {
     const averageScore = count > 0 ? sumW / count : 0;
 
     return {
-      name: currentChamp,
+      name: currentChampData.display,
+      firstChamp: currentChampData.first,
       weeks: consecutiveWeeks.toString().padStart(2, '0'),
       completionRate: completionRate.toFixed(1),
       averageScore: averageScore.toFixed(1)
@@ -345,14 +347,14 @@ export default function BasicMissionPage() {
     const isValidDashName = dashboardData?.name && !["計算中...", "無數據", "資料錯誤"].includes(dashboardData.name);
     
     if (isValidDashName && !selectedTeamHunter) {
-      setSelectedTeamHunter(dashboardData.name);
+      setSelectedTeamHunter(dashboardData.firstChamp);
     }
     
     // 如果 session 還在 loading，不要提早設定 default hunter，避免被錯誤值覆蓋
     if (status === "loading") return;
 
     if (!selectedPersonalHunter || ["計算中...", "無數據", "資料錯誤"].includes(selectedPersonalHunter)) {
-      setSelectedPersonalHunter(userHunterName || (isValidDashName ? dashboardData.name : ""));
+      setSelectedPersonalHunter(userHunterName || (isValidDashName ? dashboardData.firstChamp : ""));
     }
   }, [data, dashboardData, selectedStartDate, selectedTeamHunter, selectedPersonalHunter, userHunterName, status]);
 
