@@ -246,7 +246,7 @@ export default function BasicMissionPage() {
         // 尋找最高分的人 (若有同分則全部列出)
         const champs = records.filter(r => r.score === maxScore).map(r => r.name);
         const champStr = champs.join("、");
-        championsByDate.set(date, { display: champStr, first: champs[0] });
+        championsByDate.set(date, { display: champStr, first: champs[0] || "" });
         validDates.push(date);
       }
     }
@@ -347,14 +347,14 @@ export default function BasicMissionPage() {
     const isValidDashName = dashboardData?.name && !["計算中...", "無數據", "資料錯誤"].includes(dashboardData.name);
     
     if (isValidDashName && !selectedTeamHunter) {
-      setSelectedTeamHunter(dashboardData.firstChamp);
+      setSelectedTeamHunter(dashboardData.firstChamp || "");
     }
     
     // 如果 session 還在 loading，不要提早設定 default hunter，避免被錯誤值覆蓋
     if (status === "loading") return;
 
     if (!selectedPersonalHunter || ["計算中...", "無數據", "資料錯誤"].includes(selectedPersonalHunter)) {
-      setSelectedPersonalHunter(userHunterName || (isValidDashName ? dashboardData.firstChamp : ""));
+      setSelectedPersonalHunter(userHunterName || (isValidDashName ? (dashboardData.firstChamp || "") : ""));
     }
   }, [data, dashboardData, selectedStartDate, selectedTeamHunter, selectedPersonalHunter, userHunterName, status]);
 
