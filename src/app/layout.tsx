@@ -13,10 +13,6 @@ export const metadata: Metadata = {
   title: "SENSESOIL Portal Gateway",
   description: "Military HUD Portal",
   manifest: "/manifest.json",
-  icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
