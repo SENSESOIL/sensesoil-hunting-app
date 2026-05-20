@@ -4,6 +4,7 @@
 //   POST /api/sheets/basic-mission        → write (authenticated only)
 
 import { NextRequest, NextResponse } from "next/server";
+export const dynamic = 'force-dynamic';
 import { auth } from "@/lib/auth-options";
 import { readSheet, appendSheet, writeSheet } from "@/lib/google-sheets";
 import { SHEET_REGISTRY, SheetKey } from "@/lib/sheet-config";
