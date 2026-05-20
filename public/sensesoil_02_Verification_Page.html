@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html class="dark" lang="zh-TW">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>SENSESOIL Portal Gateway - Verification</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet">
+  <script id="tailwind-config">
+    tailwind.config = { darkMode: "class", theme: { extend: { colors: { primary: "#F39C12", "on-primary": "#000000", background: "#000000", "on-background": "#e5e2e1" }, fontFamily: { "data-mono": ["Orbitron"] } } } }
+  </script>
+  <style>
+    body {
+      background-color: #000000;
+      color: #e5e2e1;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px black inset !important;
+      -webkit-text-fill-color: #F39C12 !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-black text-on-background min-h-[100dvh] flex flex-col overflow-x-hidden" data-mode="connect">
+
+  <main class="flex-1 flex flex-col items-center justify-center p-gutter relative min-h-[360px]">
+    <div class="relative flex items-center justify-center w-full max-w-[320px] sm:max-w-[360px] aspect-square shrink-0">
+
+      <svg class="absolute inset-0 w-full h-full animate-[spin_12s_linear_infinite] pointer-events-none"
+        viewBox="0 0 360 360" style="overflow:visible;">
+        <defs>
+          <linearGradient id="outerDualFade" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="5%" stop-color="#F39C12" stop-opacity="0" />
+            <stop offset="25%" stop-color="#F39C12" stop-opacity="0.2" />
+            <stop offset="50%" stop-color="#F39C12" stop-opacity="1" />
+            <stop offset="75%" stop-color="#F39C12" stop-opacity="0.2" />
+            <stop offset="95%" stop-color="#F39C12" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <circle cx="180" cy="180" r="170" fill="none" stroke="url(#outerDualFade)" stroke-width="1.5"
+          stroke-linecap="round" stroke-dasharray="420 648" stroke-dashoffset="477" />
+      </svg>
+
+      <svg class="absolute inset-0 w-full h-full animate-[spin_9s_linear_infinite_reverse] pointer-events-none"
+        viewBox="0 0 360 360" style="overflow:visible;">
+        <defs>
+          <linearGradient id="innerDualFade" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="10%" stop-color="#F39C12" stop-opacity="0" />
+            <stop offset="30%" stop-color="#F39C12" stop-opacity="0.2" />
+            <stop offset="50%" stop-color="#F39C12" stop-opacity="0.5" />
+            <stop offset="70%" stop-color="#F39C12" stop-opacity="0.2" />
+            <stop offset="90%" stop-color="#F39C12" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <circle cx="180" cy="180" r="150" fill="none" stroke="url(#innerDualFade)" stroke-width="1.2"
+          stroke-linecap="round" stroke-dasharray="330 612" stroke-dashoffset="165" />
+      </svg>
+
+      <div class="relative z-10 flex items-center justify-center select-none cursor-pointer group"
+        onclick="window.location.href='./sensesoil_01_Entrance_page.html'">
+        <div class="block transition-transform duration-300 group-hover:scale-105 group-hover:brightness-110">
+          <img alt="SENSESOIL Logo"
+            class="h-[60px] w-auto object-contain filter drop-shadow-[0_0_10px_rgba(243,156,18,0.55)]"
+            src="./Logo｜Orange.svg">
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="w-full shrink-0 flex flex-col items-center pb-8 sm:pb-16 px-4 sm:px-gutter relative z-20">
+    <div class="flex flex-col gap-6 w-full max-w-[480px] px-4 sm:px-8">
+
+      <input
+        class="box-border relative w-full bg-black border-2 border-primary text-primary font-data-mono font-bold hover:border-primary/80 focus:border-primary focus:ring-0 focus:outline-none transition-all py-4 tracking-widest text-lg text-center placeholder:text-primary/50"
+        placeholder="輸入 Gmail" type="email">
+
+      <input
+        class="box-border relative w-full bg-black border-2 border-primary text-primary font-data-mono font-bold hover:border-primary/80 focus:border-primary focus:ring-0 focus:outline-none transition-all py-4 tracking-widest text-lg text-center placeholder:text-primary/50"
+        placeholder="輸入 Password" type="password">
+
+    </div>
+  </div>
+
+  <div class="fixed inset-0 z-[-1] bg-black"></div>
+
+  <script>
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          window.location.href = './sensesoil_B_01Basic.html';
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

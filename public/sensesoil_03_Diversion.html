@@ -1,0 +1,158 @@
+<!DOCTYPE html><html class="dark" lang="zh-TW"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SENSESOIL OS - Tactical Selection</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#2a2a2a",
+                        "surface-container-lowest": "#0e0e0e",
+                        "primary-container": "#f39c12",
+                        "on-primary-container": "#603a00",
+                        "inverse-on-surface": "#313030",
+                        "inverse-surface": "#e5e2e1",
+                        "on-error-container": "#ffdad6",
+                        "on-error": "#690005",
+                        "on-secondary-fixed-variant": "#713700",
+                        "on-secondary-fixed": "#301400",
+                        "secondary": "#ffb783",
+                        "secondary-fixed": "#ffdcc5",
+                        "background": "#0D0D0D",
+                        "on-primary-fixed-variant": "#663e00",
+                        "tertiary-fixed-dim": "#4ae183",
+                        "surface-container": "#201f1f",
+                        "surface": "#131313",
+                        "primary-fixed": "#ffddb9",
+                        "inverse-primary": "#865300",
+                        "on-surface-variant": "#d8c3ad",
+                        "surface-variant": "#353534",
+                        "on-secondary-container": "#451f00",
+                        "outline-variant": "#534434",
+                        "outline": "#a18d7a",
+                        "secondary-container": "#db7619",
+                        "on-primary": "#472a00",
+                        "surface-tint": "#ffb961",
+                        "tertiary-fixed": "#6bfe9c",
+                        "tertiary": "#4fe586",
+                        "surface-bright": "#3a3939",
+                        "primary": "#f39c12",
+                        "on-tertiary": "#003919",
+                        "on-tertiary-fixed": "#00210c",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#27c86e",
+                        "surface-dim": "#131313",
+                        "primary-fixed-dim": "#ffb961",
+                        "on-tertiary-container": "#004d25",
+                        "on-secondary": "#4f2500",
+                        "on-background": "#e5e2e1",
+                        "error": "#ffb4ab",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container-highest": "#353534",
+                        "on-surface": "#e5e2e1",
+                        "secondary-fixed-dim": "#ffb783",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-primary-fixed": "#2b1700"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin": "32px",
+                        "gutter": "16px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "orbitron": ["Orbitron", "sans-serif"],
+                        "body-lg": ["Orbitron", "sans-serif"],
+                        "label-caps": ["Orbitron", "sans-serif"],
+                        "data-mono": ["Orbitron", "sans-serif"],
+                        "headline-lg": ["Orbitron", "sans-serif"],
+                        "body-sm": ["Orbitron", "sans-serif"],
+                        "headline-md": ["Orbitron", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "1.5", "letterSpacing": "0.01em", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "data-mono": ["18px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-lg": ["42px", {"lineHeight": "1.1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-sm": ["14px", {"lineHeight": "1.4", "letterSpacing": "0px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.2", "letterSpacing": "0.02em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 48;
+        }
+        .scanline-overlay {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+        .hud-bracket {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-color: #f39c12;
+        }
+        .hud-bracket-tl { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
+        .hud-bracket-tr { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
+        .hud-bracket-bl { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
+        .hud-bracket-br { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
+        
+        .chamfered-button {
+            clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style data-stitch-cursor=""></style><style data-stitch-scroll-lock=""></style></head>
+<body class="bg-background text-on-background min-h-screen font-body-lg flex flex-col font-orbitron">
+<!-- Global Scanline Overlay -->
+<!-- Top App Bar -->
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center p-gutter relative min-h-screen">
+<!-- Background HUD Decorative Elements -->
+<!-- Tactical Selection Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl px-margin">
+<!-- Card 1: Hunting Management -->
+<div class="group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded border-primary">
+<!-- Brackets -->
+<div class="mb-8"><span class="material-symbols-outlined text-[80px] text-primary bg-transparent drop-shadow-[0_0_10px_rgba(243,156,18,0.8)] transition-transform group-hover:scale-110 duration-500" style="font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 48;">shield</span></div>
+<h3 class="font-headline-md text-headline-md text-primary mb-2 tracking-widest">狩獵管理</h3>
+<!-- Tactical Corner Label -->
+</div>
+<!-- Card 2: Hunting Awakening -->
+<div class="group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded border-primary" onclick="window.location.href='./sensesoil_B_01Basic.html'">
+<!-- Brackets -->
+<!-- Special Decorative HUD Element in top-left like the image -->
+<!-- Special Decorative HUD Element in bottom-right like the image -->
+<div class="mb-8"><span class="material-symbols-outlined text-[80px] text-primary bg-transparent drop-shadow-[0_0_10px_rgba(243,156,18,0.8)] transition-transform group-hover:scale-110 duration-500" style="font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 48;">local_fire_department</span></div>
+<h3 class="font-headline-md text-headline-md text-primary mb-2 tracking-widest">狩獵覺醒</h3>
+<!-- Tactical Corner Label -->
+</div>
+</div>
+<!-- System Prompt Detail -->
+</main>
+<!-- Bottom Navigation Bar -->
+<!-- Navigation Drawer (Hidden by default, triggered by Menu) -->
+<!-- Decorative Corner UI elements -->
+
+
+</body></html>
