@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const roles = (session.user as any).roles || {};
     const permissionKey = sheetKey === "basic-mission" ? "basic" : sheetKey;
     const userRole = roles[permissionKey] || "viewer";
-    if (userRole !== "editor") {
+    if (userRole !== "editor" && userRole !== "admin") {
       return NextResponse.json({ error: "Forbidden: You do not have edit permissions." }, { status: 403 });
     }
   }
@@ -97,7 +97,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const roles = (session.user as any).roles || {};
     const permissionKey = sheetKey === "basic-mission" ? "basic" : sheetKey;
     const userRole = roles[permissionKey] || "viewer";
-    if (userRole !== "editor") {
+    if (userRole !== "editor" && userRole !== "admin") {
       return NextResponse.json({ error: "Forbidden: You do not have edit permissions." }, { status: 403 });
     }
   }
