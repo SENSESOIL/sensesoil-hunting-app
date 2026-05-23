@@ -59,10 +59,10 @@ const SymbolSelect = ({ defaultValue, inputId }: { defaultValue: string, inputId
 };
 
 const CustomTimePicker = ({ defaultTime, inputId }: { defaultTime: string, inputId: string }) => {
-  const [time, setTime] = useState(defaultTime || "19:00");
+  const [time, setTime] = useState(defaultTime || "");
   const [isOpen, setIsOpen] = useState(false);
 
-  const [h, m] = time.includes(":") ? time.split(":") : ["19", "00"];
+  const [h, m] = time && time.includes(":") ? time.split(":") : ["19", "00"];
 
   return (
     <div className="relative w-full">
@@ -71,7 +71,7 @@ const CustomTimePicker = ({ defaultTime, inputId }: { defaultTime: string, input
         onClick={() => setIsOpen(!isOpen)}
         className="w-full h-[28px] bg-surface-container-high border border-primary/30 rounded-[4px] px-1 flex items-center justify-center cursor-pointer focus:border-primary"
       >
-        <span className="text-[10px] text-[#efe0d2] font-data-mono">{time}</span>
+        <span className="text-[10px] text-[#efe0d2] font-data-mono">{time || "-"}</span>
       </div>
       {isOpen && (
         <>
@@ -112,11 +112,23 @@ const CustomTimePicker = ({ defaultTime, inputId }: { defaultTime: string, input
                 })}
               </div>
             </div>
-            <div
-              className="py-3 text-center bg-primary/20 text-primary text-[10px] cursor-pointer hover:bg-primary/30 font-bold tracking-widest border-t border-primary/20"
-              onClick={() => setIsOpen(false)}
-            >
-              確認
+            <div className="flex border-t border-primary/20">
+              <div
+                className="flex-1 py-3 text-center bg-primary/10 text-primary/70 text-[10px] cursor-pointer hover:bg-primary/20 tracking-widest"
+                onClick={() => { setTime(""); setIsOpen(false); }}
+              >
+                清除
+              </div>
+              <div className="w-[1px] bg-primary/20"></div>
+              <div
+                className="flex-1 py-3 text-center bg-primary/20 text-primary text-[10px] cursor-pointer hover:bg-primary/30 font-bold tracking-widest"
+                onClick={() => {
+                  if (!time) setTime(`${h}:${m}`); // 若原本是空的，按下確認時套用當前選中的時間
+                  setIsOpen(false);
+                }}
+              >
+                確認
+              </div>
             </div>
           </div>
         </>
