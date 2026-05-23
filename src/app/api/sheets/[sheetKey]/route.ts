@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 export const dynamic = 'force-dynamic';
 import { auth } from "@/lib/auth-options";
-import { readSheet, appendSheet, writeSheet } from "@/lib/google-sheets";
+import { readSheet, appendSheet, writeSheet, readSheetNotes, writeSheetNotes } from "@/lib/google-sheets";
 import { SHEET_REGISTRY, SheetKey } from "@/lib/sheet-config";
 
 interface RouteParams {
@@ -28,13 +28,23 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
   try {
     const rows = await readSheet(config.spreadsheetId, config.defaultRange);
+    let sheetId = 0;
+    let notes: string[][] = [];
+    try {
+      const notesData = await readSheetNotes(config.spreadsheetId, config.defaultRange);
+      sheetId = notesData.sheetId;
+      notes = notesData.notes;
+    } catch (e) {
+      console.warn("Could not read notes data", e);
+    }
+    
     let settings: string[][] = [];
     try {
       settings = await readSheet(config.spreadsheetId, "設定!A:Z");
     } catch (e) {
       console.warn("Could not read settings sheet", e);
     }
-    return NextResponse.json({ rows, settings, label: config.label }, { status: 200 });
+    return NextResponse.json({ rows, settings, label: config.label, sheetId, notes }, { status: 200 });
   } catch (err) {
     console.error(`[Sheets GET] ${sheetKey}:`, err);
     return NextResponse.json({ error: "Failed to read sheet" }, { status: 500 });
@@ -108,9 +118,19 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   }
 
   const body = await req.json();
-  const { range, values, updates } = body as { range?: string; values?: string[][], updates?: { range: string, values: string[][] }[] };
+  const { range, values, updates, notesUpdates, sheetId } = body as { 
+    range?: string; 
+    values?: string[][], 
+    updates?: { range: string, values: string[][] }[],
+    notesUpdates?: { rowIndex: number; colIndex: number; note: string }[],
+    sheetId?: number
+  };
 
   try {
+    if (notesUpdates && notesUpdates.length > 0 && sheetId !== undefined) {
+      await writeSheetNotes(config.spreadsheetId, sheetId, notesUpdates);
+    }
+
     if (updates && Array.isArray(updates)) {
       for (const u of updates) {
         if (u.range && u.values) {
@@ -119,8 +139,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       }
     } else if (range && values && Array.isArray(values)) {
       await writeSheet(config.spreadsheetId, range, values);
-    } else {
-      return NextResponse.json({ error: "Invalid payload: expected updates array or range/values" }, { status: 400 });
+    } else if (!notesUpdates) {
+      return NextResponse.json({ error: "Invalid payload: expected updates array, notesUpdates, or range/values" }, { status: 400 });
     }
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {

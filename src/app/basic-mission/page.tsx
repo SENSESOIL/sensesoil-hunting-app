@@ -58,6 +58,48 @@ const SymbolSelect = ({ defaultValue, inputId }: { defaultValue: string, inputId
   );
 };
 
+const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInputId }: { label: string, defaultSymbol: string, defaultNote: string, symbolInputId: string, noteInputId: string }) => {
+  const [showNote, setShowNote] = useState(false);
+  const [note, setNote] = useState(defaultNote);
+
+  return (
+    <div className="space-y-1 relative">
+      <label className="text-[11px] text-primary/70 flex justify-center items-center gap-1">
+        {label}
+        <span 
+          className={`material-symbols-outlined text-[10px] cursor-pointer ${note ? 'text-[#f39c12]' : 'text-primary/30 hover:text-primary/70'}`}
+          onClick={() => setShowNote(!showNote)}
+        >
+          {note ? 'chat' : 'add_comment'}
+        </span>
+      </label>
+      <SymbolSelect defaultValue={defaultSymbol} inputId={symbolInputId} />
+      <input type="hidden" id={noteInputId} value={note} />
+      
+      {showNote && (
+        <>
+          <div className="fixed inset-0 z-[110]" onClick={() => setShowNote(false)}></div>
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[120px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.3)] z-[120] p-2 flex flex-col gap-2">
+            <div className="text-[10px] text-primary/70 uppercase tracking-widest">{label} 備註</div>
+            <textarea
+              className="w-full h-[60px] bg-primary/10 border border-primary/20 rounded-[2px] text-[10px] text-[#efe0d2] p-1 focus:outline-none focus:border-primary resize-none"
+              placeholder="輸入備註 (如: 事假)"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+            <button
+              className="w-full py-1 bg-primary/20 text-primary text-[10px] hover:bg-primary/30 rounded-[2px]"
+              onClick={() => setShowNote(false)}
+            >
+              完成
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 const CustomTimePicker = ({ defaultTime, inputId }: { defaultTime: string, inputId: string }) => {
   const [time, setTime] = useState(defaultTime || "");
   const [isOpen, setIsOpen] = useState(false);
@@ -532,7 +574,7 @@ export default function BasicMissionPage() {
       const recordTime = new Date(dateStr).getTime();
       // Only include records between startTimestamp and the latest settled week
       if (!isNaN(recordTime) && !isNaN(startTimestamp) && recordTime >= startTimestamp && recordTime <= maxValidTimestamp) {
-        validRecords.push({ data: row, originalIndex: i + 1 });
+        validRecords.push({ data: row, notes: data.notes?.[i] || [], originalIndex: i + 1 });
       }
     }
 
@@ -548,7 +590,9 @@ export default function BasicMissionPage() {
 
     return validRecords.map((rObj, index) => {
       const r = rObj.data;
+      const n = rObj.notes;
       const logs = [r[2], r[3], r[4], r[5], r[6], r[7]];
+      const logNotes = [n[2] || "", n[3] || "", n[4] || "", n[5] || "", n[6] || "", n[7] || ""];
       const quality = r[8];
       const quantity = r[9];
       const precisions = [r[10], r[11]];
@@ -580,6 +624,8 @@ export default function BasicMissionPage() {
         taskStr,
         score,
         rawData: r,
+        rawNotes: n,
+        logNotes,
         originalIndex: rObj.originalIndex
       };
     });
@@ -1005,13 +1051,21 @@ export default function BasicMissionPage() {
                       <div className="grid grid-cols-7 gap-1">
                         {[
                           { label: "D1", idx: 2 }, { label: "D2", idx: 3 }, { label: "D3", idx: 4 }, { label: "D4", idx: 5 },
-                          { label: "D5", idx: 6 }, { label: "D6", idx: 7 }, { label: "質", idx: 8 }
-                        ].map(col => (
-                          <div key={col.label} className="space-y-1">
-                            <label className="text-[11px] text-primary/70 block text-center">{col.label}</label>
-                            <SymbolSelect defaultValue={getSym(editingRow.rawData[col.idx])} inputId={`edit-col-${col.idx}`} />
-                          </div>
+                          { label: "D5", idx: 6 }, { label: "D6", idx: 7 }
+                        ].map((col, arrayIndex) => (
+                          <DayCellEdit 
+                            key={col.label}
+                            label={col.label}
+                            defaultSymbol={getSym(editingRow.rawData[col.idx])}
+                            defaultNote={editingRow.logNotes?.[arrayIndex] || ""}
+                            symbolInputId={`edit-col-${col.idx}`}
+                            noteInputId={`edit-note-${col.idx}`}
+                          />
                         ))}
+                        <div className="space-y-1">
+                          <label className="text-[11px] text-primary/70 block text-center">質</label>
+                          <SymbolSelect defaultValue={getSym(editingRow.rawData[8])} inputId={`edit-col-8`} />
+                        </div>
                       </div>
                     </div>
 
@@ -1086,10 +1140,18 @@ export default function BasicMissionPage() {
                           }
                         ];
 
+                        const notesUpdates = [
+                          { colIndex: 2 }, { colIndex: 3 }, { colIndex: 4 }, { colIndex: 5 }, { colIndex: 6 }, { colIndex: 7 }
+                        ].map(c => ({
+                          rowIndex: editingRow.originalIndex - 1,
+                          colIndex: c.colIndex,
+                          note: getVal(`edit-note-${c.colIndex}`)
+                        }));
+
                         const res = await fetch('/api/sheets/basic-mission', {
                           method: 'PATCH',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ updates })
+                          body: JSON.stringify({ updates, notesUpdates, sheetId: data?.sheetId })
                         });
 
                         if (res.ok) {

@@ -9,11 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/gapi.client.sheets": "^4.0.20201031",
     "googleapis": "latest",
+    "jimp": "^1.6.1",
     "next": "latest",
     "next-auth": "beta",
     "react": "latest",
     "react-dom": "latest",
+    "sharp": "^0.34.5",
     "swr": "^2.4.1"
   },
   "devDependencies": {
