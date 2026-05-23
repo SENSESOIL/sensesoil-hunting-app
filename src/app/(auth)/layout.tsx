@@ -18,7 +18,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       const t2 = setTimeout(() => {
         setShowUI(true);
         hasAuthLoaded = true;
-      }, 1000);
+      }, 1100);
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);
