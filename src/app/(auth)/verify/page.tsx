@@ -18,7 +18,7 @@ export default function VerificationPage() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    await signIn("google", { callbackUrl: "/basic-mission" });
+    await signIn("google", { callbackUrl: "/diversion" });
   };
 
   return (
