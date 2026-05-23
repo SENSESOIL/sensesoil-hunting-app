@@ -81,10 +81,10 @@ const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInp
       {showNote && (
         <>
           <div className="fixed inset-0 z-[110]" onClick={() => setShowNote(false)}></div>
-          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[120px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.3)] z-[120] p-2 flex flex-col gap-2">
-            <div className="text-[10px] text-primary/70 uppercase tracking-widest">{label} 備註</div>
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.3)] z-[120] p-3 flex flex-col gap-2">
+            <div className="text-[11px] text-primary/70 uppercase tracking-widest text-center mb-1">{label} 備註</div>
             <textarea
-              className="w-full h-[60px] bg-primary/10 border border-primary/20 rounded-[2px] text-[10px] text-[#efe0d2] p-1 focus:outline-none focus:border-primary resize-none"
+              className="w-full h-[80px] bg-primary/10 border border-primary/20 rounded-[2px] text-[12px] text-[#efe0d2] p-2 focus:outline-none focus:border-primary resize-none"
               placeholder={placeholder}
               value={note}
               onChange={(e) => setNote(e.target.value)}
