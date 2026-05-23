@@ -64,14 +64,12 @@ const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInp
 
   return (
     <div className="space-y-1 relative">
-      <label className="text-[11px] text-primary/70 flex justify-center items-center gap-1">
+      <label 
+        className={`text-[11px] block text-center cursor-pointer transition-colors ${note ? 'text-[#f39c12] font-bold underline decoration-1 underline-offset-2' : 'text-primary/70 hover:text-primary'}`}
+        onClick={() => setShowNote(!showNote)}
+        title="點擊新增/編輯備註"
+      >
         {label}
-        <span 
-          className={`material-symbols-outlined text-[10px] cursor-pointer ${note ? 'text-[#f39c12]' : 'text-primary/30 hover:text-primary/70'}`}
-          onClick={() => setShowNote(!showNote)}
-        >
-          {note ? 'chat' : 'add_comment'}
-        </span>
       </label>
       <SymbolSelect defaultValue={defaultSymbol} inputId={symbolInputId} />
       <input type="hidden" id={noteInputId} value={note} />
