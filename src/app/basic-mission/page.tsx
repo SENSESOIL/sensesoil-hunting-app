@@ -58,7 +58,7 @@ const SymbolSelect = ({ defaultValue, inputId }: { defaultValue: string, inputId
   );
 };
 
-const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInputId }: { label: string, defaultSymbol: string, defaultNote: string, symbolInputId: string, noteInputId: string }) => {
+const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInputId, placeholder = "輸入備註", options }: { label: string, defaultSymbol: string, defaultNote: string, symbolInputId: string, noteInputId: string, placeholder?: string, options?: string[] }) => {
   const [showNote, setShowNote] = useState(false);
   const [note, setNote] = useState(defaultNote);
 
@@ -71,7 +71,11 @@ const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInp
       >
         {label}
       </label>
-      <SymbolSelect defaultValue={defaultSymbol} inputId={symbolInputId} />
+      {options ? (
+        <TaskSelect options={options} defaultValue={defaultSymbol} inputId={symbolInputId} />
+      ) : (
+        <SymbolSelect defaultValue={defaultSymbol} inputId={symbolInputId} />
+      )}
       <input type="hidden" id={noteInputId} value={note} />
       
       {showNote && (
@@ -81,7 +85,7 @@ const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInp
             <div className="text-[10px] text-primary/70 uppercase tracking-widest">{label} 備註</div>
             <textarea
               className="w-full h-[60px] bg-primary/10 border border-primary/20 rounded-[2px] text-[10px] text-[#efe0d2] p-1 focus:outline-none focus:border-primary resize-none"
-              placeholder="輸入備註 (如: 事假)"
+              placeholder={placeholder}
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -1050,20 +1054,24 @@ export default function BasicMissionPage() {
                         {[
                           { label: "D1", idx: 2 }, { label: "D2", idx: 3 }, { label: "D3", idx: 4 }, { label: "D4", idx: 5 },
                           { label: "D5", idx: 6 }, { label: "D6", idx: 7 }
-                        ].map((col, arrayIndex) => (
+                        ].map((col) => (
                           <DayCellEdit 
                             key={col.label}
                             label={col.label}
                             defaultSymbol={getSym(editingRow.rawData[col.idx])}
-                            defaultNote={editingRow.logNotes?.[arrayIndex] || ""}
+                            defaultNote={editingRow.rawNotes?.[col.idx] || ""}
                             symbolInputId={`edit-col-${col.idx}`}
                             noteInputId={`edit-note-${col.idx}`}
+                            placeholder="輸入備註 (如: 事假)"
                           />
                         ))}
-                        <div className="space-y-1">
-                          <label className="text-[11px] text-primary/70 block text-center">質</label>
-                          <SymbolSelect defaultValue={getSym(editingRow.rawData[8])} inputId={`edit-col-8`} />
-                        </div>
+                        <DayCellEdit 
+                          label="質"
+                          defaultSymbol={getSym(editingRow.rawData[8])}
+                          defaultNote={editingRow.rawNotes?.[8] || ""}
+                          symbolInputId={`edit-col-8`}
+                          noteInputId={`edit-note-8`}
+                        />
                       </div>
                     </div>
 
@@ -1072,10 +1080,14 @@ export default function BasicMissionPage() {
                       <h4 className="text-[12px] text-primary mb-2 uppercase tracking-widest">紀錄</h4>
                       <div className="grid grid-cols-2 gap-2">
                         {[{ label: "精", idx: 10 }, { label: "準", idx: 11 }].map(col => (
-                          <div key={col.label} className="space-y-1">
-                            <label className="text-[11px] text-primary/70">{col.label}</label>
-                            <SymbolSelect defaultValue={getSym(editingRow.rawData[col.idx])} inputId={`edit-col-${col.idx}`} />
-                          </div>
+                          <DayCellEdit 
+                            key={col.label}
+                            label={col.label}
+                            defaultSymbol={getSym(editingRow.rawData[col.idx])}
+                            defaultNote={editingRow.rawNotes?.[col.idx] || ""}
+                            symbolInputId={`edit-col-${col.idx}`}
+                            noteInputId={`edit-note-${col.idx}`}
+                          />
                         ))}
                       </div>
                     </div>
@@ -1085,24 +1097,48 @@ export default function BasicMissionPage() {
                       <h4 className="text-[12px] text-primary mb-2 uppercase tracking-widest">任務</h4>
                       <div className="grid grid-cols-5 gap-2">
                         <div className="space-y-1">
-                          <label className="text-[11px] text-primary/70">天</label>
-                          <TaskSelect defaultValue={editingRow.rawData[13] || ""} options={["五", "六", "日", "後", "✕", ""]} inputId="edit-col-13" />
+                          <DayCellEdit 
+                            label="天"
+                            defaultSymbol={editingRow.rawData[13] || ""}
+                            defaultNote={editingRow.rawNotes?.[13] || ""}
+                            symbolInputId={`edit-col-13`}
+                            noteInputId={`edit-note-13`}
+                            options={["五", "六", "日", "後", "✕", ""]}
+                          />
                         </div>
                         <div className="space-y-1 relative z-50">
-                          <label className="text-[11px] text-primary/70">時</label>
+                          <label className="text-[11px] text-primary/70 block text-center">時</label>
                           <CustomTimePicker defaultTime={timeVal} inputId="edit-col-14" />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[11px] text-primary/70">誠</label>
-                          <TaskSelect defaultValue={editingRow.rawData[15] || ""} options={["5.0", "4.5", "4.0", "3.5", "3.0", "2.5", "2.0", "1.5", "1.0", "0.5", "0.0", ""]} inputId="edit-col-15" />
+                          <DayCellEdit 
+                            label="誠"
+                            defaultSymbol={editingRow.rawData[15] || ""}
+                            defaultNote={editingRow.rawNotes?.[15] || ""}
+                            symbolInputId={`edit-col-15`}
+                            noteInputId={`edit-note-15`}
+                            options={["5.0", "4.5", "4.0", "3.5", "3.0", "2.5", "2.0", "1.5", "1.0", "0.5", "0.0", ""]}
+                          />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[11px] text-primary/70">體</label>
-                          <TaskSelect defaultValue={editingRow.rawData[16] || ""} options={["高", "中", "低", "✕", ""]} inputId="edit-col-16" />
+                          <DayCellEdit 
+                            label="體"
+                            defaultSymbol={editingRow.rawData[16] || ""}
+                            defaultNote={editingRow.rawNotes?.[16] || ""}
+                            symbolInputId={`edit-col-16`}
+                            noteInputId={`edit-note-16`}
+                            options={["高", "中", "低", "✕", ""]}
+                          />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[11px] text-primary/70">格</label>
-                          <TaskSelect defaultValue={editingRow.rawData[17] || ""} options={["高", "中", "低", "✕", ""]} inputId="edit-col-17" />
+                          <DayCellEdit 
+                            label="格"
+                            defaultSymbol={editingRow.rawData[17] || ""}
+                            defaultNote={editingRow.rawNotes?.[17] || ""}
+                            symbolInputId={`edit-col-17`}
+                            noteInputId={`edit-note-17`}
+                            options={["高", "中", "低", "✕", ""]}
+                          />
                         </div>
                       </div>
                     </div>
@@ -1139,11 +1175,11 @@ export default function BasicMissionPage() {
                         ];
 
                         const notesUpdates = [
-                          { colIndex: 2 }, { colIndex: 3 }, { colIndex: 4 }, { colIndex: 5 }, { colIndex: 6 }, { colIndex: 7 }
-                        ].map(c => ({
+                          2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 15, 16, 17
+                        ].map(colIndex => ({
                           rowIndex: editingRow.originalIndex - 1,
-                          colIndex: c.colIndex,
-                          note: getVal(`edit-note-${c.colIndex}`)
+                          colIndex: colIndex,
+                          note: getVal(`edit-note-${colIndex}`)
                         }));
 
                         const res = await fetch('/api/sheets/basic-mission', {
