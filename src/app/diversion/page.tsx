@@ -19,7 +19,7 @@ export default function DiversionPage() {
     <main className="flex-1 flex flex-col items-center justify-center p-gutter relative min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl px-margin">
         {/* Card 1: Hunting Management */}
-        <div className="group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded border-primary">
+        <div className="group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded-[4px] border-primary">
           <div className="mb-8">
             <span
               className="material-symbols-outlined text-primary bg-transparent drop-shadow-[0_0_10px_rgba(243,156,18,0.8)] transition-transform group-hover:scale-110 duration-500"
@@ -35,7 +35,7 @@ export default function DiversionPage() {
 
         {/* Card 2: Hunting Awakening */}
         <div
-          className="group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded border-primary"
+          className="group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded-[4px] border-primary"
           onClick={handleEnterMission}
         >
           <div className="mb-8">
