@@ -736,7 +736,7 @@ export default function BasicMissionPage() {
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_4px_12px_rgba(243,156,18,0.15)] px-4">
         <div className="flex items-center gap-3 flex-nowrap cursor-pointer" onClick={() => router.push("/diversion")}>
           <Image alt="SenseSoil Logo" width={28} height={28} className="h-[28px] w-auto object-contain flex-shrink-0 translate-y-[-2px]" src="/Logo｜Orange.svg" />
-          <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">基礎任務試煉</h1>
+          <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">自我覺醒試煉</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -811,449 +811,66 @@ export default function BasicMissionPage() {
           </div>
         </div>
 
-        {/* Individual Module */}
-        <section className={`space-y-[18px] mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
-          <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵日誌</h2>
-              <div className="relative flex items-center gap-2">
-                <span 
-                  className="text-[10px] text-[#efe0d2] font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setIsPersonalDateDropdownOpen(!isPersonalDateDropdownOpen)}
-                >
-                  {selectedPersonalDate || "載入中..."}
-                </span>
-                <span className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(243,156,18,0.8)] flex-shrink-0 cursor-pointer" onClick={() => setIsPersonalDateDropdownOpen(!isPersonalDateDropdownOpen)}></span>
-                {isPersonalDateDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {options.dates.map((date) => (
-                      <div
-                        key={date}
-                        className="px-4 py-3 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm border-b border-primary/10 last:border-b-0 text-right"
-                        onClick={() => { setSelectedPersonalDate(date); setIsPersonalDateDropdownOpen(false); }}
-                      >
-                        {date}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-              <div className="grid grid-cols-6 gap-2">
-                <PersonalIndicatorCard label="D1" symbol={d1} note={pNotes[2]} />
-                <PersonalIndicatorCard label="D2" symbol={d2} note={pNotes[3]} />
-                <PersonalIndicatorCard label="D3" symbol={d3} note={pNotes[4]} />
-                <PersonalIndicatorCard label="D4" symbol={d4} note={pNotes[5]} />
-                <PersonalIndicatorCard label="D5" symbol={d5} note={pNotes[6]} />
-                <PersonalIndicatorCard label="D6" symbol={d6} note={pNotes[7]} />
-              </div>
-              <div className="grid grid-cols-6 gap-2 mt-2">
-                <div className="col-span-3"><PersonalIndicatorCard label="質" symbol={dQuality} note={pNotes[8]} /></div>
-                <div className="col-span-3"><PersonalIndicatorCard label="量" symbol={dQuantity} note={pNotes[9]} /></div>
-              </div>
-            </div>
-          </div>
-          <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵紀錄</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <PersonalIndicatorCard label="精" symbol={recAcc} note={pNotes[10]} />
-              <PersonalIndicatorCard label="準" symbol={recPrec} note={pNotes[11]} />
-            </div>
-          </div>
-          <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵任務</h2>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <PersonalIndicatorCard label="任務完成度" symbol={taskCompletion} note={pNotes[15]} isSymbolText />
-              <PersonalIndicatorCard label="體能強化度" symbol={taskPhysical} note={pNotes[16]} isSymbolText />
-              <PersonalIndicatorCard label="格局進化度" symbol={taskPattern} note={pNotes[17]} isSymbolText />
-            </div>
-          </div>
-          <div className="w-full bg-primary text-black p-4 rounded-[4px] flex justify-between items-center shadow-lg">
-            <span className="font-headline-md text-lg font-black">覺醒點數</span>
-            <div className="flex items-baseline gap-1">
-              <span key={`${selectedPersonalDate}-${selectedPersonalHunter}`} className="font-data-mono text-2xl font-black animate-text-reveal">
-                {personalScoreValue}
-              </span>
-              <span className="text-[10px] font-normal lowercase tracking-normal">pts</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Team Module */}
-        <section className={`space-y-[18px] mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
+        {/* Running Records UI */}
+        <section className={`space-y-[18px] mb-[32px]`}>
           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm shadow-[0_0_15px_rgba(243,156,18,0.05)]">
-            <h3 className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">團隊狀態</h3>
+            <h3 className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">本週數據</h3>
             <div className="flex gap-4">
               <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
-                <p className="text-[10px] text-primary uppercase tracking-wider mb-1">任務完成度</p>
+                <p className="text-[10px] text-primary uppercase tracking-wider mb-1">Distance</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-primary tracking-tighter">{dashboardData.completionRate}</span>
-                  <span className="text-[10px] text-primary">%</span>
+                  <span className="text-2xl font-bold text-primary tracking-tighter">--</span>
+                  <span className="text-[10px] text-primary">km</span>
                 </div>
               </div>
               <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
-                <p className="text-[10px] text-primary uppercase tracking-wider mb-1">覺醒平均值</p>
+                <p className="text-[10px] text-primary uppercase tracking-wider mb-1">Time</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-primary tracking-tighter">{dashboardData.averageScore}</span>
-                  <span className="text-[10px] text-primary">pts</span>
+                  <span className="text-2xl font-bold text-primary tracking-tighter">--</span>
+                </div>
+              </div>
+              <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
+                <p className="text-[10px] text-primary uppercase tracking-wider mb-1">Elev Gain</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-primary tracking-tighter">--</span>
+                  <span className="text-[10px] text-primary">m</span>
                 </div>
               </div>
             </div>
           </div>
+          
           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm">
-            <div className="flex justify-between mb-6 items-baseline relative">
-              <div className="relative">
-                <h3 className="text-primary font-bold tracking-widest uppercase mb-1 text-xs">狩獵分析</h3>
-                <div className="flex items-center gap-3">
-                  <span
-                    className="font-bold text-3xl cursor-pointer hover:opacity-80 transition-opacity animate-text-reveal"
-                    style={{ color: "#efe0d2" }}
-                    onClick={() => setIsHunterDropdownOpen(!isHunterDropdownOpen)}
-                    key={selectedTeamHunter}
-                  >
-                    {selectedTeamHunter || "載入中..."}
-                  </span>
-                </div>
-                {isHunterDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded shadow-lg z-10 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {options.hunters.map((hunter) => (
-                      <div
-                        key={hunter}
-                        className="px-4 py-2 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm"
-                        onClick={() => { setSelectedTeamHunter(hunter); setIsHunterDropdownOpen(false); }}
-                      >
-                        {hunter}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="text-right flex items-center gap-2 relative">
-                <span className="text-[10px] tracking-tighter font-normal flex items-center gap-1">
-                  <span className="text-primary">起算自</span>
-                  <span
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                    style={{ color: "#efe0d2" }}
-                    onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-                  >
-                    {selectedStartDate || "載入中..."}
-                  </span>
-                </span>
-                <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(243,156,18,0.8)]"></span>
-                {isDateDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded shadow-lg z-10 max-h-48 overflow-y-auto text-left" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {options.dates.map((date) => (
-                      <div
-                        key={date}
-                        className="px-4 py-2 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm"
-                        onClick={() => { setSelectedStartDate(date); setIsDateDropdownOpen(false); }}
-                      >
-                        {date}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <style>{`
-                @keyframes growX {
-                  0% { transform: scaleX(0); }
-                  100% { transform: scaleX(1); }
-                }
-                .animate-grow-x {
-                  animation: growX 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                  transform-origin: left;
-                }
-              `}</style>
-              {analysisData?.items ? analysisData.items.map((item, idx) => (
-                <div key={`${selectedTeamHunter}-${selectedStartDate}-${idx}`} className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] text-primary uppercase tracking-wider">
-                    <span>{item.label}</span>
-                    <span>{item.percent}</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-primary/10">
-                    <div 
-                      className="h-full bg-primary shadow-[0_0_8px_rgba(243,156,18,0.8)] animate-grow-x" 
-                      style={{ width: item.width }}
-                    ></div>
-                  </div>
-                </div>
-              )) : (
-                <div className="text-center text-primary/50 text-xs py-4">暫無資料</div>
-              )}
-            </div>
-            <div className="pt-4 border-t border-primary/20 flex justify-between items-baseline">
-              <span className="text-[12px] text-primary uppercase tracking-[0.2em]">區間累積覺醒點數</span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-primary font-bold text-2xl tracking-tighter">
-                  {analysisData ? analysisData.cumulativeAwakening : "0.0"}
-                </span>
-                <span className="text-[10px] font-normal lowercase tracking-normal text-primary">pts</span>
-              </div>
+            <h3 className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">過去 12 週趨勢</h3>
+            <div className="h-40 flex items-center justify-center border border-primary/10 rounded">
+              <span className="text-primary/50 text-sm">圖表建置中...</span>
             </div>
           </div>
 
-          {(userRole === "admin" || userRole === "editor") && (
-            <div className="border border-primary/30 bg-surface-container overflow-hidden rounded-sm">
-              <div className="overflow-hidden">
-              <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
-                <thead>
-                  <tr className="text-primary border-b border-primary/20 bg-surface-container-high/50">
-                    <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4, color: "#f39c12" }}>狩獵者</th>
-                    <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4, color: "#f39c12", textAlign: "left" }}>日誌 (D1-6/質量)</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "15%", padding: 4, color: "#f39c12", textAlign: "center" }}>紀錄 (精準)</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "22%", padding: 4, color: "#f39c12", textAlign: "center" }}>任務 (誠/體/格)</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "12%", padding: 4, color: "#f39c12", textAlign: "center" }}>覺醒</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-primary/5">
-                  {tableData.length > 0 ? tableData.map((row, idx) => (
-                    <tr key={`${row.date}-${row.name}-${idx}`} className={idx % 2 === 1 ? "bg-primary/5" : ""}>
-                      <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
-                        <div className="flex items-baseline gap-[6px]">
-                          <div 
-                            className={`font-bold ${(userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development") ? "cursor-pointer hover:opacity-70 transition-opacity" : ""}`}
-                            style={{ color: "#f39c12" }}
-                            onClick={() => {
-                              if (userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development") {
-                                setEditingRow(row);
-                                setIsEditModalOpen(true);
-                              }
-                            }}
-                          >
-                            {row.name}
-                          </div>
-                          <div className="text-[10px]" style={{ color: "#efe0d2" }}>{row.date.substring(5)}</div>
-                        </div>
-                      </td>
-                      <td className="p-2 font-data-mono whitespace-nowrap align-middle" style={{ width: "28%", padding: 4, overflow: "hidden", color: "#efe0d2", textAlign: "left" }}>
-                        <RenderSymbols str={row.logStr} alignLeft={true} />
-                      </td>
-                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "15%", padding: 4, color: "#efe0d2", textAlign: "center" }}>
-                        <RenderSymbols str={row.recStr} />
-                      </td>
-                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "22%", padding: 4, color: "#efe0d2", textAlign: "center", fontSize: 10 }}>
-                        <RenderSymbols str={row.taskStr} />
-                      </td>
-                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "12%", padding: 4, color: "#efe0d2", textAlign: "center", fontSize: 10 }}>
-                        {row.score}
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={5} className="p-4 text-center text-primary/50">載入中或無資料...</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm">
+            <div className="flex justify-between items-baseline mb-4">
+              <h3 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">本月回顧</h3>
+              <div className="flex gap-4">
+                <div className="text-right">
+                   <div className="text-[10px] text-primary/70">Your Streak</div>
+                   <div className="text-primary font-bold">-- Weeks</div>
+                </div>
+                <div className="text-right">
+                   <div className="text-[10px] text-primary/70">Streak Activities</div>
+                   <div className="text-primary font-bold">--</div>
+                </div>
               </div>
             </div>
-          )}
+            <div className="h-48 flex items-center justify-center border border-primary/10 rounded">
+              <span className="text-primary/50 text-sm">打卡月曆建置中...</span>
+            </div>
+          </div>
         </section>
-
-        {/* Edit Modal */}
-        {/* Edit Modal */}
-        {isEditModalOpen && editingRow && (() => {
-          const timeVal = editingRow.rawData[14] || "";
-          const [hourVal, minVal] = timeVal.includes(":") ? timeVal.split(":") : ["19", "00"];
-
-          const getSym = (val: string) => {
-            if (!val || val.trim() === "") return "";
-            if (val === "高" || val === "O" || val === "o" || val === "〇" || val === "○") return "○";
-            if (val === "中" || val === "△" || val === "^") return "△";
-            if (val === "低" || val === "無" || val === "X" || val === "x" || val === "✕" || val === "✖") return "✕";
-            return "";
-          };
-
-          return (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
-              <div className="bg-surface-container border border-primary/40 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.2)] w-full max-w-md overflow-hidden">
-                <div className="bg-primary/10 border-b border-primary/20 px-4 py-3 flex justify-between items-center">
-                  <h3 className="text-primary font-bold text-sm tracking-widest uppercase">{editingRow.name} {editingRow.date}</h3>
-                  <button
-                    onClick={() => setIsEditModalOpen(false)}
-                    className="text-primary/50 hover:text-primary transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">close</span>
-                  </button>
-                </div>
-                <div className="p-4 max-h-[60vh] overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  <div className="space-y-4">
-                    {/* 日誌 */}
-                    <div className="border border-primary/20 rounded-[4px] p-3 bg-surface-container-low">
-                      <h4 className="text-[12px] text-primary mb-2 uppercase tracking-widest">日誌</h4>
-                      <div className="grid grid-cols-7 gap-1">
-                        {[
-                          { label: "D1", idx: 2 }, { label: "D2", idx: 3 }, { label: "D3", idx: 4 }, { label: "D4", idx: 5 },
-                          { label: "D5", idx: 6 }, { label: "D6", idx: 7 }
-                        ].map((col) => (
-                          <DayCellEdit 
-                            key={col.label}
-                            label={col.label}
-                            defaultSymbol={getSym(editingRow.rawData[col.idx])}
-                            defaultNote={editingRow.rawNotes?.[col.idx] || ""}
-                            symbolInputId={`edit-col-${col.idx}`}
-                            noteInputId={`edit-note-${col.idx}`}
-                            placeholder="輸入備註 (如: 事假)"
-                          />
-                        ))}
-                        <DayCellEdit 
-                          label="質"
-                          defaultSymbol={getSym(editingRow.rawData[8])}
-                          defaultNote={editingRow.rawNotes?.[8] || ""}
-                          symbolInputId={`edit-col-8`}
-                          noteInputId={`edit-note-8`}
-                        />
-                      </div>
-                    </div>
-
-                    {/* 紀錄 */}
-                    <div className="border border-primary/20 rounded-[4px] p-3 bg-surface-container-low">
-                      <h4 className="text-[12px] text-primary mb-2 uppercase tracking-widest">紀錄</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[{ label: "精", idx: 10 }, { label: "準", idx: 11 }].map(col => (
-                          <DayCellEdit 
-                            key={col.label}
-                            label={col.label}
-                            defaultSymbol={getSym(editingRow.rawData[col.idx])}
-                            defaultNote={editingRow.rawNotes?.[col.idx] || ""}
-                            symbolInputId={`edit-col-${col.idx}`}
-                            noteInputId={`edit-note-${col.idx}`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* 任務 */}
-                    <div className="border border-primary/20 rounded-[4px] p-3 bg-surface-container-low">
-                      <h4 className="text-[12px] text-primary mb-2 uppercase tracking-widest">任務</h4>
-                      <div className="grid grid-cols-5 gap-2">
-                        <div className="space-y-1">
-                          <DayCellEdit 
-                            label="天"
-                            defaultSymbol={editingRow.rawData[13] || ""}
-                            defaultNote={editingRow.rawNotes?.[13] || ""}
-                            symbolInputId={`edit-col-13`}
-                            noteInputId={`edit-note-13`}
-                            options={["五", "六", "日", "後", "✕", ""]}
-                          />
-                        </div>
-                        <div className="space-y-1 relative z-50">
-                          <label className="text-[11px] text-primary/70 block text-center">時</label>
-                          <CustomTimePicker defaultTime={timeVal} inputId="edit-col-14" />
-                        </div>
-                        <div className="space-y-1">
-                          <DayCellEdit 
-                            label="誠"
-                            defaultSymbol={editingRow.rawData[15] || ""}
-                            defaultNote={editingRow.rawNotes?.[15] || ""}
-                            symbolInputId={`edit-col-15`}
-                            noteInputId={`edit-note-15`}
-                            options={["5.0", "4.5", "4.0", "3.5", "3.0", "2.5", "2.0", "1.5", "1.0", "0.5", "0.0", ""]}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <DayCellEdit 
-                            label="體"
-                            defaultSymbol={editingRow.rawData[16] || ""}
-                            defaultNote={editingRow.rawNotes?.[16] || ""}
-                            symbolInputId={`edit-col-16`}
-                            noteInputId={`edit-note-16`}
-                            options={["高", "中", "低", "✕", ""]}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <DayCellEdit 
-                            label="格"
-                            defaultSymbol={editingRow.rawData[17] || ""}
-                            defaultNote={editingRow.rawNotes?.[17] || ""}
-                            symbolInputId={`edit-col-17`}
-                            noteInputId={`edit-note-17`}
-                            options={["高", "中", "低", "✕", ""]}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 border-t border-primary/20 bg-surface-container-low flex justify-end gap-3">
-                  <button
-                    onClick={() => setIsEditModalOpen(false)}
-                    className="px-4 py-1.5 rounded border border-primary/30 text-primary text-[10px] hover:bg-primary/10 transition-colors uppercase tracking-wider"
-                  >
-                    取消
-                  </button>
-                  <button
-                    disabled={isSaving}
-                    onClick={async () => {
-                      setIsSaving(true);
-                      try {
-                        const newRow = [...editingRow.rawData];
-                        const getVal = (id: string) => (document.getElementById(id) as HTMLInputElement)?.value || "";
-
-                        const updates = [
-                          {
-                            range: `C${editingRow.originalIndex}:I${editingRow.originalIndex}`,
-                            values: [[getVal('edit-col-2'), getVal('edit-col-3'), getVal('edit-col-4'), getVal('edit-col-5'), getVal('edit-col-6'), getVal('edit-col-7'), getVal('edit-col-8')]]
-                          },
-                          {
-                            range: `K${editingRow.originalIndex}:L${editingRow.originalIndex}`,
-                            values: [[getVal('edit-col-10'), getVal('edit-col-11')]]
-                          },
-                          {
-                            range: `N${editingRow.originalIndex}:R${editingRow.originalIndex}`,
-                            values: [[getVal('edit-col-13'), getVal('edit-col-14'), getVal('edit-col-15'), getVal('edit-col-16'), getVal('edit-col-17')]]
-                          }
-                        ];
-
-                        const notesUpdates = [
-                          2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 15, 16, 17
-                        ].map(colIndex => ({
-                          rowIndex: editingRow.originalIndex - 1,
-                          colIndex: colIndex,
-                          note: getVal(`edit-note-${colIndex}`)
-                        }));
-
-                        const res = await fetch('/api/sheets/basic-mission', {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ updates, notesUpdates, sheetId: data?.sheetId })
-                        });
-
-                        if (res.ok) {
-                          await mutate();
-                          setIsEditModalOpen(false);
-                        } else {
-                          console.error("Failed to save:", await res.text());
-                        }
-                      } catch (err) {
-                        console.error(err);
-                      } finally {
-                        setIsSaving(false);
-                      }
-                    }}
-                    className="px-4 py-1.5 rounded bg-primary/20 border border-primary text-primary text-[10px] hover:bg-primary/30 transition-colors uppercase tracking-wider shadow-[0_0_10px_rgba(243,156,18,0.2)] disabled:opacity-50"
-                  >
-                    {isSaving ? "儲存中..." : "確認修改"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
       </main>
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-6 bg-surface/95 backdrop-blur-lg border-t border-primary/30 shadow-[0_-8px_20px_rgba(243,156,18,0.3)]">
-        <button className="flex flex-col items-center gap-1 text-primary active-pulse">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>target</span>
+        <button className="flex flex-col items-center gap-1 text-primary/50" onClick={() => router.push("/basic-mission")}>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>target</span>
           <span className="font-label-caps text-[8px]">基礎</span>
         </button>
         <button className="flex flex-col items-center gap-1 text-primary/50">
@@ -1268,8 +885,8 @@ export default function BasicMissionPage() {
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>pie_chart</span>
           <span className="font-label-caps text-[8px]">結算</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-primary/50" onClick={() => router.push("/running-records")}>
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>person</span>
+        <button className="flex flex-col items-center gap-1 text-primary active-pulse">
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
           <span className="font-label-caps text-[8px]">覺醒</span>
         </button>
       </nav>
