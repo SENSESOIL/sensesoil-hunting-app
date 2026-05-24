@@ -212,7 +212,12 @@ export default function RunningRecordsPage() {
 
   // Calculate Running Stats
   const personalRecords = useMemo(() => {
-    const normalizeName = (name: string) => name ? name.replace(/\./g, '') : '';
+    const normalizeName = (name: string) => {
+      if (!name) return '';
+      let n = name.replace(/[\.\s]/g, '').toUpperCase();
+      if (n === 'WWENJUN' || n === 'WEIWENJUN') return '魏文軍';
+      return n;
+    };
     const normalizedSelected = normalizeName(selectedPersonalHunter);
     return runningData.filter((r: any) => normalizeName(r.name) === normalizedSelected);
   }, [runningData, selectedPersonalHunter]);
