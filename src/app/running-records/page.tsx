@@ -65,6 +65,8 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
 
   const fillD = `${pathD} L ${width} ${height} L 0 ${height} Z`;
 
+  const [isInteracting, setIsInteracting] = useState(false);
+
   const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();
     let clientX = 0;
@@ -82,14 +84,22 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
     }
   };
 
+  const handlePointerLeave = () => {
+    setIsInteracting(false);
+    onSelect(11); // Reset to latest week when pointer leaves
+  };
+
   const selectedPoint = points[selectedIndex] || points[points.length - 1];
 
   return (
     <div 
       className="relative w-full h-[160px] touch-none cursor-crosshair"
-      onMouseMove={handlePointerMove}
-      onTouchMove={handlePointerMove}
-      onTouchStart={handlePointerMove}
+      onMouseEnter={() => setIsInteracting(true)}
+      onMouseLeave={handlePointerLeave}
+      onTouchStart={(e) => { setIsInteracting(true); handlePointerMove(e); }}
+      onTouchEnd={handlePointerLeave}
+      onMouseMove={isInteracting ? handlePointerMove : undefined}
+      onTouchMove={isInteracting ? handlePointerMove : undefined}
     >
       <style>{`
         @keyframes drawLine {
@@ -125,19 +135,13 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
         </defs>
         <path className="animate-fill-in" d={fillD} fill="url(#areaGradient)" />
         <path className="animate-draw-line" d={pathD} fill="none" stroke="#f39c12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        
-      {/* Interactive Vertical Line */}
-      <line 
-        x1={selectedPoint.x} y1="0" x2={selectedPoint.x} y2={height} 
-        stroke="#ffffff" strokeWidth="1.5" className="opacity-40 transition-all duration-75" 
-      />
       </svg>
       {/* Interactive Selected Dot */}
       <div 
-        className="absolute w-3 h-3 rounded-full bg-surface border-2 border-white z-10 shadow-[0_0_8px_rgba(243,156,18,0.8)] transition-all duration-75 pointer-events-none"
+        className={`absolute w-3 h-3 rounded-full bg-surface border-2 border-[#efe0d2] z-10 shadow-[0_0_8px_rgba(243,156,18,0.8)] transition-opacity duration-200 pointer-events-none ${isInteracting ? 'opacity-100' : 'opacity-0'}`}
         style={{ left: `calc(${(selectedPoint.x / width) * 100}% - 6px)`, top: `calc(${(selectedPoint.y / height) * 100}% - 6px)` }}
       >
-        <div className="w-1.5 h-1.5 rounded-full bg-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#f39c12] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       </div>
     </div>
   );
@@ -391,27 +395,27 @@ export default function RunningRecordsPage() {
             <h3 className="text-[#efe0d2] text-[24px] font-bold mb-6 font-headline-md tracking-wider">
               {selectedChartIndex === 11 ? "本週紀錄" : (selectedWeek?.dateRange || "載入中...")}
             </h3>
-            <div className="flex flex-row justify-start gap-8 sm:gap-12 items-start">
-              <div>
+            <div className="grid grid-cols-4 gap-2 sm:gap-4 max-w-[420px] items-start">
+              <div className="flex flex-col">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">距離</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.distance || "0.00"}</span>
                   <span className="text-[12px] text-[#efe0d2] font-bold ml-0.5">km</span>
                 </div>
               </div>
-              <div>
+              <div className="flex flex-col">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">時間</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.timeFormatted || "0m"}</span>
                 </div>
               </div>
-              <div>
+              <div className="flex flex-col">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">配速</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.pace || "--:--"}</span>
                 </div>
               </div>
-              <div>
+              <div className="flex flex-col">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">爬升</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.elevation || "0"}</span>
