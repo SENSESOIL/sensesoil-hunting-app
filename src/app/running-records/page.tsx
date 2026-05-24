@@ -426,7 +426,12 @@ export default function RunningRecordsPage() {
           </div>
           
           <div className="font-display">
-            <SmoothLineChart data={past12WeeksData} selectedIndex={selectedChartIndex} onSelect={setSelectedChartIndex} />
+            <SmoothLineChart 
+              key={selectedPersonalHunter}
+              data={past12WeeksData} 
+              selectedIndex={selectedChartIndex} 
+              onSelect={setSelectedChartIndex} 
+            />
             <div className="flex justify-between mt-3 px-2">
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[0]?.label}</span>
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[5]?.label}</span>
