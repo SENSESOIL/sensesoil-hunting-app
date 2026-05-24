@@ -735,7 +735,7 @@ export default function BasicMissionPage() {
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_4px_12px_rgba(243,156,18,0.15)] px-4">
         <div className="flex items-center gap-3 flex-nowrap cursor-pointer" onClick={() => router.push("/diversion")}>
-          <Image alt="SenseSoil Logo" width={28} height={28} className="h-[28px] w-auto object-contain flex-shrink-0 translate-y-[-2px]" src="/Logo｜Orange.svg" />
+          <Image priority alt="SenseSoil Logo" width={28} height={28} className="h-[28px] w-auto object-contain flex-shrink-0 translate-y-[-2px]" src="/Logo｜Orange.svg" />
           <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">基礎任務試煉</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -752,12 +752,12 @@ export default function BasicMissionPage() {
 
       <main className="relative pt-16 px-4">
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
-          <div className="flex flex-col border-l-[3px] border-primary pl-3">
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 leading-none">狩獵覺醒排行榜</p>
+          <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 leading-none whitespace-nowrap">狩獵覺醒排行榜</p>
             <h2 className={`font-headline-lg text-primary font-bold tracking-wider uppercase leading-none ${dashboardData.name.length > 4 ? 'text-xl mt-1' : 'text-3xl'}`}>{dashboardData.name}</h2>
           </div>
-          <div className="text-right flex flex-col justify-end">
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 uppercase leading-none">蟬聯冠軍週數</p>
+          <div className="text-right flex flex-col justify-end flex-shrink-0">
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
             <p className="font-headline-lg text-primary text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{dashboardData.weeks}<span className="text-[10px] font-normal lowercase tracking-normal">weeks</span></p>
           </div>
         </div>
