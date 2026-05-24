@@ -219,6 +219,44 @@ const TaskSelect = ({ options, defaultValue, inputId }: { options: string[], def
   );
 };
 
+const PersonalIndicatorCard = ({ label, symbol, note, isSymbolText = false }: { label: string, symbol: React.ReactNode, note?: string, isSymbolText?: boolean }) => {
+  const [showNote, setShowNote] = useState(false);
+  
+  return (
+    <div className="indicator-card w-full relative">
+      <span className={isSymbolText ? "text-[20px] leading-none mt-1 font-bold font-data-mono text-primary tracking-normal" : "symbol"}>
+        {symbol}
+      </span>
+      <span 
+        className={`label font-data-mono ${note ? 'underline decoration-1 underline-offset-2 font-bold cursor-pointer transition-colors hover:opacity-80' : ''}`}
+        onClick={() => {
+          if (note) setShowNote(true);
+        }}
+      >
+        {label}
+      </span>
+      
+      {showNote && note && (
+        <>
+          <div className="fixed inset-0 z-[110]" onClick={() => setShowNote(false)}></div>
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.3)] z-[120] p-3 flex flex-col gap-2">
+            <div className="text-[11px] text-primary/70 uppercase tracking-widest text-center mb-1">{label} 備註</div>
+            <div className="w-full max-h-[120px] overflow-y-auto bg-primary/10 border border-primary/20 rounded-[2px] text-[12px] text-[#efe0d2] p-2 whitespace-pre-wrap">
+              {note}
+            </div>
+            <button
+              className="w-full py-1 bg-primary/20 text-primary text-[10px] hover:bg-primary/30 rounded-[2px] cursor-pointer"
+              onClick={() => setShowNote(false)}
+            >
+              關閉
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export default function BasicMissionPage() {
   const router = useRouter();
   const [view, setView] = useState<"individual" | "team">("team");
@@ -647,12 +685,12 @@ export default function BasicMissionPage() {
     );
   };
 
-  const personalRecordData = useMemo(() => {
+  const personalRecordDataObj = useMemo(() => {
     if (!data?.rows || !selectedPersonalHunter || !selectedPersonalDate) return null;
     for (let i = 2; i < data.rows.length; i++) {
       const row = data.rows[i];
       if (row[0] === selectedPersonalDate && row[1] === selectedPersonalHunter) {
-        return row;
+        return { data: row, notes: data.notes?.[i] || [] };
       }
     }
     return null;
@@ -667,7 +705,8 @@ export default function BasicMissionPage() {
     return "remove";
   };
 
-  const pRecord = personalRecordData;
+  const pRecord = personalRecordDataObj?.data;
+  const pNotes = personalRecordDataObj?.notes || [];
   const d1 = pRecord ? mapSymbolToIcon(pRecord[2]) : "remove";
   const d2 = pRecord ? mapSymbolToIcon(pRecord[3]) : "remove";
   const d3 = pRecord ? mapSymbolToIcon(pRecord[4]) : "remove";
@@ -802,16 +841,16 @@ export default function BasicMissionPage() {
             </div>
             <div>
               <div className="grid grid-cols-6 gap-2">
-                <div className="indicator-card"><span className="symbol">{d1}</span><span className="label font-data-mono">D1</span></div>
-                <div className="indicator-card"><span className="symbol">{d2}</span><span className="label font-data-mono">D2</span></div>
-                <div className="indicator-card"><span className="symbol">{d3}</span><span className="label font-data-mono">D3</span></div>
-                <div className="indicator-card"><span className="symbol">{d4}</span><span className="label font-data-mono">D4</span></div>
-                <div className="indicator-card"><span className="symbol">{d5}</span><span className="label font-data-mono">D5</span></div>
-                <div className="indicator-card"><span className="symbol">{d6}</span><span className="label font-data-mono">D6</span></div>
+                <PersonalIndicatorCard label="D1" symbol={d1} note={pNotes[2]} />
+                <PersonalIndicatorCard label="D2" symbol={d2} note={pNotes[3]} />
+                <PersonalIndicatorCard label="D3" symbol={d3} note={pNotes[4]} />
+                <PersonalIndicatorCard label="D4" symbol={d4} note={pNotes[5]} />
+                <PersonalIndicatorCard label="D5" symbol={d5} note={pNotes[6]} />
+                <PersonalIndicatorCard label="D6" symbol={d6} note={pNotes[7]} />
               </div>
               <div className="grid grid-cols-6 gap-2 mt-2">
-                <div className="col-span-3"><div className="indicator-card w-full"><span className="symbol">{dQuality}</span><span className="label font-data-mono">質</span></div></div>
-                <div className="col-span-3"><div className="indicator-card w-full"><span className="symbol">{dQuantity}</span><span className="label font-data-mono">量</span></div></div>
+                <div className="col-span-3"><PersonalIndicatorCard label="質" symbol={dQuality} note={pNotes[8]} /></div>
+                <div className="col-span-3"><PersonalIndicatorCard label="量" symbol={dQuantity} note={pNotes[9]} /></div>
               </div>
             </div>
           </div>
@@ -820,8 +859,8 @@ export default function BasicMissionPage() {
               <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵紀錄</h2>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="indicator-card w-full"><span className="symbol">{recAcc}</span><span className="label font-data-mono">精</span></div>
-              <div className="indicator-card w-full"><span className="symbol">{recPrec}</span><span className="label font-data-mono">準</span></div>
+              <PersonalIndicatorCard label="精" symbol={recAcc} note={pNotes[10]} />
+              <PersonalIndicatorCard label="準" symbol={recPrec} note={pNotes[11]} />
             </div>
           </div>
           <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
@@ -829,9 +868,9 @@ export default function BasicMissionPage() {
               <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵任務</h2>
             </div>
             <div className="grid grid-cols-3 gap-4">
-              <div className="indicator-card w-full"><span className="text-[20px] leading-none mt-1 font-bold font-data-mono text-primary tracking-normal">{taskCompletion}</span><span className="label font-data-mono">任務完成度</span></div>
-              <div className="indicator-card w-full"><span className="text-[20px] leading-none mt-1 font-bold font-data-mono text-primary tracking-normal">{taskPhysical}</span><span className="label font-data-mono">體能強化度</span></div>
-              <div className="indicator-card w-full"><span className="text-[20px] leading-none mt-1 font-bold font-data-mono text-primary tracking-normal">{taskPattern}</span><span className="label font-data-mono">格局進化度</span></div>
+              <PersonalIndicatorCard label="任務完成度" symbol={taskCompletion} note={pNotes[15]} isSymbolText />
+              <PersonalIndicatorCard label="體能強化度" symbol={taskPhysical} note={pNotes[16]} isSymbolText />
+              <PersonalIndicatorCard label="格局進化度" symbol={taskPattern} note={pNotes[17]} isSymbolText />
             </div>
           </div>
           <div className="w-full bg-primary text-black p-4 rounded-[4px] flex justify-between items-center shadow-lg">
