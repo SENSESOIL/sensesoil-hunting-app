@@ -391,9 +391,38 @@ export default function RunningRecordsPage() {
         {/* Team Module Content (Weekly Stats) */}
         <section className={`mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="mb-8 font-display">
-            <h3 className="text-[#efe0d2] text-[24px] font-bold mb-6 font-headline-md tracking-wider">
-              {selectedChartIndex === 11 ? "本週紀錄" : (selectedWeek?.dateRange || "載入中...")}
-            </h3>
+            <div className="flex justify-between items-end mb-8 font-display">
+              <div className="flex flex-col relative">
+                <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 leading-none">狩獵分析</p>
+                <div className="flex items-center gap-2">
+                  <h2 
+                    key={selectedPersonalHunter}
+                    className="font-headline-lg text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
+                    style={{ color: "#efe0d2" }}
+                    onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
+                  >
+                    {selectedPersonalHunter || "載入中..."}
+                  </h2>
+                </div>
+                {isPersonalHunterDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto">
+                    {huntersList.map((hunter) => (
+                      <div
+                        key={hunter}
+                        className="px-4 py-3 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm border-b border-primary/10 last:border-b-0"
+                        onClick={() => { setSelectedPersonalHunter(hunter); setIsPersonalHunterDropdownOpen(false); }}
+                      >
+                        {hunter}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[#efe0d2]/70 text-[10px] sm:text-[12px] tracking-widest font-bold">起算自 2026/05/03</span>
+                <div className="w-2 h-2 rounded-full bg-[#f39c12] shadow-[0_0_8px_rgba(243,156,18,0.8)]" />
+              </div>
+            </div>
             <div className="flex justify-between w-full items-start">
               <div className="flex flex-col whitespace-nowrap">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">距離</p>
