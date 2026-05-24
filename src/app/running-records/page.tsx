@@ -212,7 +212,9 @@ export default function RunningRecordsPage() {
 
   // Calculate Running Stats
   const personalRecords = useMemo(() => {
-    return runningData.filter((r: any) => r.name === selectedPersonalHunter);
+    const normalizeName = (name: string) => name ? name.replace(/\./g, '') : '';
+    const normalizedSelected = normalizeName(selectedPersonalHunter);
+    return runningData.filter((r: any) => normalizeName(r.name) === normalizedSelected);
   }, [runningData, selectedPersonalHunter]);
 
   const { thisWeekStats, past12WeeksData } = useMemo(() => {
