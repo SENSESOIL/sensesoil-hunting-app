@@ -166,72 +166,78 @@ export default function RunningRecordsPage() {
   const [selectedPersonalHunter, setSelectedPersonalHunter] = useState<string>("");
   const [isPersonalHunterDropdownOpen, setIsPersonalHunterDropdownOpen] = useState(false);
 
-  // Extract dashboardData (First champ, weeks) exactly like basic-mission
   const dashboardData = useMemo(() => {
-    if (!basicData?.rows || basicData.rows.length < 3) {
+    if (!runningData || runningData.length === 0) {
       return { name: "計算中...", weeks: "00" };
     }
-    const rows = basicData.rows;
-    const scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂'));
-    const nameIdx = 1;
-    const dateIdx = 0;
 
-    if (scoreIdx === -1) return { name: "資料錯誤", weeks: "00" };
-
-    const dateMap = new Map<string, { name: string, score: number }[]>();
-    for (let i = 2; i < rows.length; i++) {
-      const row = rows[i];
-      const date = row[dateIdx];
-      const name = row[nameIdx];
-      const score = parseFloat(row[scoreIdx]) || 0;
-      if (!date || !name) continue;
-      if (!dateMap.has(date)) dateMap.set(date, []);
-      dateMap.get(date)!.push({ name, score });
-    }
-
-    const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const daysToSubtract = dayOfWeek === 0 ? 7 : dayOfWeek;
-    const maxAllowedDate = new Date(now);
-    maxAllowedDate.setDate(now.getDate() - daysToSubtract);
-    maxAllowedDate.setHours(23, 59, 59, 999);
-    const maxAllowedTime = maxAllowedDate.getTime();
-
-    const championsByDate = new Map<string, { display: string, first: string }>();
-    const validDates: string[] = [];
-
-    for (const date of sortedDates) {
-      if (new Date(date).getTime() > maxAllowedTime) continue;
-      const records = dateMap.get(date)!;
-      const maxScore = Math.max(...records.map(r => r.score));
-      if (maxScore > 0) {
-        const champs = records.filter(r => r.score === maxScore).map(r => r.name);
-        championsByDate.set(date, { display: champs.join("、"), first: champs[0] || "" });
-        validDates.push(date);
-      }
-    }
-
-    if (validDates.length === 0) return { name: "無數據", firstChamp: "", weeks: "00" };
-
-    const targetDate = validDates[validDates.length - 1];
-    const currentChampData = championsByDate.get(targetDate)!;
-
-    let consecutiveWeeks = 0;
-    for (let i = validDates.length - 1; i >= 0; i--) {
-      if (championsByDate.get(validDates[i])?.display === currentChampData.display) {
-        consecutiveWeeks++;
-      } else {
-        break;
-      }
-    }
-
-    return {
-      name: currentChampData.display,
-      firstChamp: currentChampData.first,
-      weeks: consecutiveWeeks.toString().padStart(2, '0')
+    const normalizeName = (name: string) => {
+      if (!name) return '';
+      let n = name.replace(/[\.\s]/g, '').toUpperCase();
+      if (n === 'WWENJUN' || n === 'WEIWENJUN') return '魏文軍';
+      return n;
     };
-  }, [basicData]);
+
+    const weeklyTotals: Record<number, Record<string, number>> = {};
+    const validHunters = new Set<string>();
+
+    runningData.forEach((r: any) => {
+      const name = normalizeName(r.name);
+      if (!name || name === 'SENSESOIL' || name.includes('COMPANY')) return;
+      
+      const d = new Date(r.date);
+      if (isNaN(d.getTime())) return;
+      
+      const { start } = getWeekRange(d);
+      if (!weeklyTotals[start]) weeklyTotals[start] = {};
+      if (!weeklyTotals[start][name]) weeklyTotals[start][name] = 0;
+      
+      weeklyTotals[start][name] += (r.distance || 0);
+      validHunters.add(name);
+    });
+
+    const sortedWeeks = Object.keys(weeklyTotals).map(Number).sort((a, b) => b - a);
+    if (sortedWeeks.length === 0) return { name: "無資料", weeks: "00" };
+
+    const weeklyWinners: Record<number, string | null> = {};
+    sortedWeeks.forEach(weekStart => {
+      let maxDist = 0;
+      let winner = null;
+      for (const [name, dist] of Object.entries(weeklyTotals[weekStart])) {
+        if (dist > maxDist) {
+          maxDist = dist;
+          winner = name;
+        }
+      }
+      weeklyWinners[weekStart] = winner;
+    });
+
+    const latestWeek = sortedWeeks[0];
+    const champion = weeklyWinners[latestWeek] || "尚無冠軍";
+    
+    let streak = 0;
+    if (champion !== "尚無冠軍") {
+      for (const weekStart of sortedWeeks) {
+        if (weeklyWinners[weekStart] === champion) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    return { 
+      name: champion, 
+      weeks: streak.toString().padStart(2, '0') 
+    };
+  }, [runningData]);
+
+  // Set default hunter to the current champion when data loads
+  useEffect(() => {
+    if (!selectedPersonalHunter && dashboardData.name && !["計算中...", "無資料", "尚無冠軍"].includes(dashboardData.name)) {
+      setSelectedPersonalHunter(dashboardData.name);
+    }
+  }, [dashboardData.name, selectedPersonalHunter]);
 
   // Extract hunters list
   const huntersList = useMemo(() => {
@@ -243,12 +249,7 @@ export default function RunningRecordsPage() {
     return Array.from(hunterSet);
   }, [basicData]);
 
-  useEffect(() => {
-    if (!selectedPersonalHunter && huntersList.length > 0) {
-      const isValidDashName = dashboardData?.name && !["計算中...", "無數據", "資料錯誤"].includes(dashboardData.name);
-      setSelectedPersonalHunter(userHunterName || (isValidDashName ? dashboardData.firstChamp : huntersList[0]));
-    }
-  }, [selectedPersonalHunter, huntersList, userHunterName, dashboardData]);
+
 
   const hunterRank = useMemo(() => {
     if (!basicData?.settings || !selectedPersonalHunter) return "S級狩獵者";
@@ -293,7 +294,7 @@ export default function RunningRecordsPage() {
 
       const startD = new Date(start);
       const endD = new Date(end);
-      const dateRangeStr = `${startD.getFullYear()} ${startD.getMonth()+1}/${startD.getDate()} - ${endD.getMonth()+1}/${endD.getDate()}`;
+      const endLabel = `${endD.getFullYear()}/${(endD.getMonth()+1).toString().padStart(2, '0')}/${endD.getDate().toString().padStart(2, '0')}`;
       
       past12.push({
         label: `${d.getMonth()+1}/${d.getDate()}`,
@@ -302,7 +303,7 @@ export default function RunningRecordsPage() {
         timeFormatted: formatTime(time),
         pace: calculatePace(time, dist),
         elevation: elev.toFixed(0),
-        dateRange: dateRangeStr
+        endLabel: endLabel
       });
     }
 
@@ -419,8 +420,8 @@ export default function RunningRecordsPage() {
                 )}
               </div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[#efe0d2]/70 text-[10px] sm:text-[12px] tracking-widest font-bold">起算自 2026/05/03</span>
-                <div className="w-2 h-2 rounded-full bg-[#f39c12] shadow-[0_0_8px_rgba(243,156,18,0.8)]" />
+                <span className="text-primary text-[10px] sm:text-[12px] tracking-widest font-bold">週紀錄 {selectedWeek?.endLabel || "載入中..."}</span>
+                <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_rgba(243,156,18,1)]" />
               </div>
             </div>
             <div className="flex justify-between w-full items-start">
