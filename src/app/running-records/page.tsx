@@ -482,20 +482,20 @@ export default function RunningRecordsPage() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-6 bg-surface/95 backdrop-blur-lg border-t border-primary/30 shadow-[0_-8px_20px_rgba(243,156,18,0.3)]">
-        <button className="flex flex-col items-center gap-1 text-primary/50" onClick={() => router.push("/basic-mission")}>
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]" onClick={() => router.push("/basic-mission")}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>target</span>
           <span className="font-label-caps text-[8px]">基礎</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-primary/50">
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>diamond</span>
           <span className="font-label-caps text-[8px]">隱藏</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-primary/50">
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>trending_up</span>
           <span className="font-label-caps text-[8px]">轉職</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-primary/50">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>pie_chart</span>
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>data_usage</span>
           <span className="font-label-caps text-[8px]">結算</span>
         </button>
         <button className="flex flex-col items-center gap-1 text-primary active-pulse">

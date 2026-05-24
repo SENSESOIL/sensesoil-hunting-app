@@ -1256,19 +1256,19 @@ export default function BasicMissionPage() {
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>target</span>
           <span className="font-label-caps text-[8px]">基礎</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-primary/50">
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>diamond</span>
           <span className="font-label-caps text-[8px]">隱藏</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-primary/50">
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>trending_up</span>
           <span className="font-label-caps text-[8px]">轉職</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-primary/50">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>pie_chart</span>
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>data_usage</span>
           <span className="font-label-caps text-[8px]">結算</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-primary/50" onClick={() => router.push("/running-records")}>
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]" onClick={() => router.push("/running-records")}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>person</span>
           <span className="font-label-caps text-[8px]">覺醒</span>
         </button>
