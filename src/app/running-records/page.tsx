@@ -240,15 +240,52 @@ export default function RunningRecordsPage() {
     }
   }, [dashboardData.name, selectedPersonalHunter]);
 
-  // Extract hunters list
+  // Extract hunters list and sort by current week's running distance
   const huntersList = useMemo(() => {
     if (!basicData?.rows || basicData.rows.length < 3) return [];
+    
     const hunterSet = new Set<string>();
     for (let i = 2; i < basicData.rows.length; i++) {
       if (basicData.rows[i][1]) hunterSet.add(basicData.rows[i][1]);
     }
-    return Array.from(hunterSet);
-  }, [basicData]);
+    const allHunters = Array.from(hunterSet);
+
+    const normalizeName = (name: string) => {
+      if (!name) return '';
+      let n = name.replace(/[\.\s]/g, '').toUpperCase();
+      if (n === 'WWENJUN' || n === 'WEIWENJUN') return '魏文軍';
+      if (n === '盧政恆') return '盧政恒';
+      return n;
+    };
+
+    const currentWeekDistance = new Map<string, number>();
+    
+    if (runningData && runningData.length > 0) {
+      let latestWeekStart = 0;
+      runningData.forEach((r: any) => {
+        const d = new Date(r.date);
+        if (isNaN(d.getTime())) return;
+        const { start } = getWeekRange(d);
+        if (start > latestWeekStart) latestWeekStart = start;
+      });
+
+      runningData.forEach((r: any) => {
+        const d = new Date(r.date);
+        if (isNaN(d.getTime())) return;
+        const { start } = getWeekRange(d);
+        if (start === latestWeekStart) {
+          const name = normalizeName(r.name);
+          currentWeekDistance.set(name, (currentWeekDistance.get(name) || 0) + (r.distance || 0));
+        }
+      });
+    }
+
+    return allHunters.sort((a, b) => {
+      const distA = currentWeekDistance.get(normalizeName(a)) || 0;
+      const distB = currentWeekDistance.get(normalizeName(b)) || 0;
+      return distB - distA; // Descending
+    });
+  }, [basicData, runningData]);
 
 
 
