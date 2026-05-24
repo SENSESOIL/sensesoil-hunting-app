@@ -38,7 +38,7 @@ const formatTime = (timeMins: number) => {
   return `${m}m`;
 };
 
-const SmoothLineChart = ({ data }: { data: { label: string, value: number }[] }) => {
+const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selectedIndex: number, onSelect: (idx: number) => void }) => {
   if (!data || data.length === 0) return <div className="h-40 flex items-center justify-center text-primary/50">暫無資料</div>;
 
   const width = 400;
@@ -64,11 +64,33 @@ const SmoothLineChart = ({ data }: { data: { label: string, value: number }[] })
   }
 
   const fillD = `${pathD} L ${width} ${height} L 0 ${height} Z`;
-  const lastPoint = points[points.length - 1];
-  const lastPctY = (lastPoint.y / height) * 100;
+
+  const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    let clientX = 0;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+    } else {
+      clientX = (e as React.MouseEvent).clientX;
+    }
+    const x = clientX - rect.left;
+    const pct = x / rect.width;
+    let idx = Math.round(pct * (data.length - 1));
+    idx = Math.max(0, Math.min(data.length - 1, idx));
+    if (idx !== selectedIndex) {
+      onSelect(idx);
+    }
+  };
+
+  const selectedPoint = points[selectedIndex] || points[points.length - 1];
 
   return (
-    <div className="relative w-full h-[160px]">
+    <div 
+      className="relative w-full h-[160px] touch-none cursor-crosshair"
+      onMouseMove={handlePointerMove}
+      onTouchMove={handlePointerMove}
+      onTouchStart={handlePointerMove}
+    >
       <style>{`
         @keyframes drawLine {
           to { stroke-dashoffset: 0; }
@@ -90,11 +112,11 @@ const SmoothLineChart = ({ data }: { data: { label: string, value: number }[] })
           animation: fadeIn 1s ease-out 0.5s forwards;
         }
       `}</style>
-      <div className="absolute -top-6 right-0 flex gap-3 text-[10px] font-data-mono">
+      <div className="absolute -top-6 right-0 flex gap-3 text-[10px] font-data-mono pointer-events-none">
         <div className="text-primary/70">MAX <span className="text-primary font-bold">{maxVal.toFixed(2)}</span></div>
         <div className="text-primary/70">MIN <span className="text-primary font-bold">{minVal.toFixed(2)}</span></div>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible pointer-events-none" preserveAspectRatio="none">
         <defs>
           <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#f39c12" stopOpacity="0.4" />
@@ -103,11 +125,17 @@ const SmoothLineChart = ({ data }: { data: { label: string, value: number }[] })
         </defs>
         <path className="animate-fill-in" d={fillD} fill="url(#areaGradient)" />
         <path className="animate-draw-line" d={pathD} fill="none" stroke="#f39c12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        
+      {/* Interactive Vertical Line */}
+      <line 
+        x1={selectedPoint.x} y1="0" x2={selectedPoint.x} y2={height} 
+        stroke="#ffffff" strokeWidth="1.5" className="opacity-40 transition-all duration-75" 
+      />
       </svg>
-      {/* HTML dot to avoid SVG stretch */}
+      {/* Interactive Selected Dot */}
       <div 
-        className="absolute w-3 h-3 rounded-full bg-surface border-2 border-primary z-10 shadow-[0_0_8px_rgba(243,156,18,0.8)] animate-fade-in"
-        style={{ right: '-6px', top: `calc(${lastPctY}% - 6px)` }}
+        className="absolute w-3 h-3 rounded-full bg-surface border-2 border-white z-10 shadow-[0_0_8px_rgba(243,156,18,0.8)] transition-all duration-75 pointer-events-none"
+        style={{ left: `calc(${(selectedPoint.x / width) * 100}% - 6px)`, top: `calc(${(selectedPoint.y / height) * 100}% - 6px)` }}
       >
         <div className="w-1.5 h-1.5 rounded-full bg-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       </div>
@@ -243,19 +271,8 @@ export default function RunningRecordsPage() {
     return runningData.filter((r: any) => normalizeName(r.name) === normalizedSelected);
   }, [runningData, selectedPersonalHunter]);
 
-  const { thisWeekStats, past12WeeksData } = useMemo(() => {
+  const past12WeeksData = useMemo(() => {
     const now = new Date();
-    const { start: twStart, end: twEnd } = getWeekRange(now);
-
-    const thisWeekRecords = personalRecords.filter((r: any) => {
-      const t = new Date(r.date).getTime();
-      return t >= twStart && t <= twEnd;
-    });
-
-    const twDist = thisWeekRecords.reduce((sum: number, r: any) => sum + r.distance, 0);
-    const twTime = thisWeekRecords.reduce((sum: number, r: any) => sum + parseFloat(r.timeStr || "0"), 0);
-    const twElev = thisWeekRecords.reduce((sum: number, r: any) => sum + r.elevation, 0);
-
     const past12 = [];
     for (let i = 11; i >= 0; i--) {
       const d = new Date(now);
@@ -268,22 +285,34 @@ export default function RunningRecordsPage() {
       });
       
       const dist = weekRecords.reduce((sum: number, r: any) => sum + r.distance, 0);
+      const time = weekRecords.reduce((sum: number, r: any) => sum + parseFloat(r.timeStr || "0"), 0);
+      const elev = weekRecords.reduce((sum: number, r: any) => sum + r.elevation, 0);
+
+      const startD = new Date(start);
+      const endD = new Date(end);
+      const dateRangeStr = `${startD.getFullYear()} ${startD.getMonth()+1}/${startD.getDate()} - ${endD.getMonth()+1}/${endD.getDate()}`;
+      
       past12.push({
         label: `${d.getMonth()+1}/${d.getDate()}`,
         value: dist,
+        distance: dist.toFixed(2),
+        timeFormatted: formatTime(time),
+        pace: calculatePace(time, dist),
+        elevation: elev.toFixed(0),
+        dateRange: dateRangeStr
       });
     }
 
-    return {
-      thisWeekStats: {
-        distance: twDist.toFixed(2),
-        timeFormatted: formatTime(twTime),
-        pace: calculatePace(twTime, twDist),
-        elevation: twElev.toFixed(0)
-      },
-      past12WeeksData: past12
-    };
+    return past12;
   }, [personalRecords]);
+
+  const [selectedChartIndex, setSelectedChartIndex] = useState<number>(11);
+
+  useEffect(() => {
+    setSelectedChartIndex(11);
+  }, [selectedPersonalHunter]);
+
+  const selectedWeek = past12WeeksData[selectedChartIndex] || past12WeeksData[11];
 
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
@@ -359,39 +388,41 @@ export default function RunningRecordsPage() {
         {/* Individual Module */}
         <section className={`mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
           <div className="mb-8 font-display">
-            <h3 className="text-[#efe0d2] text-[24px] font-bold mb-6 font-headline-md tracking-wider">當週紀錄</h3>
-            <div className="flex flex-row justify-between items-start gap-2">
-              <div className="flex-1">
+            <h3 className="text-[#efe0d2] text-[24px] font-bold mb-6 font-headline-md tracking-wider">
+              {selectedChartIndex === 11 ? "本週紀錄" : (selectedWeek?.dateRange || "載入中...")}
+            </h3>
+            <div className="flex flex-row justify-start gap-8 sm:gap-12 items-start">
+              <div>
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">距離</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.distance}</span>
-                  <span className="text-[12px] text-[#efe0d2] font-bold">km</span>
+                <div className="flex items-baseline">
+                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.distance || "0.00"}</span>
+                  <span className="text-[12px] text-[#efe0d2] font-bold ml-0.5">km</span>
                 </div>
               </div>
-              <div className="flex-1">
+              <div>
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">時間</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.timeFormatted}</span>
+                <div className="flex items-baseline">
+                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.timeFormatted || "0m"}</span>
                 </div>
               </div>
-              <div className="flex-1">
+              <div>
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">配速</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.pace}</span>
+                <div className="flex items-baseline">
+                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.pace || "--:--"}</span>
                 </div>
               </div>
-              <div className="flex-1">
+              <div>
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">爬升</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.elevation}</span>
-                  <span className="text-[12px] text-[#efe0d2] font-bold">m</span>
+                <div className="flex items-baseline">
+                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.elevation || "0"}</span>
+                  <span className="text-[12px] text-[#efe0d2] font-bold ml-0.5">m</span>
                 </div>
               </div>
             </div>
           </div>
           
           <div className="font-display">
-            <SmoothLineChart data={past12WeeksData} />
+            <SmoothLineChart data={past12WeeksData} selectedIndex={selectedChartIndex} onSelect={setSelectedChartIndex} />
             <div className="flex justify-between mt-3 px-2">
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[0]?.label}</span>
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[5]?.label}</span>
