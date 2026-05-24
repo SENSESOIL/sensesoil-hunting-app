@@ -81,16 +81,16 @@ const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInp
       {showNote && (
         <>
           <div className="fixed inset-0 z-[110]" onClick={() => setShowNote(false)}></div>
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.3)] z-[120] p-3 flex flex-col gap-2">
-            <div className="text-[11px] text-primary/70 uppercase tracking-widest text-center mb-1">{label} 備註</div>
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.3)] z-[120] p-4 flex flex-col gap-3">
+            <div className="text-[12px] text-primary/70 uppercase tracking-widest text-center mb-1 font-bold">{label} 備註 (編輯)</div>
             <textarea
-              className="w-full h-[80px] bg-primary/10 border border-primary/20 rounded-[2px] text-[12px] text-[#efe0d2] p-2 focus:outline-none focus:border-primary resize-none"
+              className="w-full h-[140px] bg-primary/10 border border-primary/20 rounded-[4px] text-[13px] text-[#efe0d2] p-3 focus:outline-none focus:border-primary resize-none"
               placeholder={placeholder}
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
             <button
-              className="w-full py-1 bg-primary/20 text-primary text-[10px] hover:bg-primary/30 rounded-[2px]"
+              className="w-full py-2 mt-1 bg-primary/20 text-primary text-[12px] hover:bg-primary/30 rounded-[4px] font-bold tracking-widest"
               onClick={() => setShowNote(false)}
             >
               完成
@@ -239,13 +239,13 @@ const PersonalIndicatorCard = ({ label, symbol, note, isSymbolText = false }: { 
       {showNote && note && (
         <>
           <div className="fixed inset-0 z-[110]" onClick={() => setShowNote(false)}></div>
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.3)] z-[120] p-3 flex flex-col gap-2">
-            <div className="text-[11px] text-primary/70 uppercase tracking-widest text-center mb-1">{label} 備註</div>
-            <div className="w-full max-h-[120px] overflow-y-auto bg-primary/10 border border-primary/20 rounded-[2px] text-[12px] text-[#efe0d2] p-2 whitespace-pre-wrap">
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.3)] z-[120] p-4 flex flex-col gap-3">
+            <div className="text-[12px] text-primary/70 uppercase tracking-widest text-center mb-1 font-bold">{label} 備註</div>
+            <div className="w-full min-h-[60px] max-h-[240px] overflow-y-auto bg-primary/10 border border-primary/20 rounded-[4px] text-[13px] text-[#efe0d2] p-3 whitespace-pre-wrap break-words" style={{ wordBreak: 'break-word' }}>
               {note}
             </div>
             <button
-              className="w-full py-1 bg-primary/20 text-primary text-[10px] hover:bg-primary/30 rounded-[2px] cursor-pointer"
+              className="w-full py-2 mt-1 bg-primary/20 text-primary text-[12px] hover:bg-primary/30 rounded-[4px] cursor-pointer tracking-widest font-bold"
               onClick={() => setShowNote(false)}
             >
               關閉
