@@ -175,6 +175,7 @@ export default function RunningRecordsPage() {
       if (!name) return '';
       let n = name.replace(/[\.\s]/g, '').toUpperCase();
       if (n === 'WWENJUN' || n === 'WEIWENJUN') return '魏文軍';
+      if (n === '盧政恆') return '盧政恒';
       return n;
     };
 
@@ -269,6 +270,7 @@ export default function RunningRecordsPage() {
       if (!name) return '';
       let n = name.replace(/[\.\s]/g, '').toUpperCase();
       if (n === 'WWENJUN' || n === 'WEIWENJUN') return '魏文軍';
+      if (n === '盧政恆') return '盧政恒';
       return n;
     };
     const normalizedSelected = normalizeName(selectedPersonalHunter);
