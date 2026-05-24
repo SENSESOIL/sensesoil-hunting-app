@@ -327,7 +327,7 @@ export default function RunningRecordsPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            className="flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+            className="flex items-center justify-center p-2 text-[#efe0d2] hover:bg-[#efe0d2]/10 rounded-lg transition-colors"
             onClick={() => setView(view === 'individual' ? 'team' : 'individual')}
           >
             <span className="material-symbols-outlined text-[24px]">
