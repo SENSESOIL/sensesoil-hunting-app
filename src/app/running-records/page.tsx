@@ -336,46 +336,46 @@ export default function RunningRecordsPage() {
         </div>
 
         {/* Individual Module */}
-        <section className={`space-y-[18px] mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
-          <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-[4px] shadow-[0_0_15px_rgba(243,156,18,0.05)]">
-            <h3 className="text-primary text-[22px] font-bold mb-6 font-headline-md tracking-wider">當週紀錄</h3>
-            <div className="grid grid-cols-2 gap-y-6 gap-x-4">
-              <div>
+        <section className={`mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
+          <div className="mb-8 font-display">
+            <h3 className="text-[#efe0d2] text-[24px] font-bold mb-6 font-headline-md tracking-wider">當週紀錄</h3>
+            <div className="flex flex-row justify-between items-start gap-2">
+              <div className="flex-1">
                 <p className="text-[12px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">Distance</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.distance}</span>
-                  <span className="text-[14px] text-[#efe0d2] font-bold">km</span>
+                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.distance}</span>
+                  <span className="text-[12px] text-[#efe0d2] font-bold">km</span>
                 </div>
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-[12px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">Time</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.timeFormatted}</span>
+                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.timeFormatted}</span>
                 </div>
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-[12px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">Pace</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.pace}</span>
+                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.pace}</span>
                 </div>
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-[12px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">Elev Gain</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.elevation}</span>
-                  <span className="text-[14px] text-[#efe0d2] font-bold">m</span>
+                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.elevation}</span>
+                  <span className="text-[12px] text-[#efe0d2] font-bold">m</span>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="p-4 pt-6 border border-primary/30 bg-surface-container-low/50 font-display rounded-[4px] shadow-[0_0_15px_rgba(243,156,18,0.05)]">
-            <h3 className="text-primary text-sm font-bold tracking-widest uppercase mb-6">過去 12 週趨勢</h3>
+          <div className="font-display">
+            <h3 className="text-[#efe0d2]/90 text-[16px] mb-6">過去 12 週趨勢</h3>
             <SmoothLineChart data={past12WeeksData} />
-            <div className="flex justify-between mt-2 px-2">
-               <span className="text-[10px] text-[#efe0d2]/50 font-data-mono">{past12WeeksData[0]?.label}</span>
-               <span className="text-[10px] text-[#efe0d2]/50 font-data-mono">{past12WeeksData[5]?.label}</span>
-               <span className="text-[10px] text-[#efe0d2]/50 font-data-mono">{past12WeeksData[11]?.label}</span>
+            <div className="flex justify-between mt-3 px-2">
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[0]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[5]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[11]?.label}</span>
             </div>
           </div>
         </section>
