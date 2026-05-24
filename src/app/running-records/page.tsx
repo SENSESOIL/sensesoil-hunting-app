@@ -23,11 +23,11 @@ const getWeekRange = (dateObj: Date) => {
 };
 
 const calculatePace = (timeMins: number, distanceKm: number) => {
-  if (!distanceKm || !timeMins) return '--:-- /km';
+  if (!distanceKm || !timeMins) return '--:--';
   const paceDec = timeMins / distanceKm;
   const mins = Math.floor(paceDec);
   const secs = Math.floor((paceDec - mins) * 60);
-  return `${mins}:${secs.toString().padStart(2, '0')} /km`;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
 const formatTime = (timeMins: number) => {
@@ -69,6 +69,27 @@ const SmoothLineChart = ({ data }: { data: { label: string, value: number }[] })
 
   return (
     <div className="relative w-full h-[160px]">
+      <style>{`
+        @keyframes drawLine {
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes fadeIn {
+          to { opacity: 1; }
+        }
+        .animate-draw-line {
+          stroke-dasharray: 2000;
+          stroke-dashoffset: 2000;
+          animation: drawLine 1.5s ease-in-out forwards;
+        }
+        .animate-fade-in {
+          opacity: 0;
+          animation: fadeIn 0.5s ease-out 1.2s forwards;
+        }
+        .animate-fill-in {
+          opacity: 0;
+          animation: fadeIn 1s ease-out 0.5s forwards;
+        }
+      `}</style>
       <div className="absolute -top-6 right-0 flex gap-3 text-[10px] font-data-mono">
         <div className="text-primary/70">MAX <span className="text-primary font-bold">{maxVal.toFixed(2)}</span></div>
         <div className="text-primary/70">MIN <span className="text-primary font-bold">{minVal.toFixed(2)}</span></div>
@@ -80,12 +101,12 @@ const SmoothLineChart = ({ data }: { data: { label: string, value: number }[] })
             <stop offset="100%" stopColor="#f39c12" stopOpacity="0.0" />
           </linearGradient>
         </defs>
-        <path d={fillD} fill="url(#areaGradient)" />
-        <path d={pathD} fill="none" stroke="#f39c12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path className="animate-fill-in" d={fillD} fill="url(#areaGradient)" />
+        <path className="animate-draw-line" d={pathD} fill="none" stroke="#f39c12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       {/* HTML dot to avoid SVG stretch */}
       <div 
-        className="absolute w-3 h-3 rounded-full bg-surface border-2 border-primary z-10 shadow-[0_0_8px_rgba(243,156,18,0.8)]"
+        className="absolute w-3 h-3 rounded-full bg-surface border-2 border-primary z-10 shadow-[0_0_8px_rgba(243,156,18,0.8)] animate-fade-in"
         style={{ right: '-6px', top: `calc(${lastPctY}% - 6px)` }}
       >
         <div className="w-1.5 h-1.5 rounded-full bg-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
@@ -341,26 +362,26 @@ export default function RunningRecordsPage() {
             <h3 className="text-[#efe0d2] text-[24px] font-bold mb-6 font-headline-md tracking-wider">當週紀錄</h3>
             <div className="flex flex-row justify-between items-start gap-2">
               <div className="flex-1">
-                <p className="text-[12px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">Distance</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">距離</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.distance}</span>
                   <span className="text-[12px] text-[#efe0d2] font-bold">km</span>
                 </div>
               </div>
               <div className="flex-1">
-                <p className="text-[12px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">Time</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">時間</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.timeFormatted}</span>
                 </div>
               </div>
               <div className="flex-1">
-                <p className="text-[12px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">Pace</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">配速</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.pace}</span>
                 </div>
               </div>
               <div className="flex-1">
-                <p className="text-[12px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">Elev Gain</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">爬升</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{thisWeekStats.elevation}</span>
                   <span className="text-[12px] text-[#efe0d2] font-bold">m</span>
@@ -370,7 +391,6 @@ export default function RunningRecordsPage() {
           </div>
           
           <div className="font-display">
-            <h3 className="text-[#efe0d2]/90 text-[16px] mb-6">過去 12 週趨勢</h3>
             <SmoothLineChart data={past12WeeksData} />
             <div className="flex justify-between mt-3 px-2">
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[0]?.label}</span>
