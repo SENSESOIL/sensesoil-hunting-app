@@ -815,7 +815,7 @@ export default function BasicMissionPage() {
               </div>
             </div>
           </div>
-          <div className="relative border border-primary/30 p-4 bg-surface-container-low rounded-sm">
+          <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵紀錄</h2>
             </div>
@@ -824,7 +824,7 @@ export default function BasicMissionPage() {
               <div className="indicator-card w-full"><span className="symbol">{recPrec}</span><span className="label font-data-mono">準</span></div>
             </div>
           </div>
-          <div className="relative border border-primary/30 p-4 bg-surface-container-low rounded-sm">
+          <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵任務</h2>
             </div>
@@ -850,14 +850,14 @@ export default function BasicMissionPage() {
           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm shadow-[0_0_15px_rgba(243,156,18,0.05)]">
             <h3 className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">團隊狀態</h3>
             <div className="flex gap-4">
-              <div className="flex-1 p-3 border border-primary/20 bg-primary/5 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
+              <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
                 <p className="text-[10px] text-primary uppercase tracking-wider mb-1">任務完成度</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-primary tracking-tighter">{dashboardData.completionRate}</span>
                   <span className="text-[10px] text-primary">%</span>
                 </div>
               </div>
-              <div className="flex-1 p-3 border border-primary/20 bg-primary/5 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
+              <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
                 <p className="text-[10px] text-primary uppercase tracking-wider mb-1">覺醒平均值</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-primary tracking-tighter">{dashboardData.averageScore}</span>
