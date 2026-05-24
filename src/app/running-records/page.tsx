@@ -395,31 +395,33 @@ export default function RunningRecordsPage() {
             <h3 className="text-[#efe0d2] text-[24px] font-bold mb-6 font-headline-md tracking-wider">
               {selectedChartIndex === 11 ? "本週紀錄" : (selectedWeek?.dateRange || "載入中...")}
             </h3>
-            <div className="grid grid-cols-4 gap-2 sm:gap-4 max-w-[420px] items-start">
-              <div className="flex flex-col">
+            <div className="flex justify-between w-full items-start">
+              <div className="flex flex-col whitespace-nowrap">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">距離</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.distance || "0.00"}</span>
                   <span className="text-[12px] text-[#efe0d2] font-bold ml-0.5">km</span>
                 </div>
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col whitespace-nowrap">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">時間</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.timeFormatted || "0m"}</span>
                 </div>
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col whitespace-nowrap">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">配速</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.pace || "--:--"}</span>
                 </div>
               </div>
-              <div className="flex flex-col">
-                <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">爬升</p>
-                <div className="flex items-baseline">
-                  <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.elevation || "0"}</span>
-                  <span className="text-[12px] text-[#efe0d2] font-bold ml-0.5">m</span>
+              <div className="flex flex-col whitespace-nowrap text-right items-end">
+                <div className="text-left">
+                  <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">爬升</p>
+                  <div className="flex items-baseline">
+                    <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.elevation || "0"}</span>
+                    <span className="text-[12px] text-[#efe0d2] font-bold ml-0.5">m</span>
+                  </div>
                 </div>
               </div>
             </div>
