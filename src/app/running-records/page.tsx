@@ -124,7 +124,6 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
       `}</style>
       <div className="absolute -top-6 right-0 flex gap-3 text-[10px] font-data-mono pointer-events-none">
         <div className="text-primary/70">MAX <span className="text-primary font-bold">{maxVal.toFixed(2)}</span></div>
-        <div className="text-primary/70">MIN <span className="text-primary font-bold">{minVal.toFixed(2)}</span></div>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible pointer-events-none" preserveAspectRatio="none">
         <defs>
@@ -389,8 +388,8 @@ export default function RunningRecordsPage() {
           </div>
         </div>
 
-        {/* Individual Module */}
-        <section className={`mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
+        {/* Team Module Content (Weekly Stats) */}
+        <section className={`mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="mb-8 font-display">
             <h3 className="text-[#efe0d2] text-[24px] font-bold mb-6 font-headline-md tracking-wider">
               {selectedChartIndex === 11 ? "本週紀錄" : (selectedWeek?.dateRange || "載入中...")}
@@ -442,10 +441,10 @@ export default function RunningRecordsPage() {
           </div>
         </section>
 
-        {/* Team Module Placeholder */}
-        <section className={`space-y-[18px] mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
+        {/* Individual Module Content (Daily Records Placeholder) */}
+        <section className={`space-y-[18px] mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
            <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-[4px]">
-             <h3 className="text-primary text-sm font-bold tracking-[0.3em] uppercase mb-4 text-center">團隊狀態建置中</h3>
+             <h3 className="text-primary text-sm font-bold tracking-[0.3em] uppercase mb-4 text-center">個人每日紀錄建置中</h3>
            </div>
         </section>
 
