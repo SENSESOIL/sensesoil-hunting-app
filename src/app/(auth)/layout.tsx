@@ -27,7 +27,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <main className="flex flex-col relative min-h-[360px] h-screen overflow-hidden">
-      <div className="flex-1 flex items-center justify-center w-full px-4 relative z-10">
+      <div className="flex-1 flex items-center justify-center w-full px-4 relative z-10 -translate-y-16 sm:-translate-y-20">
         <div className="relative flex items-center justify-center w-full max-w-[320px] sm:max-w-[360px] aspect-square shrink-0">
           <div className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${showUI ? "opacity-100" : "opacity-0"}`}>
             <svg
