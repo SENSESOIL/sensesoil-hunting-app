@@ -1272,7 +1272,7 @@ export default function BasicMissionPage() {
           <span className="font-label-caps text-[10px]">結算</span>
         </button>
         <button className="flex flex-col items-center gap-1 text-[#efe0d2]" onClick={() => router.push("/running-records")}>
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>person</span>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>directions_run</span>
           <span className="font-label-caps text-[10px]">覺醒</span>
         </button>
       </nav>

@@ -541,7 +541,7 @@ export default function RunningRecordsPage() {
           <span className="font-label-caps text-[10px]">結算</span>
         </button>
         <button className="flex flex-col items-center gap-1 text-primary active-pulse">
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
           <span className="font-label-caps text-[10px]">覺醒</span>
         </button>
       </nav>
