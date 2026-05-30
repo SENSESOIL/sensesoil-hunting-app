@@ -1254,26 +1254,26 @@ export default function BasicMissionPage() {
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-6 bg-surface/95 backdrop-blur-lg border-t border-primary/30 shadow-[0_-8px_20px_rgba(243,156,18,0.3)]">
         <button className="flex flex-col items-center gap-1 text-primary active-pulse">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>target</span>
-          <span className="font-label-caps text-[8px]">基礎</span>
+          <span className="font-label-caps text-[10px]">基礎</span>
         </button>
         <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>diamond</span>
-          <span className="font-label-caps text-[8px]">隱藏</span>
+          <span className="font-label-caps text-[10px]">隱藏</span>
         </button>
         <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>trending_up</span>
-          <span className="font-label-caps text-[8px]">轉職</span>
+          <span className="font-label-caps text-[10px]">轉職</span>
         </button>
         <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M 13.5 11.5 L 13.5 2.5 A 9 9 0 0 1 22.5 11.5 Z" />
             <path d="M 11.5 13.5 L 20.5 13.5 A 9 9 0 1 1 11.5 4.5 Z" />
           </svg>
-          <span className="font-label-caps text-[8px]">結算</span>
+          <span className="font-label-caps text-[10px]">結算</span>
         </button>
         <button className="flex flex-col items-center gap-1 text-[#efe0d2]" onClick={() => router.push("/running-records")}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>person</span>
-          <span className="font-label-caps text-[8px]">覺醒</span>
+          <span className="font-label-caps text-[10px]">覺醒</span>
         </button>
       </nav>
 
