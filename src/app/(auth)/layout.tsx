@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export let hasAuthLoaded = false;
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(hasAuthLoaded);
   const [showUI, setShowUI] = useState(hasAuthLoaded);
-  const router = useRouter();
-  const pathname = usePathname();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!hasAuthLoaded) {
@@ -87,14 +86,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
 
           <div
-            className={`relative z-10 flex items-center justify-center select-none transition-all duration-1000 ease-out ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"} ${pathname === "/verify" ? "cursor-pointer group" : ""}`}
-            onClick={() => {
-              if (pathname === "/verify") {
-                router.push("/diversion");
-              }
+            className={`relative z-10 flex items-center justify-center select-none transition-all duration-1000 ease-out ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"} cursor-pointer group ${isLoading ? "opacity-50 pointer-events-none" : ""}`}
+            onClick={async () => {
+              setIsLoading(true);
+              await signIn("google", { callbackUrl: "/diversion" });
             }}
           >
-            <div className={`block transition-transform duration-300 ${pathname === "/verify" ? "group-hover:scale-105 group-hover:brightness-110" : ""}`}>
+            <div className="block transition-transform duration-300 group-hover:scale-105 group-hover:brightness-110">
               <Image
                 alt="SENSESOIL Logo"
                 width={200}
