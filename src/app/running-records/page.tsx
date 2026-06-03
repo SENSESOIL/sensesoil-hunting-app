@@ -550,11 +550,11 @@ export default function RunningRecordsPage() {
         {/* Top Header - Team View */}
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 leading-none whitespace-nowrap">狩獵覺醒排行榜</p>
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵覺醒排行榜</p>
             <h2 className={`font-headline-lg text-primary font-bold tracking-wider uppercase leading-none ${dashboardData.name.length > 4 ? 'text-xl mt-1' : 'text-3xl'}`}>{dashboardData.name}</h2>
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
             <p className="font-headline-lg text-primary text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{dashboardData.weeks}<span className="text-[10px] font-normal lowercase tracking-normal">weeks</span></p>
           </div>
         </div>
@@ -603,7 +603,7 @@ export default function RunningRecordsPage() {
           <div className="mb-8 font-display">
             <div className="flex justify-between items-end mb-8 font-display">
               <div className="flex flex-col relative">
-                <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 leading-none">狩獵分析</p>
+                <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none">狩獵分析</p>
                 <div className="flex items-center gap-2">
                   <h2 
                     key={selectedPersonalHunter}
@@ -635,27 +635,27 @@ export default function RunningRecordsPage() {
             </div>
             <div className="flex justify-between w-full items-start">
               <div className="flex flex-col whitespace-nowrap">
-                <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">距離</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] font-bold mb-1">距離</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.distance || "0.00"}</span>
                   <span className="text-[12px] text-[#efe0d2] font-bold ml-0.5">km</span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap">
-                <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">時間</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] font-bold mb-1">時間</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.timeFormatted || "0m"}</span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap">
-                <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">配速</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] font-bold mb-1">配速</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.pace || "--:--"}</span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap text-right items-end">
                 <div className="text-left">
-                  <p className="text-[12px] text-[#efe0d2]/70 tracking-widest font-bold mb-1">爬升</p>
+                  <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] font-bold mb-1">爬升</p>
                   <div className="flex items-baseline">
                     <span className="text-[22px] sm:text-3xl font-bold text-[#efe0d2] tracking-tighter">{selectedWeek?.elevation || "0"}</span>
                     <span className="text-[12px] text-[#efe0d2] font-bold ml-0.5">m</span>
@@ -673,9 +673,9 @@ export default function RunningRecordsPage() {
               onSelect={setSelectedChartIndex} 
             />
             <div className="flex justify-between mt-3 px-2">
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[0]?.label}</span>
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[5]?.label}</span>
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-widest">{past12WeeksData[11]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[0]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[5]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[11]?.label}</span>
             </div>
           </div>
         </section>
@@ -694,14 +694,14 @@ export default function RunningRecordsPage() {
             
             <div className="flex gap-8 mb-5">
               <div className="flex flex-col">
-                <span className="text-[#efe0d2]/70 text-xs mb-1">連續紀錄</span>
+                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">連續紀錄</span>
                 <div className="flex items-baseline gap-1">
                   <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.maxStreakWeeks}</span>
                   <span className="text-white text-sm font-bold">週</span>
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-[#efe0d2]/70 text-xs mb-1">今年累計次數</span>
+                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">今年累計次數</span>
                 <div className="flex items-baseline">
                   <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
                 </div>
