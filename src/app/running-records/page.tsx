@@ -741,9 +741,6 @@ export default function RunningRecordsPage() {
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[11]?.label}</span>
             </div>
             
-            <div className="mt-8 border-t border-primary/20 pt-8">
-              <YearlyBarChart data={past12MonthsData} />
-            </div>
             </div>
           </div>
         </section>
@@ -862,6 +859,9 @@ export default function RunningRecordsPage() {
               })}
             </div>
 
+            <div className="mt-8 border-t border-primary/20 pt-8">
+              <YearlyBarChart data={past12MonthsData} />
+            </div>
           </div>
         </section>
 
