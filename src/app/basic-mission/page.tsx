@@ -985,7 +985,7 @@ export default function BasicMissionPage() {
               `}</style>
               {analysisData?.items ? analysisData.items.map((item, idx) => (
                 <div key={`${selectedTeamHunter}-${selectedStartDate}-${idx}`} className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] uppercase tracking-wider">
+                  <div className="flex justify-between text-[12px] uppercase tracking-wider">
                     <span className="text-[#efe0d2]/70">{item.label}</span>
                     <span className="text-white">{item.percent}</span>
                   </div>
