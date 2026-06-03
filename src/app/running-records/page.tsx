@@ -166,7 +166,7 @@ const YearlyBarChart = ({ data }: { data: {label: string, value: number, isActiv
                   )}
                   {isActive && (
                      <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[10px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 24px)' }}>
-                       {Math.round(d.value)} HRS
+                       {d.value.toFixed(1)} HRS
                      </div>
                   )}
                 </div>
