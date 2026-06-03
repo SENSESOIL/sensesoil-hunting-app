@@ -600,7 +600,7 @@ export default function RunningRecordsPage() {
 
         {/* Team Module Content (Weekly Stats) */}
         <section className={`mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
-          <div className="mb-8 font-display">
+          <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display mb-8">
             <div className="flex justify-between items-end mb-8 font-display">
               <div className="flex flex-col relative">
                 <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none">狩獵分析</p>
