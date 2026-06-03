@@ -1016,12 +1016,12 @@ export default function BasicMissionPage() {
               <div className="overflow-hidden">
               <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                 <thead>
-                  <tr className="text-primary border-b border-primary/20 bg-surface-container-high/50">
-                    <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4, color: "#f39c12" }}>狩獵者</th>
-                    <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4, color: "#f39c12", textAlign: "left" }}>日誌 (D1-6/質量)</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "15%", padding: 4, color: "#f39c12", textAlign: "center" }}>紀錄 (精準)</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "22%", padding: 4, color: "#f39c12", textAlign: "center" }}>任務 (誠/體/格)</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "12%", padding: 4, color: "#f39c12", textAlign: "center" }}>覺醒</th>
+                  <tr className="text-[#efe0d2]/70 border-b border-primary/20 bg-surface-container-high/50">
+                    <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4 }}>狩獵者</th>
+                    <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4, textAlign: "left" }}>日誌 [D1-6/質量]</th>
+                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "15%", padding: 4, textAlign: "center" }}>紀錄 [精準]</th>
+                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "22%", padding: 4, textAlign: "center" }}>任務 [誠/體/格]</th>
+                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "12%", padding: 4, textAlign: "center" }}>覺醒</th>
                   </tr>
                 </thead>
                 <tbody className="divide-primary/5">
@@ -1041,19 +1041,19 @@ export default function BasicMissionPage() {
                           >
                             {row.name}
                           </div>
-                          <div className="text-[10px]" style={{ color: "#efe0d2" }}>{row.date.substring(5)}</div>
+                          <div className="text-[10px]" style={{ color: "#ffffff" }}>{row.date.substring(5)}</div>
                         </div>
                       </td>
-                      <td className="p-2 font-data-mono whitespace-nowrap align-middle" style={{ width: "28%", padding: 4, overflow: "hidden", color: "#efe0d2", textAlign: "left" }}>
+                      <td className="p-2 font-data-mono whitespace-nowrap align-middle" style={{ width: "28%", padding: 4, overflow: "hidden", color: "#ffffff", textAlign: "left" }}>
                         <RenderSymbols str={row.logStr} alignLeft={true} />
                       </td>
-                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "15%", padding: 4, color: "#efe0d2", textAlign: "center" }}>
+                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "15%", padding: 4, color: "#ffffff", textAlign: "center" }}>
                         <RenderSymbols str={row.recStr} />
                       </td>
-                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "22%", padding: 4, color: "#efe0d2", textAlign: "center", fontSize: 10 }}>
+                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "22%", padding: 4, color: "#ffffff", textAlign: "center", fontSize: 10 }}>
                         <RenderSymbols str={row.taskStr} />
                       </td>
-                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "12%", padding: 4, color: "#efe0d2", textAlign: "center", fontSize: 10 }}>
+                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "12%", padding: 4, color: "#ffffff", textAlign: "center", fontSize: 10 }}>
                         {row.score}
                       </td>
                     </tr>
