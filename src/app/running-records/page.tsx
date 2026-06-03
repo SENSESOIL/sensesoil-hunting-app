@@ -169,15 +169,6 @@ export default function RunningRecordsPage() {
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
   const [isMonthSelectorOpen, setIsMonthSelectorOpen] = useState(false);
 
-  const availableMonths = useMemo(() => {
-    const months = [];
-    const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      months.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
-    }
-    return months;
-  }, []);
-
   const dashboardData = useMemo(() => {
     if (!runningData || runningData.length === 0) {
       return { name: "計算中...", weeks: "00" };
@@ -325,6 +316,32 @@ export default function RunningRecordsPage() {
     const normalizedSelected = normalizeName(selectedPersonalHunter);
     return runningData.filter((r: any) => normalizeName(r.name) === normalizedSelected);
   }, [runningData, selectedPersonalHunter]);
+
+  const availableMonths = useMemo(() => {
+    const months = [];
+    const now = new Date();
+    
+    let earliestDate = new Date(now.getFullYear() - 1, now.getMonth() + 1, 1);
+    if (personalRecords && personalRecords.length > 0) {
+      const dates = personalRecords.map((r: any) => new Date(r.date).getTime()).filter((t: number) => !isNaN(t));
+      if (dates.length > 0) {
+        const minTime = Math.min(...dates);
+        const minDate = new Date(minTime);
+        const recordEarliest = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+        if (recordEarliest < earliestDate) {
+          earliestDate = recordEarliest;
+        }
+      }
+    }
+    
+    let curr = new Date(now.getFullYear(), now.getMonth(), 1);
+    while (curr >= earliestDate) {
+      months.push(new Date(curr.getTime()));
+      curr.setMonth(curr.getMonth() - 1);
+    }
+    
+    return months;
+  }, [personalRecords]);
 
   const past12WeeksData = useMemo(() => {
     const now = new Date();
@@ -669,11 +686,10 @@ export default function RunningRecordsPage() {
             
 
             <div 
-              className="flex items-center gap-1 mb-4 cursor-pointer hover:opacity-80 transition-opacity w-max"
+              className="flex items-center mb-4 cursor-pointer hover:opacity-80 transition-opacity w-max"
               onClick={() => setIsMonthSelectorOpen(true)}
             >
-              <h3 className="text-white text-xl font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
-              <span className="material-symbols-outlined text-[#efe0d2]/70 text-xl">expand_more</span>
+              <h3 className="text-primary text-xl font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
             </div>
             
             <div className="flex gap-8 mb-5">
@@ -793,7 +809,7 @@ export default function RunningRecordsPage() {
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 max-h-[350px] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pr-1">
               {availableMonths.map((d, i) => (
                 <button
                   key={i}
