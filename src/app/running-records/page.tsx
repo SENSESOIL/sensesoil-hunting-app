@@ -858,10 +858,10 @@ export default function RunningRecordsPage() {
                            <div key={d.id} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
                              {d.active ? (
                                <div 
-                                 className={`w-full h-full bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)] cursor-pointer ${isToday ? 'ring-2 ring-white ring-offset-2 ring-offset-[#121212]' : ''}`}
+                                 className={`w-full h-full bg-primary rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(243,156,18,0.4)] cursor-pointer ${isToday ? 'ring-2 ring-primary ring-offset-2 ring-offset-[#121212]' : ''}`}
                                  onClick={() => setSelectedDayRecord(d.record)}
                                >
-                                 <span className="material-symbols-outlined text-primary text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
+                                 <span className="material-symbols-outlined text-black text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
                                </div>
                              ) : (
                                <div className={`w-full h-full rounded-full flex items-center justify-center border ${isToday ? 'border-white text-white shadow-[0_0_8px_rgba(255,255,255,0.4)]' : d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
