@@ -166,6 +166,17 @@ export default function RunningRecordsPage() {
   const [selectedPersonalHunter, setSelectedPersonalHunter] = useState<string>("");
   const [isPersonalHunterDropdownOpen, setIsPersonalHunterDropdownOpen] = useState(false);
   const [selectedDayRecord, setSelectedDayRecord] = useState<any | null>(null);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
+  const [isMonthSelectorOpen, setIsMonthSelectorOpen] = useState(false);
+
+  const availableMonths = useMemo(() => {
+    const months = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      months.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
+    }
+    return months;
+  }, []);
 
   const dashboardData = useMemo(() => {
     if (!runningData || runningData.length === 0) {
@@ -351,9 +362,10 @@ export default function RunningRecordsPage() {
   }, [personalRecords]);
 
   const monthlyCalendarData = useMemo(() => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
+    const realNow = new Date();
+    const targetDate = selectedCalendarDate || realNow;
+    const currentYear = targetDate.getFullYear();
+    const currentMonth = targetDate.getMonth();
     
     // 1. Calculate yearly activities
     let yearlyActivities = 0;
@@ -377,7 +389,7 @@ export default function RunningRecordsPage() {
       }
     });
 
-    const { start: thisWeekStart } = getWeekRange(now);
+    const { start: thisWeekStart } = getWeekRange(targetDate);
     const lastWeekStart = thisWeekStart - 7 * 24 * 60 * 60 * 1000;
     
     let checkWeek = thisWeekStart;
@@ -433,8 +445,16 @@ export default function RunningRecordsPage() {
     const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
     
     const totalRows = calendarDays.length / 7;
-    const currentDayIndex = calendarDays.findIndex(d => d.isCurrentMonth && d.day === now.getDate());
-    const currentRowIndex = currentDayIndex !== -1 ? Math.floor(currentDayIndex / 7) : (totalRows - 1);
+    const currentDayIndex = calendarDays.findIndex(d => 
+      d.isCurrentMonth && 
+      d.day === realNow.getDate() && 
+      currentMonth === realNow.getMonth() && 
+      currentYear === realNow.getFullYear()
+    );
+    const isPastMonth = currentYear < realNow.getFullYear() || (currentYear === realNow.getFullYear() && currentMonth < realNow.getMonth());
+    const currentRowIndex = currentDayIndex !== -1 
+      ? Math.floor(currentDayIndex / 7) 
+      : (isPastMonth ? totalRows - 1 : -1);
 
     return {
       monthLabel: `${monthNames[currentMonth]} ${currentYear}`,
@@ -444,7 +464,7 @@ export default function RunningRecordsPage() {
       totalRows,
       currentRowIndex
     };
-  }, [personalRecords]);
+  }, [personalRecords, selectedCalendarDate]);
 
   const [selectedChartIndex, setSelectedChartIndex] = useState<number>(11);
 
@@ -612,7 +632,13 @@ export default function RunningRecordsPage() {
           <div className="pt-6 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             
 
-            <h3 className="text-white text-xl font-bold tracking-wide mb-4">{monthlyCalendarData.monthLabel}</h3>
+            <div 
+              className="flex items-center gap-1 mb-4 cursor-pointer hover:opacity-80 transition-opacity w-max"
+              onClick={() => setIsMonthSelectorOpen(true)}
+            >
+              <h3 className="text-white text-xl font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
+              <span className="material-symbols-outlined text-[#efe0d2]/70 text-xl">expand_more</span>
+            </div>
             
             <div className="flex gap-8 mb-5">
               <div className="flex flex-col">
@@ -719,6 +745,34 @@ export default function RunningRecordsPage() {
         </section>
 
       </main>
+
+      {/* Month Selector Modal */}
+      {isMonthSelectorOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsMonthSelectorOpen(false)}>
+          <div className="bg-[#121212] border border-primary/30 p-6 rounded-2xl w-full max-w-xs shadow-[0_0_30px_rgba(243,156,18,0.2)]" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-white text-lg font-bold font-display tracking-widest">選擇月份</h3>
+              <button className="text-white/50 hover:text-white" onClick={() => setIsMonthSelectorOpen(false)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {availableMonths.map((d, i) => (
+                <button
+                  key={i}
+                  className={`py-3 px-1 rounded-xl text-center font-bold text-[13px] leading-tight transition-colors ${d.getMonth() === selectedCalendarDate.getMonth() && d.getFullYear() === selectedCalendarDate.getFullYear() ? 'bg-primary text-black shadow-[0_0_15px_rgba(243,156,18,0.3)]' : 'bg-white/5 text-[#efe0d2]/70 hover:bg-white/10 hover:text-white border border-white/5'}`}
+                  onClick={() => {
+                    setSelectedCalendarDate(d);
+                    setIsMonthSelectorOpen(false);
+                  }}
+                >
+                  {d.getFullYear()}<br/><span className="text-[15px]">{d.getMonth() + 1}月</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Record Modal */}
       {selectedDayRecord && (
