@@ -683,7 +683,7 @@ export default function RunningRecordsPage() {
       rank: idx + 1,
       barPct: maxVal > 0 ? (leaderboardMetric === 'distance' ? (item.distance / maxVal) * 100 :
               leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
-              (item.paceRaw / maxVal) * 100) : 0 
+              (result[0].paceRaw / item.paceRaw) * 100) : 0 
     }));
   }, [runningData, selectedCalendarDate, leaderboardMetric]);
 
@@ -784,7 +784,7 @@ export default function RunningRecordsPage() {
                 {guildLeaderboardData.length > 0 ? guildLeaderboardData.map((item) => (
                   <div key={item.name} className="flex items-center w-full gap-3">
                     <span className="text-[#efe0d2]/70 text-[12px] font-mono w-4 text-left shrink-0">{item.rank}</span>
-                    <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary text-primary flex items-center justify-center shrink-0">
+                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'}`}>
                       <span className="text-[12px] font-bold">{item.name.slice(-1)}</span>
                     </div>
                     <div className="flex-1 h-3 bg-primary/10 rounded-r-sm overflow-hidden flex relative">
