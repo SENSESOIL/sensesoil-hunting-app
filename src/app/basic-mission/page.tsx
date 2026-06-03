@@ -1335,7 +1335,7 @@ export default function BasicMissionPage() {
             font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
         }
         .indicator-card .label {
-            font-size: 10px;
+            font-size: 11px;
             color: rgba(239, 224, 210, 0.7);
         }
         .sym-icon {
