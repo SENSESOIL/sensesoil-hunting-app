@@ -146,13 +146,13 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
   );
 };
 
-const YearlyBarChart = ({ data }: { data: {label: string, value: number}[] }) => {
+const YearlyBarChart = ({ data }: { data: {label: string, value: number, isActive?: boolean}[] }) => {
   const maxVal = Math.max(...data.map(d => d.value), 1);
   return (
     <div className="w-full h-[220px] flex items-end justify-between px-2 pt-12 pb-12 relative mt-4">
       {data.map((d, i) => {
         const heightPct = (d.value / maxVal) * 100;
-        const isActive = i === data.length - 1; 
+        const isActive = d.isActive; 
         return (
           <div key={i} className="flex flex-col items-center flex-1 h-full relative">
             <div className="w-full h-full flex flex-col justify-end items-center relative">
@@ -165,7 +165,7 @@ const YearlyBarChart = ({ data }: { data: {label: string, value: number}[] }) =>
                     <div className="absolute -top-1 -left-[4px] w-2.5 h-2.5 bg-primary rounded-full" />
                   )}
                   {isActive && (
-                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 rotate-[-90deg] origin-bottom text-[10px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: '100%', marginBottom: '8px' }}>
+                     <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[10px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 24px)' }}>
                        {Math.round(d.value)} HRS
                      </div>
                   )}
@@ -421,6 +421,9 @@ export default function RunningRecordsPage() {
     const currentYear = now.getFullYear();
     const months = [];
     
+    const selectedYear = selectedCalendarDate?.getFullYear() || currentYear;
+    const selectedMonth = selectedCalendarDate?.getMonth() || currentMonth;
+    
     for (let i = 11; i >= 0; i--) {
       const d = new Date(currentYear, currentMonth - i, 1);
       
@@ -435,10 +438,11 @@ export default function RunningRecordsPage() {
       months.push({
         label: d.toLocaleString('en-US', { month: 'short' }).toUpperCase(),
         value: totalHours,
+        isActive: d.getFullYear() === selectedYear && d.getMonth() === selectedMonth,
       });
     }
     return months;
-  }, [personalRecords]);
+  }, [personalRecords, selectedCalendarDate]);
 
   const monthlyCalendarData = useMemo(() => {
     const realNow = new Date();
@@ -859,7 +863,7 @@ export default function RunningRecordsPage() {
               })}
             </div>
 
-            <div className="mt-8 border-t border-primary/20 pt-8">
+            <div className="mt-4">
               <YearlyBarChart data={past12MonthsData} />
             </div>
           </div>
