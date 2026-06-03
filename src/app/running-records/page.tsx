@@ -764,9 +764,9 @@ export default function RunningRecordsPage() {
               onSelect={setSelectedChartIndex} 
             />
             <div className="flex justify-between mt-3 px-2">
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[0]?.label}</span>
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[5]?.label}</span>
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[11]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[0]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[5]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[11]?.label}</span>
             </div>
             
             </div>
@@ -856,7 +856,7 @@ export default function RunningRecordsPage() {
                                  className={`w-full h-full bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)] cursor-pointer ${isToday ? 'ring-2 ring-white ring-offset-2 ring-offset-[#121212]' : ''}`}
                                  onClick={() => setSelectedDayRecord(d.record)}
                                >
-                                 <span className="material-symbols-outlined text-black text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
+                                 <span className="material-symbols-outlined text-primary text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
                                </div>
                              ) : (
                                <div className={`w-full h-full rounded-full flex items-center justify-center border ${isToday ? 'border-white text-white shadow-[0_0_8px_rgba(255,255,255,0.4)]' : d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
