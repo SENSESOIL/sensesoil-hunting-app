@@ -148,7 +148,7 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
 
 export default function RunningRecordsPage() {
   const router = useRouter();
-  const [view, setView] = useState<"individual" | "team">("individual");
+  const [view, setView] = useState<"individual" | "team">("team");
   const { data: session, status } = useSession();
   const userHunterName = (session?.user as any)?.hunterName || "";
 
