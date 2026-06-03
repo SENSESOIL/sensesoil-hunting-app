@@ -824,7 +824,7 @@ export default function RunningRecordsPage() {
 
         {/* Team Module Content (Weekly Stats) */}
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
-          <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+          <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 font-display">
             <div className="flex justify-between items-start mb-8 font-display">
               <div className="flex flex-col relative">
                 <p 
