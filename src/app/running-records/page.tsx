@@ -599,7 +599,7 @@ export default function RunningRecordsPage() {
         </div>
 
         {/* Team Module Content (Weekly Stats) */}
-        <section className={`mb-[3px] ${view === 'individual' ? 'hidden' : ''}`}>
+        <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div className="mb-8">
             <div className="flex justify-between items-end mb-8 font-display">
@@ -666,7 +666,7 @@ export default function RunningRecordsPage() {
             </div>
           </div>
           
-          <div className="font-display">
+          <div className="font-display mt-[20px]">
             <SmoothLineChart 
               key={selectedPersonalHunter}
               data={past12WeeksData} 
