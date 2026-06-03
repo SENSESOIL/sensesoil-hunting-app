@@ -918,7 +918,12 @@ export default function BasicMissionPage() {
           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm">
             <div className="flex justify-between mb-6 items-baseline relative">
               <div className="relative">
-                <h3 className="text-primary font-bold tracking-[0.1em] uppercase mb-1 text-[12px]">狩獵分析</h3>
+                <h3 
+                  className="text-primary font-bold tracking-[0.1em] uppercase mb-1 text-[12px] cursor-pointer hover:opacity-80 transition-opacity inline-block"
+                  onClick={() => setIsHunterDropdownOpen(!isHunterDropdownOpen)}
+                >
+                  狩獵分析
+                </h3>
                 <div className="flex items-center gap-3">
                   <span
                     className="font-bold text-3xl cursor-pointer hover:opacity-80 transition-opacity animate-text-reveal"

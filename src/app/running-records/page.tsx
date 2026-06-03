@@ -695,7 +695,12 @@ export default function RunningRecordsPage() {
             <div className="mb-8">
             <div className="flex justify-between items-end mb-8 font-display">
               <div className="flex flex-col relative">
-                <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 leading-none">狩獵分析</p>
+                <p 
+                  className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none cursor-pointer hover:opacity-80 transition-opacity inline-block"
+                  onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
+                >
+                  狩獵分析
+                </p>
                 <div className="flex items-center gap-2">
                   <h2 
                     key={selectedPersonalHunter}
