@@ -693,7 +693,7 @@ export default function RunningRecordsPage() {
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div className="mb-8">
-            <div className="flex justify-between items-end mb-8 font-display">
+            <div className="flex justify-between items-start mb-8 font-display">
               <div className="flex flex-col relative">
                 <p 
                   className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none cursor-pointer hover:opacity-80 transition-opacity inline-block"
@@ -724,8 +724,8 @@ export default function RunningRecordsPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-white text-[11px] tracking-widest font-bold">週紀錄 {selectedWeek?.endLabel || "載入中..."}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white text-[12px] tracking-widest font-bold">週紀錄 {selectedWeek?.endLabel || "載入中..."}</span>
                 <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_rgba(243,156,18,1)]" />
               </div>
             </div>
