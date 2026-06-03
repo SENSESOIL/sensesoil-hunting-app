@@ -599,90 +599,87 @@ export default function RunningRecordsPage() {
         <section className={`mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="p-5 border border-primary/30 bg-[#121212] font-display rounded-[8px] shadow-[0_0_15px_rgba(243,156,18,0.05)]">
             
-            {/* Title row + right streak bar share the same outer row */}
-            <div className="flex items-start gap-2">
-              {/* Left: title + stats + calendar */}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-white text-xl font-bold tracking-wide mb-4">{monthlyCalendarData.monthLabel}</h3>
-                
-                <div className="flex gap-8 mb-5">
-                  <div className="flex flex-col">
-                    <span className="text-[#efe0d2]/70 text-xs mb-1">連續紀錄</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.streakWeeks}</span>
-                      <span className="text-white text-sm font-bold">週</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[#efe0d2]/70 text-xs mb-1">今年累計次數</span>
-                    <div className="flex items-baseline">
-                      <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Header M T W T F S S */}
-                <div className="grid grid-cols-7 gap-2 mb-3">
-                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                    <div key={i} className="text-center text-[#efe0d2]/60 text-xs font-bold">{day}</div>
-                  ))}
-                </div>
-
-                {/* Days Grid */}
-                <div className="grid grid-cols-7 gap-y-3 gap-x-2">
-                  {monthlyCalendarData.calendarDays.map((d) => (
-                    <div key={d.id} className="aspect-square flex items-center justify-center">
-                      {d.active ? (
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-                          <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-                        </div>
-                      ) : (
-                        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border ${d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
-                          <span className="text-sm">{d.day}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+            <h3 className="text-white text-xl font-bold tracking-wide mb-4">{monthlyCalendarData.monthLabel}</h3>
+            
+            <div className="flex gap-8 mb-5">
+              <div className="flex flex-col">
+                <span className="text-[#efe0d2]/70 text-xs mb-1">連續紀錄</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.streakWeeks}</span>
+                  <span className="text-white text-sm font-bold">週</span>
                 </div>
               </div>
+              <div className="flex flex-col">
+                <span className="text-[#efe0d2]/70 text-xs mb-1">今年累計次數</span>
+                <div className="flex items-baseline">
+                  <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Calendar Grid & Streak Column Combined */}
+            <div className="grid grid-cols-8 gap-x-1 sm:gap-x-2 gap-y-3">
+              {/* Header M T W T F S S */}
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                <div key={i} className="text-center text-[#efe0d2]/60 text-xs font-bold">{day}</div>
+              ))}
+              <div></div> {/* 8th column header space */}
 
-              {/* Right: streak bar column */}
-              <div className="w-10 sm:w-11 ml-2 shrink-0 flex flex-col relative">
-                 <div className="h-[16px] mb-3"></div> {/* Header spacer to match 'M T W...' */}
-                 
-                 <div className="flex-1 w-full relative">
-                   {/* Streak Bar (Absolute) */}
-                   {monthlyCalendarData.streakWeeks > 0 && (
-                     <div 
-                       className="absolute left-1/2 -translate-x-1/2 w-8 sm:w-9 bg-gradient-to-b from-[#f39c12]/20 via-[#f39c12]/80 to-[#f39c12] rounded-t-full z-10"
-                       style={{ 
-                         top: '-28px', // Starts at the title row (M T W T F S S)
-                         height: `calc(${((monthlyCalendarData.currentRowIndex + 0.5) / monthlyCalendarData.totalRows) * 100}% + 28px)` // Ends exactly at the center of the current row
-                       }}
-                     ></div>
-                   )}
+              {/* Days Grid */}
+              {monthlyCalendarData.calendarDays.map((d, index) => {
+                const row = Math.floor(index / 7) + 2; // Rows start at 2
+                const col = (index % 7) + 1;
+                return (
+                  <div key={d.id} className="aspect-square flex items-center justify-center" style={{ gridRow: row, gridColumn: col }}>
+                    {d.active ? (
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+                        <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                      </div>
+                    ) : (
+                      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border ${d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
+                        <span className="text-sm">{d.day}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
 
-                   {/* Rows Grid */}
-                   <div 
-                     className="grid grid-cols-1 gap-y-3 w-full h-full absolute inset-0 z-20" 
-                     style={{ gridTemplateRows: `repeat(${monthlyCalendarData.totalRows}, minmax(0, 1fr))` }}
-                   >
-                     {Array.from({ length: monthlyCalendarData.totalRows }).map((_, i) => (
-                       <div key={i} className="flex items-center justify-center w-full h-full">
-                         {monthlyCalendarData.streakWeeks > 0 && i === monthlyCalendarData.currentRowIndex ? (
-                           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f39c12] flex items-center justify-center shadow-[0_0_10px_rgba(243,156,18,0.5)]">
-                             <span className="text-black font-extrabold text-[13px] sm:text-sm leading-none pt-0.5">{monthlyCalendarData.streakWeeks}</span>
-                           </div>
-                         ) : (i > monthlyCalendarData.currentRowIndex || monthlyCalendarData.streakWeeks === 0) ? (
-                           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10"></div>
-                         ) : (
-                           <div className="w-8 h-8 sm:w-9 sm:h-9"></div>
-                         )}
+              {/* Streak Column (8th column) */}
+              {Array.from({ length: monthlyCalendarData.totalRows }).map((_, i) => {
+                const row = i + 2; // Rows start at 2
+                const isFirstRow = i === 0;
+                const isCurrentRow = i === monthlyCalendarData.currentRowIndex;
+                const isCovered = i < monthlyCalendarData.currentRowIndex;
+
+                return (
+                  <div key={`streak-${i}`} className="aspect-square flex items-center justify-center relative" style={{ gridRow: row, gridColumn: 8 }}>
+                     {/* Bar segment */}
+                     {monthlyCalendarData.streakWeeks > 0 && (isCovered || isCurrentRow) && (
+                       <div 
+                         className={`absolute left-1/2 -translate-x-1/2 w-8 sm:w-9 bg-[#f39c12] opacity-80 ${isFirstRow ? 'rounded-t-full' : ''} z-10`}
+                         style={{
+                           top: isFirstRow ? '-28px' : '0px',
+                           bottom: isCurrentRow ? '50%' : '-12px',
+                         }}
+                       />
+                     )}
+
+                     {/* Circle */}
+                     {monthlyCalendarData.streakWeeks > 0 && isCurrentRow ? (
+                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f39c12] relative z-20 flex items-center justify-center shadow-[0_0_10px_rgba(243,156,18,0.5)]">
+                         <span className="text-black font-extrabold text-[13px] sm:text-sm leading-none pt-0.5">
+                           {monthlyCalendarData.streakWeeks}
+                         </span>
                        </div>
-                     ))}
-                   </div>
-                 </div>
-              </div>
+                     ) : isCovered ? (
+                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10 relative z-20"></div>
+                     ) : (
+                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10 relative z-20"></div>
+                     )}
+                  </div>
+                );
+              })}
             </div>
 
           </div>
