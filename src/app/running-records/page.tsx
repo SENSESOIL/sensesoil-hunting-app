@@ -169,7 +169,7 @@ const YearlyBarChart = ({ data, onSelect }: { data: {label: string, value: numbe
                     <div className="absolute -top-[3px] -left-[3px] w-2 h-2 bg-primary rounded-full" />
                   )}
                   {isActive && (
-                     <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[10px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 36px)' }}>
+                     <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[11px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 36px)' }}>
                        {d.value.toFixed(1)} hrs
                      </div>
                   )}
@@ -177,7 +177,7 @@ const YearlyBarChart = ({ data, onSelect }: { data: {label: string, value: numbe
               )}
             </div>
             {/* Month Label */}
-            <div className="absolute -bottom-[38px] text-[10px] tracking-widest font-mono flex flex-col items-center gap-[2px]" style={{ color: isActive ? '#f39c12' : 'white', marginTop: '16px' }}>
+            <div className="absolute -bottom-[38px] text-[11px] tracking-widest font-mono flex flex-col items-center gap-[2px]" style={{ color: isActive ? '#f39c12' : 'white', marginTop: '16px' }}>
               {d.label.split('').map((char: string, idx: number) => (
                 <span key={idx} className="leading-none">{char}</span>
               ))}
@@ -885,7 +885,7 @@ export default function RunningRecordsPage() {
                                </div>
                              ) : (
                                <div className={`w-full h-full rounded-full flex items-center justify-center border ${isToday ? 'border-white text-white shadow-[0_0_8px_rgba(255,255,255,0.4)]' : d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
-                                 <span className="text-[13px]">{d.day}</span>
+                                 <span className="text-[11px]">{d.day}</span>
                                </div>
                              )}
                            </div>
