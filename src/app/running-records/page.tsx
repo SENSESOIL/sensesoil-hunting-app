@@ -631,10 +631,9 @@ export default function RunningRecordsPage() {
       return n;
     };
 
-    const now = new Date();
-    const d = new Date(now);
-    d.setDate(now.getDate() - (11 - selectedChartIndex) * 7);
-    const { start, end } = getWeekRange(d);
+    const targetYear = selectedCalendarDate.getFullYear();
+    const start = new Date(targetYear, 0, 1).getTime();
+    const end = new Date(targetYear, 11, 31, 23, 59, 59, 999).getTime();
 
     const statsByHunter: Record<string, { distance: number, time: number, elevation: number }> = {};
 
@@ -686,7 +685,7 @@ export default function RunningRecordsPage() {
               leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
               (item.paceRaw / maxVal) * 100) : 0 
     }));
-  }, [runningData, selectedChartIndex, leaderboardMetric]);
+  }, [runningData, selectedCalendarDate, leaderboardMetric]);
 
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
@@ -759,25 +758,24 @@ export default function RunningRecordsPage() {
           </div>
         </div>
 
-        {/* Team Module Content (Weekly Stats) */}
+        {/* Guild Leaderboard */}
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
-            <div className="mb-8">
-            <div className="mb-12">
+            <div>
               <div className="flex justify-between items-center mb-6">
                 <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] leading-none">公會排行榜</p>
                 <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
                   <button 
                     onClick={() => setLeaderboardMetric('distance')}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wider transition-colors ${leaderboardMetric === 'distance' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                    className={`px-3 py-1 rounded-full text-[11px] tracking-wider transition-colors ${leaderboardMetric === 'distance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                   >距離</button>
                   <button 
                     onClick={() => setLeaderboardMetric('pace')}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wider transition-colors ${leaderboardMetric === 'pace' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                    className={`px-3 py-1 rounded-full text-[11px] tracking-wider transition-colors ${leaderboardMetric === 'pace' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                   >配速</button>
                   <button 
                     onClick={() => setLeaderboardMetric('elevation')}
-                    className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wider transition-colors ${leaderboardMetric === 'elevation' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                    className={`px-3 py-1 rounded-full text-[11px] tracking-wider transition-colors ${leaderboardMetric === 'elevation' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                   >爬升</button>
                 </div>
               </div>
@@ -785,7 +783,7 @@ export default function RunningRecordsPage() {
               <div className="flex flex-col gap-3">
                 {guildLeaderboardData.length > 0 ? guildLeaderboardData.map((item) => (
                   <div key={item.name} className="flex items-center w-full gap-3">
-                    <span className="text-[#efe0d2]/70 text-[12px] font-mono w-4 text-right shrink-0">{item.rank}</span>
+                    <span className="text-[#efe0d2]/70 text-[12px] font-mono w-4 text-left shrink-0">{item.rank}</span>
                     <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary text-primary flex items-center justify-center shrink-0">
                       <span className="text-[12px] font-bold">{item.name.slice(-1)}</span>
                     </div>
@@ -817,13 +815,16 @@ export default function RunningRecordsPage() {
                     </div>
                   </div>
                 )) : (
-                  <div className="text-center text-primary/50 text-xs py-4">本週暫無團隊數據</div>
+                  <div className="text-center text-primary/50 text-xs py-4">本年度暫無團隊數據</div>
                 )}
               </div>
             </div>
+          </div>
+        </section>
 
-            <hr className="border-primary/20 mb-8" />
-
+        {/* Team Module Content (Weekly Stats) */}
+        <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
+          <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div className="flex justify-between items-start mb-8 font-display">
               <div className="flex flex-col relative">
                 <p 
@@ -922,8 +923,6 @@ export default function RunningRecordsPage() {
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[0]?.label}</span>
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[5]?.label}</span>
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[11]?.label}</span>
-            </div>
-            
             </div>
           </div>
         </section>
