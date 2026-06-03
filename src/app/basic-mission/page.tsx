@@ -763,11 +763,11 @@ export default function BasicMissionPage() {
       <main className="relative pt-16 px-4">
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 leading-none whitespace-nowrap">狩獵覺醒排行榜</p>
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵覺醒排行榜</p>
             <h2 className={`font-headline-lg text-primary font-bold tracking-wider uppercase leading-none ${dashboardData.name.length > 4 ? 'text-xl mt-1' : 'text-3xl'}`}>{dashboardData.name}</h2>
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
             <p className="font-headline-lg text-primary text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{dashboardData.weeks}<span className="text-[10px] font-normal lowercase tracking-normal">weeks</span></p>
           </div>
         </div>
@@ -783,7 +783,7 @@ export default function BasicMissionPage() {
                 animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
               }
             `}</style>
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 leading-none">{hunterRank}</p>
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none">{hunterRank}</p>
             <div className="flex items-center gap-2">
               <h2 
                 key={selectedPersonalHunter}
@@ -809,7 +809,7 @@ export default function BasicMissionPage() {
             )}
           </div>
           <div className="text-right flex flex-col justify-end">
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.2em] mb-3 uppercase leading-none">累積覺醒點數</p>
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 uppercase leading-none">累積覺醒點數</p>
             <p 
               key={selectedPersonalHunter}
               className="font-headline-lg text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none animate-text-reveal" 
@@ -825,7 +825,7 @@ export default function BasicMissionPage() {
         <section className={`space-y-[18px] mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
           <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵日誌</h2>
+              <h2 className="text-primary text-[12px] font-bold tracking-[0.1em] uppercase">狩獵日誌</h2>
               <div className="relative flex items-center gap-2">
                 <span 
                   className="text-[10px] text-[#efe0d2] font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
@@ -866,7 +866,7 @@ export default function BasicMissionPage() {
           </div>
           <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵紀錄</h2>
+              <h2 className="text-primary text-[12px] font-bold tracking-[0.1em] uppercase">狩獵紀錄</h2>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <PersonalIndicatorCard label="精" symbol={recAcc} note={pNotes[10]} />
@@ -875,7 +875,7 @@ export default function BasicMissionPage() {
           </div>
           <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-primary text-xs font-bold tracking-[0.3em] uppercase">狩獵任務</h2>
+              <h2 className="text-primary text-[12px] font-bold tracking-[0.1em] uppercase">狩獵任務</h2>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <PersonalIndicatorCard label="任務完成度" symbol={taskCompletion} note={pNotes[15]} isSymbolText />
@@ -897,7 +897,7 @@ export default function BasicMissionPage() {
         {/* Team Module */}
         <section className={`space-y-[18px] mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm shadow-[0_0_15px_rgba(243,156,18,0.05)]">
-            <h3 className="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">團隊狀態</h3>
+            <h3 className="text-primary text-[12px] font-bold tracking-[0.1em] uppercase mb-4">團隊狀態</h3>
             <div className="flex gap-4">
               <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
                 <p className="text-[10px] text-primary uppercase tracking-wider mb-1">任務完成度</p>
@@ -918,7 +918,7 @@ export default function BasicMissionPage() {
           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm">
             <div className="flex justify-between mb-6 items-baseline relative">
               <div className="relative">
-                <h3 className="text-primary font-bold tracking-widest uppercase mb-1 text-xs">狩獵分析</h3>
+                <h3 className="text-primary font-bold tracking-[0.1em] uppercase mb-1 text-[12px]">狩獵分析</h3>
                 <div className="flex items-center gap-3">
                   <span
                     className="font-bold text-3xl cursor-pointer hover:opacity-80 transition-opacity animate-text-reveal"
@@ -1000,7 +1000,7 @@ export default function BasicMissionPage() {
               )}
             </div>
             <div className="pt-4 border-t border-primary/20 flex justify-between items-baseline">
-              <span className="text-[12px] text-primary uppercase tracking-[0.2em]">區間累積覺醒點數</span>
+              <span className="text-[12px] text-primary uppercase tracking-[0.1em]">區間累積覺醒點數</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-primary font-bold text-2xl tracking-tighter">
                   {analysisData ? analysisData.cumulativeAwakening : "0.0"}
