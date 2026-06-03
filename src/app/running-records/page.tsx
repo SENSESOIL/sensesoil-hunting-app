@@ -589,8 +589,8 @@ export default function RunningRecordsPage() {
           </div>
         </section>
 
-        {/* Individual Module Content (Monthly Record) */}
-        <section className={`mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
+        {/* Individual Module Content (Monthly Record) - Now in Team View */}
+        <section className={`mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="p-5 border border-primary/30 bg-[#121212] font-display rounded-[8px] shadow-[0_0_15px_rgba(243,156,18,0.05)]">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-white text-xl font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
