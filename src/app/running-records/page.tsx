@@ -376,8 +376,7 @@ export default function RunningRecordsPage() {
       }
     });
 
-    // 2. Calculate streak
-    let streakWeeks = 0;
+    // 2. Calculate MAX streak for Top Left
     const weeklyActivity = new Set<number>();
     personalRecords.forEach((r: any) => {
       if (r.distance > 0) {
@@ -389,17 +388,27 @@ export default function RunningRecordsPage() {
       }
     });
 
-    const { start: thisWeekStart } = getWeekRange(targetDate);
-    const lastWeekStart = thisWeekStart - 7 * 24 * 60 * 60 * 1000;
+    const sortedWeeks = Array.from(weeklyActivity).sort((a, b) => a - b);
+    let maxStreakWeeks = 0;
+    let tempStreak = 0;
+    let previousWeek: number | null = null;
     
-    let checkWeek = thisWeekStart;
-    if (!weeklyActivity.has(thisWeekStart) && weeklyActivity.has(lastWeekStart)) {
-      checkWeek = lastWeekStart;
-    }
-
-    while (weeklyActivity.has(checkWeek)) {
-      streakWeeks++;
-      checkWeek -= 7 * 24 * 60 * 60 * 1000;
+    for (const week of sortedWeeks) {
+       if (previousWeek === null) {
+           tempStreak = 1;
+       } else {
+           if (week - previousWeek === 7 * 24 * 60 * 60 * 1000) {
+               tempStreak++;
+           } else {
+               tempStreak = 1;
+           }
+       }
+       if (new Date(week).getFullYear() === currentYear) {
+           if (tempStreak > maxStreakWeeks) {
+               maxStreakWeeks = tempStreak;
+           }
+       }
+       previousWeek = week;
     }
 
     // 3. Calendar for current month
@@ -445,21 +454,48 @@ export default function RunningRecordsPage() {
     const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
     
     const totalRows = calendarDays.length / 7;
-    const currentDayIndex = calendarDays.findIndex(d => 
-      d.isCurrentMonth && 
-      d.day === realNow.getDate() && 
-      currentMonth === realNow.getMonth() && 
-      currentYear === realNow.getFullYear()
-    );
-    const isPastMonth = currentYear < realNow.getFullYear() || (currentYear === realNow.getFullYear() && currentMonth < realNow.getMonth());
-    const currentRowIndex = currentDayIndex !== -1 
-      ? Math.floor(currentDayIndex / 7) 
-      : (isPastMonth ? totalRows - 1 : -1);
+    const isCurrentMonthReal = currentYear === realNow.getFullYear() && currentMonth === realNow.getMonth();
+    
+    let currentRowIndex = -1;
+    if (isCurrentMonthReal) {
+       const currentDayIndex = calendarDays.findIndex(d => d.isCurrentMonth && d.day === realNow.getDate());
+       currentRowIndex = currentDayIndex !== -1 ? Math.floor(currentDayIndex / 7) : (totalRows - 1);
+    } else if (currentYear < realNow.getFullYear() || (currentYear === realNow.getFullYear() && currentMonth < realNow.getMonth())) {
+       // Past month: find the last active day
+       for (let i = calendarDays.length - 1; i >= 0; i--) {
+          if (calendarDays[i].isCurrentMonth && calendarDays[i].active) {
+             currentRowIndex = Math.floor(i / 7);
+             break;
+          }
+       }
+    }
+
+    let currentMonthStreak = 0;
+    if (currentRowIndex >= 0) {
+       const rowStartDay = calendarDays[currentRowIndex * 7];
+       let rowDate;
+       if (rowStartDay.id.startsWith('prev-')) rowDate = new Date(currentYear, currentMonth - 1, rowStartDay.day);
+       else if (rowStartDay.id.startsWith('curr-')) rowDate = new Date(currentYear, currentMonth, rowStartDay.day);
+       else rowDate = new Date(currentYear, currentMonth + 1, rowStartDay.day);
+       
+       const { start: targetStreakWeekStart } = getWeekRange(rowDate);
+       const lastWeekStart = targetStreakWeekStart - 7 * 24 * 60 * 60 * 1000;
+       
+       let checkWeek = targetStreakWeekStart;
+       if (!weeklyActivity.has(targetStreakWeekStart) && weeklyActivity.has(lastWeekStart)) {
+         checkWeek = lastWeekStart;
+       }
+       while (weeklyActivity.has(checkWeek)) {
+         currentMonthStreak++;
+         checkWeek -= 7 * 24 * 60 * 60 * 1000;
+       }
+    }
 
     return {
       monthLabel: `${monthNames[currentMonth]} ${currentYear}`,
       yearlyActivities,
-      streakWeeks,
+      maxStreakWeeks,
+      currentMonthStreak,
       calendarDays,
       totalRows,
       currentRowIndex
@@ -644,7 +680,7 @@ export default function RunningRecordsPage() {
               <div className="flex flex-col">
                 <span className="text-[#efe0d2]/70 text-xs mb-1">連續紀錄</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.streakWeeks}</span>
+                  <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.maxStreakWeeks}</span>
                   <span className="text-white text-sm font-bold">週</span>
                 </div>
               </div>
@@ -689,7 +725,8 @@ export default function RunningRecordsPage() {
                     {/* Left Calendar Days */}
                     <div className="flex justify-between flex-1 mr-6 sm:mr-10 md:mr-16">
                       {rowDays.map((d) => {
-                         const isToday = d.isCurrentMonth && d.day === new Date().getDate();
+                         const realNow = new Date();
+                         const isToday = d.isCurrentMonth && d.day === realNow.getDate() && selectedCalendarDate.getMonth() === realNow.getMonth() && selectedCalendarDate.getFullYear() === realNow.getFullYear();
                          return (
                            <div key={d.id} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
                              {d.active ? (
@@ -712,7 +749,7 @@ export default function RunningRecordsPage() {
                     {/* Right Streak Cell */}
                     <div className="w-7 sm:w-8 flex justify-center relative shrink-0">
                        {/* Bar segment */}
-                       {monthlyCalendarData.streakWeeks > 0 && (isCovered || isCurrentRow) && (
+                       {monthlyCalendarData.currentMonthStreak > 0 && (isCovered || isCurrentRow) && (
                          <div 
                            className={`absolute left-1/2 -translate-x-1/2 w-full ${isFirstRow ? 'rounded-t-full' : ''} z-10`}
                            style={{
@@ -724,14 +761,14 @@ export default function RunningRecordsPage() {
                        )}
 
                        {/* Circle */}
-                       {monthlyCalendarData.streakWeeks > 0 && isCurrentRow ? (
+                       {monthlyCalendarData.currentMonthStreak > 0 && isCurrentRow ? (
                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#f39c12] relative z-20 flex items-center justify-center shadow-[0_0_10px_rgba(243,156,18,0.5)]">
                            <span className="text-black font-extrabold text-[12px] sm:text-[13px] leading-none pt-0.5">
-                             {monthlyCalendarData.streakWeeks}
+                             {monthlyCalendarData.currentMonthStreak}
                            </span>
                          </div>
-                       ) : isCovered ? (
-                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 relative z-20 bg-[#121212]"></div>
+                       ) : (monthlyCalendarData.currentMonthStreak > 0 && isCovered) ? (
+                         null
                        ) : (
                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 relative z-20"></div>
                        )}
