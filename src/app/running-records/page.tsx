@@ -146,6 +146,43 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
   );
 };
 
+const YearlyBarChart = ({ data }: { data: {label: string, value: number}[] }) => {
+  const maxVal = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div className="w-full h-[220px] flex items-end justify-between px-2 pt-12 pb-12 relative mt-4">
+      {data.map((d, i) => {
+        const heightPct = (d.value / maxVal) * 100;
+        const isActive = i === data.length - 1; 
+        return (
+          <div key={i} className="flex flex-col items-center flex-1 h-full relative">
+            <div className="w-full h-full flex flex-col justify-end items-center relative">
+              {d.value > 0 && (
+                <div 
+                  className={`w-[2px] relative ${isActive ? 'bg-primary' : 'bg-white'}`}
+                  style={{ height: `${heightPct}%` }}
+                >
+                  {isActive && (
+                    <div className="absolute -top-1 -left-[4px] w-2.5 h-2.5 bg-primary rounded-full" />
+                  )}
+                  {isActive && (
+                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 rotate-[-90deg] origin-bottom text-[10px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: '100%', marginBottom: '8px' }}>
+                       {Math.round(d.value)} HRS
+                     </div>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Month Label */}
+            <div className="absolute -bottom-8 text-[10px] tracking-widest font-mono rotate-[-90deg] origin-center" style={{ color: isActive ? '#f39c12' : 'white', marginTop: '16px' }}>
+              {d.label}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export default function RunningRecordsPage() {
   const router = useRouter();
   const [view, setView] = useState<"individual" | "team">("team");
@@ -376,6 +413,31 @@ export default function RunningRecordsPage() {
     }
 
     return past12;
+  }, [personalRecords]);
+
+  const past12MonthsData = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const months = [];
+    
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(currentYear, currentMonth - i, 1);
+      
+      const monthRecords = personalRecords.filter((r: any) => {
+        const t = new Date(r.date);
+        return !isNaN(t.getTime()) && t.getFullYear() === d.getFullYear() && t.getMonth() === d.getMonth();
+      });
+      
+      const totalMinutes = monthRecords.reduce((sum: number, r: any) => sum + parseFloat(r.timeStr || "0"), 0);
+      const totalHours = totalMinutes / 60;
+      
+      months.push({
+        label: d.toLocaleString('en-US', { month: 'short' }).toUpperCase(),
+        value: totalHours,
+      });
+    }
+    return months;
   }, [personalRecords]);
 
   const monthlyCalendarData = useMemo(() => {
@@ -677,6 +739,10 @@ export default function RunningRecordsPage() {
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[0]?.label}</span>
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[5]?.label}</span>
                <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-bold tracking-[0.1em]">{past12WeeksData[11]?.label}</span>
+            </div>
+            
+            <div className="mt-8 border-t border-primary/20 pt-8">
+              <YearlyBarChart data={past12MonthsData} />
             </div>
             </div>
           </div>
