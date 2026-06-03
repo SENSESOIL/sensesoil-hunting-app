@@ -633,10 +633,12 @@ export default function RunningRecordsPage() {
                     <div key={d.id} className="aspect-square flex items-center justify-center">
                       {d.active ? (
                         <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="w-[18px] h-[18px] text-black fill-current" style={{ strokeWidth: "16", stroke: "currentColor", fill: "none" }}>
-                            <path d="M236.43,160.7l-11.45,32A12,12,0,0,1,213.73,200H104a44.05,44.05,0,0,1-44-44V112a4,4,0,0,1,4-4h72.19a19.74,19.74,0,0,1,17.2,10.12l21.61,36.81a4,4,0,0,0,3.44,2l42.66.86a12,12,0,0,1,10.65,6.58A12.18,12.18,0,0,1,236.43,160.7ZM68,116v40a36,36,0,0,0,36,36H213.73a4,4,0,0,0,3.75-2.43l11.45-32a4,4,0,0,0-.44-3.79,4,4,0,0,0-3.55-2.19l-42.66-.86a12,12,0,0,1-10.33-5.91l-21.61-36.81A11.83,11.83,0,0,0,140.19,116Z"/>
-                            <path d="M128,144a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h32A8,8,0,0,1,128,144Z"/>
-                            <path d="M136,176a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h40A8,8,0,0,1,136,176Z"/>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="w-[16px] h-[16px]" fill="none" stroke="black" strokeWidth="28" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M64,380 C64,380 80,320 140,300 C200,280 220,260 240,220 C260,180 300,160 340,170 C380,180 420,200 440,220 C460,240 470,270 470,300 C470,330 460,360 440,380 C420,400 380,410 340,400 C300,390 260,400 220,410 C180,420 140,420 100,410 C80,405 64,395 64,380 Z"/>
+                            <line x1="310" y1="200" x2="330" y2="170"/>
+                            <line x1="340" y1="190" x2="355" y2="162"/>
+                            <line x1="370" y1="192" x2="380" y2="165"/>
+                            <line x1="395" y1="200" x2="402" y2="175"/>
                           </svg>
                         </div>
                       ) : (
@@ -649,44 +651,45 @@ export default function RunningRecordsPage() {
                 </div>
               </div>
               
-              {/* Right Flame Column (1 column, same rows) */}
-              <div className="w-10 sm:w-11 ml-2 shrink-0 flex flex-col">
-                 <div className="h-[16px] mb-3"></div> {/* Header spacer to match 'M T W...' height (text-xs is 16px) */}
-                 <div 
-                   className="flex-1 grid grid-cols-1 gap-y-3 relative" 
-                   style={{ gridTemplateRows: `repeat(${monthlyCalendarData.totalRows}, minmax(0, 1fr))` }}
-                 >
-                   {/* Background Circles for the right column */}
-                   {Array.from({ length: monthlyCalendarData.totalRows }).map((_, i) => (
-                     <div key={i} className="flex items-center justify-center aspect-square" style={{ gridRow: i + 1, gridColumn: 1 }}>
-                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10"></div>
-                     </div>
-                   ))}
-                   
-                   {/* Streak Pill */}
-                   {monthlyCalendarData.streakWeeks > 0 && (() => {
-                     const goesToTop = monthlyCalendarData.currentRowIndex + 2 - monthlyCalendarData.streakWeeks <= 1;
-                     return (
-                     <div 
-                       className="bg-gradient-to-t from-[#f39c12] via-[#f39c12]/80 to-[#f39c12]/20 rounded-full relative z-10 mx-auto"
-                       style={{ 
-                         gridRowStart: Math.max(1, monthlyCalendarData.currentRowIndex + 2 - monthlyCalendarData.streakWeeks),
-                         gridRowEnd: monthlyCalendarData.currentRowIndex + 2,
-                         gridColumn: 1,
-                         width: '100%',
-                         marginTop: goesToTop ? '-28px' : '0'
-                       }}
-                     >
-                       <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 w-[140%] aspect-square flex flex-col items-center justify-end">
-                         <svg viewBox="0 0 24 24" className="w-full h-auto text-[#f39c12] drop-shadow-[0_2px_8px_rgba(243,156,18,0.8)] fill-current">
-                           <path d="M17.5,11.5 C17.5,7.5 14,4.5 12,0 C12,0 6.5,5.5 6.5,11 C6.5,13.5 7.5,15.5 9.5,17 C9,15.5 9,14 9.5,13 C9.5,13 14,18 12,22 C15.5,20 18,16 18,11.5 Z"/>
-                         </svg>
-                         <span className="absolute bottom-[18%] left-1/2 -translate-x-1/2 text-black font-extrabold text-[12px] sm:text-[13px] leading-none">
-                           {monthlyCalendarData.streakWeeks}
-                         </span>
+              {/* Right Flame Column */}
+              <div className="w-12 sm:w-14 ml-1 shrink-0 flex flex-col">
+                 <div className="h-[16px] mb-3"></div>
+                 <div className="flex-1 flex flex-col relative">
+                   {/* Row circles (always visible) */}
+                   <div 
+                     className="grid grid-cols-1 gap-y-3 w-full" 
+                     style={{ gridTemplateRows: `repeat(${monthlyCalendarData.totalRows}, minmax(0, 1fr))` }}
+                   >
+                     {Array.from({ length: monthlyCalendarData.totalRows }).map((_, i) => (
+                       <div key={i} className="flex items-center justify-center aspect-square">
+                         <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10"></div>
                        </div>
-                     </div>
-                   )})()}
+                     ))}
+                   </div>
+
+                   {/* Streak bar + flame overlay (positioned absolutely behind circles) */}
+                   {monthlyCalendarData.streakWeeks > 0 && (() => {
+                     const streakStartRow = Math.max(0, monthlyCalendarData.currentRowIndex + 1 - monthlyCalendarData.streakWeeks);
+                     const streakEndRow = monthlyCalendarData.currentRowIndex + 1;
+                     const topPercent = (streakStartRow / monthlyCalendarData.totalRows) * 100;
+                     const bottomPercent = ((monthlyCalendarData.totalRows - streakEndRow) / monthlyCalendarData.totalRows) * 100;
+                     return (
+                       <div className="absolute inset-0 flex flex-col items-center pointer-events-none" style={{ top: `${topPercent}%`, bottom: `${bottomPercent}%` }}>
+                         {/* Vertical bar */}
+                         <div className="w-[36px] sm:w-[40px] flex-1 rounded-full bg-gradient-to-t from-[#f39c12] via-[#f39c12]/70 to-[#f39c12]/25 relative">
+                           {/* Flame icon at the bottom, overlapping the bar's bottom edge */}
+                           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] flex items-center justify-center">
+                             <svg viewBox="0 0 512 512" className="w-full h-full drop-shadow-[0_2px_6px_rgba(243,156,18,0.7)]">
+                               <path d="M256,16 C256,16 396,176 396,320 C396,420 336,496 256,496 C176,496 116,420 116,320 C116,176 256,16 256,16 Z M256,496 C306,496 346,456 346,400 C346,340 296,280 256,240 C216,280 166,340 166,400 C166,456 206,496 256,496 Z" fill="#f39c12" fillRule="evenodd"/>
+                             </svg>
+                             <span className="absolute inset-0 flex items-center justify-center text-black font-extrabold text-[13px] sm:text-[14px] pt-1">
+                               {monthlyCalendarData.streakWeeks}
+                             </span>
+                           </div>
+                         </div>
+                       </div>
+                     );
+                   })()}
                  </div>
               </div>
             </div>
