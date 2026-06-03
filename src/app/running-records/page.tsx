@@ -868,14 +868,14 @@ export default function RunningRecordsPage() {
               <div className="flex flex-col whitespace-nowrap">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">距離</p>
                 <div className="flex items-baseline">
-                  <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">{selectedWeek?.distance || "0.00"}</span>
-                  <span className="text-[12px] text-white font-bold ml-0.5">km</span>
+                  <span className="text-[22px] sm:text-3xl text-white tracking-tighter">{selectedWeek?.distance || "0.00"}</span>
+                  <span className="text-[12px] text-white ml-0.5">km</span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">時間</p>
                 <div className="flex items-baseline">
-                  <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">
+                  <span className="text-[22px] sm:text-3xl text-white tracking-tighter">
                     {(() => {
                       const str = selectedWeek?.timeFormatted || "0m";
                       const parts = str.match(/(\d+)([hm])/g);
@@ -886,7 +886,7 @@ export default function RunningRecordsPage() {
                         return (
                           <span key={i} className="inline-flex items-baseline">
                             {match[1]}
-                            <span className="text-[12px] text-white font-bold ml-0.5 mr-1">{match[2]}</span>
+                            <span className="text-[12px] text-white ml-0.5 mr-1">{match[2]}</span>
                           </span>
                         );
                       });
@@ -897,15 +897,15 @@ export default function RunningRecordsPage() {
               <div className="flex flex-col whitespace-nowrap">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">配速</p>
                 <div className="flex items-baseline">
-                  <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">{selectedWeek?.pace || "--:--"}</span>
+                  <span className="text-[22px] sm:text-3xl text-white tracking-tighter">{selectedWeek?.pace || "--:--"}</span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap text-right items-end">
                 <div className="text-left">
                   <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">爬升</p>
                   <div className="flex items-baseline">
-                    <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">{selectedWeek?.elevation || "0"}</span>
-                    <span className="text-[12px] text-white font-bold ml-0.5">m</span>
+                    <span className="text-[22px] sm:text-3xl text-white tracking-tighter">{selectedWeek?.elevation || "0"}</span>
+                    <span className="text-[12px] text-white ml-0.5">m</span>
                   </div>
                 </div>
               </div>
