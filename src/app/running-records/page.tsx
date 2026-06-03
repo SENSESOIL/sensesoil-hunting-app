@@ -641,7 +641,7 @@ export default function RunningRecordsPage() {
         {/* Top Header - Team View */}
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
-            <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵覺醒排行榜</p>
+            <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵覺醒週排行榜</p>
             <h2 className={`font-headline-lg text-white font-bold tracking-wider uppercase leading-none ${dashboardData.name.length > 4 ? 'text-xl mt-1' : 'text-3xl'}`}>{dashboardData.name}</h2>
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
