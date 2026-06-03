@@ -763,7 +763,7 @@ export default function RunningRecordsPage() {
           <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div>
               <div className="flex justify-between items-center mb-6">
-                <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] leading-none">公會排行榜</p>
+                <p className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none">公會排行榜</p>
                 <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
                   <button 
                     onClick={() => setLeaderboardMetric('distance')}
@@ -828,7 +828,7 @@ export default function RunningRecordsPage() {
             <div className="flex justify-between items-start mb-8 font-display">
               <div className="flex flex-col relative">
                 <p 
-                  className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none cursor-pointer hover:opacity-80 transition-opacity inline-block"
+                  className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] mb-3 leading-none cursor-pointer hover:opacity-80 transition-opacity inline-block"
                   onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
                 >
                   狩獵分析
