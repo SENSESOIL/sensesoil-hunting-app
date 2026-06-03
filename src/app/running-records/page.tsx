@@ -646,7 +646,7 @@ export default function RunningRecordsPage() {
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
             <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
-            <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{dashboardData.weeks}<span className="text-[10px] font-normal lowercase tracking-normal">weeks</span></p>
+            <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{dashboardData.weeks}</p>
           </div>
         </div>
 
@@ -695,7 +695,7 @@ export default function RunningRecordsPage() {
             <div className="mb-8">
             <div className="flex justify-between items-end mb-8 font-display">
               <div className="flex flex-col relative">
-                <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none">狩獵分析</p>
+                <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 leading-none">狩獵分析</p>
                 <div className="flex items-center gap-2">
                   <h2 
                     key={selectedPersonalHunter}
@@ -726,27 +726,27 @@ export default function RunningRecordsPage() {
             </div>
             <div className="flex justify-between w-full items-start">
               <div className="flex flex-col whitespace-nowrap">
-                <p className="text-[12px] text-white tracking-[0.1em] mb-1">距離</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">距離</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">{selectedWeek?.distance || "0.00"}</span>
                   <span className="text-[12px] text-white font-bold ml-0.5">km</span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap">
-                <p className="text-[12px] text-white tracking-[0.1em] mb-1">時間</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">時間</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">{selectedWeek?.timeFormatted || "0m"}</span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap">
-                <p className="text-[12px] text-white tracking-[0.1em] mb-1">配速</p>
+                <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">配速</p>
                 <div className="flex items-baseline">
                   <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">{selectedWeek?.pace || "--:--"}</span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap text-right items-end">
                 <div className="text-left">
-                  <p className="text-[12px] text-white tracking-[0.1em] mb-1">爬升</p>
+                  <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">爬升</p>
                   <div className="flex items-baseline">
                     <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">{selectedWeek?.elevation || "0"}</span>
                     <span className="text-[12px] text-white font-bold ml-0.5">m</span>
