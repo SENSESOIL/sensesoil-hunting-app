@@ -618,6 +618,76 @@ export default function RunningRecordsPage() {
 
   const selectedWeek = past12WeeksData[selectedChartIndex] || past12WeeksData[11];
 
+  const [leaderboardMetric, setLeaderboardMetric] = useState<"distance" | "pace" | "elevation">("distance");
+
+  const guildLeaderboardData = useMemo(() => {
+    if (!runningData || runningData.length === 0) return [];
+
+    const normalizeName = (name: string) => {
+      if (!name) return '';
+      let n = name.replace(/[\.\s]/g, '').toUpperCase();
+      if (n === 'WWENJUN' || n === 'WEIWENJUN') return '魏文軍';
+      if (n === '盧政恆') return '盧政恒';
+      return n;
+    };
+
+    const now = new Date();
+    const d = new Date(now);
+    d.setDate(now.getDate() - (11 - selectedChartIndex) * 7);
+    const { start, end } = getWeekRange(d);
+
+    const statsByHunter: Record<string, { distance: number, time: number, elevation: number }> = {};
+
+    runningData.forEach((r: any) => {
+      const name = normalizeName(r.name);
+      if (!name || name === 'SENSESOIL' || name.includes('COMPANY')) return;
+      
+      const rt = new Date(r.date).getTime();
+      if (rt >= start && rt <= end) {
+        if (!statsByHunter[name]) {
+          statsByHunter[name] = { distance: 0, time: 0, elevation: 0 };
+        }
+        statsByHunter[name].distance += (r.distance || 0);
+        statsByHunter[name].time += parseFloat(r.timeStr || "0");
+        statsByHunter[name].elevation += (r.elevation || 0);
+      }
+    });
+
+    let result = Object.entries(statsByHunter).map(([name, stats]) => {
+      let paceVal = stats.distance > 0 ? (stats.time / stats.distance) : 0;
+      return {
+        name,
+        distance: stats.distance,
+        time: stats.time,
+        elevation: stats.elevation,
+        paceRaw: paceVal,
+        paceFormatted: calculatePace(stats.time, stats.distance)
+      };
+    }).filter(r => r.distance > 0);
+
+    if (leaderboardMetric === 'distance') {
+      result.sort((a, b) => b.distance - a.distance);
+    } else if (leaderboardMetric === 'elevation') {
+      result.sort((a, b) => b.elevation - a.elevation);
+    } else if (leaderboardMetric === 'pace') {
+      result.sort((a, b) => a.paceRaw - b.paceRaw);
+    }
+
+    const maxVal = result.length > 0 ? (
+      leaderboardMetric === 'distance' ? result[0].distance :
+      leaderboardMetric === 'elevation' ? result[0].elevation :
+      result[result.length - 1].paceRaw
+    ) : 1;
+
+    return result.map((item, idx) => ({
+      ...item,
+      rank: idx + 1,
+      barPct: maxVal > 0 ? (leaderboardMetric === 'distance' ? (item.distance / maxVal) * 100 :
+              leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
+              (item.paceRaw / maxVal) * 100) : 0 
+    }));
+  }, [runningData, selectedChartIndex, leaderboardMetric]);
+
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
@@ -693,6 +763,67 @@ export default function RunningRecordsPage() {
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div className="mb-8">
+            <div className="mb-12">
+              <div className="flex justify-between items-center mb-6">
+                <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] leading-none">公會排行榜</p>
+                <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
+                  <button 
+                    onClick={() => setLeaderboardMetric('distance')}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wider transition-colors ${leaderboardMetric === 'distance' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                  >距離</button>
+                  <button 
+                    onClick={() => setLeaderboardMetric('pace')}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wider transition-colors ${leaderboardMetric === 'pace' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                  >配速</button>
+                  <button 
+                    onClick={() => setLeaderboardMetric('elevation')}
+                    className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wider transition-colors ${leaderboardMetric === 'elevation' ? 'bg-primary text-black' : 'text-white/60 hover:text-white'}`}
+                  >爬升</button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {guildLeaderboardData.length > 0 ? guildLeaderboardData.map((item) => (
+                  <div key={item.name} className="flex items-center w-full gap-3">
+                    <span className="text-[#efe0d2]/70 text-[12px] font-mono w-4 text-right shrink-0">{item.rank}</span>
+                    <div className="w-6 h-6 rounded-full bg-primary/20 border border-primary text-primary flex items-center justify-center shrink-0">
+                      <span className="text-[12px] font-bold">{item.name.slice(-1)}</span>
+                    </div>
+                    <div className="flex-1 h-3 bg-primary/10 rounded-r-sm overflow-hidden flex relative">
+                      <div 
+                        className="h-full bg-primary shadow-[0_0_8px_rgba(243,156,18,0.8)] transition-all duration-700 ease-out" 
+                        style={{ width: `${item.barPct}%` }}
+                      ></div>
+                    </div>
+                    <div className="w-16 text-right shrink-0">
+                      {leaderboardMetric === 'distance' && (
+                        <div className="flex items-baseline justify-end gap-0.5">
+                          <span className="text-white text-[13px] font-bold font-mono">{item.distance.toFixed(1)}</span>
+                          <span className="text-white/70 text-[10px]">km</span>
+                        </div>
+                      )}
+                      {leaderboardMetric === 'pace' && (
+                        <div className="flex items-baseline justify-end gap-0.5">
+                          <span className="text-white text-[13px] font-bold font-mono">{item.paceFormatted}</span>
+                          <span className="text-white/70 text-[10px]">/km</span>
+                        </div>
+                      )}
+                      {leaderboardMetric === 'elevation' && (
+                        <div className="flex items-baseline justify-end gap-0.5">
+                          <span className="text-white text-[13px] font-bold font-mono">{item.elevation.toFixed(0)}</span>
+                          <span className="text-white/70 text-[10px]">m</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center text-primary/50 text-xs py-4">本週暫無團隊數據</div>
+                )}
+              </div>
+            </div>
+
+            <hr className="border-primary/20 mb-8" />
+
             <div className="flex justify-between items-start mb-8 font-display">
               <div className="flex flex-col relative">
                 <p 
