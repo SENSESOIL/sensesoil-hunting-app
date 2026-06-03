@@ -647,48 +647,42 @@ export default function RunningRecordsPage() {
               </div>
 
               {/* Right: streak bar column */}
-              {(() => {
-                const ROW_H = 44; // px per calendar row (w-8=32 + gap-y-3=12)
-                const HEADER_H = 28; // mb-3 = 12 + text-xs row ≈ 16px
-                const TITLE_STATS_H = 100; // h3 + stats block above header
-                // Total height of the right bar = title+stats + header + all rows
-                const totalH = TITLE_STATS_H + HEADER_H + monthlyCalendarData.totalRows * ROW_H;
-                // Bottom of bar = end of currentRowIndex circle centre
-                const barBottom = monthlyCalendarData.totalRows * ROW_H - (monthlyCalendarData.currentRowIndex * ROW_H + ROW_H / 2);
-                // Circle centre Y from top for the current row
-                const circleCentreFromTop = TITLE_STATS_H + HEADER_H + monthlyCalendarData.currentRowIndex * ROW_H + ROW_H / 2;
+              <div className="w-10 sm:w-11 ml-2 shrink-0 flex flex-col relative">
+                 <div className="h-[16px] mb-3"></div> {/* Header spacer to match 'M T W...' */}
+                 
+                 <div className="flex-1 w-full relative">
+                   {/* Streak Bar (Absolute) */}
+                   {monthlyCalendarData.streakWeeks > 0 && (
+                     <div 
+                       className="absolute left-1/2 -translate-x-1/2 w-8 sm:w-9 bg-gradient-to-b from-[#f39c12]/20 via-[#f39c12]/80 to-[#f39c12] rounded-t-full z-10"
+                       style={{ 
+                         top: '-28px', // Starts at the title row (M T W T F S S)
+                         height: `calc(${((monthlyCalendarData.currentRowIndex + 0.5) / monthlyCalendarData.totalRows) * 100}% + 28px)` // Ends exactly at the center of the current row
+                       }}
+                     ></div>
+                   )}
 
-                return (
-                  <div className="w-10 sm:w-11 shrink-0 relative" style={{ height: totalH }}>
-                    {/* Orange bar: from very top to current-row circle centre */}
-                    <div
-                      className="absolute left-1/2 -translate-x-1/2 w-[36px] sm:w-[40px] rounded-full bg-gradient-to-b from-[#f39c12]/20 via-[#f39c12]/70 to-[#f39c12]"
-                      style={{ top: 0, height: circleCentreFromTop }}
-                    />
-
-                    {/* Empty circles for rows AFTER current streak week */}
-                    {Array.from({ length: monthlyCalendarData.totalRows }).map((_, i) => {
-                      if (i <= monthlyCalendarData.currentRowIndex) return null;
-                      const top = TITLE_STATS_H + HEADER_H + i * ROW_H + (ROW_H / 2) - 16;
-                      return (
-                        <div
-                          key={i}
-                          className="absolute left-1/2 -translate-x-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10"
-                          style={{ top }}
-                        />
-                      );
-                    })}
-
-                    {/* Current row: solid orange circle with streak number */}
-                    <div
-                      className="absolute left-1/2 -translate-x-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f39c12] flex items-center justify-center shadow-[0_0_12px_rgba(243,156,18,0.6)] z-10"
-                      style={{ top: circleCentreFromTop - 16 }}
-                    >
-                      <span className="text-black font-extrabold text-sm leading-none">{monthlyCalendarData.streakWeeks}</span>
-                    </div>
-                  </div>
-                );
-              })()}
+                   {/* Rows Grid */}
+                   <div 
+                     className="grid grid-cols-1 gap-y-3 w-full h-full absolute inset-0 z-20" 
+                     style={{ gridTemplateRows: `repeat(${monthlyCalendarData.totalRows}, minmax(0, 1fr))` }}
+                   >
+                     {Array.from({ length: monthlyCalendarData.totalRows }).map((_, i) => (
+                       <div key={i} className="flex items-center justify-center w-full h-full">
+                         {monthlyCalendarData.streakWeeks > 0 && i === monthlyCalendarData.currentRowIndex ? (
+                           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f39c12] flex items-center justify-center shadow-[0_0_10px_rgba(243,156,18,0.5)]">
+                             <span className="text-black font-extrabold text-[13px] sm:text-sm leading-none pt-0.5">{monthlyCalendarData.streakWeeks}</span>
+                           </div>
+                         ) : (i > monthlyCalendarData.currentRowIndex || monthlyCalendarData.streakWeeks === 0) ? (
+                           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10"></div>
+                         ) : (
+                           <div className="w-8 h-8 sm:w-9 sm:h-9"></div>
+                         )}
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+              </div>
             </div>
 
           </div>
