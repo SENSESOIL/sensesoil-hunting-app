@@ -582,6 +582,21 @@ export default function RunningRecordsPage() {
        }
     }
 
+    let monthlyDistance = 0;
+    let monthlyTime = 0;
+    personalRecords.forEach((r: any) => {
+      const d = new Date(r.date);
+      if (!isNaN(d.getTime()) && d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+        monthlyDistance += (r.distance || 0);
+        monthlyTime += parseFloat(r.timeStr || "0");
+      }
+    });
+    
+    let monthlyAveragePace = "--:--";
+    if (monthlyDistance > 0 && monthlyTime > 0) {
+      monthlyAveragePace = calculatePace(monthlyTime, monthlyDistance);
+    }
+
     return {
       monthLabel: `${currentYear} ${monthNames[currentMonth]}`,
       yearlyActivities,
@@ -589,7 +604,9 @@ export default function RunningRecordsPage() {
       currentMonthStreak,
       calendarDays,
       totalRows,
-      currentRowIndex
+      currentRowIndex,
+      monthlyDistance: monthlyDistance.toFixed(0),
+      monthlyAveragePace
     };
   }, [personalRecords, selectedCalendarDate]);
 
@@ -769,7 +786,7 @@ export default function RunningRecordsPage() {
               <h3 className="text-primary text-[22px] font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
             </div>
             
-            <div className="flex gap-8 mb-5">
+            <div className="flex flex-wrap gap-x-8 gap-y-4 mb-5">
               <div className="flex flex-col">
                 <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">連續紀錄</span>
                 <div className="flex items-baseline gap-1">
@@ -781,6 +798,19 @@ export default function RunningRecordsPage() {
                 <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">今年累計次數</span>
                 <div className="flex items-baseline">
                   <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">月跑量</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.monthlyDistance}</span>
+                  <span className="text-white text-sm font-bold">km</span>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">月均速</span>
+                <div className="flex items-baseline">
+                  <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.monthlyAveragePace}</span>
                 </div>
               </div>
             </div>
