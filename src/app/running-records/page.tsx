@@ -618,65 +618,74 @@ export default function RunningRecordsPage() {
               </div>
             </div>
             
-            {/* Calendar Grid & Streak Column Combined */}
-            <div className="grid grid-cols-8 gap-x-1 sm:gap-x-2 gap-y-3">
-              {/* Header M T W T F S S */}
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                <div key={i} className="text-center text-[#efe0d2]/60 text-xs font-bold">{day}</div>
-              ))}
-              <div></div> {/* 8th column header space */}
+            {/* Calendar & Streak Flex Layout */}
+            <div className="flex flex-col gap-y-3 w-full mt-2">
+              {/* Header Row */}
+              <div className="flex justify-between w-full">
+                {/* Left Calendar Headers */}
+                <div className="flex gap-x-3 sm:gap-x-4">
+                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                    <div key={i} className="w-7 sm:w-8 text-center text-[#efe0d2]/60 text-xs font-bold flex items-center justify-center">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                {/* Right Streak Header Space */}
+                <div className="w-7 sm:w-8 flex items-center justify-center relative"></div>
+              </div>
 
-              {/* Days Grid */}
-              {monthlyCalendarData.calendarDays.map((d, index) => {
-                const row = Math.floor(index / 7) + 2; // Rows start at 2
-                const col = (index % 7) + 1;
-                return (
-                  <div key={d.id} className="aspect-square flex items-center justify-center" style={{ gridRow: row, gridColumn: col }}>
-                    {d.active ? (
-                      <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-                        <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-                      </div>
-                    ) : (
-                      <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border ${d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
-                        <span className="text-sm">{d.day}</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Streak Column (8th column) */}
-              {Array.from({ length: monthlyCalendarData.totalRows }).map((_, i) => {
-                const row = i + 2; // Rows start at 2
-                const isFirstRow = i === 0;
-                const isCurrentRow = i === monthlyCalendarData.currentRowIndex;
-                const isCovered = i < monthlyCalendarData.currentRowIndex;
+              {/* Day Rows */}
+              {Array.from({ length: monthlyCalendarData.totalRows }).map((_, rowIndex) => {
+                const rowDays = monthlyCalendarData.calendarDays.slice(rowIndex * 7, rowIndex * 7 + 7);
+                const isFirstRow = rowIndex === 0;
+                const isCurrentRow = rowIndex === monthlyCalendarData.currentRowIndex;
+                const isCovered = rowIndex < monthlyCalendarData.currentRowIndex;
 
                 return (
-                  <div key={`streak-${i}`} className="aspect-square flex items-center justify-center relative" style={{ gridRow: row, gridColumn: 8 }}>
-                     {/* Bar segment */}
-                     {monthlyCalendarData.streakWeeks > 0 && (isCovered || isCurrentRow) && (
-                       <div 
-                         className={`absolute left-1/2 -translate-x-1/2 w-8 sm:w-9 bg-[#f39c12] opacity-80 ${isFirstRow ? 'rounded-t-full' : ''} z-10`}
-                         style={{
-                           top: isFirstRow ? '-28px' : '0px',
-                           bottom: isCurrentRow ? '50%' : '-12px',
-                         }}
-                       />
-                     )}
+                  <div key={`row-${rowIndex}`} className="flex justify-between w-full relative">
+                    {/* Left Calendar Days */}
+                    <div className="flex gap-x-3 sm:gap-x-4">
+                      {rowDays.map((d) => (
+                         <div key={d.id} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
+                           {d.active ? (
+                             <div className="w-full h-full bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+                               <span className="material-symbols-outlined text-black text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                             </div>
+                           ) : (
+                             <div className={`w-full h-full rounded-full flex items-center justify-center border ${d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
+                               <span className="text-[13px]">{d.day}</span>
+                             </div>
+                           )}
+                         </div>
+                      ))}
+                    </div>
 
-                     {/* Circle */}
-                     {monthlyCalendarData.streakWeeks > 0 && isCurrentRow ? (
-                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#f39c12] relative z-20 flex items-center justify-center shadow-[0_0_10px_rgba(243,156,18,0.5)]">
-                         <span className="text-black font-extrabold text-[13px] sm:text-sm leading-none pt-0.5">
-                           {monthlyCalendarData.streakWeeks}
-                         </span>
-                       </div>
-                     ) : isCovered ? (
-                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10 relative z-20"></div>
-                     ) : (
-                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10 relative z-20"></div>
-                     )}
+                    {/* Right Streak Cell */}
+                    <div className="w-7 sm:w-8 flex justify-center relative">
+                       {/* Bar segment */}
+                       {monthlyCalendarData.streakWeeks > 0 && (isCovered || isCurrentRow) && (
+                         <div 
+                           className={`absolute left-1/2 -translate-x-1/2 w-full bg-[#f39c12] opacity-80 ${isFirstRow ? 'rounded-t-full' : ''} z-10`}
+                           style={{
+                             top: isFirstRow ? '-28px' : '0px',
+                             bottom: isCurrentRow ? '50%' : '-12px',
+                           }}
+                         />
+                       )}
+
+                       {/* Circle */}
+                       {monthlyCalendarData.streakWeeks > 0 && isCurrentRow ? (
+                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#f39c12] relative z-20 flex items-center justify-center shadow-[0_0_10px_rgba(243,156,18,0.5)]">
+                           <span className="text-black font-extrabold text-[12px] sm:text-[13px] leading-none pt-0.5">
+                             {monthlyCalendarData.streakWeeks}
+                           </span>
+                         </div>
+                       ) : isCovered ? (
+                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 relative z-20 bg-[#121212]"></div>
+                       ) : (
+                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/10 relative z-20"></div>
+                       )}
+                    </div>
                   </div>
                 );
               })}
