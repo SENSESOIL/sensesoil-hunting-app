@@ -173,8 +173,10 @@ const YearlyBarChart = ({ data }: { data: {label: string, value: number, isActiv
               )}
             </div>
             {/* Month Label */}
-            <div className="absolute -bottom-8 text-[10px] tracking-widest font-mono rotate-[-90deg] origin-center" style={{ color: isActive ? '#f39c12' : 'white', marginTop: '16px' }}>
-              {d.label}
+            <div className="absolute -bottom-[38px] text-[10px] tracking-widest font-mono flex flex-col items-center gap-[2px]" style={{ color: isActive ? '#f39c12' : 'white', marginTop: '16px' }}>
+              {d.label.split('').map((char: string, idx: number) => (
+                <span key={idx} className="leading-none">{char}</span>
+              ))}
             </div>
           </div>
         );
@@ -435,8 +437,9 @@ export default function RunningRecordsPage() {
       const totalMinutes = monthRecords.reduce((sum: number, r: any) => sum + parseFloat(r.timeStr || "0"), 0);
       const totalHours = totalMinutes / 60;
       
+      const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
       months.push({
-        label: d.toLocaleString('en-US', { month: 'short' }).toUpperCase(),
+        label: monthNames[d.getMonth()],
         value: totalHours,
         isActive: d.getFullYear() === selectedYear && d.getMonth() === selectedMonth,
       });
