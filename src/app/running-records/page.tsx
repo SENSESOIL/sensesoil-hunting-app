@@ -757,7 +757,7 @@ export default function RunningRecordsPage() {
             </div>
           </div>
           
-          <div className="font-display mt-[20px]">
+          <div className="font-display mt-[40px]">
             <SmoothLineChart 
               key={selectedPersonalHunter}
               data={past12WeeksData} 
