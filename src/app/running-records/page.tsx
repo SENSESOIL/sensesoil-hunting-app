@@ -600,10 +600,6 @@ export default function RunningRecordsPage() {
           <div className="p-5 border border-primary/30 bg-[#121212] font-display rounded-[8px] shadow-[0_0_15px_rgba(243,156,18,0.05)]">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-white text-xl font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
-              <button className="flex items-center gap-1 border border-white/30 rounded-full px-4 py-1.5 hover:bg-white/10 transition-colors">
-                <span className="material-symbols-outlined text-white text-[16px]">ios_share</span>
-                <span className="text-white text-sm font-bold">分享</span>
-              </button>
             </div>
 
             <div className="flex gap-8 mb-6">
@@ -637,7 +633,11 @@ export default function RunningRecordsPage() {
                     <div key={d.id} className="aspect-square flex items-center justify-center">
                       {d.active ? (
                         <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-                          <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="w-[18px] h-[18px] text-black fill-current" style={{ strokeWidth: "16", stroke: "currentColor", fill: "none" }}>
+                            <path d="M236.43,160.7l-11.45,32A12,12,0,0,1,213.73,200H104a44.05,44.05,0,0,1-44-44V112a4,4,0,0,1,4-4h72.19a19.74,19.74,0,0,1,17.2,10.12l21.61,36.81a4,4,0,0,0,3.44,2l42.66.86a12,12,0,0,1,10.65,6.58A12.18,12.18,0,0,1,236.43,160.7ZM68,116v40a36,36,0,0,0,36,36H213.73a4,4,0,0,0,3.75-2.43l11.45-32a4,4,0,0,0-.44-3.79,4,4,0,0,0-3.55-2.19l-42.66-.86a12,12,0,0,1-10.33-5.91l-21.61-36.81A11.83,11.83,0,0,0,140.19,116Z"/>
+                            <path d="M128,144a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h32A8,8,0,0,1,128,144Z"/>
+                            <path d="M136,176a8,8,0,0,1-8,8H88a8,8,0,0,1,0-16h40A8,8,0,0,1,136,176Z"/>
+                          </svg>
                         </div>
                       ) : (
                         <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border ${d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
@@ -664,26 +664,29 @@ export default function RunningRecordsPage() {
                    ))}
                    
                    {/* Streak Pill */}
-                   {monthlyCalendarData.streakWeeks > 0 && (
+                   {monthlyCalendarData.streakWeeks > 0 && (() => {
+                     const goesToTop = monthlyCalendarData.currentRowIndex + 2 - monthlyCalendarData.streakWeeks <= 1;
+                     return (
                      <div 
-                       className="bg-gradient-to-t from-[#e65100]/90 via-[#e65100]/60 to-transparent rounded-full relative z-10 mx-auto"
+                       className="bg-gradient-to-t from-[#f39c12] via-[#f39c12]/80 to-[#f39c12]/20 rounded-full relative z-10 mx-auto"
                        style={{ 
                          gridRowStart: Math.max(1, monthlyCalendarData.currentRowIndex + 2 - monthlyCalendarData.streakWeeks),
                          gridRowEnd: monthlyCalendarData.currentRowIndex + 2,
                          gridColumn: 1,
-                         width: '100%'
+                         width: '100%',
+                         marginTop: goesToTop ? '-28px' : '0'
                        }}
                      >
                        <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 w-[140%] aspect-square flex flex-col items-center justify-end">
-                         <svg viewBox="0 0 24 24" className="w-full h-auto text-[#ff5a00] drop-shadow-[0_2px_8px_rgba(255,90,0,0.8)] fill-current">
-                           <path d="M12,2 C12,2 7,7 7,12 C7,14 8,16 9.5,17.5 C9,16.5 9,15 9.5,14 C9.5,14 13.5,18.5 12,23 C15,21 17.5,17 17.5,13.5 C17.5,9.5 14,6.5 12,2 Z" />
+                         <svg viewBox="0 0 24 24" className="w-full h-auto text-[#f39c12] drop-shadow-[0_2px_8px_rgba(243,156,18,0.8)] fill-current">
+                           <path d="M17.5,11.5 C17.5,7.5 14,4.5 12,0 C12,0 6.5,5.5 6.5,11 C6.5,13.5 7.5,15.5 9.5,17 C9,15.5 9,14 9.5,13 C9.5,13 14,18 12,22 C15.5,20 18,16 18,11.5 Z"/>
                          </svg>
-                         <span className="absolute bottom-[16%] left-1/2 -translate-x-1/2 text-black font-extrabold text-[12px] sm:text-[13px] leading-none">
+                         <span className="absolute bottom-[18%] left-1/2 -translate-x-1/2 text-black font-extrabold text-[12px] sm:text-[13px] leading-none">
                            {monthlyCalendarData.streakWeeks}
                          </span>
                        </div>
                      </div>
-                   )}
+                   )})()}
                  </div>
               </div>
             </div>
