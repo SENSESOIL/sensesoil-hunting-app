@@ -509,7 +509,7 @@ export default function RunningRecordsPage() {
     }
 
     return {
-      monthLabel: `${monthNames[currentMonth]} ${currentYear}`,
+      monthLabel: `${currentYear} ${monthNames[currentMonth]}`,
       yearlyActivities,
       maxStreakWeeks,
       currentMonthStreak,
@@ -689,21 +689,21 @@ export default function RunningRecordsPage() {
               className="flex items-center mb-4 cursor-pointer hover:opacity-80 transition-opacity w-max"
               onClick={() => setIsMonthSelectorOpen(true)}
             >
-              <h3 className="text-primary text-xl font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
+              <h3 className="text-primary text-[22px] font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
             </div>
             
             <div className="flex gap-8 mb-5">
               <div className="flex flex-col">
                 <span className="text-[#efe0d2]/70 text-xs mb-1">連續紀錄</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.maxStreakWeeks}</span>
+                  <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.maxStreakWeeks}</span>
                   <span className="text-white text-sm font-bold">週</span>
                 </div>
               </div>
               <div className="flex flex-col">
                 <span className="text-[#efe0d2]/70 text-xs mb-1">今年累計次數</span>
                 <div className="flex items-baseline">
-                  <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
+                  <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
                 </div>
               </div>
             </div>
