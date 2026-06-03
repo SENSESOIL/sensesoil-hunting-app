@@ -763,11 +763,11 @@ export default function BasicMissionPage() {
       <main className="relative pt-16 px-4">
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
-            <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵覺醒排行榜</p>
+            <p className="font-label-caps font-bold text-white text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵覺醒排行榜</p>
             <h2 className={`font-headline-lg text-white font-bold tracking-wider uppercase leading-none ${dashboardData.name.length > 4 ? 'text-xl mt-1' : 'text-3xl'}`}>{dashboardData.name}</h2>
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
-            <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
+            <p className="font-label-caps font-bold text-white text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
             <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{dashboardData.weeks}</p>
           </div>
         </div>
@@ -808,7 +808,7 @@ export default function BasicMissionPage() {
             )}
           </div>
           <div className="text-right flex flex-col justify-end">
-            <p className="font-label-caps text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-3 uppercase leading-none">累積覺醒點數</p>
+            <p className="font-label-caps font-bold text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-3 uppercase leading-none">累積覺醒點數</p>
             <p 
               key={selectedPersonalHunter}
               className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none animate-text-reveal" 
@@ -826,7 +826,7 @@ export default function BasicMissionPage() {
               <h2 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase">狩獵日誌</h2>
               <div className="relative flex items-center gap-2">
                 <span 
-                  className="text-[11px] text-white font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
+                  className="text-[12px] font-normal text-white font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setIsPersonalDateDropdownOpen(!isPersonalDateDropdownOpen)}
                 >
                   {selectedPersonalDate || "載入中..."}
@@ -898,14 +898,14 @@ export default function BasicMissionPage() {
             <h3 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase mb-4">團隊狀態</h3>
             <div className="flex gap-4">
               <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
-                <p className="text-[10px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">任務完成度</p>
+                <p className="text-[12px] font-normal text-[#efe0d2]/70 uppercase tracking-wider mb-1">任務完成度</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-white tracking-tighter">{dashboardData.completionRate}</span>
                   <span className="text-[10px] text-white">%</span>
                 </div>
               </div>
               <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
-                <p className="text-[10px] text-[#efe0d2]/70 uppercase tracking-wider mb-1">覺醒平均值</p>
+                <p className="text-[12px] font-normal text-[#efe0d2]/70 uppercase tracking-wider mb-1">覺醒平均值</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-white tracking-tighter">{dashboardData.averageScore}</span>
                   <span className="text-[10px] text-white">pts</span>
@@ -946,7 +946,7 @@ export default function BasicMissionPage() {
                 )}
               </div>
               <div className="text-right flex items-center gap-2 relative">
-                <span className="text-[11px] tracking-tighter font-normal flex items-center gap-1">
+                <span className="text-[12px] font-normal tracking-tighter flex items-center gap-1">
                   <span className="text-white">起算自</span>
                   <span
                     className="cursor-pointer text-white hover:opacity-80 transition-opacity"
@@ -1001,7 +1001,7 @@ export default function BasicMissionPage() {
               )}
             </div>
             <div className="pt-4 border-t border-primary/20 flex justify-between items-baseline">
-              <span className="text-[12px] text-[#efe0d2]/70 uppercase tracking-[0.1em]">區間累積覺醒點數</span>
+              <span className="font-bold text-[12px] text-[#efe0d2]/70 uppercase tracking-[0.1em]">區間累積覺醒點數</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-white font-bold text-2xl tracking-tighter">
                   {analysisData ? analysisData.cumulativeAwakening : "0.0"}
