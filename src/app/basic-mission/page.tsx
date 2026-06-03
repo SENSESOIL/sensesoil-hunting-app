@@ -924,8 +924,7 @@ export default function BasicMissionPage() {
                 </h3>
                 <div className="flex items-center gap-3">
                   <span
-                    className="font-bold text-3xl cursor-pointer hover:opacity-80 transition-opacity animate-text-reveal"
-                    style={{ color: "#efe0d2" }}
+                    className="font-bold text-primary text-3xl cursor-pointer hover:opacity-80 transition-opacity animate-text-reveal"
                     onClick={() => setIsHunterDropdownOpen(!isHunterDropdownOpen)}
                     key={selectedTeamHunter}
                   >
@@ -950,8 +949,7 @@ export default function BasicMissionPage() {
                 <span className="text-[11px] tracking-tighter font-normal flex items-center gap-1">
                   <span className="text-white">起算自</span>
                   <span
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                    style={{ color: "#efe0d2" }}
+                    className="cursor-pointer text-white hover:opacity-80 transition-opacity"
                     onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
                   >
                     {selectedStartDate || "載入中..."}
