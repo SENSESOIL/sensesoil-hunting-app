@@ -146,7 +146,7 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
   );
 };
 
-const YearlyBarChart = ({ data }: { data: {label: string, value: number, isActive?: boolean}[] }) => {
+const YearlyBarChart = ({ data, onSelect }: { data: {label: string, value: number, isActive?: boolean, date: Date}[], onSelect: (d: Date) => void }) => {
   const maxVal = Math.max(...data.map(d => d.value), 1);
   return (
     <div className="w-full h-[220px] flex items-end justify-between px-2 pt-12 pb-12 relative mt-4">
@@ -154,7 +154,11 @@ const YearlyBarChart = ({ data }: { data: {label: string, value: number, isActiv
         const heightPct = (d.value / maxVal) * 100;
         const isActive = d.isActive; 
         return (
-          <div key={i} className="flex flex-col items-center flex-1 h-full relative">
+          <div 
+            key={i} 
+            className="flex flex-col items-center flex-1 h-full relative cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => onSelect(d.date)}
+          >
             <div className="w-full h-full flex flex-col justify-end items-center relative">
               {d.value > 0 && (
                 <div 
@@ -442,6 +446,7 @@ export default function RunningRecordsPage() {
         label: monthNames[d.getMonth()],
         value: totalHours,
         isActive: d.getFullYear() === selectedYear && d.getMonth() === selectedMonth,
+        date: d,
       });
     }
     return months;
@@ -867,7 +872,10 @@ export default function RunningRecordsPage() {
             </div>
 
             <div className="mt-12">
-              <YearlyBarChart data={past12MonthsData} />
+              <YearlyBarChart 
+                data={past12MonthsData} 
+                onSelect={(d) => setSelectedCalendarDate(d)} 
+              />
             </div>
           </div>
         </section>
