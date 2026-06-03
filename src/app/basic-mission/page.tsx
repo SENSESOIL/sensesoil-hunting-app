@@ -783,12 +783,11 @@ export default function BasicMissionPage() {
                 animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
               }
             `}</style>
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none">{hunterRank}</p>
+            <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 leading-none">{hunterRank}</p>
             <div className="flex items-center gap-2">
               <h2 
                 key={selectedPersonalHunter}
-                className={`font-headline-lg text-3xl font-bold tracking-wider uppercase leading-none transition-opacity animate-text-reveal ${userRole === "admin" ? "cursor-pointer hover:opacity-80" : ""}`}
-                style={{ color: "#efe0d2" }}
+                className={`font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity animate-text-reveal ${userRole === "admin" ? "cursor-pointer hover:opacity-80" : ""}`}
                 onClick={() => { if (userRole === "admin") setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen); }}
               >
                 {selectedPersonalHunter || "載入中..."}
@@ -809,14 +808,13 @@ export default function BasicMissionPage() {
             )}
           </div>
           <div className="text-right flex flex-col justify-end">
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 uppercase leading-none">累積覺醒點數</p>
+            <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 uppercase leading-none">累積覺醒點數</p>
             <p 
               key={selectedPersonalHunter}
-              className="font-headline-lg text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none animate-text-reveal" 
-              style={{ color: "#efe0d2" }}
+              className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none animate-text-reveal" 
             >
               {personalTotalScore}
-              <span className="text-[10px] font-normal lowercase tracking-normal text-primary">pts</span>
+              <span className="text-[10px] font-normal lowercase tracking-normal text-white">pts</span>
             </p>
           </div>
         </div>
@@ -825,10 +823,10 @@ export default function BasicMissionPage() {
         <section className={`space-y-[18px] mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
           <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-primary text-[12px] font-bold tracking-[0.1em] uppercase">狩獵日誌</h2>
+              <h2 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase">狩獵日誌</h2>
               <div className="relative flex items-center gap-2">
                 <span 
-                  className="text-[11px] text-[#efe0d2] font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
+                  className="text-[11px] text-white font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setIsPersonalDateDropdownOpen(!isPersonalDateDropdownOpen)}
                 >
                   {selectedPersonalDate || "載入中..."}
@@ -866,7 +864,7 @@ export default function BasicMissionPage() {
           </div>
           <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-primary text-[12px] font-bold tracking-[0.1em] uppercase">狩獵紀錄</h2>
+              <h2 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase">狩獵紀錄</h2>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <PersonalIndicatorCard label="精" symbol={recAcc} note={pNotes[10]} />
@@ -875,7 +873,7 @@ export default function BasicMissionPage() {
           </div>
           <div className="relative border border-primary/30 p-4 bg-surface-container-low/50 backdrop-blur-sm rounded-sm">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-primary text-[12px] font-bold tracking-[0.1em] uppercase">狩獵任務</h2>
+              <h2 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase">狩獵任務</h2>
             </div>
             <div className="grid grid-cols-3 gap-4">
               <PersonalIndicatorCard label="任務完成度" symbol={taskCompletion} note={pNotes[15]} isSymbolText />
@@ -1341,7 +1339,7 @@ export default function BasicMissionPage() {
         .indicator-card .label {
             font-size: 10px;
             opacity: 0.8;
-            color: #f39c12;
+            color: #ffffff;
         }
         .sym-icon {
             font-family: 'Material Symbols Outlined';
