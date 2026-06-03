@@ -349,6 +349,85 @@ export default function RunningRecordsPage() {
     return past12;
   }, [personalRecords]);
 
+  const monthlyCalendarData = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    // 1. Calculate yearly activities
+    let yearlyActivities = 0;
+    personalRecords.forEach((r: any) => {
+      const d = new Date(r.date);
+      if (!isNaN(d.getTime()) && d.getFullYear() === currentYear && r.distance > 0) {
+        yearlyActivities++;
+      }
+    });
+
+    // 2. Calculate streak
+    let streakWeeks = 0;
+    const weeklyActivity = new Set<number>();
+    personalRecords.forEach((r: any) => {
+      if (r.distance > 0) {
+        const d = new Date(r.date);
+        if (!isNaN(d.getTime())) {
+          const { start } = getWeekRange(d);
+          weeklyActivity.add(start);
+        }
+      }
+    });
+
+    const { start: thisWeekStart } = getWeekRange(now);
+    const lastWeekStart = thisWeekStart - 7 * 24 * 60 * 60 * 1000;
+    
+    let checkWeek = thisWeekStart;
+    if (!weeklyActivity.has(thisWeekStart) && weeklyActivity.has(lastWeekStart)) {
+      checkWeek = lastWeekStart;
+    }
+
+    while (weeklyActivity.has(checkWeek)) {
+      streakWeeks++;
+      checkWeek -= 7 * 24 * 60 * 60 * 1000;
+    }
+
+    // 3. Calendar for current month
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const lastDay = new Date(currentYear, currentMonth + 1, 0);
+    
+    let startDayOfWeek = firstDay.getDay() === 0 ? 7 : firstDay.getDay();
+    
+    const calendarDays = [];
+    const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+    for (let i = startDayOfWeek - 1; i > 0; i--) {
+      calendarDays.push({ day: prevMonthLastDay - i + 1, active: false, isCurrentMonth: false, id: `prev-${i}` });
+    }
+    
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      const hasActivity = personalRecords.some((r: any) => {
+        const rDate = new Date(r.date);
+        return !isNaN(rDate.getTime()) && 
+               rDate.getFullYear() === currentYear && 
+               rDate.getMonth() === currentMonth && 
+               rDate.getDate() === i && 
+               r.distance > 0;
+      });
+      calendarDays.push({ day: i, active: hasActivity, isCurrentMonth: true, id: `curr-${i}` });
+    }
+    
+    let nextMonthDay = 1;
+    while (calendarDays.length % 7 !== 0) {
+      calendarDays.push({ day: nextMonthDay++, active: false, isCurrentMonth: false, id: `next-${nextMonthDay}` });
+    }
+
+    const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+    
+    return {
+      monthLabel: `${monthNames[currentMonth]} ${currentYear}`,
+      yearlyActivities,
+      streakWeeks,
+      calendarDays
+    };
+  }, [personalRecords]);
+
   const [selectedChartIndex, setSelectedChartIndex] = useState<number>(11);
 
   useEffect(() => {
@@ -510,11 +589,67 @@ export default function RunningRecordsPage() {
           </div>
         </section>
 
-        {/* Individual Module Content (Daily Records Placeholder) */}
-        <section className={`space-y-[18px] mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
-           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-[4px]">
-             <h3 className="text-primary text-sm font-bold tracking-[0.3em] uppercase mb-4 text-center">個人每日紀錄建置中</h3>
-           </div>
+        {/* Individual Module Content (Monthly Record) */}
+        <section className={`mb-[32px] ${view === 'team' ? 'hidden' : ''}`}>
+          <div className="p-5 border border-primary/30 bg-[#121212] font-display rounded-[8px] shadow-[0_0_15px_rgba(243,156,18,0.05)]">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-white text-xl font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
+              <button className="flex items-center gap-1 border border-white/30 rounded-full px-4 py-1.5 hover:bg-white/10 transition-colors">
+                <span className="material-symbols-outlined text-white text-[16px]">ios_share</span>
+                <span className="text-white text-sm font-bold">分享</span>
+              </button>
+            </div>
+
+            <div className="flex gap-8 mb-6">
+              <div className="flex flex-col">
+                <span className="text-[#efe0d2]/70 text-xs mb-1">連續紀錄</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.streakWeeks}</span>
+                  <span className="text-white text-sm font-bold">週</span>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[#efe0d2]/70 text-xs mb-1">今年累計次數</span>
+                <div className="flex items-baseline">
+                  <span className="text-white text-2xl font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="flex-1">
+                {/* Header M T W T F S S */}
+                <div className="grid grid-cols-7 gap-2 mb-3">
+                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                    <div key={i} className="text-center text-[#efe0d2]/60 text-xs font-bold">{day}</div>
+                  ))}
+                </div>
+                {/* Days Grid */}
+                <div className="grid grid-cols-7 gap-y-3 gap-x-2">
+                  {monthlyCalendarData.calendarDays.map((d) => (
+                    <div key={d.id} className="aspect-square flex items-center justify-center">
+                      {d.active ? (
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+                          <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
+                        </div>
+                      ) : (
+                        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border ${d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white font-bold' : 'border-transparent text-white/20'}`}>
+                          <span className="text-sm">{d.day}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Flame Column */}
+              <div className="w-[50px] shrink-0 flex flex-col justify-end pb-3 pl-2 sm:pl-3">
+                <div className="w-full rounded-full flex flex-col items-center justify-end pb-4 pt-8 relative bg-gradient-to-t from-[#e65100] via-[#f57c00]/80 to-transparent shadow-[0_8px_15px_rgba(230,81,0,0.4)]" style={{ height: '220px' }}>
+                  <span className="material-symbols-outlined text-white text-[32px] drop-shadow-md z-10" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
+                  <span className="text-black font-extrabold text-xl leading-none mt-[-2px] z-10">{monthlyCalendarData.streakWeeks}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
       </main>
