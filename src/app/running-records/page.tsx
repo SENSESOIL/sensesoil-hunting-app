@@ -420,11 +420,17 @@ export default function RunningRecordsPage() {
 
     const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
     
+    const totalRows = calendarDays.length / 7;
+    const currentDayIndex = calendarDays.findIndex(d => d.isCurrentMonth && d.day === now.getDate());
+    const currentRowIndex = currentDayIndex !== -1 ? Math.floor(currentDayIndex / 7) : (totalRows - 1);
+
     return {
       monthLabel: `${monthNames[currentMonth]} ${currentYear}`,
       yearlyActivities,
       streakWeeks,
-      calendarDays
+      calendarDays,
+      totalRows,
+      currentRowIndex
     };
   }, [personalRecords]);
 
@@ -617,6 +623,7 @@ export default function RunningRecordsPage() {
             </div>
 
             <div className="flex gap-2">
+              {/* Left Calendar Grid (7 columns) */}
               <div className="flex-1">
                 {/* Header M T W T F S S */}
                 <div className="grid grid-cols-7 gap-2 mb-3">
@@ -633,7 +640,7 @@ export default function RunningRecordsPage() {
                           <span className="material-symbols-outlined text-black text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
                         </div>
                       ) : (
-                        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border ${d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white font-bold' : 'border-transparent text-white/20'}`}>
+                        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center border ${d.isCurrentMonth ? 'border-[#efe0d2]/30 text-white' : 'border-transparent text-white/20'}`}>
                           <span className="text-sm">{d.day}</span>
                         </div>
                       )}
@@ -641,12 +648,43 @@ export default function RunningRecordsPage() {
                   ))}
                 </div>
               </div>
-              {/* Flame Column */}
-              <div className="w-[50px] shrink-0 flex flex-col justify-end pb-3 pl-2 sm:pl-3">
-                <div className="w-full rounded-full flex flex-col items-center justify-end pb-4 pt-8 relative bg-gradient-to-t from-[#e65100] via-[#f57c00]/80 to-transparent shadow-[0_8px_15px_rgba(230,81,0,0.4)]" style={{ height: '220px' }}>
-                  <span className="material-symbols-outlined text-white text-[32px] drop-shadow-md z-10" style={{ fontVariationSettings: "'FILL' 1" }}>local_fire_department</span>
-                  <span className="text-black font-extrabold text-xl leading-none mt-[-2px] z-10">{monthlyCalendarData.streakWeeks}</span>
-                </div>
+              
+              {/* Right Flame Column (1 column, same rows) */}
+              <div className="w-10 sm:w-11 ml-2 shrink-0 flex flex-col">
+                 <div className="h-[16px] mb-3"></div> {/* Header spacer to match 'M T W...' height (text-xs is 16px) */}
+                 <div 
+                   className="flex-1 grid grid-cols-1 gap-y-3 relative" 
+                   style={{ gridTemplateRows: `repeat(${monthlyCalendarData.totalRows}, minmax(0, 1fr))` }}
+                 >
+                   {/* Background Circles for the right column */}
+                   {Array.from({ length: monthlyCalendarData.totalRows }).map((_, i) => (
+                     <div key={i} className="flex items-center justify-center aspect-square" style={{ gridRow: i + 1, gridColumn: 1 }}>
+                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-white/10"></div>
+                     </div>
+                   ))}
+                   
+                   {/* Streak Pill */}
+                   {monthlyCalendarData.streakWeeks > 0 && (
+                     <div 
+                       className="bg-gradient-to-t from-[#e65100]/90 via-[#e65100]/60 to-transparent rounded-full relative z-10 mx-auto"
+                       style={{ 
+                         gridRowStart: Math.max(1, monthlyCalendarData.currentRowIndex + 2 - monthlyCalendarData.streakWeeks),
+                         gridRowEnd: monthlyCalendarData.currentRowIndex + 2,
+                         gridColumn: 1,
+                         width: '100%'
+                       }}
+                     >
+                       <div className="absolute -bottom-2 sm:-bottom-3 left-1/2 -translate-x-1/2 w-[140%] aspect-square flex flex-col items-center justify-end">
+                         <svg viewBox="0 0 24 24" className="w-full h-auto text-[#ff5a00] drop-shadow-[0_2px_8px_rgba(255,90,0,0.8)] fill-current">
+                           <path d="M12,2 C12,2 7,7 7,12 C7,14 8,16 9.5,17.5 C9,16.5 9,15 9.5,14 C9.5,14 13.5,18.5 12,23 C15,21 17.5,17 17.5,13.5 C17.5,9.5 14,6.5 12,2 Z" />
+                         </svg>
+                         <span className="absolute bottom-[16%] left-1/2 -translate-x-1/2 text-black font-extrabold text-[12px] sm:text-[13px] leading-none">
+                           {monthlyCalendarData.streakWeeks}
+                         </span>
+                       </div>
+                     </div>
+                   )}
+                 </div>
               </div>
             </div>
           </div>
