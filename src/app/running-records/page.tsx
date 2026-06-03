@@ -743,7 +743,23 @@ export default function RunningRecordsPage() {
               <div className="flex flex-col whitespace-nowrap">
                 <p className="text-[12px] text-[#efe0d2]/70 tracking-[0.1em] mb-1">時間</p>
                 <div className="flex items-baseline">
-                  <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">{selectedWeek?.timeFormatted || "0m"}</span>
+                  <span className="text-[22px] sm:text-3xl font-bold text-white tracking-tighter">
+                    {(() => {
+                      const str = selectedWeek?.timeFormatted || "0m";
+                      const parts = str.match(/(\d+)([hm])/g);
+                      if (!parts) return str;
+                      return parts.map((part, i) => {
+                        const match = part.match(/(\d+)([hm])/);
+                        if (!match) return part;
+                        return (
+                          <span key={i} className="inline-flex items-baseline">
+                            {match[1]}
+                            <span className="text-[12px] text-white font-bold ml-0.5 mr-1">{match[2]}</span>
+                          </span>
+                        );
+                      });
+                    })()}
+                  </span>
                 </div>
               </div>
               <div className="flex flex-col whitespace-nowrap">
@@ -803,8 +819,9 @@ export default function RunningRecordsPage() {
               </div>
               <div className="flex flex-col">
                 <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">今年累計次數</span>
-                <div className="flex items-baseline">
+                <div className="flex items-baseline gap-1">
                   <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
+                  <span className="text-white text-[12px] font-bold">次</span>
                 </div>
               </div>
               <div className="flex flex-col">
