@@ -169,8 +169,8 @@ const YearlyBarChart = ({ data, onSelect }: { data: {label: string, value: numbe
                     <div className="absolute -top-[3px] -left-[3px] w-2 h-2 bg-primary rounded-full" />
                   )}
                   {isActive && (
-                     <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[10px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 24px)' }}>
-                       {d.value.toFixed(1)} HRS
+                     <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[10px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 36px)' }}>
+                       {d.value.toFixed(1)} hrs
                      </div>
                   )}
                 </div>
@@ -793,7 +793,7 @@ export default function RunningRecordsPage() {
               <h3 className="text-primary text-[22px] font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
             </div>
             
-            <div className="flex flex-wrap gap-x-8 gap-y-4 mb-5">
+            <div className="flex justify-between w-full gap-2 mb-5">
               <div className="flex flex-col">
                 <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">連續紀錄</span>
                 <div className="flex items-baseline gap-1">
