@@ -182,9 +182,23 @@ const CustomTimePicker = ({ defaultTime, inputId }: { defaultTime: string, input
 };
 
 const TaskSelect = ({ options, defaultValue, inputId }: { options: string[], defaultValue: string, inputId: string }) => {
-  const [value, setValue] = useState(defaultValue);
+  const [value, setValue] = useState(defaultValue === "X" ? "✕" : defaultValue);
   const [isOpen, setIsOpen] = useState(false);
-  const displayValue = value === "X" ? "✕" : (value || "-");
+
+  const renderValue = (val: string) => {
+    if (val === "✕" || val === "X") {
+      return (
+        <span className="material-symbols-outlined !text-[10px] text-[#efe0d2] leading-none" style={{ fontVariationSettings: "'FILL' 0" }}>
+          close
+        </span>
+      );
+    }
+    return (
+      <span className={`text-[10px] ${val === "" ? "text-primary font-bold" : "text-[#efe0d2]"}`}>
+        {val || "-"}
+      </span>
+    );
+  };
 
   return (
     <div className="relative w-full">
@@ -193,9 +207,7 @@ const TaskSelect = ({ options, defaultValue, inputId }: { options: string[], def
         onClick={() => setIsOpen(!isOpen)}
         className="w-full h-[28px] bg-surface-container-high border border-primary/30 rounded-[4px] px-1 flex items-center justify-center cursor-pointer focus:border-primary"
       >
-        <span className={`text-[10px] ${value === "" ? "text-primary font-bold" : "text-[#efe0d2]"}`}>
-          {displayValue}
-        </span>
+        {renderValue(value)}
       </div>
       {isOpen && (
         <>
@@ -204,12 +216,10 @@ const TaskSelect = ({ options, defaultValue, inputId }: { options: string[], def
             {options.map(opt => (
               <div
                 key={opt}
-                onClick={() => { setValue(opt === "✕" ? "X" : opt); setIsOpen(false); }}
+                onClick={() => { setValue(opt); setIsOpen(false); }}
                 className="px-2 py-2.5 hover:bg-primary/20 cursor-pointer flex justify-center items-center border-b border-primary/10 last:border-b-0"
               >
-                <span className={`text-[10px] ${opt === "" ? "text-primary font-bold" : "text-[#efe0d2]"}`}>
-                  {opt || "-"}
-                </span>
+                {renderValue(opt)}
               </div>
             ))}
           </div>
