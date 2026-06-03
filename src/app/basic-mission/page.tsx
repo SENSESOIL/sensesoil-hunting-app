@@ -783,7 +783,7 @@ export default function BasicMissionPage() {
                 animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
               }
             `}</style>
-            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none">{hunterRank}</p>
+            <p className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] mb-3 leading-none">{hunterRank}</p>
             <div className="flex items-center gap-2">
               <h2 
                 key={selectedPersonalHunter}
