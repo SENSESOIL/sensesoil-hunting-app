@@ -162,7 +162,7 @@ const YearlyBarChart = ({ data }: { data: {label: string, value: number, isActiv
                   style={{ height: `${heightPct}%` }}
                 >
                   {isActive && (
-                    <div className="absolute -top-1 -left-[4px] w-2.5 h-2.5 bg-primary rounded-full" />
+                    <div className="absolute -top-[3px] -left-[3px] w-2 h-2 bg-primary rounded-full" />
                   )}
                   {isActive && (
                      <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[10px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 24px)' }}>
@@ -863,7 +863,7 @@ export default function RunningRecordsPage() {
               })}
             </div>
 
-            <div className="mt-4">
+            <div className="mt-12">
               <YearlyBarChart data={past12MonthsData} />
             </div>
           </div>
