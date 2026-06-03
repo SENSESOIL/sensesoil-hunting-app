@@ -598,9 +598,9 @@ export default function BasicMissionPage() {
       }
     }
 
-    const validTimestamps = Array.from(dateMap.entries())
-      .filter(([_, maxScore]) => maxScore > 0)
-      .map(([d]) => new Date(d).getTime());
+    const validTimestamps = Array.from(dateMap.keys())
+      .map(d => new Date(d).getTime())
+      .filter(t => !isNaN(t));
 
     const maxValidTimestamp = validTimestamps.length > 0 ? Math.max(...validTimestamps) : 0;
     const startTimestamp = new Date(selectedStartDate).getTime();
