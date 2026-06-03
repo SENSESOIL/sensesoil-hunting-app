@@ -783,7 +783,7 @@ export default function BasicMissionPage() {
                 animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
               }
             `}</style>
-            <p className="font-label-caps text-white text-[12px] tracking-[0.1em] mb-3 leading-none">{hunterRank}</p>
+            <p className="font-label-caps text-primary text-[12px] tracking-[0.1em] mb-3 leading-none">{hunterRank}</p>
             <div className="flex items-center gap-2">
               <h2 
                 key={selectedPersonalHunter}
@@ -826,7 +826,7 @@ export default function BasicMissionPage() {
               <h2 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase">狩獵日誌</h2>
               <div className="relative flex items-center gap-2">
                 <span 
-                  className="text-[11px] text-white font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
+                  className="text-[11px] text-[#efe0d2]/70 font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setIsPersonalDateDropdownOpen(!isPersonalDateDropdownOpen)}
                 >
                   {selectedPersonalDate || "載入中..."}
@@ -1336,8 +1336,7 @@ export default function BasicMissionPage() {
         }
         .indicator-card .label {
             font-size: 10px;
-            opacity: 0.8;
-            color: #ffffff;
+            color: rgba(239, 224, 210, 0.7);
         }
         .sym-icon {
             font-family: 'Material Symbols Outlined';
