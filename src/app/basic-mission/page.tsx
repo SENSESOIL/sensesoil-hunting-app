@@ -808,7 +808,7 @@ export default function BasicMissionPage() {
             )}
           </div>
           <div className="text-right flex flex-col justify-end">
-            <p className="font-label-caps font-bold text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-3 uppercase leading-none">累積覺醒點數</p>
+            <p className="font-label-caps font-bold text-white text-[12px] tracking-[0.1em] mb-3 uppercase leading-none">累積覺醒點數</p>
             <p 
               key={selectedPersonalHunter}
               className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none animate-text-reveal" 
@@ -826,7 +826,7 @@ export default function BasicMissionPage() {
               <h2 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase">狩獵日誌</h2>
               <div className="relative flex items-center gap-2">
                 <span 
-                  className="text-[12px] font-normal text-white font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
+                  className="text-[12px] font-bold text-white font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setIsPersonalDateDropdownOpen(!isPersonalDateDropdownOpen)}
                 >
                   {selectedPersonalDate || "載入中..."}
