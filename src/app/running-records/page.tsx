@@ -165,6 +165,7 @@ export default function RunningRecordsPage() {
 
   const [selectedPersonalHunter, setSelectedPersonalHunter] = useState<string>("");
   const [isPersonalHunterDropdownOpen, setIsPersonalHunterDropdownOpen] = useState(false);
+  const [selectedDayRecord, setSelectedDayRecord] = useState<any | null>(null);
 
   const dashboardData = useMemo(() => {
     if (!runningData || runningData.length === 0) {
@@ -401,16 +402,27 @@ export default function RunningRecordsPage() {
       calendarDays.push({ day: prevMonthLastDay - i + 1, active: false, isCurrentMonth: false, id: `prev-${i}` });
     }
     
+    const currentYearRecords = personalRecords
+      .filter((r: any) => {
+        const d = new Date(r.date);
+        return !isNaN(d.getTime()) && d.getFullYear() === currentYear && r.distance > 0;
+      })
+      .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const recordIndices = new Map<any, number>();
+    currentYearRecords.forEach((r: any, idx: number) => recordIndices.set(r, idx + 1));
+
     for (let i = 1; i <= lastDay.getDate(); i++) {
-      const hasActivity = personalRecords.some((r: any) => {
+      const activityRecord = currentYearRecords.find((r: any) => {
         const rDate = new Date(r.date);
-        return !isNaN(rDate.getTime()) && 
-               rDate.getFullYear() === currentYear && 
-               rDate.getMonth() === currentMonth && 
-               rDate.getDate() === i && 
-               r.distance > 0;
+        return rDate.getMonth() === currentMonth && rDate.getDate() === i;
       });
-      calendarDays.push({ day: i, active: hasActivity, isCurrentMonth: true, id: `curr-${i}` });
+      calendarDays.push({ 
+        day: i, 
+        active: !!activityRecord, 
+        isCurrentMonth: true, 
+        id: `curr-${i}`,
+        record: activityRecord ? { ...activityRecord, nthRun: recordIndices.get(activityRecord) } : null
+      });
     }
     
     let nextMonthDay = 1;
@@ -655,7 +667,10 @@ export default function RunningRecordsPage() {
                          return (
                            <div key={d.id} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
                              {d.active ? (
-                               <div className={`w-full h-full bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)] ${isToday ? 'ring-2 ring-white ring-offset-2 ring-offset-[#121212]' : ''}`}>
+                               <div 
+                                 className={`w-full h-full bg-white rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(255,255,255,0.2)] cursor-pointer ${isToday ? 'ring-2 ring-white ring-offset-2 ring-offset-[#121212]' : ''}`}
+                                 onClick={() => setSelectedDayRecord(d.record)}
+                               >
                                  <span className="material-symbols-outlined text-black text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
                                </div>
                              ) : (
@@ -704,6 +719,44 @@ export default function RunningRecordsPage() {
         </section>
 
       </main>
+
+      {/* Record Modal */}
+      {selectedDayRecord && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedDayRecord(null)}>
+          <div className="bg-[#121212] border border-primary/30 p-6 rounded-2xl w-full max-w-sm shadow-[0_0_30px_rgba(243,156,18,0.2)]" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-primary font-label-caps text-[10px] tracking-widest mb-1">
+                  今年的第 {selectedDayRecord.nthRun} 次試煉
+                </p>
+                <h3 className="text-white text-xl font-bold font-display">{selectedDayRecord.activity || "自我覺醒試煉"}</h3>
+              </div>
+              <button className="text-white/50 hover:text-white" onClick={() => setSelectedDayRecord(null)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col border-l-2 border-primary/30 pl-3">
+                <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">距離</span>
+                <span className="text-white font-display text-xl font-bold">{selectedDayRecord.distance} <span className="text-[12px] font-normal">km</span></span>
+              </div>
+              <div className="flex flex-col border-l-2 border-primary/30 pl-3">
+                <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">時間</span>
+                <span className="text-white font-display text-xl font-bold">{selectedDayRecord.timeStr} <span className="text-[12px] font-normal">m</span></span>
+              </div>
+              <div className="flex flex-col border-l-2 border-primary/30 pl-3">
+                <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">配速</span>
+                <span className="text-white font-display text-xl font-bold">{calculatePace(parseFloat(selectedDayRecord.timeStr), selectedDayRecord.distance)}</span>
+              </div>
+              <div className="flex flex-col border-l-2 border-primary/30 pl-3">
+                <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">爬升</span>
+                <span className="text-white font-display text-xl font-bold">{selectedDayRecord.elevation} <span className="text-[12px] font-normal">m</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-6 bg-surface/95 backdrop-blur-lg border-t border-primary/30 shadow-[0_-8px_20px_rgba(243,156,18,0.3)]">
