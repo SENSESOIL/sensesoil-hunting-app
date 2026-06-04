@@ -822,7 +822,7 @@ export default function RunningRecordsPage() {
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">總累積金額</p>
-            <div className="font-headline-lg text-[#5D93B8] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none drop-shadow-[0_0_8px_rgba(93,147,184,0.5)]">
+            <div className="font-headline-lg text-[#4DB8FF] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none drop-shadow-[0_0_8px_rgba(77,184,255,0.5)]">
               <span className="text-xl">$</span>{calculatedAwardTotal.toLocaleString()}
             </div>
           </div>
@@ -846,11 +846,11 @@ export default function RunningRecordsPage() {
                   {displayAward.L1.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L1.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#5D93B8]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#4DB8FF]' : 'text-white/30'}`}>
                     {displayAward.L1.reward || "未解鎖"}
                   </span>
                   {displayAward.L1.reward && itemValues[displayAward.L1.reward] && (
-                    <span className="text-[#5D93B8]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#4DB8FF]/50 text-[10px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -863,11 +863,11 @@ export default function RunningRecordsPage() {
                   {displayAward.L2.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L2.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#5D93B8]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#4DB8FF]' : 'text-white/30'}`}>
                     {displayAward.L2.reward || "未解鎖"}
                   </span>
                   {displayAward.L2.reward && itemValues[displayAward.L2.reward] && (
-                    <span className="text-[#5D93B8]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#4DB8FF]/50 text-[10px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -880,11 +880,11 @@ export default function RunningRecordsPage() {
                   {displayAward.L3.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L3.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#5D93B8]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#4DB8FF]' : 'text-white/30'}`}>
                     {displayAward.L3.reward || "未解鎖"}
                   </span>
                   {displayAward.L3.reward && itemValues[displayAward.L3.reward] && (
-                    <span className="text-[#5D93B8]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#4DB8FF]/50 text-[10px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -897,7 +897,7 @@ export default function RunningRecordsPage() {
                     <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.length}/12 個月</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#5D93B8]' : 'text-white/30'}`}>
+                    <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#4DB8FF]' : 'text-white/30'}`}>
                       {displayAward.L4.totalB > 0 ? `+$${displayAward.L4.totalB.toLocaleString()}` : "$0"}
                     </span>
                   </div>
@@ -907,10 +907,10 @@ export default function RunningRecordsPage() {
                   {Array.from({ length: 12 }).map((_, i) => {
                     const monthData = displayAward.L4.months.find(m => m.month === i + 1);
                     return (
-                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-[#5D93B8]/10 border border-[#5D93B8]/30' : 'bg-white/5 border border-transparent'}`}>
+                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-[#4DB8FF]/10 border border-[#4DB8FF]/30' : 'bg-white/5 border border-transparent'}`}>
                         <span className={`text-[12px] font-bold ${monthData ? 'text-[#efe0d2]' : 'text-white/30'}`}>{i + 1}月</span>
                         <div className="text-right">
-                          <span className={`text-[11px] font-bold block ${monthData ? 'text-[#5D93B8]' : 'text-white/30'}`}>
+                          <span className={`text-[11px] font-bold block ${monthData ? 'text-[#4DB8FF]' : 'text-white/30'}`}>
                             {monthData ? monthData.reward || "達成" : "-"}
                           </span>
                         </div>
@@ -928,11 +928,11 @@ export default function RunningRecordsPage() {
                   {displayAward.L5.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L5.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#5D93B8]' : 'text-white/30'}`}>
+                  <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#4DB8FF]' : 'text-white/30'}`}>
                     {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "$0"}
                   </span>
                   {displayAward.L5.reward && (
-                    <span className="text-[#5D93B8]/70 text-[10px] font-bold">{displayAward.L5.reward}</span>
+                    <span className="text-[#4DB8FF]/70 text-[10px] font-bold">{displayAward.L5.reward}</span>
                   )}
                 </div>
               </div>
