@@ -1076,7 +1076,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L5' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    達年度累積總跑量里程解鎖高額獎金 (&gt;85.5K為基本門檻)。這是對全年不懈努力的自己最高致敬，持之以恆，用累積創造奇蹟！
+                    達年度累積總跑量里程解鎖高額獎金，85.5K為基本門檻。這是對全年不懈努力的自己最高致敬，持之以恆，用累積創造奇蹟！
                   </div>
                 )}
               </div>
