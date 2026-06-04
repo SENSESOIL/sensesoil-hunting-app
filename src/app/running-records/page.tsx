@@ -247,20 +247,31 @@ export default function RunningRecordsPage() {
     return awardsData.find((a: any) => normalize(a.name) === target) || null;
   }, [awardsData, selectedPersonalHunter]);
 
-  const itemValues: Record<string, number> = useMemo(() => ({
-    '筋膜槍': 1000,
-    '體脂計': 1000,
-    '運動手環': 1000
-  }), []);
+  const getItemInfo = useCallback((rewardStr: string) => {
+    if (!rewardStr) return null;
+    if (rewardStr.includes('筋膜槍')) return { name: '筋膜槍小米mini 2', value: 1400 };
+    if (rewardStr.includes('體脂計')) return { name: '體脂計小米S400', value: 600 };
+    if (rewardStr.includes('運動手錶') || rewardStr.includes('運動手環') || rewardStr.includes('Garmin')) return { name: '運動手錶Garmin165', value: 7000 };
+    return null;
+  }, []);
 
   const calculatedAwardTotal = useMemo(() => {
     if (!personalAward) return 0;
     let t = personalAward.totals.total || 0;
-    if (personalAward.L1?.reward && itemValues[personalAward.L1.reward]) t += itemValues[personalAward.L1.reward];
-    if (personalAward.L2?.reward && itemValues[personalAward.L2.reward]) t += itemValues[personalAward.L2.reward];
-    if (personalAward.L3?.reward && itemValues[personalAward.L3.reward]) t += itemValues[personalAward.L3.reward];
+    if (personalAward.L1?.reward) {
+      const info = getItemInfo(personalAward.L1.reward);
+      if (info) t += info.value;
+    }
+    if (personalAward.L2?.reward) {
+      const info = getItemInfo(personalAward.L2.reward);
+      if (info) t += info.value;
+    }
+    if (personalAward.L3?.reward) {
+      const info = getItemInfo(personalAward.L3.reward);
+      if (info) t += info.value;
+    }
     return t;
-  }, [personalAward, itemValues]);
+  }, [personalAward, getItemInfo]);
 
   const displayAward = personalAward || {
     name: selectedPersonalHunter,
@@ -859,10 +870,10 @@ export default function RunningRecordsPage() {
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[13px] font-bold ${(parseInt(displayAward.L1.runs) >= 4) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                      {(parseInt(displayAward.L1.runs) >= 4) ? (displayAward.L1.reward || "已解鎖") : "未解鎖"}
+                      {(parseInt(displayAward.L1.runs) >= 4) ? (getItemInfo(displayAward.L1.reward)?.name || displayAward.L1.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {displayAward.L1.reward && itemValues[displayAward.L1.reward] && (
-                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
+                    {getItemInfo(displayAward.L1.reward) && (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${getItemInfo(displayAward.L1.reward)?.value.toLocaleString()} 價值</span>
                     )}
                   </div>
                 </div>
@@ -889,10 +900,10 @@ export default function RunningRecordsPage() {
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[13px] font-bold ${(parseInt(displayAward.L2.prs) >= 8) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                      {(parseInt(displayAward.L2.prs) >= 8) ? (displayAward.L2.reward || "已解鎖") : "未解鎖"}
+                      {(parseInt(displayAward.L2.prs) >= 8) ? (getItemInfo(displayAward.L2.reward)?.name || displayAward.L2.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {displayAward.L2.reward && itemValues[displayAward.L2.reward] && (
-                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
+                    {getItemInfo(displayAward.L2.reward) && (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${getItemInfo(displayAward.L2.reward)?.value.toLocaleString()} 價值</span>
                     )}
                   </div>
                 </div>
@@ -919,10 +930,10 @@ export default function RunningRecordsPage() {
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[13px] font-bold ${(parseInt(displayAward.L3.prs) >= 18) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                      {(parseInt(displayAward.L3.prs) >= 18) ? (displayAward.L3.reward || "已解鎖") : "未解鎖"}
+                      {(parseInt(displayAward.L3.prs) >= 18) ? (getItemInfo(displayAward.L3.reward)?.name || displayAward.L3.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {displayAward.L3.reward && itemValues[displayAward.L3.reward] && (
-                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
+                    {getItemInfo(displayAward.L3.reward) && (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${getItemInfo(displayAward.L3.reward)?.value.toLocaleString()} 價值</span>
                     )}
                   </div>
                 </div>
