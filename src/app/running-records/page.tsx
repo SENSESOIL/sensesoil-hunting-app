@@ -994,7 +994,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L4' && (
                   <div className="mb-4 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    挑戰每月專屬挑戰指標5K或10K，即可獲得對應的高額獎勵金。持之以恆，累積創造奇蹟。
+                    完成每月專屬指標5K或10K，即可獲得對應的高額獎勵金。
                   </div>
                 )}
                 {/* Monthly Details Grid */}
@@ -1047,7 +1047,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L5' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    根據年度累積總跑量里程數結算對應的高額獎金。這是對全年不懈努力的最高致敬!
+                    達年度累積總跑量里程解鎖高額獎金 (>85.5K為基本門檻)。這是對全年不懈努力的自己最高致敬，持之以恆，用累積創造奇蹟！
                   </div>
                 )}
               </div>
