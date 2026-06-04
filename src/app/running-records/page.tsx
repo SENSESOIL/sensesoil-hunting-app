@@ -861,9 +861,8 @@ export default function RunningRecordsPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                    <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L1 基礎紀律
-                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L1' ? 'rotate-180' : ''}`}>expand_more</span>
                     </span>
                     <span className="text-white font-bold text-sm">團跑連續 {displayAward.L1.runs}/4 次</span>
                     {displayAward.L1.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L1.date}</span>}
@@ -891,9 +890,8 @@ export default function RunningRecordsPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                    <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L2 突破極限
-                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L2' ? 'rotate-180' : ''}`}>expand_more</span>
                     </span>
                     <span className="text-white font-bold text-sm">PR 突破 {displayAward.L2.prs}/8 次</span>
                     {displayAward.L2.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L2.date}</span>}
@@ -921,9 +919,8 @@ export default function RunningRecordsPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                    <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L3 毅力試煉
-                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L3' ? 'rotate-180' : ''}`}>expand_more</span>
                     </span>
                     <span className="text-white font-bold text-sm">累積跑滿 {displayAward.L3.prs}/18 次</span>
                     {displayAward.L3.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L3.date}</span>}
@@ -951,9 +948,8 @@ export default function RunningRecordsPage() {
                   onClick={() => toggleAwardLevel('L4')}
                 >
                   <div className="flex flex-col">
-                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                    <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L4 月度挑戰
-                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L4' ? 'rotate-180' : ''}`}>expand_more</span>
                     </span>
                     <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.length}/12 個月</span>
                   </div>
@@ -993,9 +989,8 @@ export default function RunningRecordsPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                    <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L5 年度遠征
-                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L5' ? 'rotate-180' : ''}`}>expand_more</span>
                     </span>
                     <span className="text-white font-bold text-sm">總跑量 {displayAward.L5.distance} km</span>
                     {displayAward.L5.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L5.date}</span>}
