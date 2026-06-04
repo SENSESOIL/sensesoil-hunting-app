@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { readSheet } from "@/lib/google-sheets";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const year = searchParams.get('year') || '2026';
     const sheetId = '1bYwZNqQLU-jgmJvz3tB_195QB4uZwqWOVPDI-c4_Pm4';
-    const range = 'Award!A4:BA100';
+    const range = `${year}Award!A4:BA100`;
     
     const rows = await readSheet(sheetId, range);
     
@@ -80,7 +82,7 @@ export async function GET() {
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch running awards from Award!A4:BA100' },
+      { success: false, error: `Failed to fetch running awards from ${year}Award!A4:BA100` },
       { status: 500 }
     );
   }

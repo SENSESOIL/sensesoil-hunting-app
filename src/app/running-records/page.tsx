@@ -223,7 +223,10 @@ export default function RunningRecordsPage() {
   const { data: runningRes } = useSWR("/api/sheets/running-records", fetcher);
   const runningData = runningRes?.data || [];
 
-  const { data: awardsRes } = useSWR("/api/sheets/running-awards", fetcher);
+  const [awardYear, setAwardYear] = useState('2026');
+  const [isAwardYearDropdownOpen, setIsAwardYearDropdownOpen] = useState(false);
+
+  const { data: awardsRes, isLoading: isAwardsLoading } = useSWR(`/api/sheets/running-awards?year=${awardYear}`, fetcher);
   const awardsData = awardsRes?.data || [];
 
   const [selectedPersonalHunter, setSelectedPersonalHunter] = useState<string>("");
@@ -886,11 +889,37 @@ export default function RunningRecordsPage() {
           <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 font-display">
 
             {/* Assets List */}
-            <p className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none mb-4 uppercase">
-              覺醒資產庫
-            </p>
+            <div className="flex items-center gap-2 mb-4 relative z-10">
+              <button 
+                onClick={() => setIsAwardYearDropdownOpen(!isAwardYearDropdownOpen)}
+                className="flex items-center gap-1 font-label-caps text-primary font-bold text-[22px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
+              >
+                {awardYear} 覺醒資產庫
+                <span className="material-symbols-outlined text-[24px]">{isAwardYearDropdownOpen ? 'arrow_drop_up' : 'arrow_drop_down'}</span>
+              </button>
+              
+              {isAwardYearDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsAwardYearDropdownOpen(false)} />
+                  <div className="absolute top-full left-0 mt-2 bg-[#1A1A1A] border border-primary/30 rounded-lg shadow-xl z-50 min-w-[180px] overflow-hidden">
+                    {['2026', '2027', '2028', '2029'].map(year => (
+                      <button
+                        key={year}
+                        className={`w-full text-left px-4 py-3 font-display font-bold text-[16px] transition-colors ${awardYear === year ? 'text-black bg-primary' : 'text-[#efe0d2] hover:bg-white/10'}`}
+                        onClick={() => {
+                          setAwardYear(year);
+                          setIsAwardYearDropdownOpen(false);
+                        }}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             
-            <div className="flex flex-col gap-3 pb-8">
+            <div className={`flex flex-col gap-3 pb-8 transition-opacity duration-300 ${isAwardsLoading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
               {/* L1 Asset */}
               <div 
                 className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
