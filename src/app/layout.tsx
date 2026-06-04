@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { PullToRefresh } from "@/components/PullToRefresh";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,7 +39,9 @@ export default function RootLayout({
       </head>
       <body className={`${orbitron.variable} ${orbitron.className} bg-black text-on-background overflow-x-hidden min-h-[100dvh]`}>
         <Providers>
-          {children}
+          <PullToRefresh>
+            {children}
+          </PullToRefresh>
         </Providers>
       </body>
     </html>
