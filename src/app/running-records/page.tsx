@@ -1009,9 +1009,11 @@ export default function RunningRecordsPage() {
                     <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "$0"}
                     </span>
-                    {displayAward.L5.reward && (
-                      <span className="text-[#00E5FF]/70 text-[11px] font-bold">{displayAward.L5.reward}</span>
-                    )}
+                    {displayAward.L5.date ? (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">已兌換: {displayAward.L5.date}</span>
+                    ) : displayAward.L5.reward ? (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">餘額 {displayAward.L5.reward}</span>
+                    ) : null}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L5' && (
