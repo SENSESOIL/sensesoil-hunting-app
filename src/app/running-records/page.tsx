@@ -648,7 +648,8 @@ export default function RunningRecordsPage() {
       return n;
     };
 
-    const targetYear = selectedCalendarDate.getFullYear();
+    // 提醒：計算當年度資料，明年會自動重新計算下一年度
+    const targetYear = new Date().getFullYear();
     const start = new Date(targetYear, 0, 1).getTime();
     const end = new Date(targetYear, 11, 31, 23, 59, 59, 999).getTime();
 
@@ -781,19 +782,19 @@ export default function RunningRecordsPage() {
           <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div>
               <div className="flex justify-between items-center mb-6">
-                <p className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none">公會排行榜</p>
+                <p className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none">年度排行榜</p>
                 <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
                   <button 
                     onClick={() => setLeaderboardMetric('distance')}
-                    className={`px-3 py-1 rounded-full text-[11px] tracking-wider transition-colors ${leaderboardMetric === 'distance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'distance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                   >距離</button>
                   <button 
                     onClick={() => setLeaderboardMetric('pace')}
-                    className={`px-3 py-1 rounded-full text-[11px] tracking-wider transition-colors ${leaderboardMetric === 'pace' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'pace' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                   >配速</button>
                   <button 
                     onClick={() => setLeaderboardMetric('elevation')}
-                    className={`px-3 py-1 rounded-full text-[11px] tracking-wider transition-colors ${leaderboardMetric === 'elevation' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'elevation' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                   >爬升</button>
                 </div>
               </div>
@@ -803,7 +804,7 @@ export default function RunningRecordsPage() {
                   <div key={item.name} className="flex items-center w-full gap-3">
                     <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{item.rank}</span>
                     <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
-                      <span className="text-[11px] font-normal">{item.name.slice(-1)}</span>
+                      <span className={`text-[12px] ${item.rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.name.slice(-1)}</span>
                     </div>
                     <div className="flex-1 h-2 bg-primary/10 rounded-r-sm overflow-visible flex relative">
                       <div 
