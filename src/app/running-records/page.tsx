@@ -890,7 +890,7 @@ export default function RunningRecordsPage() {
               覺醒資產庫
             </p>
             
-            <div className="flex flex-col gap-3 pb-8">
+            <div className="flex flex-col gap-3 pb-8 tracking-[0.1em]">
               {/* L1 Asset */}
               <div 
                 className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
