@@ -289,6 +289,17 @@ export default function RunningRecordsPage() {
     return t;
   }, [personalAward, getItemInfo]);
 
+  const unredeemedBalanceL4 = useMemo(() => {
+    if (!personalAward || !personalAward.L4 || !personalAward.L4.months) return 0;
+    return personalAward.L4.months.reduce((sum: number, m: any) => {
+      if (m.reward && m.reward !== '-' && m.reward !== '0' && !m.date) {
+        const val = parseInt(m.reward.toString().replace(/,/g, ''), 10);
+        if (!isNaN(val)) return sum + val;
+      }
+      return sum;
+    }, 0);
+  }, [personalAward]);
+
   const displayAward = personalAward || {
     name: selectedPersonalHunter,
     L1: { runs: '0', reward: '', date: '' },
@@ -964,6 +975,11 @@ export default function RunningRecordsPage() {
                     <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {displayAward.L4.totalB > 0 ? `+$${displayAward.L4.totalB.toLocaleString()}` : "$0"}
                     </span>
+                    {displayAward.L4.totalB > 0 && (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">
+                        {unredeemedBalanceL4 > 0 ? `未兌換餘額 ${unredeemedBalanceL4.toLocaleString()}` : '已全數兌換'}
+                      </span>
+                    )}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L4' && (
