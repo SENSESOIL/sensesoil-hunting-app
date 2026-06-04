@@ -822,7 +822,7 @@ export default function RunningRecordsPage() {
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">總累積金額</p>
-            <div className="font-headline-lg text-[#8ECAE6] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none drop-shadow-[0_0_8px_rgba(142,202,230,0.5)]">
+            <div className="font-headline-lg text-[#00E5FF] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none drop-shadow-[0_0_12px_rgba(0,229,255,0.6)]">
               <span className="text-xl">$</span>{calculatedAwardTotal.toLocaleString()}
             </div>
           </div>
@@ -841,16 +841,16 @@ export default function RunningRecordsPage() {
               {/* L1 Asset */}
               <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
                 <div className="flex flex-col">
-                  <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L1 基礎紀律</span>
+                  <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L1 基礎紀律</span>
                   <span className="text-white font-bold text-sm">團跑連續 {displayAward.L1.runs}/4 次</span>
-                  {displayAward.L1.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L1.date}</span>}
+                  {displayAward.L1.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L1.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#8ECAE6]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                     {displayAward.L1.reward || "未解鎖"}
                   </span>
                   {displayAward.L1.reward && itemValues[displayAward.L1.reward] && (
-                    <span className="text-[#8ECAE6]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -858,16 +858,16 @@ export default function RunningRecordsPage() {
               {/* L2 Asset */}
               <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
                 <div className="flex flex-col">
-                  <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L2 突破極限</span>
+                  <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L2 突破極限</span>
                   <span className="text-white font-bold text-sm">PR 突破 {displayAward.L2.prs}/8 次</span>
-                  {displayAward.L2.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L2.date}</span>}
+                  {displayAward.L2.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L2.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#8ECAE6]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                     {displayAward.L2.reward || "未解鎖"}
                   </span>
                   {displayAward.L2.reward && itemValues[displayAward.L2.reward] && (
-                    <span className="text-[#8ECAE6]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -875,16 +875,16 @@ export default function RunningRecordsPage() {
               {/* L3 Asset */}
               <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
                 <div className="flex flex-col">
-                  <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L3 毅力試煉</span>
+                  <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L3 毅力試煉</span>
                   <span className="text-white font-bold text-sm">累積跑滿 {displayAward.L3.prs}/18 次</span>
-                  {displayAward.L3.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L3.date}</span>}
+                  {displayAward.L3.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L3.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#8ECAE6]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                     {displayAward.L3.reward || "未解鎖"}
                   </span>
                   {displayAward.L3.reward && itemValues[displayAward.L3.reward] && (
-                    <span className="text-[#8ECAE6]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -893,11 +893,11 @@ export default function RunningRecordsPage() {
               <div className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5">
                 <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
                   <div className="flex flex-col">
-                    <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L4 月度挑戰</span>
+                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L4 月度挑戰</span>
                     <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.length}/12 個月</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#8ECAE6]' : 'text-white/30'}`}>
+                    <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {displayAward.L4.totalB > 0 ? `+$${displayAward.L4.totalB.toLocaleString()}` : "$0"}
                     </span>
                   </div>
@@ -907,10 +907,10 @@ export default function RunningRecordsPage() {
                   {Array.from({ length: 12 }).map((_, i) => {
                     const monthData = displayAward.L4.months.find(m => m.month === i + 1);
                     return (
-                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-[#8ECAE6]/10 border border-[#8ECAE6]/30' : 'bg-white/5 border border-transparent'}`}>
+                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-[#00E5FF]/10 border border-[#00E5FF]/30' : 'bg-white/5 border border-transparent'}`}>
                         <span className={`text-[12px] font-bold ${monthData ? 'text-[#efe0d2]' : 'text-white/30'}`}>{i + 1}月</span>
                         <div className="text-right">
-                          <span className={`text-[11px] font-bold block ${monthData ? 'text-[#8ECAE6]' : 'text-white/30'}`}>
+                          <span className={`text-[11px] font-bold block ${monthData ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                             {monthData ? monthData.reward || "達成" : "-"}
                           </span>
                         </div>
@@ -923,16 +923,16 @@ export default function RunningRecordsPage() {
               {/* L5 Asset */}
               <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
                 <div className="flex flex-col">
-                  <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L5 年度遠征賽</span>
+                  <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L5 年度遠征賽</span>
                   <span className="text-white font-bold text-sm">總跑量 {displayAward.L5.distance} km</span>
-                  {displayAward.L5.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L5.date}</span>}
+                  {displayAward.L5.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L5.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#8ECAE6]' : 'text-white/30'}`}>
+                  <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                     {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "$0"}
                   </span>
                   {displayAward.L5.reward && (
-                    <span className="text-[#8ECAE6]/70 text-[10px] font-bold">{displayAward.L5.reward}</span>
+                    <span className="text-[#00E5FF]/70 text-[11px] font-bold">{displayAward.L5.reward}</span>
                   )}
                 </div>
               </div>
