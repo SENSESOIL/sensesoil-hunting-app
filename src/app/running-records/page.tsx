@@ -982,6 +982,9 @@ export default function RunningRecordsPage() {
                           <span className={`text-[11px] font-bold block ${monthData ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                             {monthData ? monthData.reward || "達成" : "-"}
                           </span>
+                          {monthData && monthData.date && (
+                            <span className="text-[#00E5FF]/50 text-[10px] block mt-0.5">已兌換: {monthData.date}</span>
+                          )}
                         </div>
                       </div>
                     );
