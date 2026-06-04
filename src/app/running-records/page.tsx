@@ -228,7 +228,7 @@ export default function RunningRecordsPage() {
 
   const [selectedPersonalHunter, setSelectedPersonalHunter] = useState<string>("");
   const [isPersonalHunterDropdownOpen, setIsPersonalHunterDropdownOpen] = useState(false);
-  const [selectedDayRecord, setSelectedDayRecord] = useState<any | null>(null);
+  const [selectedDayRecords, setSelectedDayRecords] = useState<any[] | null>(null);
   const [expandedAwardLevel, setExpandedAwardLevel] = useState<string | null>(null);
 
   const toggleAwardLevel = (level: string) => {
@@ -621,20 +621,30 @@ export default function RunningRecordsPage() {
         return !isNaN(d.getTime()) && d.getFullYear() === currentYear && r.distance > 0;
       })
       .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    let dayCount = 0;
+    let lastDateStr = "";
     const recordIndices = new Map<any, number>();
-    currentYearRecords.forEach((r: any, idx: number) => recordIndices.set(r, idx + 1));
+    currentYearRecords.forEach((r: any) => {
+       const dateStr = new Date(r.date).toDateString();
+       if (dateStr !== lastDateStr) {
+           dayCount++;
+           lastDateStr = dateStr;
+       }
+       recordIndices.set(r, dayCount);
+    });
 
     for (let i = 1; i <= lastDay.getDate(); i++) {
-      const activityRecord = currentYearRecords.find((r: any) => {
+      const dayRecords = currentYearRecords.filter((r: any) => {
         const rDate = new Date(r.date);
         return rDate.getMonth() === currentMonth && rDate.getDate() === i;
       });
+      const hasActivity = dayRecords.length > 0;
       calendarDays.push({ 
         day: i, 
-        active: !!activityRecord, 
+        active: hasActivity, 
         isCurrentMonth: true, 
         id: `curr-${i}`,
-        record: activityRecord ? { ...activityRecord, nthRun: recordIndices.get(activityRecord) } : null
+        records: hasActivity ? dayRecords.map((r: any) => ({ ...r, nthRun: recordIndices.get(r) })) : null
       });
     }
     
@@ -1295,7 +1305,7 @@ export default function RunningRecordsPage() {
                              {d.active ? (
                                <div 
                                  className={`w-full h-full bg-primary rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(243,156,18,0.4)] cursor-pointer ${isToday ? 'ring-2 ring-primary ring-offset-2 ring-offset-[#121212]' : ''}`}
-                                 onClick={() => setSelectedDayRecord(d.record)}
+                                 onClick={() => setSelectedDayRecords(d.records)}
                                >
                                  <span className="material-symbols-outlined text-black text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
                                </div>
@@ -1382,39 +1392,45 @@ export default function RunningRecordsPage() {
       )}
 
       {/* Record Modal */}
-      {selectedDayRecord && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedDayRecord(null)}>
-          <div className="bg-[#121212] border border-primary/30 p-6 rounded-2xl w-full max-w-sm shadow-[0_0_30px_rgba(243,156,18,0.2)]" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-start mb-6">
+      {selectedDayRecords && selectedDayRecords.length > 0 && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedDayRecords(null)}>
+          <div className="bg-[#121212] border border-primary/30 p-6 rounded-2xl w-full max-w-sm shadow-[0_0_30px_rgba(243,156,18,0.2)] flex flex-col gap-6 max-h-[80vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-start">
               <div>
                 <p className="text-primary font-label-caps text-[10px] tracking-widest mb-1">
-                  今年的第 {selectedDayRecord.nthRun} 次試煉
+                  今年的第 {selectedDayRecords[0].nthRun} 次試煉
                 </p>
-                <h3 className="text-white text-xl font-bold font-display">{selectedDayRecord.activity || "自我覺醒試煉"}</h3>
+                <h3 className="text-white text-xl font-bold font-display">{selectedDayRecords[0].activity || "自我覺醒試煉"}</h3>
               </div>
-              <button className="text-white/50 hover:text-white" onClick={() => setSelectedDayRecord(null)}>
+              <button className="text-white/50 hover:text-white" onClick={() => setSelectedDayRecords(null)}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col border-l-2 border-primary/30 pl-3">
-                <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">距離</span>
-                <span className="text-white font-display text-xl font-bold">{selectedDayRecord.distance} <span className="text-[12px] font-normal">km</span></span>
+            {selectedDayRecords.map((record, idx) => (
+              <div key={idx} className="flex flex-col gap-4">
+                {idx > 0 && <div className="h-px bg-white/10 w-full" />}
+                {idx > 0 && <h3 className="text-white/80 text-lg font-bold font-display">{record.activity || "自我覺醒試煉"}</h3>}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col border-l-2 border-primary/30 pl-3">
+                    <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">距離</span>
+                    <span className="text-white font-display text-xl font-bold">{record.distance} <span className="text-[12px] font-normal">km</span></span>
+                  </div>
+                  <div className="flex flex-col border-l-2 border-primary/30 pl-3">
+                    <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">時間</span>
+                    <span className="text-white font-display text-xl font-bold">{record.timeStr} <span className="text-[12px] font-normal">m</span></span>
+                  </div>
+                  <div className="flex flex-col border-l-2 border-primary/30 pl-3">
+                    <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">配速</span>
+                    <span className="text-white font-display text-xl font-bold">{calculatePace(parseFloat(record.timeStr), record.distance)}</span>
+                  </div>
+                  <div className="flex flex-col border-l-2 border-primary/30 pl-3">
+                    <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">爬升</span>
+                    <span className="text-white font-display text-xl font-bold">{record.elevation} <span className="text-[12px] font-normal">m</span></span>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col border-l-2 border-primary/30 pl-3">
-                <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">時間</span>
-                <span className="text-white font-display text-xl font-bold">{selectedDayRecord.timeStr} <span className="text-[12px] font-normal">m</span></span>
-              </div>
-              <div className="flex flex-col border-l-2 border-primary/30 pl-3">
-                <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">配速</span>
-                <span className="text-white font-display text-xl font-bold">{calculatePace(parseFloat(selectedDayRecord.timeStr), selectedDayRecord.distance)}</span>
-              </div>
-              <div className="flex flex-col border-l-2 border-primary/30 pl-3">
-                <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">爬升</span>
-                <span className="text-white font-display text-xl font-bold">{selectedDayRecord.elevation} <span className="text-[12px] font-normal">m</span></span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}
