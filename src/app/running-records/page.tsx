@@ -263,7 +263,7 @@ export default function RunningRecordsPage() {
     
     if (info) {
       if (dateStr) {
-        return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${info.value.toLocaleString()} 價值 | 已兌換: {dateStr}</span>;
+        return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${info.value.toLocaleString()} 價值 | 已兌換 {dateStr}</span>;
       }
       return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${info.value.toLocaleString()} 價值</span>;
     }
@@ -999,7 +999,7 @@ export default function RunningRecordsPage() {
                             {monthData ? monthData.reward || "達成" : "-"}
                           </span>
                           {monthData && monthData.date && (
-                            <span className="text-[#00E5FF]/50 text-[10px] block mt-0.5">已兌換: {monthData.date}</span>
+                            <span className="text-[#00E5FF]/50 text-[10px] block mt-0.5">已兌換 {monthData.date}</span>
                           )}
                         </div>
                       </div>
@@ -1018,18 +1018,20 @@ export default function RunningRecordsPage() {
                     <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L5 年度遠征
                     </span>
-                    <span className="text-white font-bold text-sm">總跑量 {displayAward.L5.distance} km</span>
-                    {displayAward.L5.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L5.date}</span>}
+                    <span className="text-white font-bold text-sm">總跑量 {displayAward.L5.distance}/85.5K</span>
+                    {displayAward.L5.date && <span className="text-white/40 text-[11px] mt-0.5">達成 {displayAward.L5.date}</span>}
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                      {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "$0"}
+                    <span className={`font-bold ${displayAward.L5.totalC > 0 ? 'text-[16px] font-mono text-[#00E5FF]' : 'text-[12px] text-white/30'}`}>
+                      {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "未解鎖"}
                     </span>
-                    {displayAward.L5.date ? (
-                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">已兌換: {displayAward.L5.date}</span>
-                    ) : displayAward.L5.reward ? (
-                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">餘額 {displayAward.L5.reward}</span>
-                    ) : null}
+                    {displayAward.L5.totalC > 0 && (
+                      displayAward.L5.date ? (
+                        <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">已兌換 {displayAward.L5.date}</span>
+                      ) : displayAward.L5.reward ? (
+                        <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">餘額 {displayAward.L5.reward}</span>
+                      ) : null
+                    )}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L5' && (
