@@ -927,7 +927,7 @@ export default function RunningRecordsPage() {
                     <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L2 突破極限
                     </span>
-                    <span className="text-white font-bold text-sm">PR 突破 {displayAward.L2.prs}/8 次</span>
+                    <span className="text-white font-bold text-sm">紀錄突破 {displayAward.L2.prs}/8 次</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[12px] font-bold ${(parseInt(displayAward.L2.prs) >= 8) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
@@ -953,7 +953,7 @@ export default function RunningRecordsPage() {
                     <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L3 毅力試煉
                     </span>
-                    <span className="text-white font-bold text-sm">累積跑滿 {displayAward.L3.prs}/18 次</span>
+                    <span className="text-white font-bold text-sm">紀錄突破 {displayAward.L3.prs}/18 次</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[12px] font-bold ${(parseInt(displayAward.L3.prs) >= 18) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
@@ -979,7 +979,7 @@ export default function RunningRecordsPage() {
                     <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L4 月度挑戰
                     </span>
-                    <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.length}/12 個月</span>
+                    <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.filter(m => m && m.reward && m.reward !== '0' && m.reward !== '-').length}/12 個月</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
@@ -1001,14 +1001,15 @@ export default function RunningRecordsPage() {
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   {Array.from({ length: 12 }).map((_, i) => {
                     const monthData = displayAward.L4.months.find(m => m.month === i + 1);
+                    const achieved = monthData && monthData.reward && monthData.reward !== '0' && monthData.reward !== '-';
                     return (
-                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-[#00E5FF]/10 border border-[#00E5FF]/30' : 'bg-white/5 border border-transparent'}`}>
-                        <span className={`text-[12px] font-bold ${monthData ? 'text-white' : 'text-white/30'}`}>{i + 1}月</span>
+                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${achieved ? 'bg-[#00E5FF]/10 border border-[#00E5FF]/30' : 'bg-white/5 border border-transparent'}`}>
+                        <span className={`text-[12px] font-bold ${achieved ? 'text-white' : 'text-white/30'}`}>{i + 1}月</span>
                         <div className="text-right">
-                          <span className={`text-[11px] font-bold block ${monthData ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                          <span className={`text-[11px] font-bold block ${achieved ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                             {monthData ? monthData.reward || "達成" : "-"}
                           </span>
-                          {monthData && monthData.date && (
+                          {achieved && monthData.date && (
                             <span className="text-[#00E5FF]/50 text-[10px] block mt-0.5">已兌換 {monthData.date}</span>
                           )}
                         </div>
