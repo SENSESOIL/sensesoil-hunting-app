@@ -894,7 +894,7 @@ export default function RunningRecordsPage() {
                 onClick={() => setIsAwardYearDropdownOpen(!isAwardYearDropdownOpen)}
                 className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
               >
-                {awardYear} 覺醒資產庫
+                {awardYear} 年度資產庫
               </button>
               
               {isAwardYearDropdownOpen && (
