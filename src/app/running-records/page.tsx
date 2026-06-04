@@ -225,6 +225,7 @@ export default function RunningRecordsPage() {
 
   const [awardYear, setAwardYear] = useState('2026');
   const [isAwardYearDropdownOpen, setIsAwardYearDropdownOpen] = useState(false);
+  const [isLeaderboardYearDropdownOpen, setIsLeaderboardYearDropdownOpen] = useState(false);
 
   const { data: awardsRes, isLoading: isAwardsLoading } = useSWR(`/api/sheets/running-awards?year=${awardYear}`, fetcher);
   const awardsData = awardsRes?.data || [];
@@ -1087,8 +1088,36 @@ export default function RunningRecordsPage() {
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div>
-              <div className="flex justify-between items-center mb-6">
-                <p className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none">年度排行榜</p>
+              <div className="flex justify-between items-center mb-6 relative z-10">
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsLeaderboardYearDropdownOpen(!isLeaderboardYearDropdownOpen)}
+                    className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
+                  >
+                    {awardYear} 年度排行榜
+                  </button>
+                  
+                  {isLeaderboardYearDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsLeaderboardYearDropdownOpen(false)} />
+                      <div className="absolute top-full left-0 mt-2 bg-[#1A1A1A] border border-primary/30 rounded-lg shadow-xl z-50 min-w-[120px] overflow-hidden">
+                        {['2026', '2027', '2028', '2029'].map(year => (
+                          <button
+                            key={year}
+                            className={`w-full text-left px-4 py-3 font-display font-bold text-[16px] transition-colors ${awardYear === year ? 'text-black bg-primary' : 'text-[#efe0d2] hover:bg-white/10'}`}
+                            onClick={() => {
+                              setAwardYear(year);
+                              setIsLeaderboardYearDropdownOpen(false);
+                            }}
+                          >
+                            {year}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+                
                 <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
                   <button 
                     onClick={() => setLeaderboardMetric('distance')}
