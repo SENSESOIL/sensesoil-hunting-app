@@ -878,7 +878,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L1' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    參與公司團跑，連續出席4次以建立穩定的基礎紀律。解鎖後可獲得恢復裝備。連續出席再多2次解鎖獎金兌換。
+                    參與公司團跑，連續出席4次以建立穩定的基礎紀律。解鎖後可獲得恢復裝備。連續出席再多2次解鎖兌換獎金。
                   </div>
                 )}
               </div>
@@ -907,7 +907,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L2' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    突破極限，挑戰個人最佳跑量里程紀錄，累積突破 8 次解鎖監測裝備。累積突破再多2次解鎖獎金兌換。
+                    突破極限，挑戰個人最佳跑量里程紀錄，累積突破 8 次解鎖監測裝備。累積突破再多2次解鎖兌換獎金。
                   </div>
                 )}
               </div>
@@ -936,7 +936,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L3' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    展現無比毅力超越自我，挑戰個人最佳距離紀錄，累積突破18次解鎖進階監測裝備。累積突破再多2次解鎖獎金兌換。
+                    展現無比毅力超越自我，挑戰個人最佳距離紀錄，累積突破18次解鎖進階監測裝備。累積突破再多2次解鎖兌換獎金。
                   </div>
                 )}
               </div>
