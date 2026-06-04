@@ -827,7 +827,7 @@ export default function RunningRecordsPage() {
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">總累積金額</p>
-            <div className="font-headline-lg text-[#00E5FF] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none drop-shadow-[0_0_12px_rgba(0,229,255,0.6)]">
+            <div className="font-headline-lg text-[#00E5FF] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none">
               <span className="text-xl">$</span>{calculatedAwardTotal.toLocaleString()}
             </div>
           </div>
@@ -858,8 +858,8 @@ export default function RunningRecordsPage() {
                     {displayAward.L1.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L1.date}</span>}
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                      {displayAward.L1.reward || "未解鎖"}
+                    <span className={`text-[13px] font-bold ${(parseInt(displayAward.L1.runs) >= 4) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                      {(parseInt(displayAward.L1.runs) >= 4) ? (displayAward.L1.reward || "已解鎖") : "未解鎖"}
                     </span>
                     {displayAward.L1.reward && itemValues[displayAward.L1.reward] && (
                       <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
@@ -888,8 +888,8 @@ export default function RunningRecordsPage() {
                     {displayAward.L2.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L2.date}</span>}
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                      {displayAward.L2.reward || "未解鎖"}
+                    <span className={`text-[13px] font-bold ${(parseInt(displayAward.L2.prs) >= 8) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                      {(parseInt(displayAward.L2.prs) >= 8) ? (displayAward.L2.reward || "已解鎖") : "未解鎖"}
                     </span>
                     {displayAward.L2.reward && itemValues[displayAward.L2.reward] && (
                       <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
@@ -918,8 +918,8 @@ export default function RunningRecordsPage() {
                     {displayAward.L3.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L3.date}</span>}
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                      {displayAward.L3.reward || "未解鎖"}
+                    <span className={`text-[13px] font-bold ${(parseInt(displayAward.L3.prs) >= 18) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                      {(parseInt(displayAward.L3.prs) >= 18) ? (displayAward.L3.reward || "已解鎖") : "未解鎖"}
                     </span>
                     {displayAward.L3.reward && itemValues[displayAward.L3.reward] && (
                       <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
