@@ -892,10 +892,9 @@ export default function RunningRecordsPage() {
             <div className="flex items-center gap-2 mb-4 relative z-10">
               <button 
                 onClick={() => setIsAwardYearDropdownOpen(!isAwardYearDropdownOpen)}
-                className="flex items-center gap-1 font-label-caps text-primary font-bold text-[22px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
+                className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
               >
                 {awardYear} 覺醒資產庫
-                <span className="material-symbols-outlined text-[24px]">{isAwardYearDropdownOpen ? 'arrow_drop_up' : 'arrow_drop_down'}</span>
               </button>
               
               {isAwardYearDropdownOpen && (
