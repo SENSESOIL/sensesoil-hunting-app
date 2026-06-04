@@ -853,7 +853,7 @@ export default function RunningRecordsPage() {
             )}
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
-            <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">總累積金額</p>
+            <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">總累積獎金餘額</p>
             <div className="font-headline-lg text-[#00E5FF] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none">
               <span className="text-xl">$</span>{calculatedAwardTotal.toLocaleString()}
             </div>
