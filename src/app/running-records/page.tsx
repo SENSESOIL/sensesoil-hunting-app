@@ -255,6 +255,22 @@ export default function RunningRecordsPage() {
     return null;
   }, []);
 
+  const renderRewardSubText = useCallback((valStr: string, threshold: number, rewardStr: string, dateStr: string) => {
+    const isUnlocked = parseInt(valStr) >= threshold;
+    if (!isUnlocked) return null;
+
+    const info = getItemInfo(rewardStr);
+    
+    if (info) {
+      if (dateStr) {
+        return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${info.value.toLocaleString()} 價值 | 已兌換: {dateStr}</span>;
+      }
+      return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${info.value.toLocaleString()} 價值</span>;
+    }
+    
+    return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">未兌換獎勵</span>;
+  }, [getItemInfo]);
+
   const calculatedAwardTotal = useMemo(() => {
     if (!personalAward) return 0;
     let t = personalAward.totals.total || 0;
@@ -865,15 +881,12 @@ export default function RunningRecordsPage() {
                       L1 基礎紀律
                     </span>
                     <span className="text-white font-bold text-sm">團跑連續 {displayAward.L1.runs}/4 次</span>
-                    {displayAward.L1.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L1.date}</span>}
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[13px] font-bold ${(parseInt(displayAward.L1.runs) >= 4) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L1.runs) >= 4) ? (getItemInfo(displayAward.L1.reward)?.name || displayAward.L1.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {getItemInfo(displayAward.L1.reward) && (
-                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${getItemInfo(displayAward.L1.reward)?.value.toLocaleString()} 價值</span>
-                    )}
+                    {renderRewardSubText(displayAward.L1.runs, 4, displayAward.L1.reward, displayAward.L1.date)}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L1' && (
@@ -894,15 +907,12 @@ export default function RunningRecordsPage() {
                       L2 突破極限
                     </span>
                     <span className="text-white font-bold text-sm">PR 突破 {displayAward.L2.prs}/8 次</span>
-                    {displayAward.L2.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L2.date}</span>}
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[13px] font-bold ${(parseInt(displayAward.L2.prs) >= 8) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L2.prs) >= 8) ? (getItemInfo(displayAward.L2.reward)?.name || displayAward.L2.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {getItemInfo(displayAward.L2.reward) && (
-                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${getItemInfo(displayAward.L2.reward)?.value.toLocaleString()} 價值</span>
-                    )}
+                    {renderRewardSubText(displayAward.L2.prs, 8, displayAward.L2.reward, displayAward.L2.date)}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L2' && (
@@ -923,15 +933,12 @@ export default function RunningRecordsPage() {
                       L3 毅力試煉
                     </span>
                     <span className="text-white font-bold text-sm">累積跑滿 {displayAward.L3.prs}/18 次</span>
-                    {displayAward.L3.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L3.date}</span>}
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[13px] font-bold ${(parseInt(displayAward.L3.prs) >= 18) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L3.prs) >= 18) ? (getItemInfo(displayAward.L3.reward)?.name || displayAward.L3.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {getItemInfo(displayAward.L3.reward) && (
-                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${getItemInfo(displayAward.L3.reward)?.value.toLocaleString()} 價值</span>
-                    )}
+                    {renderRewardSubText(displayAward.L3.prs, 18, displayAward.L3.reward, displayAward.L3.date)}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L3' && (
