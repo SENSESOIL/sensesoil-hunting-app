@@ -1029,7 +1029,7 @@ export default function RunningRecordsPage() {
                       displayAward.L5.date ? (
                         <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">已兌換 {displayAward.L5.date}</span>
                       ) : displayAward.L5.reward ? (
-                        <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">餘額 {displayAward.L5.reward}</span>
+                        <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">未兌換餘額 {displayAward.L5.reward}</span>
                       ) : null
                     )}
                   </div>
