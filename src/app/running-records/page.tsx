@@ -781,7 +781,7 @@ export default function RunningRecordsPage() {
 
         {/* Top Header - Individual View */}
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'team' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
-          <div className="flex flex-col border-l-[3px] border-primary pl-3 relative">
+          <div className="flex flex-col border-l-[3px] border-primary pl-3 relative flex-1 pr-4">
             <style>{`
               @keyframes textReveal {
                 0% { opacity: 0; filter: blur(3px); transform: translateX(-4px); }
@@ -791,12 +791,16 @@ export default function RunningRecordsPage() {
                 animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
               }
             `}</style>
-            <p className="font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none">{hunterRank}</p>
+            <p 
+              className="font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none cursor-pointer"
+              onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
+            >
+              {hunterRank}
+            </p>
             <div className="flex items-center gap-2">
               <h2 
                 key={selectedPersonalHunter}
-                className="font-headline-lg text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
-                style={{ color: "#efe0d2" }}
+                className="font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
                 onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
               >
                 {selectedPersonalHunter || "載入中..."}
@@ -816,27 +820,22 @@ export default function RunningRecordsPage() {
               </div>
             )}
           </div>
+          <div className="text-right flex flex-col justify-end flex-shrink-0">
+            <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">總累積金額</p>
+            <div className="font-headline-lg text-[#5D93B8] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none drop-shadow-[0_0_8px_rgba(93,147,184,0.5)]">
+              <span className="text-xl">$</span>{calculatedAwardTotal.toLocaleString()}
+            </div>
+          </div>
         </div>
 
         {/* Personal Dashboard (Individual View) */}
         <section className={`mb-[5px] ${view === 'team' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 font-display">
-            {/* Total Value / Portfolio Balance */}
-            <div className="mb-8 p-6 rounded-xl bg-gradient-to-br from-[#121212] to-black border border-primary/20 shadow-[0_0_20px_rgba(243,156,18,0.1)] text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-              <p className="text-white/50 text-[11px] font-label-caps tracking-[0.2em] mb-2 uppercase">Total Accumulated Awards</p>
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-[#00ff88] text-2xl font-normal drop-shadow-[0_0_8px_rgba(0,255,136,0.3)]">$</span>
-                <span className="text-[#00ff88] text-5xl font-extrabold tracking-tighter font-mono drop-shadow-[0_0_12px_rgba(0,255,136,0.5)]">
-                  {calculatedAwardTotal.toLocaleString()}
-                </span>
-              </div>
-            </div>
 
             {/* Assets List */}
-            <h3 className="text-white/80 text-[13px] font-bold tracking-widest uppercase mb-4 pl-2 border-l-[3px] border-primary">
-              Awakening Portfolio
-            </h3>
+            <p className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none mb-4 uppercase">
+              覺醒資產庫
+            </p>
             
             <div className="flex flex-col gap-3 pb-8">
               {/* L1 Asset */}
@@ -847,11 +846,11 @@ export default function RunningRecordsPage() {
                   {displayAward.L1.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L1.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#5D93B8]' : 'text-white/30'}`}>
                     {displayAward.L1.reward || "未解鎖"}
                   </span>
                   {displayAward.L1.reward && itemValues[displayAward.L1.reward] && (
-                    <span className="text-[#00ff88]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#5D93B8]/50 text-[10px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -864,11 +863,11 @@ export default function RunningRecordsPage() {
                   {displayAward.L2.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L2.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#5D93B8]' : 'text-white/30'}`}>
                     {displayAward.L2.reward || "未解鎖"}
                   </span>
                   {displayAward.L2.reward && itemValues[displayAward.L2.reward] && (
-                    <span className="text-[#00ff88]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#5D93B8]/50 text-[10px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -881,11 +880,11 @@ export default function RunningRecordsPage() {
                   {displayAward.L3.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L3.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                  <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#5D93B8]' : 'text-white/30'}`}>
                     {displayAward.L3.reward || "未解鎖"}
                   </span>
                   {displayAward.L3.reward && itemValues[displayAward.L3.reward] && (
-                    <span className="text-[#00ff88]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                    <span className="text-[#5D93B8]/50 text-[10px] mt-0.5">+$1,000 價值</span>
                   )}
                 </div>
               </div>
@@ -898,7 +897,7 @@ export default function RunningRecordsPage() {
                     <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.length}/12 個月</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                    <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#5D93B8]' : 'text-white/30'}`}>
                       {displayAward.L4.totalB > 0 ? `+$${displayAward.L4.totalB.toLocaleString()}` : "$0"}
                     </span>
                   </div>
@@ -908,10 +907,10 @@ export default function RunningRecordsPage() {
                   {Array.from({ length: 12 }).map((_, i) => {
                     const monthData = displayAward.L4.months.find(m => m.month === i + 1);
                     return (
-                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-primary/5 border border-[#00ff88]/20' : 'bg-white/5 border border-transparent'}`}>
+                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-[#5D93B8]/10 border border-[#5D93B8]/30' : 'bg-white/5 border border-transparent'}`}>
                         <span className={`text-[12px] font-bold ${monthData ? 'text-[#efe0d2]' : 'text-white/30'}`}>{i + 1}月</span>
                         <div className="text-right">
-                          <span className={`text-[11px] font-bold block ${monthData ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                          <span className={`text-[11px] font-bold block ${monthData ? 'text-[#5D93B8]' : 'text-white/30'}`}>
                             {monthData ? monthData.reward || "達成" : "-"}
                           </span>
                         </div>
@@ -929,11 +928,11 @@ export default function RunningRecordsPage() {
                   {displayAward.L5.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L5.date}</span>}
                 </div>
                 <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                  <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#5D93B8]' : 'text-white/30'}`}>
                     {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "$0"}
                   </span>
                   {displayAward.L5.reward && (
-                    <span className="text-[#00ff88]/70 text-[10px] font-bold">{displayAward.L5.reward}</span>
+                    <span className="text-[#5D93B8]/70 text-[10px] font-bold">{displayAward.L5.reward}</span>
                   )}
                 </div>
               </div>
