@@ -777,8 +777,8 @@ export default function BasicMissionPage() {
         </div>
       </header>
 
-      <PullToRefresh className="mt-16">
-        <main className="relative px-4">
+      <PullToRefresh>
+        <main className="relative pt-16 px-4">
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵週排行榜</p>

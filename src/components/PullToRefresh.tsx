@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-export function PullToRefresh({ children }: { children: React.ReactNode }) {
+export function PullToRefresh({ children, className = "" }: { children: React.ReactNode, className?: string }) {
   const [pullDistance, setPullDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -17,7 +17,6 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
-      // Allow pulling if scroll is exactly 0 or slightly negative (iOS bounce)
       if (window.scrollY <= 0) {
         startY.current = e.touches[0].clientY;
         isPulling.current = true;
@@ -71,13 +70,10 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   }, [isRefreshing, router]);
 
   return (
-    <div 
-      className={`relative w-full min-h-[100dvh] ${!isPulling.current ? "transition-transform duration-300 ease-out" : ""}`}
-      style={{ transform: `translateY(${pullDistance}px)` }}
-    >
+    <div className={`relative w-full ${className}`}>
       <div 
-        className="absolute top-0 left-0 right-0 flex justify-center items-end pb-4 pointer-events-none" 
-        style={{ height: `${THRESHOLD}px`, top: `-${THRESHOLD}px`, opacity: pullDistance / THRESHOLD }}
+        className="absolute left-0 right-0 flex justify-center items-center pointer-events-none overflow-hidden" 
+        style={{ top: '64px', height: `${pullDistance}px`, opacity: pullDistance / THRESHOLD }}
       >
         <div 
           className={`w-7 h-7 text-primary ${isRefreshing ? 'animate-spin' : ''}`}
@@ -101,7 +97,12 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
           </svg>
         </div>
       </div>
-      {children}
+      <div 
+        className={`w-full min-h-screen ${!isPulling.current ? "transition-transform duration-300 ease-out" : ""}`}
+        style={{ transform: `translateY(${pullDistance}px)` }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
