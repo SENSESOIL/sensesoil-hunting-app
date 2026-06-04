@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -191,6 +192,22 @@ const YearlyBarChart = ({ data, onSelect }: { data: {label: string, value: numbe
 
 export default function RunningRecordsPage() {
   const router = useRouter();
+  const [showNav, setShowNav] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > lastScrollY.current && window.scrollY > 50) {
+        setShowNav(false);
+      } else {
+        setShowNav(true);
+      }
+      lastScrollY.current = window.scrollY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const [view, setView] = useState<"individual" | "team">("team");
   const { data: session, status } = useSession();
   const userHunterName = (session?.user as any)?.hunterName || "";
@@ -706,8 +723,9 @@ export default function RunningRecordsPage() {
         </div>
       </header>
 
-      <main className="relative pt-16 px-4">
-        {/* Top Header - Team View */}
+      <PullToRefresh className="mt-16">
+        <main className="relative px-4">
+          {/* Top Header - Team View */}
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵週排行榜</p>
@@ -1065,6 +1083,7 @@ export default function RunningRecordsPage() {
         </section>
 
       </main>
+      </PullToRefresh>
 
       {/* Month Selector Modal */}
       {isMonthSelectorOpen && (
@@ -1133,7 +1152,7 @@ export default function RunningRecordsPage() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-6 bg-surface/95 backdrop-blur-lg border-t border-primary/30 shadow-[0_-8px_20px_rgba(243,156,18,0.3)]">
+      <nav className={`fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-6 bg-surface/95 backdrop-blur-lg border-t border-primary/30 shadow-[0_-8px_20px_rgba(243,156,18,0.3)] transition-transform duration-300 ${showNav ? 'translate-y-0' : 'translate-y-full'}`}>
         <button className="flex flex-col items-center gap-1 text-[#efe0d2]" onClick={() => router.push("/basic-mission")}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>target</span>
           <span className="font-label-caps text-[11px] tracking-[0.1em]">基礎</span>
