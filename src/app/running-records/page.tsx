@@ -890,7 +890,7 @@ export default function RunningRecordsPage() {
           <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 font-display">
 
             {/* Assets List */}
-            <div className="flex items-center gap-2 mb-4 relative z-10">
+            <div className="flex items-center gap-2 mb-6 min-h-[33px] relative z-10">
               <button 
                 onClick={() => setIsAwardYearDropdownOpen(!isAwardYearDropdownOpen)}
                 className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
