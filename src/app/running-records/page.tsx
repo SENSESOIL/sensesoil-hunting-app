@@ -883,7 +883,7 @@ export default function RunningRecordsPage() {
                     <span className="text-white font-bold text-sm">團跑連續 {displayAward.L1.runs}/4 次</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[13px] font-bold ${(parseInt(displayAward.L1.runs) >= 4) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                    <span className={`text-[12px] font-bold ${(parseInt(displayAward.L1.runs) >= 4) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L1.runs) >= 4) ? (getItemInfo(displayAward.L1.reward)?.name || displayAward.L1.reward || "已解鎖") : "未解鎖"}
                     </span>
                     {renderRewardSubText(displayAward.L1.runs, 4, displayAward.L1.reward, displayAward.L1.date)}
@@ -909,7 +909,7 @@ export default function RunningRecordsPage() {
                     <span className="text-white font-bold text-sm">PR 突破 {displayAward.L2.prs}/8 次</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[13px] font-bold ${(parseInt(displayAward.L2.prs) >= 8) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                    <span className={`text-[12px] font-bold ${(parseInt(displayAward.L2.prs) >= 8) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L2.prs) >= 8) ? (getItemInfo(displayAward.L2.reward)?.name || displayAward.L2.reward || "已解鎖") : "未解鎖"}
                     </span>
                     {renderRewardSubText(displayAward.L2.prs, 8, displayAward.L2.reward, displayAward.L2.date)}
@@ -935,7 +935,7 @@ export default function RunningRecordsPage() {
                     <span className="text-white font-bold text-sm">累積跑滿 {displayAward.L3.prs}/18 次</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
-                    <span className={`text-[13px] font-bold ${(parseInt(displayAward.L3.prs) >= 18) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                    <span className={`text-[12px] font-bold ${(parseInt(displayAward.L3.prs) >= 18) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L3.prs) >= 18) ? (getItemInfo(displayAward.L3.reward)?.name || displayAward.L3.reward || "已解鎖") : "未解鎖"}
                     </span>
                     {renderRewardSubText(displayAward.L3.prs, 18, displayAward.L3.reward, displayAward.L3.date)}
