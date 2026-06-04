@@ -878,7 +878,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L1' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    參與團隊約跑活動，連續出席4次以建立穩定的跑步紀律。解鎖後可獲得基礎防護與恢復裝備。
+                    參與公司團跑，連續出席4次以建立穩定的基礎紀律。解鎖後可獲得恢復裝備。連續出席再多2次解鎖獎金兌換。
                   </div>
                 )}
               </div>
@@ -907,7 +907,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L2' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    超越自我，挑戰個人最佳紀錄 (Personal Record)。累積突破 8 次即可獲得進階恢復與監測裝備。
+                    突破極限，挑戰個人最佳跑量里程紀錄，累積突破 8 次解鎖監測裝備。累積突破再多2次解鎖獎金兌換。
                   </div>
                 )}
               </div>
@@ -936,7 +936,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L3' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    展現無比的毅力，無論風雨累積參與 18 次訓練。這是對意志力最真實的考驗。
+                    展現無比毅力超越自我，挑戰個人最佳距離紀錄，累積突破18次解鎖進階監測裝備。累積突破再多2次解鎖獎金兌換。
                   </div>
                 )}
               </div>
@@ -961,7 +961,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L4' && (
                   <div className="mb-4 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    每月均有專屬的挑戰指標，只要在當月達成目標，即可獲得對應的高額獎勵金。持之以恆，每月都有新突破。
+                    挑戰每月專屬挑戰指標5K或10K，即可獲得對應的高額獎勵金。持之以恆，累積創造奇蹟。
                   </div>
                 )}
                 {/* Monthly Details Grid */}
@@ -1006,7 +1006,7 @@ export default function RunningRecordsPage() {
                 </div>
                 {expandedAwardLevel === 'L5' && (
                   <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
-                    一整年的終極目標！根據年度累積的總跑量里程數結算對應的高額獎金。這是對全年不懈努力的最高致敬。
+                    根據年度累積總跑量里程數結算對應的高額獎金。這是對全年不懈努力的最高致敬!
                   </div>
                 )}
               </div>
