@@ -223,9 +223,50 @@ export default function RunningRecordsPage() {
   const { data: runningRes } = useSWR("/api/sheets/running-records", fetcher);
   const runningData = runningRes?.data || [];
 
+  const { data: awardsRes } = useSWR("/api/sheets/running-awards", fetcher);
+  const awardsData = awardsRes?.data || [];
+
   const [selectedPersonalHunter, setSelectedPersonalHunter] = useState<string>("");
   const [isPersonalHunterDropdownOpen, setIsPersonalHunterDropdownOpen] = useState(false);
   const [selectedDayRecord, setSelectedDayRecord] = useState<any | null>(null);
+
+  const personalAward = useMemo(() => {
+    if (!selectedPersonalHunter || !awardsData.length) return null;
+    const normalize = (n: string) => {
+      let r = n.replace(/[\.\s]/g, '').toUpperCase();
+      if (r === 'WWENJUN' || r === 'WEIWENJUN') return '魏文軍';
+      if (r === '盧政恆') return '盧政恒';
+      return r;
+    };
+    const target = normalize(selectedPersonalHunter);
+    return awardsData.find((a: any) => normalize(a.name) === target) || null;
+  }, [awardsData, selectedPersonalHunter]);
+
+  const itemValues: Record<string, number> = useMemo(() => ({
+    '筋膜槍': 1000,
+    '體脂計': 1000,
+    '運動手環': 1000
+  }), []);
+
+  const calculatedAwardTotal = useMemo(() => {
+    if (!personalAward) return 0;
+    let t = personalAward.totals.total || 0;
+    if (personalAward.L1?.reward && itemValues[personalAward.L1.reward]) t += itemValues[personalAward.L1.reward];
+    if (personalAward.L2?.reward && itemValues[personalAward.L2.reward]) t += itemValues[personalAward.L2.reward];
+    if (personalAward.L3?.reward && itemValues[personalAward.L3.reward]) t += itemValues[personalAward.L3.reward];
+    return t;
+  }, [personalAward, itemValues]);
+
+  const displayAward = personalAward || {
+    name: selectedPersonalHunter,
+    L1: { runs: '0', reward: '', date: '' },
+    L2: { prs: '0', reward: '', date: '' },
+    L3: { prs: '0', reward: '', date: '' },
+    L4: { months: [], totalB: 0 },
+    L5: { distance: '0', reward: '', date: '', totalC: 0 },
+    totals: { A: 0, B: 0, C: 0, total: 0 }
+  };
+
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date>(new Date());
   const [isMonthSelectorOpen, setIsMonthSelectorOpen] = useState(false);
 
@@ -776,6 +817,129 @@ export default function RunningRecordsPage() {
             )}
           </div>
         </div>
+
+        {/* Personal Dashboard (Individual View) */}
+        <section className={`mb-[5px] ${view === 'team' ? 'hidden' : ''}`}>
+          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 font-display">
+            {/* Total Value / Portfolio Balance */}
+            <div className="mb-8 p-6 rounded-xl bg-gradient-to-br from-[#121212] to-black border border-primary/20 shadow-[0_0_20px_rgba(243,156,18,0.1)] text-center relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+              <p className="text-white/50 text-[11px] font-label-caps tracking-[0.2em] mb-2 uppercase">Total Accumulated Awards</p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-[#00ff88] text-2xl font-normal drop-shadow-[0_0_8px_rgba(0,255,136,0.3)]">$</span>
+                <span className="text-[#00ff88] text-5xl font-extrabold tracking-tighter font-mono drop-shadow-[0_0_12px_rgba(0,255,136,0.5)]">
+                  {calculatedAwardTotal.toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            {/* Assets List */}
+            <h3 className="text-white/80 text-[13px] font-bold tracking-widest uppercase mb-4 pl-2 border-l-[3px] border-primary">
+              Awakening Portfolio
+            </h3>
+            
+            <div className="flex flex-col gap-3 pb-8">
+              {/* L1 Asset */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
+                <div className="flex flex-col">
+                  <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L1 基礎紀律</span>
+                  <span className="text-white font-bold text-sm">團跑連續 {displayAward.L1.runs}/4 次</span>
+                  {displayAward.L1.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L1.date}</span>}
+                </div>
+                <div className="text-right flex flex-col justify-end">
+                  <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                    {displayAward.L1.reward || "未解鎖"}
+                  </span>
+                  {displayAward.L1.reward && itemValues[displayAward.L1.reward] && (
+                    <span className="text-[#00ff88]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                  )}
+                </div>
+              </div>
+
+              {/* L2 Asset */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
+                <div className="flex flex-col">
+                  <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L2 突破極限</span>
+                  <span className="text-white font-bold text-sm">PR 突破 {displayAward.L2.prs}/8 次</span>
+                  {displayAward.L2.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L2.date}</span>}
+                </div>
+                <div className="text-right flex flex-col justify-end">
+                  <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                    {displayAward.L2.reward || "未解鎖"}
+                  </span>
+                  {displayAward.L2.reward && itemValues[displayAward.L2.reward] && (
+                    <span className="text-[#00ff88]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                  )}
+                </div>
+              </div>
+
+              {/* L3 Asset */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
+                <div className="flex flex-col">
+                  <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L3 毅力試煉</span>
+                  <span className="text-white font-bold text-sm">累積跑滿 {displayAward.L3.prs}/18 次</span>
+                  {displayAward.L3.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L3.date}</span>}
+                </div>
+                <div className="text-right flex flex-col justify-end">
+                  <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                    {displayAward.L3.reward || "未解鎖"}
+                  </span>
+                  {displayAward.L3.reward && itemValues[displayAward.L3.reward] && (
+                    <span className="text-[#00ff88]/50 text-[10px] mt-0.5">+$1,000 價值</span>
+                  )}
+                </div>
+              </div>
+
+              {/* L4 Asset (Detailed Months) */}
+              <div className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5">
+                <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
+                  <div className="flex flex-col">
+                    <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L4 月度挑戰賽</span>
+                    <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.length}/12 個月</span>
+                  </div>
+                  <div className="text-right flex flex-col justify-end">
+                    <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                      {displayAward.L4.totalB > 0 ? `+$${displayAward.L4.totalB.toLocaleString()}` : "$0"}
+                    </span>
+                  </div>
+                </div>
+                {/* Monthly Details Grid */}
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {Array.from({ length: 12 }).map((_, i) => {
+                    const monthData = displayAward.L4.months.find(m => m.month === i + 1);
+                    return (
+                      <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-primary/5 border border-[#00ff88]/20' : 'bg-white/5 border border-transparent'}`}>
+                        <span className={`text-[12px] font-bold ${monthData ? 'text-[#efe0d2]' : 'text-white/30'}`}>{i + 1}月</span>
+                        <div className="text-right">
+                          <span className={`text-[11px] font-bold block ${monthData ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                            {monthData ? monthData.reward || "達成" : "-"}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* L5 Asset */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
+                <div className="flex flex-col">
+                  <span className="text-primary text-[10px] font-bold tracking-widest mb-1">L5 年度遠征賽</span>
+                  <span className="text-white font-bold text-sm">總跑量 {displayAward.L5.distance} km</span>
+                  {displayAward.L5.date && <span className="text-white/40 text-[10px] mt-0.5">達成: {displayAward.L5.date}</span>}
+                </div>
+                <div className="text-right flex flex-col justify-end">
+                  <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#00ff88]' : 'text-white/30'}`}>
+                    {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "$0"}
+                  </span>
+                  {displayAward.L5.reward && (
+                    <span className="text-[#00ff88]/70 text-[10px] font-bold">{displayAward.L5.reward}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Guild Leaderboard */}
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
