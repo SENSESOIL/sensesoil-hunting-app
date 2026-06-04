@@ -977,7 +977,7 @@ export default function RunningRecordsPage() {
                     const monthData = displayAward.L4.months.find(m => m.month === i + 1);
                     return (
                       <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${monthData ? 'bg-[#00E5FF]/10 border border-[#00E5FF]/30' : 'bg-white/5 border border-transparent'}`}>
-                        <span className={`text-[12px] font-bold ${monthData ? 'text-[#efe0d2]' : 'text-white/30'}`}>{i + 1}月</span>
+                        <span className={`text-[12px] font-bold ${monthData ? 'text-white' : 'text-white/30'}`}>{i + 1}月</span>
                         <div className="text-right">
                           <span className={`text-[11px] font-bold block ${monthData ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                             {monthData ? monthData.reward || "達成" : "-"}
