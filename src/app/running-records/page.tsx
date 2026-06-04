@@ -229,6 +229,11 @@ export default function RunningRecordsPage() {
   const [selectedPersonalHunter, setSelectedPersonalHunter] = useState<string>("");
   const [isPersonalHunterDropdownOpen, setIsPersonalHunterDropdownOpen] = useState(false);
   const [selectedDayRecord, setSelectedDayRecord] = useState<any | null>(null);
+  const [expandedAwardLevel, setExpandedAwardLevel] = useState<string | null>(null);
+
+  const toggleAwardLevel = (level: string) => {
+    setExpandedAwardLevel(prev => prev === level ? null : level);
+  };
 
   const personalAward = useMemo(() => {
     if (!selectedPersonalHunter || !awardsData.length) return null;
@@ -839,61 +844,106 @@ export default function RunningRecordsPage() {
             
             <div className="flex flex-col gap-3 pb-8">
               {/* L1 Asset */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
-                <div className="flex flex-col">
-                  <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L1 基礎紀律</span>
-                  <span className="text-white font-bold text-sm">團跑連續 {displayAward.L1.runs}/4 次</span>
-                  {displayAward.L1.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L1.date}</span>}
+              <div 
+                className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => toggleAwardLevel('L1')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                      L1 基礎紀律
+                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L1' ? 'rotate-180' : ''}`}>expand_more</span>
+                    </span>
+                    <span className="text-white font-bold text-sm">團跑連續 {displayAward.L1.runs}/4 次</span>
+                    {displayAward.L1.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L1.date}</span>}
+                  </div>
+                  <div className="text-right flex flex-col justify-end">
+                    <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                      {displayAward.L1.reward || "未解鎖"}
+                    </span>
+                    {displayAward.L1.reward && itemValues[displayAward.L1.reward] && (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L1.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                    {displayAward.L1.reward || "未解鎖"}
-                  </span>
-                  {displayAward.L1.reward && itemValues[displayAward.L1.reward] && (
-                    <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
-                  )}
-                </div>
+                {expandedAwardLevel === 'L1' && (
+                  <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                    參與團隊約跑活動，連續出席4次以建立穩定的跑步紀律。解鎖後可獲得基礎防護與恢復裝備。
+                  </div>
+                )}
               </div>
 
               {/* L2 Asset */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
-                <div className="flex flex-col">
-                  <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L2 突破極限</span>
-                  <span className="text-white font-bold text-sm">PR 突破 {displayAward.L2.prs}/8 次</span>
-                  {displayAward.L2.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L2.date}</span>}
+              <div 
+                className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => toggleAwardLevel('L2')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                      L2 突破極限
+                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L2' ? 'rotate-180' : ''}`}>expand_more</span>
+                    </span>
+                    <span className="text-white font-bold text-sm">PR 突破 {displayAward.L2.prs}/8 次</span>
+                    {displayAward.L2.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L2.date}</span>}
+                  </div>
+                  <div className="text-right flex flex-col justify-end">
+                    <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                      {displayAward.L2.reward || "未解鎖"}
+                    </span>
+                    {displayAward.L2.reward && itemValues[displayAward.L2.reward] && (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L2.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                    {displayAward.L2.reward || "未解鎖"}
-                  </span>
-                  {displayAward.L2.reward && itemValues[displayAward.L2.reward] && (
-                    <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
-                  )}
-                </div>
+                {expandedAwardLevel === 'L2' && (
+                  <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                    超越自我，挑戰個人最佳紀錄 (Personal Record)。累積突破 8 次即可獲得進階恢復與監測裝備。
+                  </div>
+                )}
               </div>
 
               {/* L3 Asset */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
-                <div className="flex flex-col">
-                  <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L3 毅力試煉</span>
-                  <span className="text-white font-bold text-sm">累積跑滿 {displayAward.L3.prs}/18 次</span>
-                  {displayAward.L3.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L3.date}</span>}
+              <div 
+                className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => toggleAwardLevel('L3')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                      L3 毅力試煉
+                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L3' ? 'rotate-180' : ''}`}>expand_more</span>
+                    </span>
+                    <span className="text-white font-bold text-sm">累積跑滿 {displayAward.L3.prs}/18 次</span>
+                    {displayAward.L3.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L3.date}</span>}
+                  </div>
+                  <div className="text-right flex flex-col justify-end">
+                    <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                      {displayAward.L3.reward || "未解鎖"}
+                    </span>
+                    {displayAward.L3.reward && itemValues[displayAward.L3.reward] && (
+                      <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[13px] font-bold ${displayAward.L3.reward ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                    {displayAward.L3.reward || "未解鎖"}
-                  </span>
-                  {displayAward.L3.reward && itemValues[displayAward.L3.reward] && (
-                    <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+$1,000 價值</span>
-                  )}
-                </div>
+                {expandedAwardLevel === 'L3' && (
+                  <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                    展現無比的毅力，無論風雨累積參與 18 次訓練。這是對意志力最真實的考驗。
+                  </div>
+                )}
               </div>
 
               {/* L4 Asset (Detailed Months) */}
               <div className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5">
-                <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
+                <div 
+                  className="flex items-center justify-between mb-3 pb-3 border-b border-white/10 cursor-pointer"
+                  onClick={() => toggleAwardLevel('L4')}
+                >
                   <div className="flex flex-col">
-                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L4 月度挑戰</span>
+                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                      L4 月度挑戰
+                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L4' ? 'rotate-180' : ''}`}>expand_more</span>
+                    </span>
                     <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.length}/12 個月</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
@@ -902,6 +952,11 @@ export default function RunningRecordsPage() {
                     </span>
                   </div>
                 </div>
+                {expandedAwardLevel === 'L4' && (
+                  <div className="mb-4 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                    每月均有專屬的挑戰指標，只要在當月達成目標，即可獲得對應的高額獎勵金。持之以恆，每月都有新突破。
+                  </div>
+                )}
                 {/* Monthly Details Grid */}
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   {Array.from({ length: 12 }).map((_, i) => {
@@ -921,20 +976,33 @@ export default function RunningRecordsPage() {
               </div>
 
               {/* L5 Asset */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors">
-                <div className="flex flex-col">
-                  <span className="text-primary text-[11px] font-bold tracking-widest mb-1">L5 年度遠征賽</span>
-                  <span className="text-white font-bold text-sm">總跑量 {displayAward.L5.distance} km</span>
-                  {displayAward.L5.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L5.date}</span>}
+              <div 
+                className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={() => toggleAwardLevel('L5')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-primary text-[11px] font-bold tracking-widest mb-1 flex items-center gap-1">
+                      L5 年度遠征
+                      <span className={`material-symbols-outlined text-[14px] transition-transform ${expandedAwardLevel === 'L5' ? 'rotate-180' : ''}`}>expand_more</span>
+                    </span>
+                    <span className="text-white font-bold text-sm">總跑量 {displayAward.L5.distance} km</span>
+                    {displayAward.L5.date && <span className="text-white/40 text-[11px] mt-0.5">達成: {displayAward.L5.date}</span>}
+                  </div>
+                  <div className="text-right flex flex-col justify-end">
+                    <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                      {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "$0"}
+                    </span>
+                    {displayAward.L5.reward && (
+                      <span className="text-[#00E5FF]/70 text-[11px] font-bold">{displayAward.L5.reward}</span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right flex flex-col justify-end">
-                  <span className={`text-[16px] font-mono font-bold ${displayAward.L5.totalC > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
-                    {displayAward.L5.totalC > 0 ? `+$${displayAward.L5.totalC.toLocaleString()}` : "$0"}
-                  </span>
-                  {displayAward.L5.reward && (
-                    <span className="text-[#00E5FF]/70 text-[11px] font-bold">{displayAward.L5.reward}</span>
-                  )}
-                </div>
+                {expandedAwardLevel === 'L5' && (
+                  <div className="mt-3 pt-3 border-t border-white/10 text-[12px] text-white/60 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200">
+                    一整年的終極目標！根據年度累積的總跑量里程數結算對應的高額獎金。這是對全年不懈努力的最高致敬。
+                  </div>
+                )}
               </div>
             </div>
           </div>
