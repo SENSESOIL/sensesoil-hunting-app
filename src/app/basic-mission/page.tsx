@@ -317,7 +317,7 @@ export default function BasicMissionPage() {
 
     const rows = data.rows;
     // 尋找「總分」所在的欄位 index
-    const scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂'));
+    const scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂') || h.includes('覺醒'));
     const colPIdx = 15; // Col P
     const nameIdx = 1;
     const dateIdx = 0;
@@ -802,7 +802,14 @@ export default function BasicMissionPage() {
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵週排行榜</p>
-            <h2 className={`font-headline-lg text-white font-bold tracking-wider uppercase leading-none ${dashboardData.name.length > 4 ? 'text-xl mt-1' : 'text-3xl'}`}>{dashboardData.name}</h2>
+            <div className="h-[30px] flex items-center">
+              <h2 className={`font-headline-lg text-white font-bold tracking-wider uppercase ${
+                dashboardData.name.length <= 4 ? 'text-3xl leading-[30px]' :
+                dashboardData.name.length <= 10 ? 'text-xl leading-[30px]' :
+                dashboardData.name.length <= 20 ? 'text-sm leading-[15px] line-clamp-2' :
+                'text-[11px] leading-[14px] line-clamp-2'
+              }`}>{dashboardData.name}</h2>
+            </div>
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>

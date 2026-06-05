@@ -402,14 +402,16 @@ export default function RunningRecordsPage() {
     const weeklyWinners: Record<number, string | null> = {};
     sortedWeeks.forEach(weekStart => {
       let maxDist = 0;
-      let winner = null;
+      let winners: string[] = [];
       for (const [name, dist] of Object.entries(weeklyTotals[weekStart])) {
         if (dist > maxDist) {
           maxDist = dist;
-          winner = name;
+          winners = [name];
+        } else if (dist === maxDist && dist > 0) {
+          winners.push(name);
         }
       }
-      weeklyWinners[weekStart] = winner;
+      weeklyWinners[weekStart] = winners.length > 0 ? winners.join('、') : null;
     });
 
     const latestWeek = sortedWeeks[0];
@@ -438,7 +440,8 @@ export default function RunningRecordsPage() {
       if (userHunterName) {
         setSelectedPersonalHunter(userHunterName);
       } else if (dashboardData.name && !["計算中...", "無資料", "尚無冠軍"].includes(dashboardData.name)) {
-        setSelectedPersonalHunter(dashboardData.name);
+        const firstChamp = dashboardData.name.split('、')[0];
+        setSelectedPersonalHunter(firstChamp);
       }
     }
   }, [dashboardData.name, selectedPersonalHunter, userHunterName, status]);
@@ -880,7 +883,14 @@ export default function RunningRecordsPage() {
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] h-[60px] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵週排行榜</p>
-            <h2 className={`font-headline-lg text-white font-bold tracking-wider uppercase leading-none ${dashboardData.name.length > 4 ? 'text-xl mt-1' : 'text-3xl'}`}>{dashboardData.name}</h2>
+            <div className="h-[30px] flex items-center">
+              <h2 className={`font-headline-lg text-white font-bold tracking-wider uppercase ${
+                dashboardData.name.length <= 4 ? 'text-3xl leading-[30px]' :
+                dashboardData.name.length <= 10 ? 'text-xl leading-[30px]' :
+                dashboardData.name.length <= 20 ? 'text-sm leading-[15px] line-clamp-2' :
+                'text-[11px] leading-[14px] line-clamp-2'
+              }`}>{dashboardData.name}</h2>
+            </div>
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
