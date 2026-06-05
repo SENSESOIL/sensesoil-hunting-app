@@ -1450,7 +1450,7 @@ export default function RunningRecordsPage() {
               })}
             </div>
 
-            <div className="mt-12 pb-6">
+            <div className="mt-12 pb-4">
               <YearlyBarChart 
                 data={past12MonthsData} 
                 onSelect={(d) => setSelectedCalendarDate(d)} 
@@ -1458,7 +1458,7 @@ export default function RunningRecordsPage() {
             </div>
           </div>
 
-          <div className="pt-6 pb-8 px-5 sm:px-6 -mx-4 font-display bg-black">
+          <div className="pt-4 pb-8 px-5 sm:px-6 -mx-4 font-display bg-black">
             {/* Team Recent Records Table */}
             {userRole !== "viewer" && (
             <div className="border border-primary/30 bg-transparent rounded-sm overflow-hidden flex flex-col">
