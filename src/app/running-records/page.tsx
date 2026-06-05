@@ -1234,16 +1234,16 @@ export default function RunningRecordsPage() {
             <div className="flex justify-between items-start mb-8 font-display">
               <div className="flex flex-col relative">
                 <p 
-                  className={`font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] mb-3 leading-none inline-block ${isAdmin ? "transition-opacity cursor-pointer hover:opacity-80" : ""}`}
-                  onClick={() => { if(isAdmin) setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen) }}
+                  className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] mb-3 leading-none inline-block transition-opacity cursor-pointer hover:opacity-80"
+                  onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
                 >
                   狩獵分析
                 </p>
                 <div className="flex items-center gap-2">
                   <h2 
                     key={selectedPersonalHunter}
-                    className={`font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity ${isAdmin ? "cursor-pointer hover:opacity-80" : ""} animate-text-reveal`}
-                    onClick={() => { if(isAdmin) setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen) }}
+                    className="font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
+                    onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
                   >
                     {selectedPersonalHunter || "載入中..."}
                   </h2>
