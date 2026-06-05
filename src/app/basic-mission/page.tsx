@@ -745,8 +745,8 @@ export default function BasicMissionPage() {
       };
     });
 
-    // Cap to 15, then pad if fewer than 15
-    const capped = mapped.slice(0, 15);
+    // Cap to 70 to allow scrolling, then pad if fewer than 15
+    const capped = mapped.slice(0, 70);
     while (capped.length < 15) {
       capped.push({
         id: capped.length,
