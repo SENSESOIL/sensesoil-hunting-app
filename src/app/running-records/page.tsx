@@ -303,14 +303,24 @@ export default function RunningRecordsPage() {
     const isUnlocked = parseInt(valStr) >= threshold;
     if (!isUnlocked) return null;
 
+    const isSecondaryUnlocked = parseInt(valStr) >= threshold + 2;
+
     const info = getItemInfo(rewardStr);
     const value = info ? info.value : defaultValue;
     
     if (dateStr) {
-      return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${value.toLocaleString()} 價值 | 已兌換 {dateStr}</span>;
+      if (isSecondaryUnlocked) {
+        return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${value.toLocaleString()} 價值 | 已兌換 {dateStr}</span>;
+      } else {
+        return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">已兌換 {dateStr}</span>;
+      }
     }
     
-    return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${value.toLocaleString()} 價值 | 未兌換獎勵</span>;
+    if (isSecondaryUnlocked) {
+      return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${value.toLocaleString()} 價值 | 未兌換獎金</span>;
+    } else {
+      return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">未兌換獎勵</span>;
+    }
   }, [getItemInfo]);
 
   const calculatedAwardTotal = useMemo(() => {
@@ -318,15 +328,15 @@ export default function RunningRecordsPage() {
     let t = personalAward.totals.total || 0;
     if (personalAward.L1?.reward) {
       const info = getItemInfo(personalAward.L1.reward);
-      if (info) t += info.value;
+      if (info && parseInt(personalAward.L1.runs) >= 6) t += info.value;
     }
     if (personalAward.L2?.reward) {
       const info = getItemInfo(personalAward.L2.reward);
-      if (info) t += info.value;
+      if (info && parseInt(personalAward.L2.prs) >= 10) t += info.value;
     }
     if (personalAward.L3?.reward) {
       const info = getItemInfo(personalAward.L3.reward);
-      if (info) t += info.value;
+      if (info && parseInt(personalAward.L3.prs) >= 20) t += info.value;
     }
     return t;
   }, [personalAward, getItemInfo]);
