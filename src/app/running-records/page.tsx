@@ -925,10 +925,10 @@ export default function RunningRecordsPage() {
 
         {/* Personal Dashboard (Individual View) */}
         <section className={`mb-[5px] ${view === 'team' ? 'hidden' : ''}`}>
-          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 font-display">
+          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
 
             {/* Assets List */}
-            <div className="flex items-center gap-2 mb-6 relative z-10 h-[32px]">
+            <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
               <button 
                 onClick={() => setIsAwardYearDropdownOpen(!isAwardYearDropdownOpen)}
                 className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
@@ -1124,7 +1124,7 @@ export default function RunningRecordsPage() {
 
         {/* Guild Leaderboard */}
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
-          <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div>
               <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
                 <div className="relative">
