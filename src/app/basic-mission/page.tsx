@@ -346,22 +346,11 @@ export default function BasicMissionPage() {
     // 依據時間先後排序日期
     const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
-    // 遊戲規則：禮拜一才結算上週數據。
-    // 過濾出「已經結算」的日期 (上個禮拜天(含)之前)
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const daysToSubtract = dayOfWeek === 0 ? 7 : dayOfWeek;
-    const maxAllowedDate = new Date(now);
-    maxAllowedDate.setDate(now.getDate() - daysToSubtract);
-    maxAllowedDate.setHours(23, 59, 59, 999);
-    const maxAllowedTime = maxAllowedDate.getTime();
-
     // 計算每天的冠軍
     const championsByDate = new Map<string, { display: string, first: string }>();
     const validDates: string[] = [];
 
     for (const date of sortedDates) {
-      if (new Date(date).getTime() > maxAllowedTime) continue; // 忽略尚未結算的未來日期
       const records = dateMap.get(date)!;
       const maxScore = Math.max(...records.map(r => r.score));
       if (maxScore > 0) {
@@ -849,13 +838,24 @@ export default function BasicMissionPage() {
         <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵週排行榜</p>
-            <div className="h-[30px] flex items-center">
-              <h2 className={`font-headline-lg text-white font-bold tracking-wider uppercase ${
-                dashboardData.name.length <= 4 ? 'text-3xl leading-[30px]' :
-                dashboardData.name.length <= 10 ? 'text-xl leading-[30px]' :
-                dashboardData.name.length <= 20 ? 'text-sm leading-[15px] line-clamp-2' :
-                'text-[11px] leading-[14px] line-clamp-2'
-              }`}>{dashboardData.name}</h2>
+            <div className="h-[30px] flex items-center w-full">
+              <h2 className="text-white font-bold tracking-wider uppercase w-full"
+                style={{
+                  fontSize: dashboardData.name.length <= 4 ? '30px' :
+                            dashboardData.name.length <= 10 ? '20px' :
+                            dashboardData.name.length <= 20 ? '14px' :
+                            '10px',
+                  lineHeight: dashboardData.name.length <= 10 ? '30px' :
+                              dashboardData.name.length <= 20 ? '15px' :
+                              '10px',
+                  display: '-webkit-box',
+                  WebkitLineClamp: dashboardData.name.length <= 10 ? 1 :
+                                   dashboardData.name.length <= 20 ? 2 : 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  wordBreak: 'break-all'
+                }}
+              >{dashboardData.name}</h2>
             </div>
           </div>
           <div className="text-right flex flex-col justify-end flex-shrink-0">
