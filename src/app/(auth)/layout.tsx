@@ -15,12 +15,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "authenticated") {
-      router.replace("/diversion");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
     if (!hasAuthLoaded) {
       const t1 = setTimeout(() => setMounted(true), 100);
       const t2 = setTimeout(() => {
@@ -98,7 +92,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             className={`relative z-10 flex items-center justify-center select-none transition-all duration-1000 ease-out ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"} cursor-pointer group ${isLoading ? "opacity-50 pointer-events-none" : ""}`}
             onClick={async () => {
               setIsLoading(true);
-              await signIn("google", { callbackUrl: "/diversion" });
+              if (status === "authenticated") {
+                router.push("/diversion");
+              } else {
+                await signIn("google", { callbackUrl: "/diversion" });
+              }
             }}
           >
             <div className="block transition-transform duration-300 group-hover:scale-105 group-hover:brightness-110">
