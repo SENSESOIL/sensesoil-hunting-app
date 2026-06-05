@@ -854,7 +854,6 @@ export default function RunningRecordsPage() {
             >
               {hunterRank}
             </p>
-            <div className="flex items-center gap-2">
               <h2 
                 key={selectedPersonalHunter}
                 className="font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
@@ -862,7 +861,6 @@ export default function RunningRecordsPage() {
               >
                 {selectedPersonalHunter || "載入中..."}
               </h2>
-            </div>
             {isPersonalHunterDropdownOpen && (
               <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto">
                 {huntersList.map((hunter) => (
@@ -890,7 +888,7 @@ export default function RunningRecordsPage() {
           <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 font-display">
 
             {/* Assets List */}
-            <div className="flex items-center gap-2 mb-6 min-h-[33px] relative z-10">
+            <div className="flex items-center gap-2 mb-6 relative z-10 h-[32px]">
               <button 
                 onClick={() => setIsAwardYearDropdownOpen(!isAwardYearDropdownOpen)}
                 className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
@@ -1088,7 +1086,7 @@ export default function RunningRecordsPage() {
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-6 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div>
-              <div className="flex justify-between items-center mb-6 relative z-10">
+              <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
                 <div className="relative">
                   <button 
                     onClick={() => setIsLeaderboardYearDropdownOpen(!isLeaderboardYearDropdownOpen)}
