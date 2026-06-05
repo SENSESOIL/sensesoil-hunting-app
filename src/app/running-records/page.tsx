@@ -1450,16 +1450,18 @@ export default function RunningRecordsPage() {
               })}
             </div>
 
-            <div className="mt-12">
+            <div className="mt-12 pb-8">
               <YearlyBarChart 
                 data={past12MonthsData} 
                 onSelect={(d) => setSelectedCalendarDate(d)} 
               />
             </div>
+          </div>
 
+          <div className="pb-8 px-5 sm:px-6 -mx-4 font-display bg-black">
             {/* Team Recent Records Table */}
             {userRole !== "viewer" && (
-            <div className="mt-12 border border-primary/30 bg-surface-container rounded-sm overflow-hidden flex flex-col">
+            <div className="border border-primary/30 bg-transparent rounded-sm overflow-hidden flex flex-col">
               <div className="overflow-x-auto overflow-y-auto max-h-[414px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                   <thead className="sticky top-0 z-10 bg-surface-container-high">
