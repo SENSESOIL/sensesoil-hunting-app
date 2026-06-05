@@ -211,7 +211,8 @@ export default function RunningRecordsPage() {
   const [view, setView] = useState<"individual" | "team">("team");
   const { data: session, status } = useSession();
   const userHunterName = (session?.user as any)?.hunterName || "";
-  const userRole = (session?.user as any)?.roles?.["hunting-mgmt"] || "viewer";
+  const roles = (session?.user as any)?.roles || {};
+  const userRole = roles["hunting-mgmt"] || roles["basic"] || "viewer";
   const canEdit = userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development";
 
   useEffect(() => {

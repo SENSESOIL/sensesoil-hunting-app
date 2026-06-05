@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest) {
 
     if (session?.user) {
       const roles = (session.user as any).roles || {};
-      const userRole = roles["hunting-mgmt"] || "viewer";
+      const userRole = roles["hunting-mgmt"] || roles["basic"] || "viewer";
       if (userRole !== "editor" && userRole !== "admin") {
         return NextResponse.json({ error: "Forbidden: You do not have edit permissions." }, { status: 403 });
       }
