@@ -209,6 +209,7 @@ export default function RunningRecordsPage() {
   }, []);
 
   const [view, setView] = useState<"individual" | "team">("team");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: session, status } = useSession();
   const userHunterName = (session?.user as any)?.hunterName || "";
   const roles = (session?.user as any)?.roles || {};
@@ -850,18 +851,7 @@ export default function RunningRecordsPage() {
           <Image priority alt="SenseSoil Logo" width={28} height={28} className="h-[28px] w-auto object-contain flex-shrink-0 translate-y-[-2px]" src="/Logo｜Orange.svg" />
           <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">自我覺醒試煉</h1>
         </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <button
-              className="flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-              onClick={() => signOut({ callbackUrl: '/' })}
-              title="登出"
-            >
-              <span className="material-symbols-outlined text-[24px]">
-                power_settings_new
-              </span>
-            </button>
-          )}
+        <div className="flex items-center gap-2 relative">
           <button
             className="flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
             onClick={() => setView(view === 'individual' ? 'team' : 'individual')}
@@ -870,6 +860,32 @@ export default function RunningRecordsPage() {
               {view === 'individual' ? 'groups' : 'person'}
             </span>
           </button>
+          
+          <div className="relative">
+            <button
+              className="flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              title="選單"
+            >
+              <span className="material-symbols-outlined text-[24px]">
+                menu
+              </span>
+            </button>
+            {isMenuOpen && (
+              <div className="absolute top-full right-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded shadow-lg z-[120]">
+                <div
+                  className="px-4 py-3 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm flex items-center gap-2"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    signOut({ callbackUrl: '/' });
+                  }}
+                >
+                  <span className="material-symbols-outlined text-[18px] text-primary">power_settings_new</span>
+                  <span>登出</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
