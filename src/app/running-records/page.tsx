@@ -1175,7 +1175,7 @@ export default function RunningRecordsPage() {
               <div className="flex flex-col gap-2">
                 {guildLeaderboardData.length > 0 ? guildLeaderboardData.map((item, index) => {
                   const maxIndex = Math.max(1, guildLeaderboardData.length - 1);
-                  const barOpacity = 1 - (0.2 * (index / maxIndex));
+                  const barOpacity = 1 - (0.3 * (index / maxIndex));
                   return (
                   <div key={item.name} className="flex items-center w-full gap-3">
                     <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{item.rank}</span>
