@@ -1458,7 +1458,7 @@ export default function RunningRecordsPage() {
             </div>
           </div>
 
-          <div className="pt-4 pb-8 px-5 sm:px-6 -mx-4 font-display bg-black">
+          <div className="pt-8 pb-8 px-5 sm:px-6 -mx-4 font-display bg-black">
             {/* Team Recent Records Table */}
             {userRole !== "viewer" && (
             <div className="border border-primary/30 bg-transparent rounded-sm overflow-hidden flex flex-col">
