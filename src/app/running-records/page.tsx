@@ -211,6 +211,8 @@ export default function RunningRecordsPage() {
   const [view, setView] = useState<"individual" | "team">("team");
   const { data: session, status } = useSession();
   const userHunterName = (session?.user as any)?.hunterName || "";
+  const userRole = (session?.user as any)?.roles?.["hunting-mgmt"] || "viewer";
+  const canEdit = userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development";
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -220,7 +222,7 @@ export default function RunningRecordsPage() {
   }, [status, router]);
 
   const { data: basicData } = useSWR("/api/sheets/basic-mission", fetcher);
-  const { data: runningRes } = useSWR("/api/sheets/running-records", fetcher);
+  const { data: runningRes, mutate: mutateRunning } = useSWR("/api/sheets/running-records", fetcher);
   const runningData = runningRes?.data || [];
 
   const [awardYear, setAwardYear] = useState('2026');
@@ -234,6 +236,42 @@ export default function RunningRecordsPage() {
   const [isPersonalHunterDropdownOpen, setIsPersonalHunterDropdownOpen] = useState(false);
   const [selectedDayRecords, setSelectedDayRecords] = useState<any[] | null>(null);
   const [expandedAwardLevel, setExpandedAwardLevel] = useState<string | null>(null);
+
+  const [isRecordEditModalOpen, setIsRecordEditModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<any>(null);
+  const [isSavingRecord, setIsSavingRecord] = useState(false);
+
+  const handleSaveRecord = async () => {
+    if (!editingRecord) return;
+    setIsSavingRecord(true);
+    try {
+      const res = await fetch("/api/sheets/running-records", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rowIndex: editingRecord.rowIndex,
+          values: [[
+            editingRecord.date,
+            editingRecord.name,
+            editingRecord.activity,
+            editingRecord.distance.toString(),
+            editingRecord.elevation.toString(),
+            editingRecord.timeStr
+          ]]
+        })
+      });
+      if (!res.ok) {
+        throw new Error("Failed to save");
+      }
+      await mutateRunning();
+      setIsRecordEditModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("儲存失敗");
+    } finally {
+      setIsSavingRecord(false);
+    }
+  };
 
   const toggleAwardLevel = (level: string) => {
     setExpandedAwardLevel(prev => prev === level ? null : level);
@@ -1419,9 +1457,6 @@ export default function RunningRecordsPage() {
 
             {/* Team Recent Records Table */}
             <div className="mt-12 border border-primary/30 bg-surface-container rounded-sm overflow-hidden flex flex-col">
-              <div className="bg-surface-container-high/50 px-3 py-2 border-b border-primary/20 flex justify-between items-center">
-                 <h3 className="text-primary font-bold text-[12px] tracking-widest uppercase">最新狩獵紀錄</h3>
-              </div>
               <div className="overflow-x-auto overflow-y-auto max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                   <thead className="sticky top-0 z-10 bg-surface-container-high">
@@ -1438,7 +1473,15 @@ export default function RunningRecordsPage() {
                       <tr key={`${row.date}-${row.name}-${idx}`} className={idx % 2 === 1 ? "bg-primary/5" : ""}>
                         <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
                           <div className="flex flex-col gap-0.5">
-                            <div className="font-bold text-primary truncate">
+                            <div 
+                              className={`font-bold ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity" : ""} text-primary truncate`}
+                              onClick={() => {
+                                if (canEdit) {
+                                  setEditingRecord(row);
+                                  setIsRecordEditModalOpen(true);
+                                }
+                              }}
+                            >
                               {row.name}
                             </div>
                             <div className="text-[9px] text-white/50">{row.date.substring(5)}</div>
@@ -1497,6 +1540,72 @@ export default function RunningRecordsPage() {
                   {d.getFullYear()}<br/><span className="text-[15px]">{d.getMonth() + 1}月</span>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Record Edit Modal */}
+      {isRecordEditModalOpen && editingRecord && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4" onClick={() => setIsRecordEditModalOpen(false)}>
+          <div className="bg-surface-container border border-primary/40 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.2)] w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-primary/10 border-b border-primary/20 px-4 py-3 flex justify-between items-center">
+              <h3 className="text-primary font-bold text-sm tracking-widest uppercase">{editingRecord.name} {editingRecord.date}</h3>
+              <button
+                onClick={() => setIsRecordEditModalOpen(false)}
+                className="text-primary/50 hover:text-primary transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            <div className="p-4 flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-primary/70 uppercase tracking-widest">活動名稱</label>
+                <input 
+                  className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
+                  value={editingRecord.activity}
+                  onChange={e => setEditingRecord({...editingRecord, activity: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] text-primary/70 uppercase tracking-widest">距離 (Km)</label>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
+                    value={editingRecord.distance}
+                    onChange={e => setEditingRecord({...editingRecord, distance: parseFloat(e.target.value) || 0})}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] text-primary/70 uppercase tracking-widest">時間 (Min)</label>
+                  <input 
+                    type="text"
+                    className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
+                    value={editingRecord.timeStr}
+                    onChange={e => setEditingRecord({...editingRecord, timeStr: e.target.value})}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] text-primary/70 uppercase tracking-widest">爬升 (m)</label>
+                  <input 
+                    type="number"
+                    className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
+                    value={editingRecord.elevation}
+                    onChange={e => setEditingRecord({...editingRecord, elevation: parseFloat(e.target.value) || 0})}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end mt-2">
+                <button 
+                  className="bg-primary text-black font-bold text-xs px-4 py-2 rounded shadow-[0_0_10px_rgba(243,156,18,0.3)] hover:opacity-80 transition-opacity disabled:opacity-50"
+                  onClick={handleSaveRecord}
+                  disabled={isSavingRecord}
+                >
+                  {isSavingRecord ? "儲存中..." : "儲存變更"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
