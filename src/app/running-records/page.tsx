@@ -865,7 +865,7 @@ export default function RunningRecordsPage() {
       <PullToRefresh>
         <main className="relative pt-16 px-4">
           {/* Top Header - Team View */}
-        <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
+        <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 0 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵週排行榜</p>
             <h2 className={`font-headline-lg text-white font-bold tracking-wider uppercase leading-none ${dashboardData.name.length > 4 ? 'text-xl mt-1' : 'text-3xl'}`}>{dashboardData.name}</h2>
@@ -877,7 +877,7 @@ export default function RunningRecordsPage() {
         </div>
 
         {/* Top Header - Individual View */}
-        <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'team' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
+        <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'team' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 0 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 relative flex-1 pr-4">
             <style>{`
               @keyframes textReveal {
@@ -925,7 +925,7 @@ export default function RunningRecordsPage() {
 
         {/* Personal Dashboard (Individual View) */}
         <section className={`mb-[5px] ${view === 'team' ? 'hidden' : ''}`}>
-          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+          <div className="pt-[52px] pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
 
             {/* Assets List */}
             <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
@@ -1124,7 +1124,7 @@ export default function RunningRecordsPage() {
 
         {/* Guild Leaderboard */}
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
-          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+          <div className="pt-[52px] pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div>
               <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
                 <div className="relative">
