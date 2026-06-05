@@ -679,10 +679,25 @@ export default function BasicMissionPage() {
       }
     });
 
+    // Ensure exactly 13 rows for UI consistency
+    // (pad BEFORE sort, but use selectedStartDate as date so sort works)
+    while (validRecords.length < 13) {
+      const emptyRow = Array(rows[0].length).fill("");
+      emptyRow[0] = selectedStartDate; // use real date so sort works
+      emptyRow[1] = "--";
+      validRecords.push({ data: emptyRow, notes: [], originalIndex: -1 });
+    }
+
     const hunterOrder = new Map(options.hunters.map((h, i) => [h, i]));
 
     validRecords.sort((a, b) => {
-      const timeDiff = new Date(b.data[0]).getTime() - new Date(a.data[0]).getTime();
+      const timeA = new Date(a.data[0]).getTime();
+      const timeB = new Date(b.data[0]).getTime();
+      // Handle NaN dates: push them to the end
+      if (isNaN(timeA) && isNaN(timeB)) return 0;
+      if (isNaN(timeA)) return 1;
+      if (isNaN(timeB)) return -1;
+      const timeDiff = timeB - timeA;
       if (timeDiff !== 0) return timeDiff;
       return (hunterOrder.get(a.data[1]) ?? 999) - (hunterOrder.get(b.data[1]) ?? 999);
     });
@@ -695,7 +710,7 @@ export default function BasicMissionPage() {
       return "-";
     };
 
-    return validRecords.map((rObj, index) => {
+    const mapped = validRecords.map((rObj, index) => {
       const r = rObj.data;
       const n = rObj.notes;
       const logs = [r[2], r[3], r[4], r[5], r[6], r[7]];
@@ -736,6 +751,8 @@ export default function BasicMissionPage() {
         originalIndex: rObj.originalIndex
       };
     });
+
+    return mapped;
   }, [data, selectedStartDate]);
 
   const RenderSymbols = ({ str, alignLeft = false }: { str: string, alignLeft?: boolean }) => {
@@ -1077,8 +1094,8 @@ export default function BasicMissionPage() {
           </div>
 
           {(userRole === "admin" || userRole === "editor") && (
-            <div className="border border-primary/30 bg-transparent overflow-hidden rounded-sm flex flex-col">
-              <div className="overflow-x-auto overflow-y-auto max-h-[414px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="border border-primary/30 bg-transparent overflow-visible rounded-sm flex flex-col">
+              <div className="overflow-x-auto overflow-y-auto max-h-[1000px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                 <thead className="sticky top-0 z-10 bg-surface-container-high">
                   <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
@@ -1105,7 +1122,9 @@ export default function BasicMissionPage() {
                           >
                             {row.name}
                           </div>
-                          <div className="text-[9px] text-white/50">{row.date.substring(5)}</div>
+                          <div className="text-[9px] text-white/50">
+                            {row.date === "--" || row.date.length < 5 ? "--" : row.date.substring(5)}
+                          </div>
                         </div>
                       </td>
                       <td className="p-2 font-data-mono whitespace-nowrap align-middle" style={{ width: "28%", padding: 4, overflow: "hidden", color: "#ffffff", textAlign: "left" }}>

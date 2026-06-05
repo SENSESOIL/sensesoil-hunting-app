@@ -1484,7 +1484,7 @@ export default function RunningRecordsPage() {
             {/* Team Recent Records Table */}
             {userRole !== "viewer" && (
             <div className="border border-primary/30 bg-transparent rounded-sm overflow-hidden flex flex-col">
-              <div className="overflow-x-auto overflow-y-auto max-h-[382px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="overflow-x-auto overflow-y-auto max-h-[750px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                   <thead className="sticky top-0 z-10 bg-surface-container-high">
                     <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
@@ -1496,12 +1496,19 @@ export default function RunningRecordsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-primary/5">
-                    {runningData && runningData.length > 0 ? [...runningData].reverse().slice(0, 50).map((row, idx) => (
+                    {(() => {
+                      const reversed = runningData && runningData.length > 0 ? [...runningData].reverse().slice(0, 50) : [];
+                      // Pad to at least 13 rows
+                      const padded = [...reversed];
+                      while (padded.length < 13) {
+                        padded.push({ name: "--", date: "--", distance: 0, activity: "--", elevation: 0, timeStr: "--" });
+                      }
+                      return padded.map((row: any, idx: number) => (
                       <tr key={`${row.date}-${row.name}-${idx}`} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
                         <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
                           <div className="flex flex-col gap-0.5">
                             <div 
-                              className={`font-bold ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity" : ""} text-primary truncate`}
+                              className={`font-bold ${canEdit && row.date !== "--" ? "cursor-pointer hover:opacity-70 transition-opacity" : ""} text-primary truncate`}
                               onClick={() => {
                                 if (canEdit && row.date !== "--") {
                                   setEditingRecord(row);
@@ -1516,7 +1523,7 @@ export default function RunningRecordsPage() {
                         </td>
                         <td className="p-2 font-data-mono align-middle" style={{ width: "35%", padding: 4, color: "#ffffff", textAlign: "left" }}>
                           <div className="line-clamp-2 leading-tight">
-                            {row.activity || "自我覺醒試煉"}
+                            {row.date === "--" ? "--" : (row.activity || "自我覺醒試煉")}
                           </div>
                         </td>
                         <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center" }}>
@@ -1531,11 +1538,8 @@ export default function RunningRecordsPage() {
                           {row.elevation > 0 && <span className="text-[8px] text-white/50">m</span>}
                         </td>
                       </tr>
-                    )) : (
-                      <tr>
-                        <td colSpan={5} className="p-4 text-center text-primary/50">載入中或無資料...</td>
-                      </tr>
-                    )}
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
