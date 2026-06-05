@@ -1036,20 +1036,19 @@ export default function BasicMissionPage() {
                 <thead>
                   <tr className="text-[#efe0d2]/70 border-b border-primary/20 bg-surface-container-high/50">
                     <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4 }}>狩獵者</th>
-                    <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4, textAlign: "left" }}>日誌 [D1-6/質量]</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "15%", padding: 4, textAlign: "center" }}>紀錄 [精準]</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "22%", padding: 4, textAlign: "center" }}>任務 [誠/體/格]</th>
-                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "12%", padding: 4, textAlign: "center" }}>覺醒</th>
+                    <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4, textAlign: "left" }}>日誌</th>
+                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "15%", padding: 4, textAlign: "center" }}>紀錄</th>
+                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "22%", padding: 4, textAlign: "center" }}>任務</th>
+                    <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "12%", padding: 4, textAlign: "center" }}>點數</th>
                   </tr>
                 </thead>
                 <tbody className="divide-primary/5">
                   {tableData.length > 0 ? tableData.map((row, idx) => (
                     <tr key={`${row.date}-${row.name}-${idx}`} className={idx % 2 === 1 ? "bg-primary/5" : ""}>
                       <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
-                        <div className="flex items-baseline gap-[6px]">
+                        <div className="flex flex-col gap-0.5">
                           <div 
-                            className={`font-bold ${(userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development") ? "cursor-pointer hover:opacity-70 transition-opacity" : ""}`}
-                            style={{ color: "#f39c12" }}
+                            className={`font-bold text-primary truncate ${(userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development") ? "cursor-pointer hover:opacity-70 transition-opacity" : ""}`}
                             onClick={() => {
                               if (userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development") {
                                 setEditingRow(row);
@@ -1059,7 +1058,7 @@ export default function BasicMissionPage() {
                           >
                             {row.name}
                           </div>
-                          <div className="text-[10px]" style={{ color: "#ffffff" }}>{row.date.substring(5)}</div>
+                          <div className="text-[9px] text-white/50">{row.date.substring(5)}</div>
                         </div>
                       </td>
                       <td className="p-2 font-data-mono whitespace-nowrap align-middle" style={{ width: "28%", padding: 4, overflow: "hidden", color: "#ffffff", textAlign: "left" }}>
