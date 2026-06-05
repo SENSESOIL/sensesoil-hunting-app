@@ -212,8 +212,9 @@ export default function RunningRecordsPage() {
   const { data: session, status } = useSession();
   const userHunterName = (session?.user as any)?.hunterName || "";
   const roles = (session?.user as any)?.roles || {};
-  const userRole = roles["hunting-mgmt"] || roles["basic"] || "viewer";
+  const userRole = roles["running"] || "viewer";
   const canEdit = userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development";
+  const isAdmin = userRole === "admin" || process.env.NODE_ENV === "development";
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -888,15 +889,15 @@ export default function RunningRecordsPage() {
               }
             `}</style>
             <p 
-              className="font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none cursor-pointer"
-              onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
+              className={`font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none ${isAdmin ? "cursor-pointer" : ""}`}
+              onClick={() => { if(isAdmin) setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen) }}
             >
               {hunterRank}
             </p>
               <h2 
                 key={selectedPersonalHunter}
-                className="font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
-                onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
+                className={`font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity ${isAdmin ? "cursor-pointer hover:opacity-80" : ""} animate-text-reveal`}
+                onClick={() => { if(isAdmin) setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen) }}
               >
                 {selectedPersonalHunter || "載入中..."}
               </h2>
@@ -1222,16 +1223,16 @@ export default function RunningRecordsPage() {
             <div className="flex justify-between items-start mb-8 font-display">
               <div className="flex flex-col relative">
                 <p 
-                  className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] mb-3 leading-none cursor-pointer hover:opacity-80 transition-opacity inline-block"
-                  onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
+                  className={`font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] mb-3 leading-none inline-block ${isAdmin ? "transition-opacity cursor-pointer hover:opacity-80" : ""}`}
+                  onClick={() => { if(isAdmin) setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen) }}
                 >
                   狩獵分析
                 </p>
                 <div className="flex items-center gap-2">
                   <h2 
                     key={selectedPersonalHunter}
-                    className="font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
-                    onClick={() => setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen)}
+                    className={`font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity ${isAdmin ? "cursor-pointer hover:opacity-80" : ""} animate-text-reveal`}
+                    onClick={() => { if(isAdmin) setIsPersonalHunterDropdownOpen(!isPersonalHunterDropdownOpen) }}
                   >
                     {selectedPersonalHunter || "載入中..."}
                   </h2>
@@ -1457,6 +1458,7 @@ export default function RunningRecordsPage() {
             </div>
 
             {/* Team Recent Records Table */}
+            {userRole !== "viewer" && (
             <div className="mt-12 border border-primary/30 bg-surface-container rounded-sm overflow-hidden flex flex-col">
               <div className="overflow-x-auto overflow-y-auto max-h-[414px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
@@ -1512,6 +1514,7 @@ export default function RunningRecordsPage() {
                 </table>
               </div>
             </div>
+            )}
           </div>
         </section>
 
