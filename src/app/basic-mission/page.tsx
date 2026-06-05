@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import useSWR from "swr";
 
@@ -292,6 +292,7 @@ export default function BasicMissionPage() {
   const [isSaving, setIsSaving] = useState(false);
   const { data: session, status } = useSession();
   const userRole = (session?.user as any)?.roles?.["basic"] || "viewer";
+  const isAdmin = userRole === "admin" || process.env.NODE_ENV === "development";
   const userHunterName = (session?.user as any)?.hunterName || "";
 
   useEffect(() => {
@@ -766,6 +767,17 @@ export default function BasicMissionPage() {
           <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">基礎任務試煉</h1>
         </div>
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              className="flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+              onClick={() => signOut()}
+              title="登出"
+            >
+              <span className="material-symbols-outlined text-[24px]">
+                power_settings_new
+              </span>
+            </button>
+          )}
           <button
             className="flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
             onClick={() => setView(view === 'individual' ? 'team' : 'individual')}
