@@ -1030,7 +1030,7 @@ export default function BasicMissionPage() {
           </div>
 
           {(userRole === "admin" || userRole === "editor") && (
-            <div className="border border-primary/30 bg-surface-container overflow-hidden rounded-sm">
+            <div className="border border-primary/30 bg-transparent overflow-hidden rounded-sm flex flex-col">
               <div className="overflow-x-auto overflow-y-auto max-h-[414px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                 <thead className="sticky top-0 z-10 bg-surface-container-high">
@@ -1042,7 +1042,7 @@ export default function BasicMissionPage() {
                     <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "12%", padding: 4, textAlign: "center" }}>點數</th>
                   </tr>
                 </thead>
-                <tbody className="divide-primary/5">
+                <tbody className="divide-y divide-primary/5">
                   {tableData.length > 0 ? tableData.map((row, idx) => (
                     <tr key={`${row.date}-${row.name}-${idx}`} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/5" : ""}`}>
                       <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
