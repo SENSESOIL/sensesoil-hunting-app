@@ -1509,7 +1509,7 @@ export default function RunningRecordsPage() {
                                 }
                               }}
                             >
-                              {row.displayName || getDisplayName(row.name)}
+                              {row.displayName || row.name}
                             </div>
                             <div className="text-[9px] text-white/50">{row.date === "--" ? "--" : row.date.substring(5)}</div>
                           </div>
