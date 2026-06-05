@@ -902,7 +902,7 @@ export default function RunningRecordsPage() {
                 {selectedPersonalHunter || "載入中..."}
               </h2>
             {isPersonalHunterDropdownOpen && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto">
+              <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto scrollbar-hide">
                 {huntersList.map((hunter) => (
                   <div
                     key={hunter}
@@ -1238,7 +1238,7 @@ export default function RunningRecordsPage() {
                   </h2>
                 </div>
                 {isPersonalHunterDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto scrollbar-hide">
                     {huntersList.map((hunter) => (
                       <div
                         key={hunter}

@@ -127,7 +127,7 @@ const CustomTimePicker = ({ defaultTime, inputId }: { defaultTime: string, input
               <div className="flex-1 text-center py-2 text-[10px] text-primary/70 font-bold">分</div>
             </div>
             <div className="flex h-[180px]">
-              <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="flex-1 overflow-y-auto scrollbar-hide">
                 {Array.from({ length: 24 }).map((_, i) => {
                   const val = i.toString().padStart(2, '0');
                   return (
@@ -142,7 +142,7 @@ const CustomTimePicker = ({ defaultTime, inputId }: { defaultTime: string, input
                 })}
               </div>
               <div className="w-[1px] bg-primary/20"></div>
-              <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="flex-1 overflow-y-auto scrollbar-hide">
                 {Array.from({ length: 60 }).map((_, i) => {
                   const val = i.toString().padStart(2, '0');
                   return (
@@ -213,7 +213,7 @@ const TaskSelect = ({ options, defaultValue, inputId }: { options: string[], def
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[110]" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 min-w-[40px] w-full max-h-[150px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 min-w-[40px] w-full max-h-[150px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] overflow-y-auto scrollbar-hide">
             {options.map(opt => (
               <div
                 key={opt}
@@ -813,7 +813,7 @@ export default function BasicMissionPage() {
               </h2>
             </div>
             {isPersonalHunterDropdownOpen && userRole === "admin" && (
-              <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto scrollbar-hide">
                 {options.hunters.map((hunter) => (
                   <div
                     key={hunter}
@@ -852,7 +852,7 @@ export default function BasicMissionPage() {
                 </span>
                 <span className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(243,156,18,0.8)] flex-shrink-0 cursor-pointer" onClick={() => setIsPersonalDateDropdownOpen(!isPersonalDateDropdownOpen)}></span>
                 {isPersonalDateDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  <div className="absolute top-full right-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto scrollbar-hide">
                     {options.dates.map((date) => (
                       <div
                         key={date}
@@ -951,7 +951,7 @@ export default function BasicMissionPage() {
                   </span>
                 </div>
                 {isHunterDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded shadow-lg z-10 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  <div className="absolute top-full left-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded shadow-lg z-10 max-h-48 overflow-y-auto scrollbar-hide">
                     {options.hunters.map((hunter) => (
                       <div
                         key={hunter}
@@ -976,7 +976,7 @@ export default function BasicMissionPage() {
                 </span>
                 <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(243,156,18,0.8)]"></span>
                 {isDateDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded shadow-lg z-10 max-h-48 overflow-y-auto text-left" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                  <div className="absolute top-full right-0 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded shadow-lg z-10 max-h-48 overflow-y-auto text-left scrollbar-hide">
                     {options.dates.map((date) => (
                       <div
                         key={date}
@@ -1115,7 +1115,7 @@ export default function BasicMissionPage() {
                     <span className="material-symbols-outlined text-[18px]">close</span>
                   </button>
                 </div>
-                <div className="p-4 overflow-y-auto shrink" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <div className="p-4 overflow-y-auto shrink scrollbar-hide">
                   <div className="space-y-4">
                     {/* 日誌 */}
                     <div className="border border-primary/20 rounded-[4px] p-3 bg-surface-container-low">
