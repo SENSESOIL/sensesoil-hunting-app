@@ -1458,10 +1458,10 @@ export default function RunningRecordsPage() {
 
             {/* Team Recent Records Table */}
             <div className="mt-12 border border-primary/30 bg-surface-container rounded-sm overflow-hidden flex flex-col">
-              <div className="overflow-x-auto overflow-y-auto max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="overflow-x-auto overflow-y-auto max-h-[414px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                   <thead className="sticky top-0 z-10 bg-surface-container-high">
-                    <tr className="text-[#efe0d2]/70 border-b border-primary/20">
+                    <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
                       <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4 }}>狩獵者</th>
                       <th className="p-2 font-bold whitespace-nowrap" style={{ width: "35%", padding: 4, textAlign: "left" }}>活動名稱</th>
                       <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "14%", padding: 4, textAlign: "center" }}>距離</th>
@@ -1471,7 +1471,7 @@ export default function RunningRecordsPage() {
                   </thead>
                   <tbody className="divide-y divide-primary/5">
                     {runningData.length > 0 ? runningData.slice().reverse().slice(0, 50).map((row, idx) => (
-                      <tr key={`${row.date}-${row.name}-${idx}`} className={idx % 2 === 1 ? "bg-primary/5" : ""}>
+                      <tr key={`${row.date}-${row.name}-${idx}`} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/5" : ""}`}>
                         <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
                           <div className="flex flex-col gap-0.5">
                             <div 

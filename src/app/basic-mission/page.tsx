@@ -1031,10 +1031,10 @@ export default function BasicMissionPage() {
 
           {(userRole === "admin" || userRole === "editor") && (
             <div className="border border-primary/30 bg-surface-container overflow-hidden rounded-sm">
-              <div className="overflow-hidden">
+              <div className="overflow-x-auto overflow-y-auto max-h-[414px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                 <thead>
-                  <tr className="text-[#efe0d2]/70 border-b border-primary/20 bg-surface-container-high/50">
+                  <tr className="text-[#efe0d2]/70 border-b border-primary/20 bg-surface-container-high/50 h-[30px]">
                     <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4 }}>狩獵者</th>
                     <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4, textAlign: "left" }}>日誌</th>
                     <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "15%", padding: 4, textAlign: "center" }}>紀錄</th>
@@ -1044,7 +1044,7 @@ export default function BasicMissionPage() {
                 </thead>
                 <tbody className="divide-primary/5">
                   {tableData.length > 0 ? tableData.map((row, idx) => (
-                    <tr key={`${row.date}-${row.name}-${idx}`} className={idx % 2 === 1 ? "bg-primary/5" : ""}>
+                    <tr key={`${row.date}-${row.name}-${idx}`} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/5" : ""}`}>
                       <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
                         <div className="flex flex-col gap-0.5">
                           <div 
