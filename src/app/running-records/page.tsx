@@ -1563,9 +1563,11 @@ export default function RunningRecordsPage() {
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-primary/70 uppercase tracking-widest">日期</label>
                 <input 
+                  type="date"
                   className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
-                  value={editingRecord.date}
-                  onChange={e => setEditingRecord({...editingRecord, date: e.target.value})}
+                  style={{ colorScheme: 'dark' }}
+                  value={editingRecord.date.replace(/\//g, '-')}
+                  onChange={e => setEditingRecord({...editingRecord, date: e.target.value.replace(/-/g, '/')})}
                 />
               </div>
               <div className="flex flex-col gap-1">
