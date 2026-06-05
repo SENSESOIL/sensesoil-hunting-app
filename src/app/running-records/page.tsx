@@ -1497,10 +1497,10 @@ export default function RunningRecordsPage() {
                   </thead>
                   <tbody className="divide-y divide-primary/5">
                     {(() => {
-                      const reversed = runningData && runningData.length > 0 ? [...runningData].reverse().slice(0, 50) : [];
-                      // Pad to at least 13 rows
+                      const reversed = runningData && runningData.length > 0 ? [...runningData].reverse().slice(0, 15) : [];
+                      // Pad to exactly 15 rows
                       const padded = [...reversed];
-                      while (padded.length < 13) {
+                      while (padded.length < 15) {
                         padded.push({ name: "--", date: "--", distance: 0, activity: "--", elevation: 0, timeStr: "--" });
                       }
                       return padded.map((row: any, idx: number) => (

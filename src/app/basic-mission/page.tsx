@@ -679,14 +679,7 @@ export default function BasicMissionPage() {
       }
     });
 
-    // Ensure exactly 13 rows for UI consistency
-    // (pad BEFORE sort, but use selectedStartDate as date so sort works)
-    while (validRecords.length < 13) {
-      const emptyRow = Array(rows[0].length).fill("");
-      emptyRow[0] = selectedStartDate; // use real date so sort works
-      emptyRow[1] = "--";
-      validRecords.push({ data: emptyRow, notes: [], originalIndex: -1 });
-    }
+    // Sort first, then cap/pad to exactly 15 rows
 
     const hunterOrder = new Map(options.hunters.map((h, i) => [h, i]));
 
@@ -752,7 +745,24 @@ export default function BasicMissionPage() {
       };
     });
 
-    return mapped;
+    // Cap to 15, then pad if fewer than 15
+    const capped = mapped.slice(0, 15);
+    while (capped.length < 15) {
+      capped.push({
+        id: capped.length,
+        name: "--",
+        date: "--",
+        logStr: "-",
+        recStr: "-",
+        taskStr: "-",
+        score: "0.0",
+        rawData: [],
+        rawNotes: [],
+        logNotes: [],
+        originalIndex: -1
+      });
+    }
+    return capped;
   }, [data, selectedStartDate]);
 
   const RenderSymbols = ({ str, alignLeft = false }: { str: string, alignLeft?: boolean }) => {
