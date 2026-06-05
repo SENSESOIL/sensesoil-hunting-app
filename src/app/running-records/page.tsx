@@ -1527,15 +1527,15 @@ export default function RunningRecordsPage() {
                           </div>
                         </td>
                         <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center" }}>
-                          {row.distance > 0 ? `${row.distance.toFixed(1)} ` : "-- "}
-                          {row.distance > 0 && <span className="text-[8px] text-white/50">km</span>}
+                          {row.date !== "--" ? `${(row.distance || 0).toFixed(1)} ` : "-- "}
+                          {row.date !== "--" && <span className="text-[8px] text-white/50">km</span>}
                         </td>
                         <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center", fontSize: 10 }}>
-                          {row.distance > 0 && row.timeStr !== "--" ? calculatePace(parseFloat(row.timeStr), row.distance) : "--"}
+                          {row.date !== "--" && row.timeStr && row.timeStr !== "--" ? calculatePace(parseFloat(row.timeStr), row.distance || 0) : "--"}
                         </td>
                         <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center", fontSize: 10 }}>
-                          {row.elevation > 0 ? `${row.elevation.toFixed(0)} ` : "-- "}
-                          {row.elevation > 0 && <span className="text-[8px] text-white/50">m</span>}
+                          {row.date !== "--" ? `${(row.elevation || 0).toFixed(0)} ` : "-- "}
+                          {row.date !== "--" && <span className="text-[8px] text-white/50">m</span>}
                         </td>
                       </tr>
                       ));
