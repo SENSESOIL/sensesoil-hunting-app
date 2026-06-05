@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export let hasAuthLoaded = false;
 
@@ -10,6 +11,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const [mounted, setMounted] = useState(hasAuthLoaded);
   const [showUI, setShowUI] = useState(hasAuthLoaded);
   const [isLoading, setIsLoading] = useState(false);
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/diversion");
+    }
+  }, [status, router]);
 
   useEffect(() => {
     if (!hasAuthLoaded) {
