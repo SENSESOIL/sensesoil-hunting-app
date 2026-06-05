@@ -760,7 +760,7 @@ export default function BasicMissionPage() {
 
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
-      <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
+      <header className="fixed top-0 w-full z-50 flex justify-between items-center shrink-0 h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
         <div className="flex items-center gap-3 flex-nowrap cursor-pointer" onClick={() => router.push("/diversion")}>
           <Image priority alt="SenseSoil Logo" width={28} height={28} className="h-[28px] w-auto object-contain flex-shrink-0 translate-y-[-2px]" src="/Logo｜Orange.svg" />
           <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">基礎任務試煉</h1>
@@ -1086,6 +1086,8 @@ export default function BasicMissionPage() {
           )}
         </section>
 
+        </main>
+      </PullToRefresh>
         {/* Edit Modal */}
         {/* Edit Modal */}
         {isEditModalOpen && editingRow && (() => {
@@ -1102,8 +1104,8 @@ export default function BasicMissionPage() {
 
           return (
             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4">
-              <div className="bg-surface-container border border-primary/40 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.2)] w-full max-w-md overflow-hidden">
-                <div className="bg-primary/10 border-b border-primary/20 px-4 py-3 flex justify-between items-center">
+              <div className="bg-surface-container border border-primary/40 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.2)] w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
+                <div className="bg-primary/10 border-b border-primary/20 px-4 py-3 flex justify-between items-center shrink-0">
                   <h3 className="text-primary font-bold text-sm tracking-widest uppercase">{editingRow.name} {editingRow.date}</h3>
                   <button
                     onClick={() => setIsEditModalOpen(false)}
@@ -1112,7 +1114,7 @@ export default function BasicMissionPage() {
                     <span className="material-symbols-outlined text-[18px]">close</span>
                   </button>
                 </div>
-                <div className="p-4 max-h-[60vh] overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                <div className="p-4 overflow-y-auto shrink" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                   <div className="space-y-4">
                     {/* 日誌 */}
                     <div className="border border-primary/20 rounded-[4px] p-3 bg-surface-container-low">
@@ -1211,7 +1213,7 @@ export default function BasicMissionPage() {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 border-t border-primary/20 bg-surface-container-low flex justify-end gap-3">
+                <div className="p-4 border-t border-primary/20 bg-surface-container-low flex justify-end gap-3 shrink-0">
                   <button
                     onClick={() => setIsEditModalOpen(false)}
                     className="px-4 py-1.5 rounded border border-primary/30 text-primary text-[10px] hover:bg-primary/10 transition-colors uppercase tracking-wider"
@@ -1276,8 +1278,6 @@ export default function BasicMissionPage() {
             </div>
           );
         })()}
-        </main>
-      </PullToRefresh>
 
       {/* Bottom Navigation */}
       <nav className={`fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-20 px-6 bg-surface/95 backdrop-blur-lg border-t border-primary/30 shadow-[0_-8px_20px_rgba(243,156,18,0.3)] transition-transform duration-300 ${showNav ? 'translate-y-0' : 'translate-y-full'}`}>
