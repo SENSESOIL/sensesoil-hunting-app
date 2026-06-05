@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, useSession, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export let hasAuthLoaded = false;
@@ -91,11 +91,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div
             className={`relative z-10 flex items-center justify-center select-none transition-all duration-1000 ease-out ${mounted ? "opacity-100 scale-100" : "opacity-0 scale-95"} cursor-pointer group ${isLoading ? "opacity-50 pointer-events-none" : ""}`}
             onClick={async () => {
+              if (isLoading) return;
               setIsLoading(true);
-              if (status === "authenticated") {
+              const currentSession = await getSession();
+              if (currentSession) {
                 router.push("/diversion");
               } else {
-                await signIn("google", { callbackUrl: "/diversion" });
+                const res = await signIn("google", { redirect: false, callbackUrl: "/diversion" });
+                if (res?.url) {
+                  window.location.href = res.url;
+                }
               }
             }}
           >
