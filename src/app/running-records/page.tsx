@@ -1416,6 +1416,58 @@ export default function RunningRecordsPage() {
                 onSelect={(d) => setSelectedCalendarDate(d)} 
               />
             </div>
+
+            {/* Team Recent Records Table */}
+            <div className="mt-12 border border-primary/30 bg-surface-container rounded-sm overflow-hidden flex flex-col">
+              <div className="bg-surface-container-high/50 px-3 py-2 border-b border-primary/20 flex justify-between items-center">
+                 <h3 className="text-primary font-bold text-[12px] tracking-widest uppercase">最新狩獵紀錄</h3>
+              </div>
+              <div className="overflow-x-auto overflow-y-auto max-h-[400px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
+                  <thead className="sticky top-0 z-10 bg-surface-container-high">
+                    <tr className="text-[#efe0d2]/70 border-b border-primary/20">
+                      <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4 }}>狩獵者</th>
+                      <th className="p-2 font-bold whitespace-nowrap" style={{ width: "35%", padding: 4, textAlign: "left" }}>活動名稱</th>
+                      <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "14%", padding: 4, textAlign: "center" }}>距離</th>
+                      <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "14%", padding: 4, textAlign: "center" }}>配速</th>
+                      <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "14%", padding: 4, textAlign: "center" }}>爬升</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-primary/5">
+                    {runningData.length > 0 ? runningData.slice().reverse().slice(0, 50).map((row, idx) => (
+                      <tr key={`${row.date}-${row.name}-${idx}`} className={idx % 2 === 1 ? "bg-primary/5" : ""}>
+                        <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
+                          <div className="flex flex-col gap-0.5">
+                            <div className="font-bold text-primary truncate">
+                              {row.name}
+                            </div>
+                            <div className="text-[9px] text-white/50">{row.date.substring(5)}</div>
+                          </div>
+                        </td>
+                        <td className="p-2 font-data-mono align-middle" style={{ width: "35%", padding: 4, color: "#ffffff", textAlign: "left" }}>
+                          <div className="line-clamp-2 leading-tight">
+                            {row.activity || "自我覺醒試煉"}
+                          </div>
+                        </td>
+                        <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center" }}>
+                          {row.distance.toFixed(1)} <span className="text-[8px] text-white/50">km</span>
+                        </td>
+                        <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center", fontSize: 10 }}>
+                          {calculatePace(parseFloat(row.timeStr), row.distance)}
+                        </td>
+                        <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center", fontSize: 10 }}>
+                          {row.elevation.toFixed(0)} <span className="text-[8px] text-white/50">m</span>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={5} className="p-4 text-center text-primary/50">載入中或無資料...</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
 
