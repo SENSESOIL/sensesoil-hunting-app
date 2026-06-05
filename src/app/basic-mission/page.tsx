@@ -647,17 +647,40 @@ export default function BasicMissionPage() {
     }
 
     // Ensure all 11 hunters are present for the selected start date
+    const MASTER_HUNTERS = [
+      "陳政剛", "陳政威", "魏文軍", "戴翠婷", "盧政恒", 
+      "彭慶忠", "陳德霖", "劉璋櫻", "盧德洋", "謝建宏", "彭詩渝"
+    ];
+    
+    const presentHunters = new Set(validRecords.map(r => r.data[1]));
+    
+    // First, try to add missing hunters from options.hunters (dynamic from sheet)
     if (options.hunters && options.hunters.length > 0) {
-      const presentHunters = new Set(validRecords.map(r => r.data[1]));
       options.hunters.forEach(hunter => {
         if (!presentHunters.has(hunter)) {
           const emptyRow = Array(rows[0].length).fill("");
           emptyRow[0] = selectedStartDate;
           emptyRow[1] = hunter;
           validRecords.push({ data: emptyRow, notes: [], originalIndex: -1 });
+          presentHunters.add(hunter);
         }
       });
     }
+
+    // Then, guarantee the master 11 hunters are present
+    MASTER_HUNTERS.forEach(hunter => {
+      if (!presentHunters.has(hunter)) {
+        const emptyRow = Array(rows[0].length).fill("");
+        emptyRow[0] = selectedStartDate;
+        emptyRow[1] = hunter;
+        validRecords.push({ data: emptyRow, notes: [], originalIndex: -1 });
+        presentHunters.add(hunter);
+        // Add to options.hunters if not present so dropdowns work too
+        if (!options.hunters.includes(hunter)) {
+          options.hunters.push(hunter);
+        }
+      }
+    });
 
     const hunterOrder = new Map(options.hunters.map((h, i) => [h, i]));
 

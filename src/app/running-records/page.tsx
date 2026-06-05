@@ -1496,22 +1496,22 @@ export default function RunningRecordsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-primary/5">
-                    {runningData.length > 0 ? runningData.slice(0, 50).map((row, idx) => (
+                    {tableFeedData.length > 0 ? tableFeedData.map((row, idx) => (
                       <tr key={`${row.date}-${row.name}-${idx}`} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
                         <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
                           <div className="flex flex-col gap-0.5">
                             <div 
                               className={`font-bold ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity" : ""} text-primary truncate`}
                               onClick={() => {
-                                if (canEdit) {
+                                if (canEdit && row.date !== "--") {
                                   setEditingRecord(row);
                                   setIsRecordEditModalOpen(true);
                                 }
                               }}
                             >
-                              {row.name}
+                              {row.displayName || getDisplayName(row.name)}
                             </div>
-                            <div className="text-[9px] text-white/50">{row.date.substring(5)}</div>
+                            <div className="text-[9px] text-white/50">{row.date === "--" ? "--" : row.date.substring(5)}</div>
                           </div>
                         </td>
                         <td className="p-2 font-data-mono align-middle" style={{ width: "35%", padding: 4, color: "#ffffff", textAlign: "left" }}>
@@ -1520,13 +1520,15 @@ export default function RunningRecordsPage() {
                           </div>
                         </td>
                         <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center" }}>
-                          {row.distance.toFixed(1)} <span className="text-[8px] text-white/50">km</span>
+                          {row.distance > 0 ? `${row.distance.toFixed(1)} ` : "-- "}
+                          {row.distance > 0 && <span className="text-[8px] text-white/50">km</span>}
                         </td>
                         <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center", fontSize: 10 }}>
-                          {calculatePace(parseFloat(row.timeStr), row.distance)}
+                          {row.distance > 0 && row.timeStr !== "--" ? calculatePace(parseFloat(row.timeStr), row.distance) : "--"}
                         </td>
                         <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center", fontSize: 10 }}>
-                          {row.elevation.toFixed(0)} <span className="text-[8px] text-white/50">m</span>
+                          {row.elevation > 0 ? `${row.elevation.toFixed(0)} ` : "-- "}
+                          {row.elevation > 0 && <span className="text-[8px] text-white/50">m</span>}
                         </td>
                       </tr>
                     )) : (
