@@ -1105,7 +1105,7 @@ export default function BasicMissionPage() {
 
           {(userRole === "admin" || userRole === "editor") && (
             <div className="border border-primary/30 bg-transparent overflow-visible rounded-sm flex flex-col">
-              <div className="overflow-x-auto overflow-y-auto max-h-[1000px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="overflow-x-auto overflow-y-auto max-h-[606px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                 <thead className="sticky top-0 z-10 bg-surface-container-high">
                   <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">

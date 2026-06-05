@@ -1484,7 +1484,7 @@ export default function RunningRecordsPage() {
             {/* Team Recent Records Table */}
             {userRole !== "viewer" && (
             <div className="border border-primary/30 bg-transparent rounded-sm overflow-hidden flex flex-col">
-              <div className="overflow-x-auto overflow-y-auto max-h-[750px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="overflow-x-auto overflow-y-auto max-h-[606px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                   <thead className="sticky top-0 z-10 bg-surface-container-high">
                     <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
@@ -1497,8 +1497,8 @@ export default function RunningRecordsPage() {
                   </thead>
                   <tbody className="divide-y divide-primary/5">
                     {(() => {
-                      const reversed = runningData && runningData.length > 0 ? [...runningData].reverse().slice(0, 15) : [];
-                      // Pad to exactly 15 rows
+                      const reversed = runningData && runningData.length > 0 ? [...runningData].reverse().slice(0, 70) : [];
+                      // Pad to exactly 15 rows if there are fewer than 15
                       const padded = [...reversed];
                       while (padded.length < 15) {
                         padded.push({ name: "--", date: "--", distance: 0, activity: "--", elevation: 0, timeStr: "--" });
