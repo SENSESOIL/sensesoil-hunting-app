@@ -858,57 +858,6 @@ export default function RunningRecordsPage() {
     }));
   }, [runningData, selectedCalendarDate, leaderboardMetric, awardYear]);
 
-  // Group runningData by hunter for the table, guaranteeing 11 rows
-  const tableFeedData = useMemo(() => {
-    if (!runningData) return [];
-    
-    const MASTER_HUNTERS = [
-      "陳政剛", "陳政威", "魏文軍", "戴翠婷", "盧政恒", 
-      "彭慶忠", "陳德霖", "劉璋櫻", "盧德洋", "謝建宏", "彭詩渝"
-    ];
-    
-    // Get latest activity for each hunter
-    const latestByHunter = new Map<string, any>();
-    
-    // Process in order so later ones (more recent) overwrite earlier ones
-    runningData.forEach((row: any) => {
-      if (row.name) {
-        let n = row.name.replace(/[\.\s]/g, '').toUpperCase();
-        if (n === 'WWENJUN' || n === 'WEIWENJUN') n = '魏文軍';
-        if (n === '盧政恆') n = '盧政恒';
-        latestByHunter.set(n, row);
-      }
-    });
-    
-    const result: any[] = [];
-    MASTER_HUNTERS.forEach(hunter => {
-      // Normalize the master hunter name to match the key
-      let n = hunter.replace(/[\.\s]/g, '').toUpperCase();
-      if (n === 'WWENJUN' || n === 'WEIWENJUN') n = '魏文軍';
-      if (n === '盧政恆') n = '盧政恒';
-      
-      if (latestByHunter.has(n)) {
-        const row = latestByHunter.get(n);
-        result.push({
-          ...row,
-          displayName: hunter
-        });
-      } else {
-        result.push({
-          date: "--",
-          name: hunter,
-          displayName: hunter,
-          activity: "--",
-          distance: 0,
-          elevation: 0,
-          timeStr: "--"
-        });
-      }
-    });
-    
-    return result;
-  }, [runningData]);
-
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
@@ -1535,7 +1484,7 @@ export default function RunningRecordsPage() {
             {/* Team Recent Records Table */}
             {userRole !== "viewer" && (
             <div className="border border-primary/30 bg-transparent rounded-sm overflow-hidden flex flex-col">
-              <div className="overflow-x-auto overflow-y-auto max-h-[414px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="overflow-x-auto overflow-y-auto max-h-[382px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                   <thead className="sticky top-0 z-10 bg-surface-container-high">
                     <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
@@ -1547,7 +1496,7 @@ export default function RunningRecordsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-primary/5">
-                    {tableFeedData.length > 0 ? tableFeedData.map((row, idx) => (
+                    {runningData && runningData.length > 0 ? [...runningData].reverse().slice(0, 50).map((row, idx) => (
                       <tr key={`${row.date}-${row.name}-${idx}`} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
                         <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
                           <div className="flex flex-col gap-0.5">
@@ -1560,7 +1509,7 @@ export default function RunningRecordsPage() {
                                 }
                               }}
                             >
-                              {row.displayName || row.name}
+                              {row.name}
                             </div>
                             <div className="text-[9px] text-white/50">{row.date === "--" ? "--" : row.date.substring(5)}</div>
                           </div>
