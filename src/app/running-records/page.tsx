@@ -424,12 +424,15 @@ export default function RunningRecordsPage() {
     };
   }, [runningData]);
 
-  // Set default hunter to the current champion when data loads
   useEffect(() => {
-    if (!selectedPersonalHunter && dashboardData.name && !["計算中...", "無資料", "尚無冠軍"].includes(dashboardData.name)) {
-      setSelectedPersonalHunter(dashboardData.name);
+    if (!selectedPersonalHunter) {
+      if (userHunterName) {
+        setSelectedPersonalHunter(userHunterName);
+      } else if (dashboardData.name && !["計算中...", "無資料", "尚無冠軍"].includes(dashboardData.name)) {
+        setSelectedPersonalHunter(dashboardData.name);
+      }
     }
-  }, [dashboardData.name, selectedPersonalHunter]);
+  }, [dashboardData.name, selectedPersonalHunter, userHunterName]);
 
   // Extract hunters list and sort by current week's running distance
   const huntersList = useMemo(() => {
