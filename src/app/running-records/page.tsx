@@ -425,6 +425,7 @@ export default function RunningRecordsPage() {
   }, [runningData]);
 
   useEffect(() => {
+    if (status === "loading") return;
     if (!selectedPersonalHunter) {
       if (userHunterName) {
         setSelectedPersonalHunter(userHunterName);
@@ -432,7 +433,7 @@ export default function RunningRecordsPage() {
         setSelectedPersonalHunter(dashboardData.name);
       }
     }
-  }, [dashboardData.name, selectedPersonalHunter, userHunterName]);
+  }, [dashboardData.name, selectedPersonalHunter, userHunterName, status]);
 
   // Extract hunters list and sort by current week's running distance
   const huntersList = useMemo(() => {

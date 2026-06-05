@@ -468,12 +468,12 @@ export default function BasicMissionPage() {
     }
     const isValidDashName = dashboardData?.name && !["計算中...", "無數據", "資料錯誤"].includes(dashboardData.name);
     
-    if (isValidDashName && !selectedTeamHunter) {
-      setSelectedTeamHunter(dashboardData.firstChamp || "");
-    }
-    
     // 如果 session 還在 loading，不要提早設定 default hunter，避免被錯誤值覆蓋
     if (status === "loading") return;
+
+    if (!selectedTeamHunter) {
+      setSelectedTeamHunter(userHunterName || (isValidDashName ? (dashboardData.firstChamp || "") : ""));
+    }
 
     if (!selectedPersonalHunter || ["計算中...", "無數據", "資料錯誤"].includes(selectedPersonalHunter)) {
       setSelectedPersonalHunter(userHunterName || (isValidDashName ? (dashboardData.firstChamp || "") : ""));
