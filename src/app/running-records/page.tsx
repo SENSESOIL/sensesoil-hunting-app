@@ -1324,7 +1324,7 @@ export default function RunningRecordsPage() {
 
         {/* Individual Module Content (Monthly Record) - Now in Team View */}
         <section className={`mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
-          <div className="pt-6 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+          <div className="pt-6 pb-2 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             
 
             <div 
