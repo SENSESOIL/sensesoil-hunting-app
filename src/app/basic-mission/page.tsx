@@ -659,7 +659,13 @@ export default function BasicMissionPage() {
       });
     }
 
-    validRecords.sort((a, b) => new Date(b.data[0]).getTime() - new Date(a.data[0]).getTime() || a.data[1].localeCompare(b.data[1]));
+    const hunterOrder = new Map(options.hunters.map((h, i) => [h, i]));
+
+    validRecords.sort((a, b) => {
+      const timeDiff = new Date(b.data[0]).getTime() - new Date(a.data[0]).getTime();
+      if (timeDiff !== 0) return timeDiff;
+      return (hunterOrder.get(a.data[1]) ?? 999) - (hunterOrder.get(b.data[1]) ?? 999);
+    });
 
     const mapSymbol = (val: string) => {
       if (!val || val.trim() === "") return "-";
