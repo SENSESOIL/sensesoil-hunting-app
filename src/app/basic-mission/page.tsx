@@ -1020,7 +1020,7 @@ export default function BasicMissionPage() {
               )}
             </div>
             <div className="pt-4 border-t border-primary/20 flex justify-between items-baseline">
-              <span className="text-[12px] text-[#efe0d2]/70 uppercase tracking-[0.1em]">區間累積覺醒點數</span>
+              <span className="text-[12px] text-[#efe0d2]/70 font-bold uppercase tracking-[0.1em]">區間累積覺醒點數</span>
               <div className="flex items-baseline gap-1">
                 <span className="text-white font-bold text-2xl tracking-tighter">
                   {analysisData ? analysisData.cumulativeAwakening : "0.0"}
