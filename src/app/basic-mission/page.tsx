@@ -1033,8 +1033,8 @@ export default function BasicMissionPage() {
             <div className="border border-primary/30 bg-surface-container overflow-hidden rounded-sm">
               <div className="overflow-x-auto overflow-y-auto max-h-[414px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
-                <thead>
-                  <tr className="text-[#efe0d2]/70 border-b border-primary/20 bg-surface-container-high/50 h-[30px]">
+                <thead className="sticky top-0 z-10 bg-surface-container-high">
+                  <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
                     <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4 }}>狩獵者</th>
                     <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4, textAlign: "left" }}>日誌</th>
                     <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "15%", padding: 4, textAlign: "center" }}>紀錄</th>
