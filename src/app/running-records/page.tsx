@@ -858,6 +858,57 @@ export default function RunningRecordsPage() {
     }));
   }, [runningData, selectedCalendarDate, leaderboardMetric, awardYear]);
 
+  // Group runningData by hunter for the table, guaranteeing 11 rows
+  const tableFeedData = useMemo(() => {
+    if (!runningData) return [];
+    
+    const MASTER_HUNTERS = [
+      "陳政剛", "陳政威", "魏文軍", "戴翠婷", "盧政恒", 
+      "彭慶忠", "陳德霖", "劉璋櫻", "盧德洋", "謝建宏", "彭詩渝"
+    ];
+    
+    // Get latest activity for each hunter
+    const latestByHunter = new Map<string, any>();
+    
+    // Process in order so later ones (more recent) overwrite earlier ones
+    runningData.forEach((row: any) => {
+      if (row.name) {
+        let n = row.name.replace(/[\.\s]/g, '').toUpperCase();
+        if (n === 'WWENJUN' || n === 'WEIWENJUN') n = '魏文軍';
+        if (n === '盧政恆') n = '盧政恒';
+        latestByHunter.set(n, row);
+      }
+    });
+    
+    const result: any[] = [];
+    MASTER_HUNTERS.forEach(hunter => {
+      // Normalize the master hunter name to match the key
+      let n = hunter.replace(/[\.\s]/g, '').toUpperCase();
+      if (n === 'WWENJUN' || n === 'WEIWENJUN') n = '魏文軍';
+      if (n === '盧政恆') n = '盧政恒';
+      
+      if (latestByHunter.has(n)) {
+        const row = latestByHunter.get(n);
+        result.push({
+          ...row,
+          displayName: hunter
+        });
+      } else {
+        result.push({
+          date: "--",
+          name: hunter,
+          displayName: hunter,
+          activity: "--",
+          distance: 0,
+          elevation: 0,
+          timeStr: "--"
+        });
+      }
+    });
+    
+    return result;
+  }, [runningData]);
+
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">

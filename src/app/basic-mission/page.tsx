@@ -675,10 +675,7 @@ export default function BasicMissionPage() {
         emptyRow[1] = hunter;
         validRecords.push({ data: emptyRow, notes: [], originalIndex: -1 });
         presentHunters.add(hunter);
-        // Add to options.hunters if not present so dropdowns work too
-        if (!options.hunters.includes(hunter)) {
-          options.hunters.push(hunter);
-        }
+        // Safe: don't mutate options.hunters directly. It's already in validRecords.
       }
     });
 
