@@ -646,7 +646,20 @@ export default function BasicMissionPage() {
       }
     }
 
-    validRecords.sort((a, b) => new Date(b.data[0]).getTime() - new Date(a.data[0]).getTime());
+    // Ensure all 11 hunters are present for the selected start date
+    if (options.hunters && options.hunters.length > 0) {
+      const presentHunters = new Set(validRecords.map(r => r.data[1]));
+      options.hunters.forEach(hunter => {
+        if (!presentHunters.has(hunter)) {
+          const emptyRow = Array(rows[0].length).fill("");
+          emptyRow[0] = selectedStartDate;
+          emptyRow[1] = hunter;
+          validRecords.push({ data: emptyRow, notes: [], originalIndex: -1 });
+        }
+      });
+    }
+
+    validRecords.sort((a, b) => new Date(b.data[0]).getTime() - new Date(a.data[0]).getTime() || a.data[1].localeCompare(b.data[1]));
 
     const mapSymbol = (val: string) => {
       if (!val || val.trim() === "") return "-";

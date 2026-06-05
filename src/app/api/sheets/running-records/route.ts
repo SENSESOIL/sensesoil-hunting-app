@@ -22,7 +22,7 @@ export async function GET() {
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       // Expected: [0]跑步日期, [1]跑者名稱, [2]活動名稱, [3]距離 (Km), [4]海拔高度 (m), [5]時間 (min)
-      if (row.length >= 2 && (row[0] || row[1])) {
+      if (row.length >= 1 && row.some(cell => cell && cell.toString().trim() !== '')) {
         records.push({
           rowIndex: i + 1, // Store the exact 1-based index in the tracker sheet. Wait, range is B:G. So rows[0] is row 1. rows[i] is row i+1.
           date: row[0]?.trim() || "",
