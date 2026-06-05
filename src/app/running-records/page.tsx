@@ -854,7 +854,7 @@ export default function RunningRecordsPage() {
           {isAdmin && (
             <button
               className="flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: '/' })}
               title="登出"
             >
               <span className="material-symbols-outlined text-[24px]">
