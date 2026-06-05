@@ -788,7 +788,7 @@ export default function RunningRecordsPage() {
     };
 
     // 提醒：計算當年度資料，明年會自動重新計算下一年度
-    const targetYear = new Date().getFullYear();
+    const targetYear = parseInt(awardYear, 10);
     const start = new Date(targetYear, 0, 1).getTime();
     const end = new Date(targetYear, 11, 31, 23, 59, 59, 999).getTime();
 
@@ -842,7 +842,7 @@ export default function RunningRecordsPage() {
               leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
               (result[0].paceRaw / item.paceRaw) * 100) : 0 
     }));
-  }, [runningData, selectedCalendarDate, leaderboardMetric]);
+  }, [runningData, selectedCalendarDate, leaderboardMetric, awardYear]);
 
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
