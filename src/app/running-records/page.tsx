@@ -1551,7 +1551,7 @@ export default function RunningRecordsPage() {
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm px-4" onClick={() => setIsRecordEditModalOpen(false)}>
           <div className="bg-surface-container border border-primary/40 rounded-[4px] shadow-[0_0_20px_rgba(243,156,18,0.2)] w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="bg-primary/10 border-b border-primary/20 px-4 py-3 flex justify-between items-center">
-              <h3 className="text-primary font-bold text-sm tracking-widest uppercase">{editingRecord.name} {editingRecord.date}</h3>
+              <h3 className="text-primary font-bold text-sm tracking-widest uppercase">{editingRecord.name}</h3>
               <button
                 onClick={() => setIsRecordEditModalOpen(false)}
                 className="text-primary/50 hover:text-primary transition-colors"
@@ -1560,6 +1560,14 @@ export default function RunningRecordsPage() {
               </button>
             </div>
             <div className="p-4 flex flex-col gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-primary/70 uppercase tracking-widest">日期</label>
+                <input 
+                  className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
+                  value={editingRecord.date}
+                  onChange={e => setEditingRecord({...editingRecord, date: e.target.value})}
+                />
+              </div>
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-primary/70 uppercase tracking-widest">活動名稱</label>
                 <input 
@@ -1573,28 +1581,27 @@ export default function RunningRecordsPage() {
                   <label className="text-[10px] text-primary/70 uppercase tracking-widest">距離 (Km)</label>
                   <input 
                     type="number"
-                    step="0.01"
-                    className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
+                    className="bg-black/50 border border-primary/30/50 rounded px-2 py-1.5 text-white/50 text-xs cursor-not-allowed"
                     value={editingRecord.distance}
-                    onChange={e => setEditingRecord({...editingRecord, distance: parseFloat(e.target.value) || 0})}
+                    disabled
                   />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] text-primary/70 uppercase tracking-widest">時間 (Min)</label>
                   <input 
                     type="text"
-                    className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
+                    className="bg-black/50 border border-primary/30/50 rounded px-2 py-1.5 text-white/50 text-xs cursor-not-allowed"
                     value={editingRecord.timeStr}
-                    onChange={e => setEditingRecord({...editingRecord, timeStr: e.target.value})}
+                    disabled
                   />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] text-primary/70 uppercase tracking-widest">爬升 (m)</label>
                   <input 
                     type="number"
-                    className="bg-black/50 border border-primary/30 rounded px-2 py-1.5 text-white text-xs focus:border-primary focus:outline-none"
+                    className="bg-black/50 border border-primary/30/50 rounded px-2 py-1.5 text-white/50 text-xs cursor-not-allowed"
                     value={editingRecord.elevation}
-                    onChange={e => setEditingRecord({...editingRecord, elevation: parseFloat(e.target.value) || 0})}
+                    disabled
                   />
                 </div>
               </div>
