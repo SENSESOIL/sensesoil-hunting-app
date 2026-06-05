@@ -1138,7 +1138,7 @@ export default function RunningRecordsPage() {
                 {guildLeaderboardData.length > 0 ? guildLeaderboardData.map((item) => (
                   <div key={item.name} className="flex items-center w-full gap-3">
                     <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{item.rank}</span>
-                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'border-2 shadow-[0_0_8px_rgba(243,156,18,0.8)]' : 'border'}`}>
                       <span className={`text-[12px] ${item.rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.name.slice(-1)}</span>
                     </div>
                     <div className="flex-1 h-2 bg-primary/10 rounded-r-sm overflow-visible flex relative">
