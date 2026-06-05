@@ -977,9 +977,9 @@ export default function BasicMissionPage() {
               </div>
               <div className="text-right flex items-center gap-2 relative">
                 <span className="text-[12px] font-normal tracking-tighter flex items-center gap-1">
-                  <span className="text-white">起算自</span>
+                  <span className="text-primary">起算自</span>
                   <span
-                    className="cursor-pointer font-bold text-white hover:opacity-80 transition-opacity"
+                    className="cursor-pointer font-bold text-primary hover:opacity-80 transition-opacity"
                     onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
                   >
                     {selectedStartDate || "載入中..."}

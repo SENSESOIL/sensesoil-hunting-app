@@ -1263,7 +1263,7 @@ export default function RunningRecordsPage() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-white text-[12px] tracking-widest flex items-center gap-1">
+                <span className="text-primary text-[12px] tracking-widest flex items-center gap-1">
                   <span className="font-normal">週紀錄</span>
                   <span className="font-bold">{selectedWeek?.endLabel || "載入中..."}</span>
                 </span>
