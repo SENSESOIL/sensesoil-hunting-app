@@ -299,20 +299,18 @@ export default function RunningRecordsPage() {
     return null;
   }, []);
 
-  const renderRewardSubText = useCallback((valStr: string, threshold: number, rewardStr: string, dateStr: string) => {
+  const renderRewardSubText = useCallback((valStr: string, threshold: number, rewardStr: string, dateStr: string, defaultValue: number) => {
     const isUnlocked = parseInt(valStr) >= threshold;
     if (!isUnlocked) return null;
 
     const info = getItemInfo(rewardStr);
+    const value = info ? info.value : defaultValue;
     
-    if (info) {
-      if (dateStr) {
-        return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${info.value.toLocaleString()} 價值 | 已兌換 {dateStr}</span>;
-      }
-      return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${info.value.toLocaleString()} 價值</span>;
+    if (dateStr) {
+      return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${value.toLocaleString()} 價值 | 已兌換 {dateStr}</span>;
     }
     
-    return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">未兌換獎勵</span>;
+    return <span className="text-[#00E5FF]/50 text-[11px] mt-0.5">+${value.toLocaleString()} 價值 | 未兌換獎勵</span>;
   }, [getItemInfo]);
 
   const calculatedAwardTotal = useMemo(() => {
@@ -978,7 +976,7 @@ export default function RunningRecordsPage() {
                     <span className={`text-[12px] font-bold ${(parseInt(displayAward.L1.runs) >= 4) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L1.runs) >= 4) ? (getItemInfo(displayAward.L1.reward)?.name || displayAward.L1.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {renderRewardSubText(displayAward.L1.runs, 4, displayAward.L1.reward, displayAward.L1.date)}
+                    {renderRewardSubText(displayAward.L1.runs, 4, displayAward.L1.reward, displayAward.L1.date, 1400)}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L1' && (
@@ -1004,7 +1002,7 @@ export default function RunningRecordsPage() {
                     <span className={`text-[12px] font-bold ${(parseInt(displayAward.L2.prs) >= 8) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L2.prs) >= 8) ? (getItemInfo(displayAward.L2.reward)?.name || displayAward.L2.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {renderRewardSubText(displayAward.L2.prs, 8, displayAward.L2.reward, displayAward.L2.date)}
+                    {renderRewardSubText(displayAward.L2.prs, 8, displayAward.L2.reward, displayAward.L2.date, 600)}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L2' && (
@@ -1030,7 +1028,7 @@ export default function RunningRecordsPage() {
                     <span className={`text-[12px] font-bold ${(parseInt(displayAward.L3.prs) >= 18) ? 'text-[#00E5FF]' : 'text-white/30'}`}>
                       {(parseInt(displayAward.L3.prs) >= 18) ? (getItemInfo(displayAward.L3.reward)?.name || displayAward.L3.reward || "已解鎖") : "未解鎖"}
                     </span>
-                    {renderRewardSubText(displayAward.L3.prs, 18, displayAward.L3.reward, displayAward.L3.date)}
+                    {renderRewardSubText(displayAward.L3.prs, 18, displayAward.L3.reward, displayAward.L3.date, 7000)}
                   </div>
                 </div>
                 {expandedAwardLevel === 'L3' && (
