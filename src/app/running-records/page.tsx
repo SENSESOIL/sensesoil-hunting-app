@@ -1475,7 +1475,7 @@ export default function RunningRecordsPage() {
                   </thead>
                   <tbody className="divide-y divide-primary/5">
                     {runningData.length > 0 ? runningData.slice().reverse().slice(0, 50).map((row, idx) => (
-                      <tr key={`${row.date}-${row.name}-${idx}`} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/5" : ""}`}>
+                      <tr key={`${row.date}-${row.name}-${idx}`} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
                         <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
                           <div className="flex flex-col gap-0.5">
                             <div 
