@@ -845,7 +845,7 @@ export default function BasicMissionPage() {
               <h2 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase">狩獵日誌</h2>
               <div className="relative flex items-center gap-2">
                 <span 
-                  className="text-[12px] font-bold text-white font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
+                  className="text-[12px] font-bold text-primary font-data-mono cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setIsPersonalDateDropdownOpen(!isPersonalDateDropdownOpen)}
                 >
                   {selectedPersonalDate || "載入中..."}
