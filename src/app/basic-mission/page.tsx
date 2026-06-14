@@ -1209,13 +1209,6 @@ export default function BasicMissionPage() {
                             placeholder="輸入備註 (如: 事假)"
                           />
                         ))}
-                        <DayCellEdit 
-                          label="質"
-                          defaultSymbol={getSym(editingRow.rawData[8])}
-                          defaultNote={editingRow.rawNotes?.[8] || ""}
-                          symbolInputId={`edit-col-8`}
-                          noteInputId={`edit-note-8`}
-                        />
                       </div>
                     </div>
 
