@@ -716,7 +716,7 @@ export default function BasicMissionPage() {
 
       const score = parseFloat(r[scoreIdx] || "0").toFixed(1);
 
-      const logStr = logs.map(mapSymbol).join("") + "/" + mapSymbol(quality) + mapSymbol(quantity);
+      const logStr = logs.map(mapSymbol).join("") + "/" + mapSymbol(quantity);
       const recStr = precisions.map(mapSymbol).join("");
 
       return {
@@ -949,8 +949,7 @@ export default function BasicMissionPage() {
                 <PersonalIndicatorCard label="D6" symbol={d6} note={pNotes[7]} />
               </div>
               <div className="grid grid-cols-6 gap-2 mt-2">
-                <div className="col-span-3"><PersonalIndicatorCard label="質" symbol={dQuality} note={pNotes[8]} /></div>
-                <div className="col-span-3"><PersonalIndicatorCard label="量" symbol={dQuantity} note={pNotes[9]} /></div>
+                <div className="col-span-6"><PersonalIndicatorCard label="量" symbol={dQuantity} note={pNotes[9]} /></div>
               </div>
             </div>
           </div>
@@ -1195,7 +1194,7 @@ export default function BasicMissionPage() {
                     {/* 日誌 */}
                     <div className="border border-primary/20 rounded-[4px] p-3 bg-surface-container-low">
                       <h4 className="text-[12px] text-primary mb-2 uppercase tracking-widest">日誌</h4>
-                      <div className="grid grid-cols-7 gap-1">
+                      <div className="grid grid-cols-6 gap-1">
                         {[
                           { label: "D1", idx: 2 }, { label: "D2", idx: 3 }, { label: "D3", idx: 4 }, { label: "D4", idx: 5 },
                           { label: "D5", idx: 6 }, { label: "D6", idx: 7 }
@@ -1306,8 +1305,8 @@ export default function BasicMissionPage() {
 
                         const updates = [
                           {
-                            range: `C${editingRow.originalIndex}:I${editingRow.originalIndex}`,
-                            values: [[getVal('edit-col-2'), getVal('edit-col-3'), getVal('edit-col-4'), getVal('edit-col-5'), getVal('edit-col-6'), getVal('edit-col-7'), getVal('edit-col-8')]]
+                            range: `C${editingRow.originalIndex}:H${editingRow.originalIndex}`,
+                            values: [[getVal('edit-col-2'), getVal('edit-col-3'), getVal('edit-col-4'), getVal('edit-col-5'), getVal('edit-col-6'), getVal('edit-col-7')]]
                           },
                           {
                             range: `K${editingRow.originalIndex}:L${editingRow.originalIndex}`,
@@ -1320,7 +1319,7 @@ export default function BasicMissionPage() {
                         ];
 
                         const notesUpdates = [
-                          2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 15, 16, 17
+                          2, 3, 4, 5, 6, 7, 10, 11, 13, 15, 16, 17
                         ].map(colIndex => ({
                           rowIndex: editingRow.originalIndex - 1,
                           colIndex: colIndex,
