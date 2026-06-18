@@ -16,9 +16,10 @@ const SymbolSelect = ({ defaultValue, inputId }: { defaultValue: string, inputId
     { val: "○", icon: "radio_button_unchecked" },
     { val: "△", icon: "change_history" },
     { val: "✕", icon: "close" },
+    { val: "⊗", icon: "highlight_off" },
     { val: "", icon: "-" }
   ];
-  const selectedOpt = options.find(o => o.val === value) || options[3];
+  const selectedOpt = options.find(o => o.val === value) || options[4];
 
   return (
     <div className="relative w-full">
@@ -700,6 +701,7 @@ export default function BasicMissionPage() {
       if (val === "高" || val === "O" || val === "o" || val === "〇" || val === "○") return "○";
       if (val === "中" || val === "△" || val === "^") return "△";
       if (val === "低" || val === "無" || val === "X" || val === "x" || val === "✕" || val === "✖") return "✕";
+      if (val === "⊗" || val === "⨂") return "⊗";
       return "-";
     };
 
@@ -772,6 +774,7 @@ export default function BasicMissionPage() {
           if (char === '○' || char === 'O') return <span key={i} className="sym-icon text-[12px] leading-none">radio_button_unchecked</span>;
           if (char === '✕' || char === 'X') return <span key={i} className="sym-icon text-[12px] leading-none">close</span>;
           if (char === '△') return <span key={i} className="sym-icon text-[12px] leading-none">change_history</span>;
+          if (char === '⊗' || char === '⨂') return <span key={i} className="sym-icon text-[12px] leading-none">highlight_off</span>;
           if (char === '/') return <span key={i} className="mx-0.5 text-[10px]">/</span>;
           return <span key={i} className="text-[10px]">{char}</span>;
         })}
@@ -796,6 +799,7 @@ export default function BasicMissionPage() {
     if (v === "O" || v === "o" || v === "〇" || v === "○" || v === "高") return "radio_button_unchecked";
     if (v === "△" || v === "^" || v === "中") return "change_history";
     if (v === "X" || v === "x" || v === "✕" || v === "✖" || v === "低") return "close";
+    if (v === "⊗" || v === "⨂") return "highlight_off";
     return "remove";
   };
 
@@ -1185,6 +1189,7 @@ export default function BasicMissionPage() {
             if (val === "高" || val === "O" || val === "o" || val === "〇" || val === "○") return "○";
             if (val === "中" || val === "△" || val === "^") return "△";
             if (val === "低" || val === "無" || val === "X" || val === "x" || val === "✕" || val === "✖") return "✕";
+            if (val === "⊗" || val === "⨂") return "⊗";
             return "";
           };
 
