@@ -346,11 +346,22 @@ export default function BasicMissionPage() {
     // 依據時間先後排序日期
     const sortedDates = Array.from(dateMap.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
+    // 遊戲規則：禮拜一才結算上週數據。
+    // 過濾出「已經結算」的日期 (上個禮拜天(含)之前)
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const daysToSubtract = dayOfWeek === 0 ? 7 : dayOfWeek;
+    const maxAllowedDate = new Date(now);
+    maxAllowedDate.setDate(now.getDate() - daysToSubtract);
+    maxAllowedDate.setHours(23, 59, 59, 999);
+    const maxAllowedTime = maxAllowedDate.getTime();
+
     // 計算每天的冠軍
     const championsByDate = new Map<string, { display: string, first: string }>();
     const validDates: string[] = [];
 
     for (const date of sortedDates) {
+      if (new Date(date).getTime() > maxAllowedTime) continue; // 忽略尚未結算的未來日期
       const records = dateMap.get(date)!;
       const maxScore = Math.max(...records.map(r => r.score));
       if (maxScore > 0) {
