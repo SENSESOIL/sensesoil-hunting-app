@@ -9,17 +9,22 @@ import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const SymbolSelect = ({ defaultValue, inputId }: { defaultValue: string, inputId: string }) => {
+const SymbolSelect = ({ defaultValue, inputId, allowCrossCircle = false }: { defaultValue: string, inputId: string, allowCrossCircle?: boolean }) => {
   const [value, setValue] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
-  const options = [
+  
+  const baseOptions = [
     { val: "○", icon: "radio_button_unchecked" },
     { val: "△", icon: "change_history" },
-    { val: "✕", icon: "close" },
-    { val: "⊗", icon: "highlight_off" },
-    { val: "", icon: "-" }
+    { val: "✕", icon: "close" }
   ];
-  const selectedOpt = options.find(o => o.val === value) || options[4];
+  if (allowCrossCircle) {
+    baseOptions.push({ val: "⊗", icon: "highlight_off" });
+  }
+  baseOptions.push({ val: "", icon: "-" });
+  
+  const options = baseOptions;
+  const selectedOpt = options.find(o => o.val === value) || options[options.length - 1];
 
   return (
     <div className="relative w-full">
@@ -60,7 +65,7 @@ const SymbolSelect = ({ defaultValue, inputId }: { defaultValue: string, inputId
   );
 };
 
-const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInputId, placeholder = "輸入備註", options }: { label: string, defaultSymbol: string, defaultNote: string, symbolInputId: string, noteInputId: string, placeholder?: string, options?: string[] }) => {
+const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInputId, placeholder = "輸入備註", options, allowCrossCircle = false }: { label: string, defaultSymbol: string, defaultNote: string, symbolInputId: string, noteInputId: string, placeholder?: string, options?: string[], allowCrossCircle?: boolean }) => {
   const [showNote, setShowNote] = useState(false);
   const [note, setNote] = useState(defaultNote);
 
@@ -76,7 +81,7 @@ const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInp
       {options ? (
         <TaskSelect options={options} defaultValue={defaultSymbol} inputId={symbolInputId} />
       ) : (
-        <SymbolSelect defaultValue={defaultSymbol} inputId={symbolInputId} />
+        <SymbolSelect defaultValue={defaultSymbol} inputId={symbolInputId} allowCrossCircle={allowCrossCircle} />
       )}
       <input type="hidden" id={noteInputId} value={note} />
       
@@ -1223,6 +1228,7 @@ export default function BasicMissionPage() {
                             symbolInputId={`edit-col-${col.idx}`}
                             noteInputId={`edit-note-${col.idx}`}
                             placeholder="輸入備註 (如: 事假)"
+                            allowCrossCircle={true}
                           />
                         ))}
                       </div>
