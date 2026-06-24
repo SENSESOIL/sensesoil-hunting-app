@@ -1422,7 +1422,7 @@ export default function RunningRecordsPage() {
             
             <div className="flex justify-between w-full gap-2 mb-5">
               <div className="flex flex-col">
-                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">今年累計</span>
+                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">年累計</span>
                 <div className="flex items-baseline gap-1">
                   <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
                   <span className="text-white text-sm font-bold">次</span>
