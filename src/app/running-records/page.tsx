@@ -786,9 +786,13 @@ export default function RunningRecordsPage() {
 
     let monthlyDistance = 0;
     let monthlyTime = 0;
+    let monthlyActivities = 0;
     personalRecords.forEach((r: any) => {
       const d = new Date(r.date);
       if (!isNaN(d.getTime()) && d.getFullYear() === currentYear && d.getMonth() === currentMonth) {
+        if (r.distance > 0) {
+            monthlyActivities++;
+        }
         monthlyDistance += (r.distance || 0);
         monthlyTime += parseFloat(r.timeStr || "0");
       }
@@ -802,6 +806,7 @@ export default function RunningRecordsPage() {
     return {
       monthLabel: `${currentYear} ${monthNames[currentMonth]}`,
       yearlyActivities,
+      monthlyActivities,
       maxStreakWeeks,
       currentMonthStreak,
       calendarDays,
@@ -1417,16 +1422,16 @@ export default function RunningRecordsPage() {
             
             <div className="flex justify-between w-full gap-2 mb-5">
               <div className="flex flex-col">
-                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">連續紀錄</span>
+                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">今年累計</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.maxStreakWeeks}</span>
-                  <span className="text-white text-sm font-bold">週</span>
+                  <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
+                  <span className="text-white text-sm font-bold">次</span>
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">今年累計次數</span>
+                <span className="text-[#efe0d2]/70 text-[12px] tracking-[0.1em] mb-1">月累計</span>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.yearlyActivities}</span>
+                  <span className="text-white text-[22px] font-bold tracking-tighter">{monthlyCalendarData.monthlyActivities}</span>
                   <span className="text-white text-[12px] font-bold">次</span>
                 </div>
               </div>
