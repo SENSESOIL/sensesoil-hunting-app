@@ -147,14 +147,24 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
   );
 };
 
-const YearlyBarChart = ({ data, onSelect, metric = 'time' }: { data: {label: string, hours: number, distance: number, isActive?: boolean, date: Date}[], onSelect: (d: Date) => void, metric?: 'time' | 'distance' }) => {
-  const maxVal = Math.max(...data.map(d => metric === 'time' ? d.hours : d.distance), 1);
+const YearlyBarChart = ({ data, onSelect, metric = 'time' }: { data: {label: string, hours: number, distance: number, pace: number, isActive?: boolean, date: Date}[], onSelect: (d: Date) => void, metric?: 'time' | 'distance' | 'pace' }) => {
+  const maxVal = Math.max(...data.map(d => metric === 'time' ? d.hours : metric === 'distance' ? d.distance : d.pace), 1);
   return (
     <div className="w-full h-[220px] flex items-end justify-between px-2 pt-12 pb-12 relative mt-4">
       {data.map((d, i) => {
-        const val = metric === 'time' ? d.hours : d.distance;
-        const heightPct = (val / maxVal) * 100;
+        const val = metric === 'time' ? d.hours : metric === 'distance' ? d.distance : d.pace;
+        const heightPct = maxVal > 0 ? (val / maxVal) * 100 : 0;
         const isActive = d.isActive; 
+        
+        let displayStr = "";
+        if (metric === 'time') displayStr = `${val.toFixed(1)} hrs`;
+        else if (metric === 'distance') displayStr = `${val.toFixed(1)} km`;
+        else {
+          const mins = Math.floor(val);
+          const secs = Math.round((val - mins) * 60);
+          displayStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
         return (
           <div 
             key={i} 
@@ -172,7 +182,7 @@ const YearlyBarChart = ({ data, onSelect, metric = 'time' }: { data: {label: str
                   )}
                   {isActive && (
                      <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[11px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 36px)' }}>
-                       {val.toFixed(1)} {metric === 'time' ? 'hrs' : 'km'}
+                       {displayStr}
                      </div>
                   )}
                 </div>
@@ -229,7 +239,7 @@ export default function RunningRecordsPage() {
   const runningData = runningRes?.data || [];
 
   const [awardYear, setAwardYear] = useState('2026');
-  const [barChartMetric, setBarChartMetric] = useState<'time' | 'distance'>('time');
+  const [barChartMetric, setBarChartMetric] = useState<'time' | 'distance' | 'pace'>('distance');
   const [isAwardYearDropdownOpen, setIsAwardYearDropdownOpen] = useState(false);
   const [isLeaderboardYearDropdownOpen, setIsLeaderboardYearDropdownOpen] = useState(false);
 
@@ -613,12 +623,14 @@ export default function RunningRecordsPage() {
       const totalMinutes = monthRecords.reduce((sum: number, r: any) => sum + parseFloat(r.timeStr || "0"), 0);
       const totalHours = totalMinutes / 60;
       const totalDistance = monthRecords.reduce((sum: number, r: any) => sum + (r.distance || 0), 0);
+      const avgPaceMinutes = totalDistance > 0 ? totalMinutes / totalDistance : 0;
       
       const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
       months.push({
         label: monthNames[d.getMonth()],
         hours: totalHours,
         distance: totalDistance,
+        pace: avgPaceMinutes,
         isActive: d.getFullYear() === selectedYear && d.getMonth() === selectedMonth,
         date: d,
       });
@@ -1383,13 +1395,17 @@ export default function RunningRecordsPage() {
               </div>
               <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20 z-10">
                 <button 
-                  onClick={() => setBarChartMetric('time')}
-                  className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${barChartMetric === 'time' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                >時間</button>
-                <button 
                   onClick={() => setBarChartMetric('distance')}
                   className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${barChartMetric === 'distance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                 >距離</button>
+                <button 
+                  onClick={() => setBarChartMetric('pace')}
+                  className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${barChartMetric === 'pace' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                >配速</button>
+                <button 
+                  onClick={() => setBarChartMetric('time')}
+                  className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${barChartMetric === 'time' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                >時間</button>
               </div>
             </div>
             
