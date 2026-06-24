@@ -1374,11 +1374,23 @@ export default function RunningRecordsPage() {
           <div className="pt-6 pb-2 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             
 
-            <div 
-              className="flex items-center mb-4 cursor-pointer hover:opacity-80 transition-opacity w-max"
-              onClick={() => setIsMonthSelectorOpen(true)}
-            >
-              <h3 className="text-primary text-[22px] font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
+            <div className="flex items-center justify-between mb-4">
+              <div 
+                className="flex items-center cursor-pointer hover:opacity-80 transition-opacity w-max"
+                onClick={() => setIsMonthSelectorOpen(true)}
+              >
+                <h3 className="text-primary text-[22px] font-bold tracking-wide">{monthlyCalendarData.monthLabel}</h3>
+              </div>
+              <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20 z-10">
+                <button 
+                  onClick={() => setBarChartMetric('time')}
+                  className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${barChartMetric === 'time' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                >時間</button>
+                <button 
+                  onClick={() => setBarChartMetric('distance')}
+                  className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${barChartMetric === 'distance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                >距離</button>
+              </div>
             </div>
             
             <div className="flex justify-between w-full gap-2 mb-5">
@@ -1497,17 +1509,7 @@ export default function RunningRecordsPage() {
               })}
             </div>
 
-            <div className="mt-12 pb-4 relative">
-              <div className="absolute -top-6 right-0 flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20 z-10">
-                <button 
-                  onClick={() => setBarChartMetric('time')}
-                  className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${barChartMetric === 'time' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                >時間</button>
-                <button 
-                  onClick={() => setBarChartMetric('distance')}
-                  className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${barChartMetric === 'distance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                >距離</button>
-              </div>
+            <div className="mt-12 pb-4">
               <YearlyBarChart 
                 data={past12MonthsData} 
                 onSelect={(d) => setSelectedCalendarDate(d)} 
