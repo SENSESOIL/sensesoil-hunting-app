@@ -161,7 +161,7 @@ const YearlyBarChart = ({ data, onSelect, metric = 'time' }: { data: {label: str
         else if (metric === 'distance') displayStr = `${val.toFixed(1)} km`;
         else {
           const mins = Math.floor(val);
-          const secs = Math.round((val - mins) * 60);
+          const secs = Math.floor((val - mins) * 60);
           displayStr = `${mins}:${secs.toString().padStart(2, '0')}`;
         }
         
