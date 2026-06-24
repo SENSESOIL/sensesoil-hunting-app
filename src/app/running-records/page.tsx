@@ -148,12 +148,20 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
 };
 
 const YearlyBarChart = ({ data, onSelect, metric = 'time' }: { data: {label: string, hours: number, distance: number, pace: number, isActive?: boolean, date: Date}[], onSelect: (d: Date) => void, metric?: 'time' | 'distance' | 'pace' }) => {
-  const maxVal = Math.max(...data.map(d => metric === 'time' ? d.hours : metric === 'distance' ? d.distance : d.pace), 1);
+  const maxVal = Math.max(...data.map(d => metric === 'time' ? d.hours : metric === 'distance' ? d.distance : (d.pace > 0 ? 60 / d.pace : 0)), 1);
   return (
     <div className="w-full h-[220px] flex items-end justify-between px-2 pt-12 pb-12 relative mt-4">
       {data.map((d, i) => {
         const val = metric === 'time' ? d.hours : metric === 'distance' ? d.distance : d.pace;
-        const heightPct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+        
+        let heightPct = 0;
+        if (metric === 'pace' && val > 0) {
+            const speed = 60 / val;
+            heightPct = maxVal > 0 ? (speed / maxVal) * 100 : 0;
+        } else {
+            heightPct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+        }
+        
         const isActive = d.isActive; 
         
         let displayStr = "";
