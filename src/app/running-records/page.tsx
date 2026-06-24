@@ -180,11 +180,9 @@ const YearlyBarChart = ({ data, onSelect, metric = 'time' }: { data: {label: str
                   {isActive && (
                     <div className="absolute -top-[3px] -left-[3px] w-2 h-2 bg-primary rounded-full" />
                   )}
-                  {isActive && (
-                     <div className="absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[11px] text-white whitespace-nowrap tracking-widest font-mono" style={{ bottom: 'calc(100% + 36px)' }}>
-                       {displayStr}
-                     </div>
-                  )}
+                  <div className={`absolute left-1/2 -translate-x-1/2 rotate-[-90deg] origin-center text-[11px] whitespace-nowrap tracking-widest font-mono ${isActive ? 'text-primary' : 'text-white'}`} style={{ bottom: 'calc(100% + 36px)' }}>
+                    {displayStr}
+                  </div>
                 </div>
               )}
             </div>
