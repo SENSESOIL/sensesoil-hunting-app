@@ -1027,7 +1027,7 @@ export default function RunningRecordsPage() {
           }
           return prev + 1;
         });
-      }, 400);
+      }, 200);
     }
   }, [isRacePlaying, raceFrameIndex, raceFrames.length]);
 
@@ -1036,7 +1036,8 @@ export default function RunningRecordsPage() {
     return () => { if (raceTimerRef.current) clearInterval(raceTimerRef.current); };
   }, []);
 
-  const displayLeaderboardData = isRacePlaying || raceFrameIndex > 0 ? (raceFrames[raceFrameIndex]?.data || []) : guildLeaderboardData;
+  const isRaceActive = isRacePlaying || (raceFrameIndex > 0 && raceFrameIndex < raceFrames.length - 1);
+  const displayLeaderboardData = isRaceActive ? (raceFrames[raceFrameIndex]?.data || []) : guildLeaderboardData;
   const raceCurrentDate = raceFrames[raceFrameIndex]?.dateLabel || '';
 
   return (
@@ -1373,17 +1374,17 @@ export default function RunningRecordsPage() {
                 {/* Play/Pause Race Button */}
                 <button
                   onClick={toggleRace}
-                  className="w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center transition-all hover:bg-primary/20 active:scale-90 shrink-0"
+                  className="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-all hover:brightness-110 active:scale-90 shrink-0"
                   title={isRacePlaying ? '暫停' : '播放排名動畫'}
                 >
                   {isRacePlaying ? (
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <rect x="1" y="1" width="3.5" height="10" rx="1" fill="#f39c12" />
-                      <rect x="7.5" y="1" width="3.5" height="10" rx="1" fill="#f39c12" />
+                      <rect x="1.5" y="1" width="3" height="10" rx="1" fill="#000" />
+                      <rect x="7.5" y="1" width="3" height="10" rx="1" fill="#000" />
                     </svg>
                   ) : (
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 1L10 6L2 11V1Z" fill="#f39c12" />
+                      <path d="M3.5 1L10.5 6L3.5 11V1Z" fill="#000" />
                     </svg>
                   )}
                 </button>
@@ -1405,10 +1406,9 @@ export default function RunningRecordsPage() {
               </div>
 
               {/* Race date indicator */}
-              {(isRacePlaying || raceFrameIndex > 0) && (
-                <div className="flex items-center justify-between mb-3 -mt-3">
+              {isRaceActive && (
+                <div className="flex items-center mb-3 -mt-3">
                   <span className="text-primary/80 text-[11px] font-mono tracking-wider">{raceCurrentDate}</span>
-                  <span className="text-white/40 text-[10px]">{raceFrameIndex + 1} / {raceFrames.length}</span>
                 </div>
               )}
 
