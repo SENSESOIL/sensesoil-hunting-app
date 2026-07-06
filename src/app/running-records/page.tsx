@@ -895,6 +895,150 @@ export default function RunningRecordsPage() {
     }));
   }, [runningData, selectedCalendarDate, leaderboardMetric, awardYear]);
 
+  // === Bar Chart Race Animation ===
+  const [isRacePlaying, setIsRacePlaying] = useState(false);
+  const [raceFrameIndex, setRaceFrameIndex] = useState(0);
+  const raceTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const raceFrames = useMemo(() => {
+    if (!runningData || runningData.length === 0) return [];
+
+    const normalizeName = (name: string) => {
+      if (!name) return '';
+      let n = name.replace(/[\.\s]/g, '').toUpperCase();
+      if (n === 'WWENJUN' || n === 'WEIWENJUN') return '魏文軍';
+      if (n === '盧政恆') return '盧政恒';
+      return n;
+    };
+
+    const targetYear = parseInt(awardYear, 10);
+    const start = new Date(targetYear, 0, 1).getTime();
+    const end = new Date(targetYear, 11, 31, 23, 59, 59, 999).getTime();
+
+    // Collect all records for this year, sorted by date
+    const yearRecords: { date: Date; name: string; distance: number; time: number; elevation: number }[] = [];
+    runningData.forEach((r: any) => {
+      const name = normalizeName(r.name);
+      if (!name || name === 'SENSESOIL' || name.includes('COMPANY')) return;
+      const rt = new Date(r.date);
+      if (rt.getTime() >= start && rt.getTime() <= end) {
+        yearRecords.push({
+          date: rt,
+          name,
+          distance: r.distance || 0,
+          time: parseFloat(r.timeStr || '0'),
+          elevation: r.elevation || 0,
+        });
+      }
+    });
+    yearRecords.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+    // Get unique dates
+    const uniqueDates: string[] = [];
+    const dateSet = new Set<string>();
+    yearRecords.forEach(r => {
+      const ds = `${r.date.getFullYear()}/${(r.date.getMonth()+1).toString().padStart(2,'0')}/${r.date.getDate().toString().padStart(2,'0')}`;
+      if (!dateSet.has(ds)) { dateSet.add(ds); uniqueDates.push(ds); }
+    });
+
+    // Build cumulative snapshots per date
+    const cumulative: Record<string, { distance: number; time: number; elevation: number }> = {};
+    let dateIdx = 0;
+    const frames: { dateLabel: string; data: typeof guildLeaderboardData }[] = [];
+
+    for (const dateStr of uniqueDates) {
+      // Add all records for this date
+      while (dateIdx < yearRecords.length) {
+        const r = yearRecords[dateIdx];
+        const ds = `${r.date.getFullYear()}/${(r.date.getMonth()+1).toString().padStart(2,'0')}/${r.date.getDate().toString().padStart(2,'0')}`;
+        if (ds !== dateStr) break;
+        if (!cumulative[r.name]) cumulative[r.name] = { distance: 0, time: 0, elevation: 0 };
+        cumulative[r.name].distance += r.distance;
+        cumulative[r.name].time += r.time;
+        cumulative[r.name].elevation += r.elevation;
+        dateIdx++;
+      }
+
+      // Compute leaderboard for this frame
+      let result = Object.entries(cumulative).map(([name, stats]) => {
+        const paceVal = stats.distance > 0 ? (stats.time / stats.distance) : 0;
+        return {
+          name,
+          distance: stats.distance,
+          time: stats.time,
+          elevation: stats.elevation,
+          paceRaw: paceVal,
+          paceFormatted: calculatePace(stats.time, stats.distance),
+        };
+      }).filter(r => r.distance > 0);
+
+      if (leaderboardMetric === 'distance') {
+        result.sort((a, b) => b.distance - a.distance);
+      } else if (leaderboardMetric === 'elevation') {
+        result.sort((a, b) => b.elevation - a.elevation);
+      } else if (leaderboardMetric === 'pace') {
+        result.sort((a, b) => a.paceRaw - b.paceRaw);
+      }
+
+      const maxVal = result.length > 0 ? (
+        leaderboardMetric === 'distance' ? result[0].distance :
+        leaderboardMetric === 'elevation' ? result[0].elevation :
+        result[result.length - 1].paceRaw
+      ) : 1;
+
+      const frameData = result.map((item, idx) => ({
+        ...item,
+        rank: idx + 1,
+        barPct: maxVal > 0 ? (leaderboardMetric === 'distance' ? (item.distance / maxVal) * 100 :
+                leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
+                (result[0].paceRaw / item.paceRaw) * 100) : 0
+      }));
+
+      frames.push({ dateLabel: dateStr, data: frameData });
+    }
+
+    return frames;
+  }, [runningData, awardYear, leaderboardMetric]);
+
+  // Stop race when metric or year changes
+  useEffect(() => {
+    if (raceTimerRef.current) { clearInterval(raceTimerRef.current); raceTimerRef.current = null; }
+    setIsRacePlaying(false);
+    setRaceFrameIndex(0);
+  }, [leaderboardMetric, awardYear]);
+
+  const toggleRace = useCallback(() => {
+    if (isRacePlaying) {
+      // Pause
+      if (raceTimerRef.current) { clearInterval(raceTimerRef.current); raceTimerRef.current = null; }
+      setIsRacePlaying(false);
+    } else {
+      // Play
+      if (raceFrames.length === 0) return;
+      let startIdx = raceFrameIndex >= raceFrames.length - 1 ? 0 : raceFrameIndex;
+      setRaceFrameIndex(startIdx);
+      setIsRacePlaying(true);
+      raceTimerRef.current = setInterval(() => {
+        setRaceFrameIndex(prev => {
+          if (prev >= raceFrames.length - 1) {
+            if (raceTimerRef.current) { clearInterval(raceTimerRef.current); raceTimerRef.current = null; }
+            setIsRacePlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 400);
+    }
+  }, [isRacePlaying, raceFrameIndex, raceFrames.length]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => { if (raceTimerRef.current) clearInterval(raceTimerRef.current); };
+  }, []);
+
+  const displayLeaderboardData = isRacePlaying || raceFrameIndex > 0 ? (raceFrames[raceFrameIndex]?.data || []) : guildLeaderboardData;
+  const raceCurrentDate = raceFrames[raceFrameIndex]?.dateLabel || '';
+
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
@@ -1225,6 +1369,24 @@ export default function RunningRecordsPage() {
                     </>
                   )}
                 </div>
+
+                {/* Play/Pause Race Button */}
+                <button
+                  onClick={toggleRace}
+                  className="w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center transition-all hover:bg-primary/20 active:scale-90 shrink-0"
+                  title={isRacePlaying ? '暫停' : '播放排名動畫'}
+                >
+                  {isRacePlaying ? (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <rect x="1" y="1" width="3.5" height="10" rx="1" fill="#f39c12" />
+                      <rect x="7.5" y="1" width="3.5" height="10" rx="1" fill="#f39c12" />
+                    </svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 1L10 6L2 11V1Z" fill="#f39c12" />
+                    </svg>
+                  )}
+                </button>
                 
                 <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
                   <button 
@@ -1242,20 +1404,28 @@ export default function RunningRecordsPage() {
                 </div>
               </div>
 
+              {/* Race date indicator */}
+              {(isRacePlaying || raceFrameIndex > 0) && (
+                <div className="flex items-center justify-between mb-3 -mt-3">
+                  <span className="text-primary/80 text-[11px] font-mono tracking-wider">{raceCurrentDate}</span>
+                  <span className="text-white/40 text-[10px]">{raceFrameIndex + 1} / {raceFrames.length}</span>
+                </div>
+              )}
+
               <div className="flex flex-col gap-2">
-                {guildLeaderboardData.length > 0 ? guildLeaderboardData.map((item, index) => {
-                  const maxIndex = Math.max(1, guildLeaderboardData.length - 1);
+                {displayLeaderboardData.length > 0 ? displayLeaderboardData.map((item, index) => {
+                  const maxIndex = Math.max(1, displayLeaderboardData.length - 1);
                   const barOpacity = 1 - (0.3 * (index / maxIndex));
                   return (
-                  <div key={item.name} className="flex items-center w-full gap-3">
+                  <div key={item.name} className="flex items-center w-full gap-3" style={{ transition: 'transform 0.35s ease-out, opacity 0.35s ease-out' }}>
                     <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{item.rank}</span>
                     <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
                       <span className={`text-[12px] ${item.rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.name.slice(-1)}</span>
                     </div>
                     <div className="flex-1 h-2 bg-primary/10 rounded-r-sm overflow-visible flex relative">
                       <div 
-                        className={`h-full bg-primary transition-all duration-700 ease-out ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
-                        style={{ width: `${item.barPct}%`, opacity: barOpacity }}
+                        className={`h-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
+                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.35s ease-out' }}
                       ></div>
                     </div>
                     <div className="w-16 text-right shrink-0">
