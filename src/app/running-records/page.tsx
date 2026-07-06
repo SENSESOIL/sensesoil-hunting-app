@@ -1341,6 +1341,13 @@ export default function RunningRecordsPage() {
         <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             <div>
+              {/* Race date indicator - above title */}
+              <div className="h-[16px] mb-1">
+                {isRaceActive && (
+                  <span className="text-primary/80 text-[11px] font-mono tracking-wider">{raceCurrentDate.replace(/^\d{4}\//, '')}</span>
+                )}
+              </div>
+
               <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
                 <div className="relative">
                   <button 
@@ -1371,46 +1378,42 @@ export default function RunningRecordsPage() {
                   )}
                 </div>
 
-                {/* Play/Pause Race Button */}
-                <button
-                  onClick={toggleRace}
-                  className="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-all hover:brightness-110 active:scale-90 shrink-0"
-                  title={isRacePlaying ? '暫停' : '播放排名動畫'}
-                >
-                  {isRacePlaying ? (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <rect x="1.5" y="1" width="3" height="10" rx="1" fill="#000" />
-                      <rect x="7.5" y="1" width="3" height="10" rx="1" fill="#000" />
-                    </svg>
-                  ) : (
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M3.5 1L10.5 6L3.5 11V1Z" fill="#000" />
-                    </svg>
-                  )}
-                </button>
-                
-                <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
-                  <button 
-                    onClick={() => setLeaderboardMetric('distance')}
-                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'distance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                  >距離</button>
-                  <button 
-                    onClick={() => setLeaderboardMetric('pace')}
-                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'pace' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                  >配速</button>
-                  <button 
-                    onClick={() => setLeaderboardMetric('elevation')}
-                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'elevation' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                  >爬升</button>
+                <div className="flex items-center gap-2">
+                  {/* Play/Pause Race Button */}
+                  <button
+                    onClick={toggleRace}
+                    className="rounded-full bg-primary flex items-center justify-center transition-all hover:brightness-110 active:scale-90 shrink-0"
+                    style={{ width: '26px', height: '26px' }}
+                    title={isRacePlaying ? '暫停' : '播放排名動畫'}
+                  >
+                    {isRacePlaying ? (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                        <rect x="1.5" y="1" width="3" height="10" rx="1" fill="#000" />
+                        <rect x="7.5" y="1" width="3" height="10" rx="1" fill="#000" />
+                      </svg>
+                    ) : (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                        <path d="M3.5 1L10.5 6L3.5 11V1Z" fill="#000" />
+                      </svg>
+                    )}
+                  </button>
+                  
+                  <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
+                    <button 
+                      onClick={() => setLeaderboardMetric('distance')}
+                      className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'distance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                    >距離</button>
+                    <button 
+                      onClick={() => setLeaderboardMetric('pace')}
+                      className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'pace' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                    >配速</button>
+                    <button 
+                      onClick={() => setLeaderboardMetric('elevation')}
+                      className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'elevation' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                    >爬升</button>
+                  </div>
                 </div>
               </div>
-
-              {/* Race date indicator */}
-              {isRaceActive && (
-                <div className="flex items-center mb-3 -mt-3">
-                  <span className="text-primary/80 text-[11px] font-mono tracking-wider">{raceCurrentDate}</span>
-                </div>
-              )}
 
               <div className="flex flex-col gap-2">
                 {displayLeaderboardData.length > 0 ? displayLeaderboardData.map((item, index) => {
