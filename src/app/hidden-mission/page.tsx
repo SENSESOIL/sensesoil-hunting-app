@@ -224,12 +224,12 @@ export default function HiddenMissionPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-[#0a0a0a] text-[#efe0d2] font-sans pb-24">
+    <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
       {/* Fixed Header */}
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
         <div className="flex items-center gap-3 flex-nowrap cursor-pointer" onClick={() => router.push("/diversion")}>
           <Image priority alt="SenseSoil Logo" width={28} height={28} className="h-[28px] w-auto object-contain flex-shrink-0 translate-y-[-2px]" src="/Logo｜Orange.svg" />
-          <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">自我覺醒試煉</h1>
+          <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">隱藏任務試煉</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -245,7 +245,7 @@ export default function HiddenMissionPage() {
       </header>
 
       <PullToRefresh>
-        <main className="relative pt-20 px-4 max-w-5xl mx-auto w-full">
+        <main className="relative pt-16 px-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-64 gap-4">
               <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
