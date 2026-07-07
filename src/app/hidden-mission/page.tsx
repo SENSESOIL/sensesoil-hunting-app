@@ -254,43 +254,54 @@ export default function HiddenMissionPage() {
               {/* INDIVIDUAL VIEW */}
               {view === 'individual' && (
                 <div className="flex flex-col gap-6 animate-fade-in">
-                  {/* Hunter Selector Header */}
-                  <div className="flex justify-between items-center bg-[#141414] border border-primary/30 rounded-xl p-4 shadow-lg">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-label-caps tracking-[0.2em] text-primary/70 uppercase">Hunter Profile</span>
-                      <h2 className="text-2xl font-bold font-display text-white flex items-center gap-2">
-                        <span>{selectedHunter || "選擇狩獵者"}</span>
-                        {canEdit && <span className="text-[10px] bg-primary/20 text-primary border border-primary/40 px-2 py-0.5 rounded-full">ADMIN</span>}
-                      </h2>
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={() => setIsHunterDropdownOpen(!isHunterDropdownOpen)}
-                        className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 border border-primary/40 px-3 py-2 rounded-lg text-primary font-bold text-sm transition-all"
+                  {/* Top Header - Individual View */}
+                  <div className="flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] h-[60px]" style={{ marginTop: 32, marginBottom: 32 }}>
+                    <div className="flex flex-col border-l-[3px] border-primary pl-3 relative flex-1 pr-4">
+                      <style>{`
+                        @keyframes textReveal {
+                          0% { opacity: 0; filter: blur(3px); transform: translateX(-4px); }
+                          100% { opacity: 1; filter: blur(0); transform: translateX(0); }
+                        }
+                        .animate-text-reveal {
+                          animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                        }
+                      `}</style>
+                      <p 
+                        className={`font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none ${canEdit ? "cursor-pointer" : ""}`}
+                        onClick={() => { if(canEdit) setIsHunterDropdownOpen(!isHunterDropdownOpen) }}
                       >
-                        <span>切換狩獵者</span>
-                        <span className="material-symbols-outlined text-[18px]">expand_more</span>
-                      </button>
+                        S級狩獵者
+                      </p>
+                      <h2 
+                        key={selectedHunter}
+                        className={`font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity ${canEdit ? "cursor-pointer hover:opacity-80" : ""} animate-text-reveal`}
+                        onClick={() => { if(canEdit) setIsHunterDropdownOpen(!isHunterDropdownOpen) }}
+                      >
+                        {selectedHunter || "選擇狩獵者"}
+                      </h2>
                       {isHunterDropdownOpen && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setIsHunterDropdownOpen(false)} />
-                          <div className="absolute right-0 top-full mt-2 bg-[#1A1A1A] border border-primary/40 rounded-xl shadow-2xl z-50 min-w-[140px] overflow-hidden max-h-60 overflow-y-auto">
+                          <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-60 overflow-y-auto">
                             {data.scoreboard.map((item: any) => (
-                              <button
+                              <div
                                 key={item.hunter}
-                                className={`w-full text-left px-4 py-2.5 text-sm font-bold transition-colors flex items-center justify-between ${selectedHunter === item.hunter ? 'bg-primary text-black' : 'text-[#efe0d2] hover:bg-white/10'}`}
-                                onClick={() => {
-                                  setSelectedHunter(item.hunter);
-                                  setIsHunterDropdownOpen(false);
-                                }}
+                                className={`px-4 py-3 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm border-b border-primary/10 last:border-b-0 flex justify-between items-center ${selectedHunter === item.hunter ? 'bg-primary/30 text-primary font-bold' : ''}`}
+                                onClick={() => { setSelectedHunter(item.hunter); setIsHunterDropdownOpen(false); }}
                               >
                                 <span>{item.hunter}</span>
                                 <span className="text-[11px] opacity-70">${item.totalReward || 0}</span>
-                              </button>
+                              </div>
                             ))}
                           </div>
                         </>
                       )}
+                    </div>
+                    <div className="text-right flex flex-col justify-end flex-shrink-0">
+                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">總累積獎金餘額</p>
+                      <div className="font-headline-lg text-[#00E5FF] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none">
+                        <span className="text-xl">$</span>{((personalScoreboard?.challengeA.balance || 0) + (personalScoreboard?.challengeB.balance || 0) + (personalScoreboard?.challengeC.balance || 0) || (personalScoreboard?.totalReward || 0)).toLocaleString()}
+                      </div>
                     </div>
                   </div>
 
