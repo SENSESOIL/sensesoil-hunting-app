@@ -269,15 +269,15 @@ export default function HiddenMissionPage() {
                         }
                       `}</style>
                       <p 
-                        className={`font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none ${canEdit ? "cursor-pointer" : ""}`}
-                        onClick={() => { if(canEdit) setIsHunterDropdownOpen(!isHunterDropdownOpen) }}
+                        className="font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none cursor-pointer"
+                        onClick={() => setIsHunterDropdownOpen(!isHunterDropdownOpen)}
                       >
                         S級狩獵者
                       </p>
                       <h2 
                         key={selectedHunter}
-                        className={`font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity ${canEdit ? "cursor-pointer hover:opacity-80" : ""} animate-text-reveal`}
-                        onClick={() => { if(canEdit) setIsHunterDropdownOpen(!isHunterDropdownOpen) }}
+                        className="font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
+                        onClick={() => setIsHunterDropdownOpen(!isHunterDropdownOpen)}
                       >
                         {selectedHunter || "選擇狩獵者"}
                       </h2>
