@@ -301,7 +301,7 @@ export default function HiddenMissionPage() {
                     </div>
                     <div className="text-right flex flex-col justify-end flex-shrink-0">
                       <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">總累積獎金餘額</p>
-                      <div className="font-headline-lg text-[#00E5FF] text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none">
+                      <div className="font-headline-lg text-emerald-400 text-3xl font-bold tracking-tighter font-display flex items-baseline justify-end gap-1 leading-none">
                         <span className="text-xl">$</span>{((personalScoreboard?.challengeA.balance || 0) + (personalScoreboard?.challengeB.balance || 0) + (personalScoreboard?.challengeC.balance || 0) || (personalScoreboard?.totalReward || 0)).toLocaleString()}
                       </div>
                     </div>
@@ -331,7 +331,7 @@ export default function HiddenMissionPage() {
                               <span className="text-white font-bold text-sm">長期持有</span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
-                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeA.total || 0) > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeA.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeA.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeA.total || 0) > 0 && (
@@ -363,7 +363,7 @@ export default function HiddenMissionPage() {
                               <span className="text-white font-bold text-sm">連續投資</span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
-                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeB.total || 0) > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeB.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeB.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeB.total || 0) > 0 && (
@@ -395,7 +395,7 @@ export default function HiddenMissionPage() {
                               <span className="text-white font-bold text-sm">年度績效</span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
-                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeC.total || 0) > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeC.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeC.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeC.total || 0) > 0 && (
