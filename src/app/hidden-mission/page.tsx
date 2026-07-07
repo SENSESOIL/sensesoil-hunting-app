@@ -27,6 +27,11 @@ export default function HiddenMissionPage() {
   const [expandedLevel, setExpandedLevel] = useState<string | null>(null);
   const toggleLevel = (lvl: string) => setExpandedLevel(prev => prev === lvl ? null : lvl);
 
+  // Year selection states
+  const [awardYear, setAwardYear] = useState<string>('2026');
+  const [isLeaderboardYearDropdownOpen, setIsLeaderboardYearDropdownOpen] = useState(false);
+  const [isAwardYearDropdownOpen, setIsAwardYearDropdownOpen] = useState(false);
+
   // Modal states for editing / adding Tracker or Reward
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -82,8 +87,9 @@ export default function HiddenMissionPage() {
 
   // Current hunter's data
   const personalScoreboard = useMemo(() => {
+    if (awardYear !== '2026') return null;
     return data.scoreboard.find((item: any) => item.hunter === selectedHunter) || null;
-  }, [data.scoreboard, selectedHunter]);
+  }, [data.scoreboard, selectedHunter, awardYear]);
 
   const personalLeadgeA = useMemo(() => {
     return data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
@@ -311,9 +317,34 @@ export default function HiddenMissionPage() {
                     <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
                       {/* Assets List Header */}
                       <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
-                        <span className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase">
-                          2026 年度資產庫
-                        </span>
+                        <div className="relative">
+                          <button 
+                            onClick={() => setIsAwardYearDropdownOpen(!isAwardYearDropdownOpen)}
+                            className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-emerald-400 transition-colors"
+                          >
+                            {awardYear} 年度資產庫
+                          </button>
+                          
+                          {isAwardYearDropdownOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setIsAwardYearDropdownOpen(false)} />
+                              <div className="absolute top-full left-0 mt-2 bg-[#1A1A1A] border border-primary/30 rounded-lg shadow-xl z-50 min-w-[120px] overflow-hidden">
+                                {['2026', '2027', '2028', '2029'].map(year => (
+                                  <button
+                                    key={year}
+                                    className={`w-full text-left px-4 py-3 font-display font-bold text-[16px] transition-colors ${awardYear === year ? 'text-black bg-primary' : 'text-[#efe0d2] hover:bg-white/10'}`}
+                                    onClick={() => {
+                                      setAwardYear(year);
+                                      setIsAwardYearDropdownOpen(false);
+                                    }}
+                                  >
+                                    {year}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex flex-col gap-3 pb-8 transition-opacity duration-300">
@@ -428,64 +459,89 @@ export default function HiddenMissionPage() {
                       <div className="h-[30px] flex items-center w-full">
                         <h2 className="text-white font-bold tracking-wider uppercase w-full"
                           style={{
-                            fontSize: (data.scoreboard[0]?.hunter || "-").length <= 4 ? '30px' :
-                                      (data.scoreboard[0]?.hunter || "-").length <= 10 ? '20px' : '14px',
-                            lineHeight: (data.scoreboard[0]?.hunter || "-").length <= 10 ? '30px' : '15px',
+                            fontSize: (awardYear === '2026' ? (data.scoreboard[0]?.hunter || "-") : "-").length <= 4 ? '30px' :
+                                      (awardYear === '2026' ? (data.scoreboard[0]?.hunter || "-") : "-").length <= 10 ? '20px' : '14px',
+                            lineHeight: (awardYear === '2026' ? (data.scoreboard[0]?.hunter || "-") : "-").length <= 10 ? '30px' : '15px',
                             display: '-webkit-box',
                             WebkitLineClamp: 1,
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
                             wordBreak: 'break-all'
                           }}
-                        >{data.scoreboard[0]?.hunter || "-"}</h2>
+                        >{awardYear === '2026' ? (data.scoreboard[0]?.hunter || "-") : "-"}</h2>
                       </div>
                     </div>
                     <div className="text-right flex flex-col justify-end flex-shrink-0">
                       <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯季數冠軍</p>
-                      <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">01</p>
+                      <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{awardYear === '2026' ? "01" : "-"}</p>
                     </div>
                   </div>
 
-                  {/* Team Leaderboard Card */}
-                  <div className="bg-[#141414] border border-primary/40 rounded-2xl p-6 shadow-xl">
-                    <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                      <div>
-                        <span className="text-[10px] font-label-caps tracking-[0.2em] text-primary/70 uppercase">Scoreboard</span>
-                        <h2 className="text-2xl font-bold font-display text-white">團隊投資激勵總覽與排行榜</h2>
+                  {/* Team Leaderboard Bar Chart */}
+                  <section className="mb-[5px]">
+                    <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+                      <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
+                        <div className="relative">
+                          <button 
+                            onClick={() => setIsLeaderboardYearDropdownOpen(!isLeaderboardYearDropdownOpen)}
+                            className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-emerald-400 transition-colors"
+                          >
+                            {awardYear} 年度排行榜
+                          </button>
+                          
+                          {isLeaderboardYearDropdownOpen && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setIsLeaderboardYearDropdownOpen(false)} />
+                              <div className="absolute top-full left-0 mt-2 bg-[#1A1A1A] border border-primary/30 rounded-lg shadow-xl z-50 min-w-[120px] overflow-hidden">
+                                {['2026', '2027', '2028', '2029'].map(year => (
+                                  <button
+                                    key={year}
+                                    className={`w-full text-left px-4 py-3 font-display font-bold text-[16px] transition-colors ${awardYear === year ? 'text-black bg-primary' : 'text-[#efe0d2] hover:bg-white/10'}`}
+                                    onClick={() => {
+                                      setAwardYear(year);
+                                      setIsLeaderboardYearDropdownOpen(false);
+                                    }}
+                                  >
+                                    {year}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-xs text-white/50 font-mono">更新自 Google Sheet</span>
-                    </div>
 
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse font-mono text-sm">
-                        <thead>
-                          <tr className="border-b-2 border-primary text-primary bg-black/60">
-                            <th className="p-3">排行</th>
-                            <th className="p-3">狩獵者</th>
-                            <th className="p-3 text-right">挑戰A：耐性</th>
-                            <th className="p-3 text-right">挑戰B：定性</th>
-                            <th className="p-3 text-right">挑戰C：韌性</th>
-                            <th className="p-3 text-right text-emerald-400">Total 總獎金</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {data.scoreboard.map((row: any, idx: number) => (
-                            <tr key={row.hunter} className="border-b border-white/10 hover:bg-white/5 transition-colors">
-                              <td className="p-3 font-bold text-primary/80">#{idx + 1}</td>
-                              <td className="p-3 font-bold text-white flex items-center gap-2">
-                                <span>{row.hunter}</span>
-                                {idx === 0 && <span className="material-symbols-outlined text-primary text-base" style={{ fontVariationSettings: "'FILL' 1" }}>emoji_events</span>}
-                              </td>
-                              <td className="p-3 text-right text-white/80">{formatMoney(row.challengeA.total)}</td>
-                              <td className="p-3 text-right text-white/80">{formatMoney(row.challengeB.total)}</td>
-                              <td className="p-3 text-right text-white/80">{formatMoney(row.challengeC.total)}</td>
-                              <td className="p-3 text-right font-bold text-emerald-400 text-base">{formatMoney(row.totalReward)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <div className="flex flex-col gap-2">
+                        {awardYear === '2026' && data.scoreboard.length > 0 ? data.scoreboard.map((item: any, index: number) => {
+                          const maxIndex = Math.max(1, data.scoreboard.length - 1);
+                          const barOpacity = 1 - (0.3 * (index / maxIndex));
+                          const maxReward = Math.max(...data.scoreboard.map((s: any) => s.totalReward || 0), 1);
+                          const barPct = Math.min(100, Math.max(8, ((item.totalReward || 0) / maxReward) * 100));
+                          return (
+                            <div key={item.hunter} className="flex items-center w-full gap-3" style={{ transition: 'transform 0.35s ease-out, opacity 0.35s ease-out' }}>
+                              <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{index + 1}</span>
+                              <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${index < 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
+                                <span className={`text-[12px] ${index === 0 ? 'font-bold' : 'font-normal'}`}>{item.hunter.slice(-1)}</span>
+                              </div>
+                              <div className="flex-1 h-2 bg-primary/10 rounded-r-sm overflow-visible flex relative">
+                                <div 
+                                  className={`h-full bg-primary ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
+                                  style={{ width: `${barPct}%`, opacity: barOpacity, transition: 'width 0.35s ease-out' }}
+                                ></div>
+                              </div>
+                              <div className="w-24 text-right shrink-0">
+                                <div className="flex items-baseline justify-end gap-0.5">
+                                  <span className="text-emerald-400 text-[13px] font-bold font-mono">${(item.totalReward || 0).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }) : (
+                          <div className="text-center text-primary/50 text-xs py-4">本年度暫無團隊數據</div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </section>
 
                   {/* Editable Tables Section for Tracker (投資) & Reward (請領) */}
                   <div className="bg-[#141414] border-2 border-primary/50 rounded-2xl p-6 shadow-2xl">
