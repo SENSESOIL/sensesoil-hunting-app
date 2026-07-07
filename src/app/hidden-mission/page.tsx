@@ -24,6 +24,8 @@ export default function HiddenMissionPage() {
   // Selected hunter for Individual View
   const [selectedHunter, setSelectedHunter] = useState<string>("");
   const [isHunterDropdownOpen, setIsHunterDropdownOpen] = useState(false);
+  const [expandedLevel, setExpandedLevel] = useState<string | null>(null);
+  const toggleLevel = (lvl: string) => setExpandedLevel(prev => prev === lvl ? null : lvl);
 
   // Modal states for editing / adding Tracker or Reward
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -305,198 +307,185 @@ export default function HiddenMissionPage() {
                     </div>
                   </div>
 
-                  {/* Personal Scoreboard Overview Card */}
-                  <div className="bg-gradient-to-br from-[#1c1a17] via-[#121212] to-[#0a0a0a] border-2 border-primary/60 rounded-2xl p-6 shadow-[0_0_30px_rgba(243,156,18,0.15)] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-primary/20 pb-6 mb-6 gap-4">
-                      <div>
-                        <span className="text-xs font-mono text-primary tracking-widest uppercase">Total Investment Reward</span>
-                        <div className="text-4xl sm:text-5xl font-extrabold font-data-mono text-white tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] mt-1">
-                          {formatMoney(personalScoreboard?.totalReward || 0)}
-                        </div>
-                      </div>
-                      <div className="flex gap-4">
-                        <div className="bg-black/40 border border-white/10 px-4 py-2 rounded-xl text-center">
-                          <div className="text-[10px] text-white/50 uppercase">已請領獎金</div>
-                          <div className="text-lg font-bold text-emerald-400 font-mono">
-                            {formatMoney((personalScoreboard?.challengeA.claimed || 0) + (personalScoreboard?.challengeB.claimed || 0) + (personalScoreboard?.challengeC.claimed || 0))}
-                          </div>
-                        </div>
-                        <div className="bg-black/40 border border-white/10 px-4 py-2 rounded-xl text-center">
-                          <div className="text-[10px] text-white/50 uppercase">獎金餘額</div>
-                          <div className="text-lg font-bold text-primary font-mono">
-                            {formatMoney((personalScoreboard?.challengeA.balance || 0) + (personalScoreboard?.challengeB.balance || 0) + (personalScoreboard?.challengeC.balance || 0))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 3 Challenges Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Challenge A */}
-                      <div className="bg-black/60 border border-primary/30 rounded-xl p-4 flex flex-col justify-between hover:border-primary/60 transition-all">
-                        <div>
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs font-bold text-primary tracking-wider">挑戰A：耐性</span>
-                            <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded font-mono">持股試煉</span>
-                          </div>
-                          <div className="text-2xl font-bold font-mono text-white mb-3">{formatMoney(personalScoreboard?.challengeA.total || 0)}</div>
-                        </div>
-                        <div className="border-t border-white/10 pt-2 flex justify-between text-xs text-white/60 font-mono">
-                          <span>已請: {formatMoney(personalScoreboard?.challengeA.claimed || 0)}</span>
-                          <span className="text-primary font-bold">餘額: {formatMoney(personalScoreboard?.challengeA.balance || 0)}</span>
-                        </div>
+                  {/* Personal Dashboard (Individual View) */}
+                  <section className="mb-[5px]">
+                    <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+                      {/* Assets List Header */}
+                      <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
+                        <span className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase">
+                          2026 年度資產庫
+                        </span>
                       </div>
 
-                      {/* Challenge B */}
-                      <div className="bg-black/60 border border-primary/30 rounded-xl p-4 flex flex-col justify-between hover:border-primary/60 transition-all">
-                        <div>
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs font-bold text-primary tracking-wider">挑戰B：定性</span>
-                            <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded font-mono">連續月數</span>
+                      <div className="flex flex-col gap-3 pb-8 transition-opacity duration-300">
+                        {/* L1 Asset (Challenge A: 耐性) */}
+                        <div 
+                          className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                          onClick={() => toggleLevel('L1')}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
+                                L1 耐性
+                              </span>
+                              <span className="text-white font-bold text-sm">長期持有</span>
+                            </div>
+                            <div className="text-right flex flex-col justify-end">
+                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeA.total || 0) > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                                {(personalScoreboard?.challengeA.total || 0) > 0 ? "已解鎖" : "未解鎖"}
+                              </span>
+                              {(personalScoreboard?.challengeA.total || 0) > 0 && (
+                                <span className="text-[10px] text-white/50 font-mono mt-0.5">
+                                  +${(personalScoreboard?.challengeA.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeA.balance || 0).toLocaleString()}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-2xl font-bold font-mono text-white mb-3">{formatMoney(personalScoreboard?.challengeB.total || 0)}</div>
-                        </div>
-                        <div className="border-t border-white/10 pt-2 flex justify-between text-xs text-white/60 font-mono">
-                          <span>已請: {formatMoney(personalScoreboard?.challengeB.claimed || 0)}</span>
-                          <span className="text-primary font-bold">餘額: {formatMoney(personalScoreboard?.challengeB.balance || 0)}</span>
-                        </div>
-                      </div>
-
-                      {/* Challenge C */}
-                      <div className="bg-black/60 border border-primary/30 rounded-xl p-4 flex flex-col justify-between hover:border-primary/60 transition-all">
-                        <div>
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs font-bold text-primary tracking-wider">挑戰C：韌性</span>
-                            <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded font-mono">年度排行榜</span>
-                          </div>
-                          <div className="text-2xl font-bold font-mono text-white mb-3">{formatMoney(personalScoreboard?.challengeC.total || 0)}</div>
-                        </div>
-                        <div className="border-t border-white/10 pt-2 flex justify-between text-xs text-white/60 font-mono">
-                          <span>已請: {formatMoney(personalScoreboard?.challengeC.claimed || 0)}</span>
-                          <span className="text-primary font-bold">餘額: {formatMoney(personalScoreboard?.challengeC.balance || 0)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Challenge Details Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Challenge B Details Card */}
-                    <div className="bg-[#141414] border border-primary/30 rounded-2xl p-5 flex flex-col justify-between shadow-lg">
-                      <div>
-                        <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
-                          <span className="material-symbols-outlined text-primary">psychology</span>
-                          <h3 className="text-base font-bold font-display text-white tracking-wider">挑戰B：定性試煉（連續投資）</h3>
-                        </div>
-                        <p className="text-xs text-white/60 mb-4 leading-relaxed">
-                          規則：定期定額或連續月份買入持股。依據累計投入金額與連續月數，計算底薪率 (1.0%) 與成長率 (0.1%，最高達 3.3%) 獎勵金。
-                        </p>
-                        <div className="bg-black/50 rounded-xl p-4 border border-white/5 flex flex-col gap-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-white/70">連續達成月數</span>
-                            <span className="text-lg font-bold font-mono text-primary">{personalLeadgeB?.consecutiveMonths || 0} 個月</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-white/70">累計投入金額</span>
-                            <span className="text-lg font-bold font-mono text-white">{personalLeadgeB?.accumulatedAmount || "$0"}</span>
-                          </div>
-                          <div className="border-t border-white/10 pt-2 flex justify-between items-center">
-                            <span className="text-xs font-bold text-primary">目前試算獎金</span>
-                            <span className="text-xl font-bold font-mono text-emerald-400">{personalLeadgeB?.reward || "$0"}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Challenge C Details Card */}
-                    <div className="bg-[#141414] border border-primary/30 rounded-2xl p-5 flex flex-col justify-between shadow-lg">
-                      <div>
-                        <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
-                          <span className="material-symbols-outlined text-primary">military_tech</span>
-                          <h3 className="text-base font-bold font-display text-white tracking-wider">挑戰C：韌性試煉（年度投資排行）</h3>
-                        </div>
-                        <p className="text-xs text-white/60 mb-4 leading-relaxed">
-                          規則：依據年度結算日之總損益率 <span className="font-mono text-primary">(A+C+E)/(B+D)</span> 排行，競爭年度總獎金池 <span className="font-mono text-primary">$50,000</span>！
-                        </p>
-                        <div className="bg-black/50 rounded-xl p-4 border border-white/5 flex flex-col gap-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-white/70">總損益率</span>
-                            <span className="text-lg font-bold font-mono text-primary">{personalLeadgeC?.returnRate || "0.00%"}</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs text-white/60 font-mono">
-                            <div>未實現損益: <span className="text-white">{personalLeadgeC?.pnlA || "$0"}</span></div>
-                            <div>已實現損益: <span className="text-white">{personalLeadgeC?.realizedPnlC || "$0"}</span></div>
-                            <div>付出成本: <span className="text-white">{personalLeadgeC?.costB || "$0"}</span></div>
-                            <div>配息: <span className="text-white">{personalLeadgeC?.dividendE || "$0"}</span></div>
-                          </div>
-                          <div className="border-t border-white/10 pt-2 flex justify-between items-center">
-                            <span className="text-xs font-bold text-primary">排名瓜分獎金</span>
-                            <span className="text-xl font-bold font-mono text-emerald-400">{personalLeadgeC?.rankReward || "$0"}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Challenge A Details Card - Full Width */}
-                  <div className="bg-[#141414] border border-primary/30 rounded-2xl p-5 shadow-lg">
-                    <div className="flex items-center gap-2 mb-4 border-b border-white/10 pb-3">
-                      <span className="material-symbols-outlined text-primary">hourglass_bottom</span>
-                      <h3 className="text-base font-bold font-display text-white tracking-wider">挑戰A：耐性試煉（長期持股明細）</h3>
-                    </div>
-                    <p className="text-xs text-white/60 mb-4">
-                      規則：根據買入日計算持股屆滿天數（90 / 180 / 270 / 360 / 720 天），分別觸發 Q1~Q4 階梯式長期投資獎金。
-                    </p>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse font-mono text-xs">
-                        <thead>
-                          <tr className="border-b border-primary/30 text-primary/80 bg-black/40">
-                            <th className="p-3">買入日</th>
-                            <th className="p-3">標的</th>
-                            <th className="p-3 text-right">股數</th>
-                            <th className="p-3 text-right">金額</th>
-                            <th className="p-3 text-right">累計股數</th>
-                            <th className="p-3 text-center">90天</th>
-                            <th className="p-3 text-center">180天</th>
-                            <th className="p-3 text-center">270天</th>
-                            <th className="p-3 text-center">360天</th>
-                            <th className="p-3 text-right text-emerald-400">Q1獎金</th>
-                            <th className="p-3 text-right text-emerald-400">Q2獎金</th>
-                            <th className="p-3 text-right text-emerald-400">Q3獎金</th>
-                            <th className="p-3 text-right text-emerald-400">Q4獎金</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {personalLeadgeA.length > 0 ? (
-                            personalLeadgeA.map((row: any, idx: number) => (
-                              <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                <td className="p-3 text-white/80">{row.buyDate}</td>
-                                <td className="p-3 font-bold text-primary">{row.target}</td>
-                                <td className="p-3 text-right text-white">{row.shares}</td>
-                                <td className="p-3 text-right text-white/70">{row.amount}</td>
-                                <td className="p-3 text-right font-bold text-white">{row.accumulatedShares}</td>
-                                <td className="p-3 text-center text-white/60">{row.days90}</td>
-                                <td className="p-3 text-center text-white/60">{row.days180}</td>
-                                <td className="p-3 text-center text-white/60">{row.days270}</td>
-                                <td className="p-3 text-center text-white/60">{row.days360}</td>
-                                <td className="p-3 text-right font-bold text-emerald-400">{row.q1Reward || "-"}</td>
-                                <td className="p-3 text-right font-bold text-emerald-400">{row.q2Reward || "-"}</td>
-                                <td className="p-3 text-right font-bold text-emerald-400">{row.q3Reward || "-"}</td>
-                                <td className="p-3 text-right font-bold text-emerald-400">{row.q4Reward || "-"}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={13} className="p-6 text-center text-white/40 font-sans">
-                                目前尚無 {selectedHunter} 的持股耐性明細
-                              </td>
-                            </tr>
+                          {expandedLevel === 'L1' && (
+                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                              <p className="text-white/60 mb-3">
+                                根據買入日計算持股屆滿天數（90 / 180 / 270 / 360 / 720 天），分別觸發 Q1~Q4 階梯式長期投資獎金。
+                              </p>
+                              <div className="overflow-x-auto bg-black/40 rounded-lg p-2 border border-white/5">
+                                <table className="w-full text-left border-collapse font-mono text-xs">
+                                  <thead>
+                                    <tr className="border-b border-white/10 text-primary/80">
+                                      <th className="p-2">買入日</th>
+                                      <th className="p-2">標的</th>
+                                      <th className="p-2 text-right">股數</th>
+                                      <th className="p-2 text-right">金額</th>
+                                      <th className="p-2 text-right">累計股數</th>
+                                      <th className="p-2 text-right text-emerald-400">Q1獎金</th>
+                                      <th className="p-2 text-right text-emerald-400">Q2獎金</th>
+                                      <th className="p-2 text-right text-emerald-400">Q3獎金</th>
+                                      <th className="p-2 text-right text-emerald-400">Q4獎金</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {personalLeadgeA.length > 0 ? (
+                                      personalLeadgeA.map((row: any, idx: number) => (
+                                        <tr key={idx} className="border-b border-white/5 last:border-b-0 hover:bg-white/5">
+                                          <td className="p-2 text-white/80">{row.buyDate}</td>
+                                          <td className="p-2 font-bold text-primary">{row.target}</td>
+                                          <td className="p-2 text-right text-white">{row.shares}</td>
+                                          <td className="p-2 text-right text-white/70">{row.amount}</td>
+                                          <td className="p-2 text-right font-bold text-white">{row.accumulatedShares}</td>
+                                          <td className="p-2 text-right font-bold text-emerald-400">{row.q1Reward || "-"}</td>
+                                          <td className="p-2 text-right font-bold text-emerald-400">{row.q2Reward || "-"}</td>
+                                          <td className="p-2 text-right font-bold text-emerald-400">{row.q3Reward || "-"}</td>
+                                          <td className="p-2 text-right font-bold text-emerald-400">{row.q4Reward || "-"}</td>
+                                        </tr>
+                                      ))
+                                    ) : (
+                                      <tr>
+                                        <td colSpan={9} className="p-4 text-center text-white/40 font-sans">
+                                          目前尚無持股耐性明細
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
                           )}
-                        </tbody>
-                      </table>
+                        </div>
+
+                        {/* L2 Asset (Challenge B: 定性) */}
+                        <div 
+                          className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                          onClick={() => toggleLevel('L2')}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
+                                L2 定性
+                              </span>
+                              <span className="text-white font-bold text-sm">連續投資</span>
+                            </div>
+                            <div className="text-right flex flex-col justify-end">
+                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeB.total || 0) > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                                {(personalScoreboard?.challengeB.total || 0) > 0 ? "已解鎖" : "未解鎖"}
+                              </span>
+                              {(personalScoreboard?.challengeB.total || 0) > 0 && (
+                                <span className="text-[10px] text-white/50 font-mono mt-0.5">
+                                  +${(personalScoreboard?.challengeB.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeB.balance || 0).toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {expandedLevel === 'L2' && (
+                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                              <p className="text-white/60 mb-3">
+                                定期定額或連續月份買入持股。依據累計投入金額與連續月數，計算底薪率 (1.0%) 與成長率 (0.1%，最高達 3.3%) 獎勵金。
+                              </p>
+                              <div className="bg-black/40 rounded-lg p-3 border border-white/5 flex flex-col gap-2 font-mono">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-white/70">連續達成月數</span>
+                                  <span className="font-bold text-primary">{personalLeadgeB?.consecutiveMonths || 0} 個月</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-white/70">累計投入金額</span>
+                                  <span className="font-bold text-white">{personalLeadgeB?.accumulatedAmount || "$0"}</span>
+                                </div>
+                                <div className="border-t border-white/10 pt-2 flex justify-between items-center">
+                                  <span className="font-bold text-primary">目前試算獎金</span>
+                                  <span className="font-bold text-emerald-400">{personalLeadgeB?.reward || "$0"}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* L3 Asset (Challenge C: 韌性) */}
+                        <div 
+                          className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                          onClick={() => toggleLevel('L3')}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
+                                L3 韌性
+                              </span>
+                              <span className="text-white font-bold text-sm">年度績效</span>
+                            </div>
+                            <div className="text-right flex flex-col justify-end">
+                              <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeC.total || 0) > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
+                                {(personalScoreboard?.challengeC.total || 0) > 0 ? "已解鎖" : "未解鎖"}
+                              </span>
+                              {(personalScoreboard?.challengeC.total || 0) > 0 && (
+                                <span className="text-[10px] text-white/50 font-mono mt-0.5">
+                                  +${(personalScoreboard?.challengeC.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeC.balance || 0).toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          {expandedLevel === 'L3' && (
+                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                              <p className="text-white/60 mb-3">
+                                依據年度結算日之總損益率 <span className="font-mono text-primary">(A+C+E)/(B+D)</span> 排行，競爭年度總獎金池 <span className="font-mono text-primary">$50,000</span>！
+                              </p>
+                              <div className="bg-black/40 rounded-lg p-3 border border-white/5 flex flex-col gap-2 font-mono">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-white/70">總損益率</span>
+                                  <span className="font-bold text-primary">{personalLeadgeC?.returnRate || "0.00%"}</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-white/60 border-t border-white/10 pt-2">
+                                  <div>未實現: <span className="text-white">{personalLeadgeC?.pnlA || "$0"}</span></div>
+                                  <div>已實現: <span className="text-white">{personalLeadgeC?.realizedPnlC || "$0"}</span></div>
+                                  <div>成本: <span className="text-white">{personalLeadgeC?.costB || "$0"}</span></div>
+                                  <div>配息: <span className="text-white">{personalLeadgeC?.dividendE || "$0"}</span></div>
+                                </div>
+                                <div className="border-t border-white/10 pt-2 flex justify-between items-center">
+                                  <span className="font-bold text-primary">排名瓜分獎金</span>
+                                  <span className="font-bold text-emerald-400">{personalLeadgeC?.rankReward || "$0"}</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </section>
                 </div>
               )}
 
