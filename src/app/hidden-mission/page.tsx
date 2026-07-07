@@ -343,49 +343,9 @@ export default function HiddenMissionPage() {
                           </div>
                           {expandedLevel === 'L1' && (
                             <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
-                              <p className="text-white/60 mb-3">
+                              <p className="text-white/60">
                                 根據買入日計算持股屆滿天數（90 / 180 / 270 / 360 / 720 天），分別觸發 Q1~Q4 階梯式長期投資獎金。
                               </p>
-                              <div className="overflow-x-auto bg-black/40 rounded-lg p-2 border border-white/5">
-                                <table className="w-full text-left border-collapse font-mono text-xs">
-                                  <thead>
-                                    <tr className="border-b border-white/10 text-primary/80">
-                                      <th className="p-2">買入日</th>
-                                      <th className="p-2">標的</th>
-                                      <th className="p-2 text-right">股數</th>
-                                      <th className="p-2 text-right">金額</th>
-                                      <th className="p-2 text-right">累計股數</th>
-                                      <th className="p-2 text-right text-emerald-400">Q1獎金</th>
-                                      <th className="p-2 text-right text-emerald-400">Q2獎金</th>
-                                      <th className="p-2 text-right text-emerald-400">Q3獎金</th>
-                                      <th className="p-2 text-right text-emerald-400">Q4獎金</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {personalLeadgeA.length > 0 ? (
-                                      personalLeadgeA.map((row: any, idx: number) => (
-                                        <tr key={idx} className="border-b border-white/5 last:border-b-0 hover:bg-white/5">
-                                          <td className="p-2 text-white/80">{row.buyDate}</td>
-                                          <td className="p-2 font-bold text-primary">{row.target}</td>
-                                          <td className="p-2 text-right text-white">{row.shares}</td>
-                                          <td className="p-2 text-right text-white/70">{row.amount}</td>
-                                          <td className="p-2 text-right font-bold text-white">{row.accumulatedShares}</td>
-                                          <td className="p-2 text-right font-bold text-emerald-400">{row.q1Reward || "-"}</td>
-                                          <td className="p-2 text-right font-bold text-emerald-400">{row.q2Reward || "-"}</td>
-                                          <td className="p-2 text-right font-bold text-emerald-400">{row.q3Reward || "-"}</td>
-                                          <td className="p-2 text-right font-bold text-emerald-400">{row.q4Reward || "-"}</td>
-                                        </tr>
-                                      ))
-                                    ) : (
-                                      <tr>
-                                        <td colSpan={9} className="p-4 text-center text-white/40 font-sans">
-                                          目前尚無持股耐性明細
-                                        </td>
-                                      </tr>
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
                             </div>
                           )}
                         </div>
@@ -415,23 +375,9 @@ export default function HiddenMissionPage() {
                           </div>
                           {expandedLevel === 'L2' && (
                             <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
-                              <p className="text-white/60 mb-3">
+                              <p className="text-white/60">
                                 定期定額或連續月份買入持股。依據累計投入金額與連續月數，計算底薪率 (1.0%) 與成長率 (0.1%，最高達 3.3%) 獎勵金。
                               </p>
-                              <div className="bg-black/40 rounded-lg p-3 border border-white/5 flex flex-col gap-2 font-mono">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-white/70">連續達成月數</span>
-                                  <span className="font-bold text-primary">{personalLeadgeB?.consecutiveMonths || 0} 個月</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                  <span className="text-white/70">累計投入金額</span>
-                                  <span className="font-bold text-white">{personalLeadgeB?.accumulatedAmount || "$0"}</span>
-                                </div>
-                                <div className="border-t border-white/10 pt-2 flex justify-between items-center">
-                                  <span className="font-bold text-primary">目前試算獎金</span>
-                                  <span className="font-bold text-emerald-400">{personalLeadgeB?.reward || "$0"}</span>
-                                </div>
-                              </div>
                             </div>
                           )}
                         </div>
@@ -461,25 +407,9 @@ export default function HiddenMissionPage() {
                           </div>
                           {expandedLevel === 'L3' && (
                             <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
-                              <p className="text-white/60 mb-3">
+                              <p className="text-white/60">
                                 依據年度結算日之總損益率 <span className="font-mono text-primary">(A+C+E)/(B+D)</span> 排行，競爭年度總獎金池 <span className="font-mono text-primary">$50,000</span>！
                               </p>
-                              <div className="bg-black/40 rounded-lg p-3 border border-white/5 flex flex-col gap-2 font-mono">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-white/70">總損益率</span>
-                                  <span className="font-bold text-primary">{personalLeadgeC?.returnRate || "0.00%"}</span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 text-white/60 border-t border-white/10 pt-2">
-                                  <div>未實現: <span className="text-white">{personalLeadgeC?.pnlA || "$0"}</span></div>
-                                  <div>已實現: <span className="text-white">{personalLeadgeC?.realizedPnlC || "$0"}</span></div>
-                                  <div>成本: <span className="text-white">{personalLeadgeC?.costB || "$0"}</span></div>
-                                  <div>配息: <span className="text-white">{personalLeadgeC?.dividendE || "$0"}</span></div>
-                                </div>
-                                <div className="border-t border-white/10 pt-2 flex justify-between items-center">
-                                  <span className="font-bold text-primary">排名瓜分獎金</span>
-                                  <span className="font-bold text-emerald-400">{personalLeadgeC?.rankReward || "$0"}</span>
-                                </div>
-                              </div>
                             </div>
                           )}
                         </div>
@@ -491,7 +421,32 @@ export default function HiddenMissionPage() {
 
               {/* TEAM VIEW */}
               {view === 'team' && (
-                <div className="flex flex-col gap-8 animate-fade-in">
+                <div className="flex flex-col gap-6 animate-fade-in">
+                  {/* Top Header - Team View */}
+                  <div className="flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] h-[60px]" style={{ marginTop: 32, marginBottom: 32 }}>
+                    <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
+                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵季排行榜</p>
+                      <div className="h-[30px] flex items-center w-full">
+                        <h2 className="text-white font-bold tracking-wider uppercase w-full"
+                          style={{
+                            fontSize: (data.scoreboard[0]?.hunter || "-").length <= 4 ? '30px' :
+                                      (data.scoreboard[0]?.hunter || "-").length <= 10 ? '20px' : '14px',
+                            lineHeight: (data.scoreboard[0]?.hunter || "-").length <= 10 ? '30px' : '15px',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            wordBreak: 'break-all'
+                          }}
+                        >{data.scoreboard[0]?.hunter || "-"}</h2>
+                      </div>
+                    </div>
+                    <div className="text-right flex flex-col justify-end flex-shrink-0">
+                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯季數冠軍</p>
+                      <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">01</p>
+                    </div>
+                  </div>
+
                   {/* Team Leaderboard Card */}
                   <div className="bg-[#141414] border border-primary/40 rounded-2xl p-6 shadow-xl">
                     <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
