@@ -335,7 +335,7 @@ export default function HiddenMissionPage() {
                                 {(personalScoreboard?.challengeA.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeA.total || 0) > 0 && (
-                                <span className="text-[10px] text-white/50 font-mono mt-0.5">
+                                <span className="text-[10px] text-emerald-400/70 font-mono mt-0.5">
                                   +${(personalScoreboard?.challengeA.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeA.balance || 0).toLocaleString()}
                                 </span>
                               )}
@@ -367,7 +367,7 @@ export default function HiddenMissionPage() {
                                 {(personalScoreboard?.challengeB.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeB.total || 0) > 0 && (
-                                <span className="text-[10px] text-white/50 font-mono mt-0.5">
+                                <span className="text-[10px] text-emerald-400/70 font-mono mt-0.5">
                                   +${(personalScoreboard?.challengeB.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeB.balance || 0).toLocaleString()}
                                 </span>
                               )}
@@ -399,7 +399,7 @@ export default function HiddenMissionPage() {
                                 {(personalScoreboard?.challengeC.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeC.total || 0) > 0 && (
-                                <span className="text-[10px] text-white/50 font-mono mt-0.5">
+                                <span className="text-[10px] text-emerald-400/70 font-mono mt-0.5">
                                   +${(personalScoreboard?.challengeC.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeC.balance || 0).toLocaleString()}
                                 </span>
                               )}
