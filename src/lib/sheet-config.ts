@@ -22,6 +22,16 @@ export const SHEET_REGISTRY = {
       authenticated: "read-write" as const,
     },
   },
+  // 隱藏任務 (投資激勵)
+  "hidden-mission": {
+    spreadsheetId: process.env.SHEET_ID_HIDDEN_MISSION ?? "1aPrtF590zZu7fQYrCZSzZZSDs8zRkqfr7Oqzn-9PyzY",
+    defaultRange: "Scoreboard!A:Z",
+    label: "隱藏任務",
+    permissions: {
+      guest: "read" as const,
+      authenticated: "read-write" as const,
+    },
+  },
 } as const;
 
 export type SheetKey = keyof typeof SHEET_REGISTRY;

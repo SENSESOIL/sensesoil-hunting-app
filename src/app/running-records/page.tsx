@@ -1942,7 +1942,7 @@ export default function RunningRecordsPage() {
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>target</span>
           <span className="font-label-caps text-[11px] tracking-[0.1em]">基礎</span>
         </button>
-        <button className="flex flex-col items-center gap-1 text-[#efe0d2]">
+        <button className="flex flex-col items-center gap-1 text-[#efe0d2]" onClick={() => router.push("/hidden-mission")}>
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>diamond</span>
           <span className="font-label-caps text-[11px] tracking-[0.1em]">隱藏</span>
         </button>

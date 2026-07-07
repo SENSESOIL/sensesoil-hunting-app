@@ -116,3 +116,41 @@ export async function writeSheetNotes(
     requestBody: { requests },
   });
 }
+
+// ─── DELETE ROW ─────────────────────────────────────────────────────────────
+
+export async function deleteSheetRow(
+  spreadsheetId: string,
+  sheetName: string,
+  rowIndex: number
+) {
+  const sheets = getSheetsClient();
+  const res = await sheets.spreadsheets.get({
+    spreadsheetId,
+    includeGridData: false,
+  });
+  const sheet = res.data.sheets?.find(
+    (s) => s.properties?.title?.toLowerCase() === sheetName.toLowerCase()
+  );
+  if (!sheet || sheet.properties?.sheetId === undefined) {
+    throw new Error(`Sheet ${sheetName} not found`);
+  }
+  const sheetId = sheet.properties.sheetId;
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          deleteDimension: {
+            range: {
+              sheetId,
+              dimension: "ROWS",
+              startIndex: rowIndex - 1, // 0-based inclusive
+              endIndex: rowIndex, // 0-based exclusive
+            },
+          },
+        },
+      ],
+    },
+  });
+}
