@@ -284,15 +284,14 @@ export default function HiddenMissionPage() {
                       {isHunterDropdownOpen && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setIsHunterDropdownOpen(false)} />
-                          <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-60 overflow-y-auto">
+                          <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto scrollbar-hide">
                             {data.scoreboard.map((item: any) => (
                               <div
                                 key={item.hunter}
-                                className={`px-4 py-3 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm border-b border-primary/10 last:border-b-0 flex justify-between items-center ${selectedHunter === item.hunter ? 'bg-primary/30 text-primary font-bold' : ''}`}
+                                className={`px-4 py-3 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm border-b border-primary/10 last:border-b-0 ${selectedHunter === item.hunter ? 'bg-primary/30 text-primary font-bold' : ''}`}
                                 onClick={() => { setSelectedHunter(item.hunter); setIsHunterDropdownOpen(false); }}
                               >
-                                <span>{item.hunter}</span>
-                                <span className="text-[11px] opacity-70">${item.totalReward || 0}</span>
+                                {item.hunter}
                               </div>
                             ))}
                           </div>
