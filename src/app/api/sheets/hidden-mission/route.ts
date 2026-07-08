@@ -58,6 +58,7 @@ export async function GET() {
         });
       }
     }
+    scoreboard.sort((a, b) => (b.totalReward || 0) - (a.totalReward || 0));
 
     // Parse Tracker (Rows 2+, index 1+)
     const tracker = [];

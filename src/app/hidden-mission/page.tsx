@@ -43,7 +43,7 @@ export default function HiddenMissionPage() {
     refreshInterval: 30000,
   });
 
-  const data = res?.data || {
+  const rawData = res?.data || {
     scoreboard: [],
     tracker: [],
     reward: [],
@@ -51,6 +51,14 @@ export default function HiddenMissionPage() {
     leadgeB: [],
     leadgeC: [],
   };
+
+  const data = useMemo(() => {
+    const sortedScoreboard = [...(rawData.scoreboard || [])].sort((a: any, b: any) => (b.totalReward || 0) - (a.totalReward || 0));
+    return {
+      ...rawData,
+      scoreboard: sortedScoreboard,
+    };
+  }, [rawData]);
 
   // Check user role
   const roles = (session?.user as any)?.roles || {};
