@@ -399,7 +399,7 @@ export default function HiddenMissionPage() {
                               <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                                 L1 耐性
                               </span>
-                              <span className="text-white font-bold text-sm">長期持有 <span className="text-white/70 font-normal text-[13px] ml-1">最久{personalLeadgeA_maxDays}天</span></span>
+                              <span className="text-white font-bold text-sm">長期持有 {personalLeadgeA_maxDays}天</span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeA.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
@@ -431,7 +431,7 @@ export default function HiddenMissionPage() {
                               <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                                 L2 定性
                               </span>
-                              <span className="text-white font-bold text-sm">連續投資 <span className="text-white/70 font-normal text-[13px] ml-1">最長{personalLeadgeB_maxMonths}月</span></span>
+                              <span className="text-white font-bold text-sm">連續投資 {personalLeadgeB_maxMonths}月</span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeB.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
@@ -463,7 +463,7 @@ export default function HiddenMissionPage() {
                               <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                                 L3 韌性
                               </span>
-                              <span className="text-white font-bold text-sm">年度績效 <span className="text-white/70 font-normal text-[13px] ml-1">總損益{personalLeadgeC_returnRate}</span></span>
+                              <span className="text-white font-bold text-sm">年度績效 {personalLeadgeC_returnRate}</span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeC.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
