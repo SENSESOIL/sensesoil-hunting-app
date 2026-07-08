@@ -394,19 +394,19 @@ export default function HiddenMissionPage() {
                           className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
                           onClick={() => toggleLevel('L1')}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                              <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-primary text-[12px] font-bold tracking-widest">
                                 L1 耐性
                               </span>
-                              <span className="text-white font-bold text-sm">長期持有 {personalLeadgeA_maxDays}天</span>
-                            </div>
-                            <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeA.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeA.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
+                            </div>
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-white font-bold text-sm">長期持有 {personalLeadgeA_maxDays}天</span>
                               {(personalScoreboard?.challengeA.total || 0) > 0 && (
-                                <span className="text-[11px] text-emerald-400/70 font-display mt-0.5">
+                                <span className="text-[11px] text-emerald-400/70 font-display">
                                   +${(personalScoreboard?.challengeA.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeA.balance || 0).toLocaleString()}
                                 </span>
                               )}
@@ -426,19 +426,19 @@ export default function HiddenMissionPage() {
                           className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
                           onClick={() => toggleLevel('L2')}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                              <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-primary text-[12px] font-bold tracking-widest">
                                 L2 定性
                               </span>
-                              <span className="text-white font-bold text-sm">連續投資 {personalLeadgeB_maxMonths}月</span>
-                            </div>
-                            <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeB.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeB.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
+                            </div>
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-white font-bold text-sm">連續投資 {personalLeadgeB_maxMonths}月</span>
                               {(personalScoreboard?.challengeB.total || 0) > 0 && (
-                                <span className="text-[11px] text-emerald-400/70 font-display mt-0.5">
+                                <span className="text-[11px] text-emerald-400/70 font-display">
                                   +${(personalScoreboard?.challengeB.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeB.balance || 0).toLocaleString()}
                                 </span>
                               )}
@@ -458,19 +458,19 @@ export default function HiddenMissionPage() {
                           className="flex flex-col p-4 rounded-lg bg-surface-container-low/50 border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
                           onClick={() => toggleLevel('L3')}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                              <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-primary text-[12px] font-bold tracking-widest">
                                 L3 韌性
                               </span>
-                              <span className="text-white font-bold text-sm">年度績效 {personalLeadgeC_returnRate}</span>
-                            </div>
-                            <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeC.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeC.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
+                            </div>
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-white font-bold text-sm">年度績效 {personalLeadgeC_returnRate}</span>
                               {(personalScoreboard?.challengeC.total || 0) > 0 && (
-                                <span className="text-[11px] text-emerald-400/70 font-display mt-0.5">
+                                <span className="text-[11px] text-emerald-400/70 font-display">
                                   +${(personalScoreboard?.challengeC.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeC.balance || 0).toLocaleString()}
                                 </span>
                               )}
