@@ -99,17 +99,50 @@ export default function HiddenMissionPage() {
     return data.scoreboard.find((item: any) => item.hunter === selectedHunter) || null;
   }, [data.scoreboard, selectedHunter, awardYear]);
 
-  const personalLeadgeA = useMemo(() => {
-    return data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
-  }, [data.leadgeA, selectedHunter]);
+  const personalLeadgeA_maxDays = useMemo(() => {
+    if (awardYear !== '2026' || !selectedHunter || !data.leadgeA) return 0;
+    const hunterRows = data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
+    let maxD = 0;
+    for (const item of hunterRows) {
+      if (item.buyDate) {
+        const buy = new Date(item.buyDate);
+        if (!isNaN(buy.getTime())) {
+          const diffMs = Date.now() - buy.getTime();
+          const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+          if (days > maxD) maxD = days;
+        }
+      }
+    }
+    return maxD;
+  }, [data.leadgeA, selectedHunter, awardYear]);
 
-  const personalLeadgeB = useMemo(() => {
-    return data.leadgeB.find((item: any) => item.hunter === selectedHunter) || null;
-  }, [data.leadgeB, selectedHunter]);
+  const personalLeadgeB_maxMonths = useMemo(() => {
+    if (awardYear !== '2026' || !selectedHunter || !data.leadgeB) return 0;
+    const hunterRows = data.leadgeB.filter((item: any) => item.hunter === selectedHunter);
+    let maxM = 0;
+    for (const item of hunterRows) {
+      const m = Number(item.consecutiveMonths) || 0;
+      if (m > maxM) maxM = m;
+    }
+    return maxM;
+  }, [data.leadgeB, selectedHunter, awardYear]);
 
-  const personalLeadgeC = useMemo(() => {
-    return data.leadgeC.find((item: any) => item.hunter === selectedHunter) || null;
-  }, [data.leadgeC, selectedHunter]);
+  const personalLeadgeC_returnRate = useMemo(() => {
+    if (!selectedHunter || !data.leadgeC || data.leadgeC.length === 0) return "0.00%";
+    
+    const matches = data.leadgeC.filter((item: any) => item.hunter === selectedHunter && (item.date || '').includes(awardYear));
+    
+    let target = null;
+    if (matches.length > 0) {
+      target = matches[matches.length - 1];
+    } else if (awardYear === '2026') {
+      target = data.leadgeC.find((item: any) => item.hunter === selectedHunter);
+    }
+    
+    if (!target || !target.returnRate || !target.returnRate.trim()) return "0.00%";
+    const rate = target.returnRate.trim();
+    return rate.endsWith('%') ? rate : `${rate}%`;
+  }, [data.leadgeC, selectedHunter, awardYear]);
 
   // Handle Save / Add
   const handleSave = async () => {
@@ -366,14 +399,14 @@ export default function HiddenMissionPage() {
                               <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                                 L1 耐性
                               </span>
-                              <span className="text-white font-bold text-sm">長期持有</span>
+                              <span className="text-white font-bold text-sm">長期持有 <span className="text-white/70 font-normal text-[13px] ml-1">最久{personalLeadgeA_maxDays}天</span></span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeA.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeA.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeA.total || 0) > 0 && (
-                                <span className="text-[10px] text-emerald-400/70 font-mono mt-0.5">
+                                <span className="text-[11px] text-emerald-400/70 font-display mt-0.5">
                                   +${(personalScoreboard?.challengeA.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeA.balance || 0).toLocaleString()}
                                 </span>
                               )}
@@ -398,14 +431,14 @@ export default function HiddenMissionPage() {
                               <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                                 L2 定性
                               </span>
-                              <span className="text-white font-bold text-sm">連續投資</span>
+                              <span className="text-white font-bold text-sm">連續投資 <span className="text-white/70 font-normal text-[13px] ml-1">最長{personalLeadgeB_maxMonths}月</span></span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeB.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeB.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeB.total || 0) > 0 && (
-                                <span className="text-[10px] text-emerald-400/70 font-mono mt-0.5">
+                                <span className="text-[11px] text-emerald-400/70 font-display mt-0.5">
                                   +${(personalScoreboard?.challengeB.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeB.balance || 0).toLocaleString()}
                                 </span>
                               )}
@@ -430,14 +463,14 @@ export default function HiddenMissionPage() {
                               <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                                 L3 韌性
                               </span>
-                              <span className="text-white font-bold text-sm">年度績效</span>
+                              <span className="text-white font-bold text-sm">年度績效 <span className="text-white/70 font-normal text-[13px] ml-1">總損益{personalLeadgeC_returnRate}</span></span>
                             </div>
                             <div className="text-right flex flex-col justify-end">
                               <span className={`text-[12px] font-bold ${(personalScoreboard?.challengeC.total || 0) > 0 ? 'text-emerald-400' : 'text-white/30'}`}>
                                 {(personalScoreboard?.challengeC.total || 0) > 0 ? "已解鎖" : "未解鎖"}
                               </span>
                               {(personalScoreboard?.challengeC.total || 0) > 0 && (
-                                <span className="text-[10px] text-emerald-400/70 font-mono mt-0.5">
+                                <span className="text-[11px] text-emerald-400/70 font-display mt-0.5">
                                   +${(personalScoreboard?.challengeC.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeC.balance || 0).toLocaleString()}
                                 </span>
                               )}

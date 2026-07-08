@@ -134,12 +134,16 @@ export async function GET() {
 
     // Parse LeadgeC (Rows 3+, index 2+)
     const leadgeC = [];
+    let currentLeadgeCDate = '';
     for (let i = 2; i < leadgeCRows.length; i++) {
       const row = leadgeCRows[i];
+      if (row[0]?.trim()) {
+        currentLeadgeCDate = row[0].trim();
+      }
       const hunter = row[1]?.trim();
       if (hunter) {
         leadgeC.push({
-          date: row[0]?.trim() || '',
+          date: currentLeadgeCDate,
           hunter,
           pnlA: row[2]?.trim() || '',
           costB: row[3]?.trim() || '',
