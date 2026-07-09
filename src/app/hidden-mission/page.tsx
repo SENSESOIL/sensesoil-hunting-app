@@ -747,23 +747,21 @@ export default function HiddenMissionPage() {
 
   const openAddModal = () => {
     setModalMode('add');
-    const defaultHunter = !canEdit && loggedInHunterName ? loggedInHunterName : (selectedHunter || loggedInHunterName || session?.user?.name || '');
+    const defaultHunter = !canEdit && loggedInHunterName ? loggedInHunterName : '';
     if (activeTab === 'Tracker') {
-      const today = new Date().toISOString().split('T')[0].replace(/-/g, '/');
       setEditingItem({
-        date: today,
+        date: '',
         hunter: defaultHunter,
-        target: '0050',
-        shares: '50',
-        amount: '$10,000',
+        target: '',
+        shares: '',
+        amount: '',
         type: '買'
       });
     } else {
-      const today = new Date().toISOString().split('T')[0].replace(/-/g, '/');
       setEditingItem({
-        date: today,
+        date: '',
         hunter: defaultHunter,
-        amount: '$3,000',
+        amount: '',
         category: 'A耐性'
       });
     }
