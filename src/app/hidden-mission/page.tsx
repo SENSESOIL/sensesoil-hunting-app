@@ -456,37 +456,37 @@ export default function HiddenMissionPage() {
                             </div>
                           </div>
                           {expandedLevel === 'L1' && (
-                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex flex-col gap-1.5">
-                                <p className="font-semibold text-white/90">
-                                  「耐性」講求延後消費，養成自控力 × 忍耐力
-                                </p>
-                                <p className="text-white/60">
-                                  根據買入日計算每筆市值型ETF持有天數（90 / 180 / 270 / 360 / 720 天），分別觸發倍增投資獎勵（乘數1~10倍），並採先進先出交易原則檢視持股時間。
-                                </p>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                {personalLeadgeA_monthsData.map((mData, idx) => {
-                                  const achieved = mData.hasData;
-                                  return (
-                                    <div key={idx} className={`flex justify-between items-center px-3 py-2 rounded ${achieved ? 'bg-emerald-400/10 border border-emerald-400/30' : 'bg-white/5 border border-transparent'}`}>
-                                      <span className={`text-[12px] font-bold ${achieved ? 'text-white' : 'text-white/30'}`}>{mData.month}月</span>
-                                      <div className="text-right flex flex-col justify-end">
-                                        <span className={`text-[11px] font-bold block ${achieved ? 'text-emerald-400 font-display' : 'text-white/30 font-mono'}`}>
-                                          {achieved ? (mData.totalReward > 0 ? mData.totalReward.toLocaleString() : "0") : "-"}
-                                        </span>
-                                        {achieved && (
-                                          <span className="text-emerald-400/70 text-[10px] font-display block mt-0.5">
-                                            持有 {mData.holdingDays}天
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                            <div className="mt-3 pt-3 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <p className="font-semibold text-white/90">
+                                「耐性」講求延後消費，養成自控力 × 忍耐力
+                              </p>
+                              <p className="text-white/60">
+                                根據買入日計算每筆市值型ETF持有天數（90 / 180 / 270 / 360 / 720 天），分別觸發倍增投資獎勵（乘數1~10倍），並採先進先出交易原則檢視持股時間。
+                              </p>
                             </div>
                           )}
+
+                          {/* 1-12 Month Details Grid directly rendered */}
+                          <div className="grid grid-cols-2 gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
+                            {personalLeadgeA_monthsData.map((mData, idx) => {
+                              const achieved = mData.hasData;
+                              return (
+                                <div key={idx} className={`flex justify-between items-center px-3 py-2 rounded ${achieved ? 'bg-emerald-400/10 border border-emerald-400/30' : 'bg-white/5 border border-transparent'}`}>
+                                  <span className={`text-[12px] font-bold ${achieved ? 'text-white' : 'text-white/30'}`}>{mData.month}月</span>
+                                  <div className="text-right flex flex-col justify-end">
+                                    <span className={`text-[11px] font-bold block ${achieved ? 'text-emerald-400 font-display' : 'text-white/30 font-mono'}`}>
+                                      {achieved ? (mData.totalReward > 0 ? mData.totalReward.toLocaleString() : "0") : "-"}
+                                    </span>
+                                    {achieved && (
+                                      <span className="text-emerald-400/70 text-[10px] font-display block mt-0.5">
+                                        持有 {mData.holdingDays}天
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* L2 Asset (Challenge B: 定性) */}
