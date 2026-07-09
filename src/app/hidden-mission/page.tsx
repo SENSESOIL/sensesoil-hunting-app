@@ -661,6 +661,22 @@ export default function HiddenMissionPage() {
       const url = "/api/sheets/hidden-mission";
       let payload: any = {};
 
+      const cleanSharesForSheet = (val: any) => {
+        if (!val) return '';
+        const numStr = String(val).replace(/[^\d.-]/g, '');
+        const num = parseFloat(numStr);
+        if (isNaN(num)) return String(val);
+        return Math.round(num).toString();
+      };
+
+      const formatAmountForSheet = (val: any) => {
+        if (!val) return '';
+        const numStr = String(val).replace(/[^\d.-]/g, '');
+        const num = parseFloat(numStr);
+        if (isNaN(num)) return String(val);
+        return '$' + Math.round(num).toLocaleString('en-US');
+      };
+
       if (modalMode === 'add') {
         let values: string[][] = [];
         if (activeTab === 'Tracker') {
@@ -668,8 +684,8 @@ export default function HiddenMissionPage() {
             editingItem.date || '',
             editingItem.hunter || '',
             editingItem.target || '',
-            String(editingItem.shares || ''),
-            String(editingItem.amount || ''),
+            cleanSharesForSheet(editingItem.shares),
+            formatAmountForSheet(editingItem.amount),
             editingItem.type || '買'
           ]];
         } else {
@@ -677,7 +693,7 @@ export default function HiddenMissionPage() {
             editingItem.date || '',
             editingItem.hunter || '',
             editingItem.category || 'A耐性',
-            String(editingItem.amount || '')
+            formatAmountForSheet(editingItem.amount)
           ]];
         }
         payload = { action: 'append', tab: activeTab, values };
@@ -694,8 +710,8 @@ export default function HiddenMissionPage() {
             editingItem.date || '',
             editingItem.hunter || '',
             editingItem.target || '',
-            String(editingItem.shares || ''),
-            String(editingItem.amount || ''),
+            cleanSharesForSheet(editingItem.shares),
+            formatAmountForSheet(editingItem.amount),
             editingItem.type || '買'
           ]];
         } else {
@@ -703,7 +719,7 @@ export default function HiddenMissionPage() {
             editingItem.date || '',
             editingItem.hunter || '',
             editingItem.category || 'A耐性',
-            String(editingItem.amount || '')
+            formatAmountForSheet(editingItem.amount)
           ]];
         }
         payload = { action: 'update', tab: activeTab, rowIndex: editingItem.rowIndex, values };
@@ -745,6 +761,14 @@ export default function HiddenMissionPage() {
     }
   };
 
+  const hunterOptions = useMemo(() => {
+    if (!data.scoreboard) return [];
+    const names = data.scoreboard
+      .map((item: any) => item.hunter)
+      .filter((name: string) => name && name !== 'Total' && name !== '加總');
+    return Array.from(new Set(names)) as string[];
+  }, [data.scoreboard]);
+
   const openAddModal = () => {
     setModalMode('add');
     const defaultHunter = !canEdit && loggedInHunterName ? loggedInHunterName : '';
@@ -770,7 +794,13 @@ export default function HiddenMissionPage() {
 
   const openEditModal = (item: any) => {
     setModalMode('edit');
-    setEditingItem({ ...item });
+    const cleanAmount = (item.amount || '').toString().replace(/[^\d.-]/g, '');
+    const cleanShares = (item.shares || '').toString().replace(/[^\d.-]/g, '');
+    setEditingItem({ 
+      ...item, 
+      amount: cleanAmount,
+      shares: cleanShares
+    });
     setIsModalOpen(true);
   };
 
@@ -1274,8 +1304,13 @@ export default function HiddenMissionPage() {
                             <tbody className="divide-y divide-primary/5">
                               {data.tracker && data.tracker.length > 0 ? (
                                 data.tracker.map((row: any, idx: number) => {
-                                  const rawShares = (row.shares || '').toString();
-                                  const rawAmount = (row.amount || '').toString();
+                                  const rawSharesStr = (row.shares || '').toString().replace(/[股]/g, '');
+                                  const sharesNum = parseFloat(rawSharesStr.replace(/[^\d.-]/g, ''));
+                                  const formattedShares = !isNaN(sharesNum) ? Math.round(sharesNum).toLocaleString('en-US') : rawSharesStr;
+
+                                  const rawAmountStr = (row.amount || '').toString().replace(/[元NTD$]/gi, '');
+                                  const amountNum = parseFloat(rawAmountStr.replace(/[^\d.-]/g, ''));
+                                  const formattedAmount = !isNaN(amountNum) ? Math.round(amountNum).toLocaleString('en-US') : rawAmountStr;
                                   return (
                                     <tr key={idx} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
                                       <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
@@ -1297,12 +1332,12 @@ export default function HiddenMissionPage() {
                                         </div>
                                       </td>
                                       <td className="p-2 text-right whitespace-nowrap align-middle" style={{ width: "17%", padding: 4, color: "#ffffff", textAlign: "right" }}>
-                                        <span className="text-white font-mono">{rawShares.replace(/[股]/g, '')}</span>
-                                        {rawShares && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">股</span>}
+                                        <span className="text-white font-mono">{formattedShares}</span>
+                                        {formattedShares && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">股</span>}
                                       </td>
                                       <td className="p-2 text-right whitespace-nowrap align-middle" style={{ width: "19%", padding: 4, color: "#ffffff", textAlign: "right" }}>
-                                        <span className="text-white font-mono font-bold">{rawAmount.replace(/[元NTD$]/gi, '')}</span>
-                                        {rawAmount && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">元</span>}
+                                        <span className="text-white font-mono font-bold">{formattedAmount}</span>
+                                        {formattedAmount && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">元</span>}
                                       </td>
                                       <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center" }}>
                                         <span className={`font-bold ${row.type === '買' ? 'text-red-400' : row.type === '賣' ? 'text-emerald-400' : 'text-white'}`}>{row.type || '買'}</span>
@@ -1329,7 +1364,9 @@ export default function HiddenMissionPage() {
                             <tbody className="divide-y divide-primary/5">
                               {data.reward && data.reward.length > 0 ? (
                                 data.reward.map((row: any, idx: number) => {
-                                  const rawAmount = (row.amount || '').toString();
+                                  const rawAmountStr = (row.amount || '').toString().replace(/[元NTD$]/gi, '');
+                                  const amountNum = parseFloat(rawAmountStr.replace(/[^\d.-]/g, ''));
+                                  const formattedAmount = !isNaN(amountNum) ? Math.round(amountNum).toLocaleString('en-US') : rawAmountStr;
                                   return (
                                     <tr key={idx} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
                                       <td className="p-2 whitespace-nowrap align-middle" style={{ width: "30%", padding: 4 }}>
@@ -1361,8 +1398,8 @@ export default function HiddenMissionPage() {
                                         })()}
                                       </td>
                                       <td className="p-2 text-right whitespace-nowrap align-middle" style={{ width: "32%", padding: 4, color: "#ffffff", textAlign: "right" }}>
-                                        <span className="text-white font-mono font-bold text-xs">{rawAmount.replace(/[元NTD$]/gi, '')}</span>
-                                        {rawAmount && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">元</span>}
+                                        <span className="text-white font-mono font-bold text-xs">{formattedAmount}</span>
+                                        {formattedAmount && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">元</span>}
                                       </td>
                                     </tr>
                                   );
@@ -1413,13 +1450,20 @@ export default function HiddenMissionPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">狩獵者名稱</label>
-                <input
+                <select
                   className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   value={editingItem.hunter || ''}
                   disabled={!canEdit}
                   onChange={e => setEditingItem({ ...editingItem, hunter: e.target.value })}
-                  placeholder="例如: 陳政剛"
-                />
+                >
+                  <option value="">請選擇或選取狩獵者</option>
+                  {hunterOptions.map((name, idx) => (
+                    <option key={idx} value={name}>{name}</option>
+                  ))}
+                  {editingItem.hunter && !hunterOptions.includes(editingItem.hunter) && (
+                    <option value={editingItem.hunter}>{editingItem.hunter}</option>
+                  )}
+                </select>
               </div>
 
               {activeTab === 'Tracker' ? (
@@ -1427,12 +1471,19 @@ export default function HiddenMissionPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">標的 (股號)</label>
-                      <input
+                      <select
                         className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
                         value={editingItem.target || ''}
                         onChange={e => setEditingItem({ ...editingItem, target: e.target.value })}
-                        placeholder="例如: 0050"
-                      />
+                      >
+                        <option value="">請選擇標的</option>
+                        <option value="009816">009816</option>
+                        <option value="0050">0050</option>
+                        <option value="006208">006208</option>
+                        {editingItem.target && !['009816', '0050', '006208'].includes(editingItem.target) && (
+                          <option value={editingItem.target}>{editingItem.target}</option>
+                        )}
+                      </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">股數</label>
@@ -1440,7 +1491,7 @@ export default function HiddenMissionPage() {
                         className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
                         value={editingItem.shares || ''}
                         onChange={e => setEditingItem({ ...editingItem, shares: e.target.value })}
-                        placeholder="例如: 50.00"
+                        placeholder=""
                       />
                     </div>
                   </div>
@@ -1452,7 +1503,7 @@ export default function HiddenMissionPage() {
                         className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
                         value={editingItem.amount || ''}
                         onChange={e => setEditingItem({ ...editingItem, amount: e.target.value })}
-                        placeholder="例如: $10,000"
+                        placeholder=""
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -1489,7 +1540,7 @@ export default function HiddenMissionPage() {
                       className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
                       value={editingItem.amount || ''}
                       onChange={e => setEditingItem({ ...editingItem, amount: e.target.value })}
-                      placeholder="例如: $3,000"
+                      placeholder=""
                     />
                   </div>
                 </>
