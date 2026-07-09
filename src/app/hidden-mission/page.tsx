@@ -78,10 +78,10 @@ export default function HiddenMissionPage() {
           setSelectedHunter(data.scoreboard[0].hunter);
         }
       } else {
-        // Admin: can see any hunter. If empty or on load, default to logged in hunter or first scoreboard item
+        // Admin: can see any hunter. If empty or on load, default to logged in hunter or match in scoreboard
         if (!selectedHunter) {
           const match = data.scoreboard.find((item: any) => item.hunter === loggedInHunterName);
-          setSelectedHunter(match ? match.hunter : data.scoreboard[0].hunter);
+          setSelectedHunter(match ? match.hunter : (loggedInHunterName || data.scoreboard[0].hunter));
         }
       }
     }
@@ -465,9 +465,8 @@ export default function HiddenMissionPage() {
               const nextView = view === 'individual' ? 'team' : 'individual';
               setView(nextView);
               if (nextView === 'individual' && loggedInHunterName) {
-                if (!isAdmin || !selectedHunter) {
-                  setSelectedHunter(loggedInHunterName);
-                }
+                const match = data.scoreboard.find((item: any) => item.hunter === loggedInHunterName);
+                setSelectedHunter(match ? match.hunter : loggedInHunterName);
               }
             }}
             title={view === 'individual' ? "切換至團隊視角" : "切換至個人視角"}
