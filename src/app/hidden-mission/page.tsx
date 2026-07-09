@@ -964,16 +964,19 @@ export default function HiddenMissionPage() {
                                   <div className="flex items-baseline justify-end gap-0.5">
                                     {teamLeaderboardMetric === 'holding' ? (
                                       <>
-                                        <span className="text-emerald-400 text-[13px] font-bold font-mono">{item.holdingDays || 0}</span>
-                                        <span className="text-[#efe0d2]/70 text-[11px]">天</span>
+                                        <span className="text-white text-[13px] font-bold font-mono">{item.holdingDays || 0}</span>
+                                        <span className="text-white/70 text-[10px]">天</span>
                                       </>
                                     ) : teamLeaderboardMetric === 'streak' ? (
                                       <>
-                                        <span className="text-emerald-400 text-[13px] font-bold font-mono">{item.consecutiveMonths || 0}</span>
-                                        <span className="text-[#efe0d2]/70 text-[11px]">個月</span>
+                                        <span className="text-white text-[13px] font-bold font-mono">{item.consecutiveMonths || 0}</span>
+                                        <span className="text-white/70 text-[10px]">月</span>
                                       </>
                                     ) : (
-                                      <span className="text-emerald-400 text-[13px] font-bold font-mono">{item.returnRateStr || "0.00%"}</span>
+                                      <>
+                                        <span className="text-white text-[13px] font-bold font-mono">{(item.returnRateStr || "0.00%").replace(/%/g, '')}</span>
+                                        <span className="text-white/70 text-[10px]">%</span>
+                                      </>
                                     )}
                                   </div>
                                 </div>
