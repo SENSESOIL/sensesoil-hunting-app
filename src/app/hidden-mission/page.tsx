@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -32,6 +32,11 @@ export default function HiddenMissionPage() {
   const [isLeaderboardYearDropdownOpen, setIsLeaderboardYearDropdownOpen] = useState(false);
   const [isAwardYearDropdownOpen, setIsAwardYearDropdownOpen] = useState(false);
   const [teamLeaderboardMetric, setTeamLeaderboardMetric] = useState<'holding' | 'streak' | 'performance'>('holding');
+
+  // Race playback states for Team Leaderboard
+  const [isRacePlaying, setIsRacePlaying] = useState(false);
+  const [raceFrameIndex, setRaceFrameIndex] = useState(0);
+  const raceTimerRef = useRef<any>(null);
 
   // Modal states for editing / adding Tracker or Reward
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -220,6 +225,212 @@ export default function HiddenMissionPage() {
 
     return result;
   }, [data.scoreboard, data.leadgeA, data.leadgeC, awardYear, teamLeaderboardMetric]);
+
+  const teamLeaderboardFrames = useMemo(() => {
+    if (!data.scoreboard || data.scoreboard.length === 0) return [];
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const targetYear = parseInt(awardYear, 10) || currentYear;
+    const nowTime = now.getTime();
+
+    // Collect all relevant dates in awardYear up to now
+    const dateSet = new Set<string>();
+    
+    // Add month starts & midpoints for targetYear up to now
+    const maxM = targetYear === currentYear ? (now.getMonth() + 1) : (targetYear < currentYear ? 12 : 0);
+    for (let m = 1; m <= maxM; m++) {
+      const mStr = m.toString().padStart(2, '0');
+      dateSet.add(`${targetYear}/${mStr}/01`);
+      if (targetYear < currentYear || m < maxM || now.getDate() >= 15) {
+        dateSet.add(`${targetYear}/${mStr}/15`);
+      }
+    }
+    // If targetYear === currentYear, add today's date
+    if (targetYear === currentYear) {
+      const todayStr = `${targetYear}/${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')}`;
+      dateSet.add(todayStr);
+    }
+
+    // Add buyDate from leadgeA
+    if (data.leadgeA) {
+      for (const item of data.leadgeA) {
+        if (!item.buyDate) continue;
+        const d = new Date(item.buyDate);
+        if (!isNaN(d.getTime()) && d.getTime() <= nowTime && d.getFullYear() === targetYear) {
+          const mStr = (d.getMonth() + 1).toString().padStart(2, '0');
+          const dStr = d.getDate().toString().padStart(2, '0');
+          dateSet.add(`${targetYear}/${mStr}/${dStr}`);
+        }
+      }
+    }
+
+    // Add dates from leadgeC
+    if (data.leadgeC) {
+      for (const item of data.leadgeC) {
+        if (!item.date) continue;
+        const d = new Date(item.date);
+        if (!isNaN(d.getTime()) && d.getTime() <= nowTime && d.getFullYear() === targetYear) {
+          const mStr = (d.getMonth() + 1).toString().padStart(2, '0');
+          const dStr = d.getDate().toString().padStart(2, '0');
+          dateSet.add(`${targetYear}/${mStr}/${dStr}`);
+        }
+      }
+    }
+
+    // Sort dates chronologically
+    const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+    const frames = sortedDates.map(dateStr => {
+      const frameDate = new Date(dateStr);
+      const frameTime = new Date(frameDate.getFullYear(), frameDate.getMonth(), frameDate.getDate(), 23, 59, 59, 999).getTime();
+      const frameMonth = frameDate.getMonth() + 1;
+
+      const result = data.scoreboard.map((sItem: any) => {
+        const hunter = sItem.hunter;
+
+        // 1. Holding (持有 - 天) as of frameTime
+        let maxD = 0;
+        if (data.leadgeA) {
+          const hunterRows = data.leadgeA.filter((item: any) => item.hunter === hunter);
+          for (const item of hunterRows) {
+            if (item.buyDate) {
+              const buy = new Date(item.buyDate);
+              if (!isNaN(buy.getTime()) && buy.getTime() <= frameTime) {
+                const parts = item.buyDate.split(/[/.-]/);
+                if (parts.length >= 1 && parts[0].trim() === awardYear) {
+                  const diffMs = frameTime - buy.getTime();
+                  const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                  if (days > maxD) maxD = days;
+                }
+              }
+            }
+          }
+        }
+
+        // 2. Streak (連續 - 月) as of frameMonth
+        let maxStreak = 0;
+        if (data.leadgeA) {
+          const buyMonths = new Set<number>();
+          const hunterRows = data.leadgeA.filter((item: any) => item.hunter === hunter);
+          for (const item of hunterRows) {
+            if (!item.buyDate) continue;
+            const buy = new Date(item.buyDate);
+            if (isNaN(buy.getTime()) || buy.getTime() > frameTime) continue;
+            const parts = item.buyDate.split(/[/.-]/);
+            if (parts.length >= 2) {
+              const y = parts[0].trim();
+              const m = parseInt(parts[1], 10);
+              if (y === awardYear && m >= 1 && m <= 12 && m <= frameMonth) {
+                buyMonths.add(m);
+              }
+            }
+          }
+          let streak = 0;
+          for (let m = 1; m <= frameMonth; m++) {
+            if (buyMonths.has(m)) {
+              streak++;
+              if (streak > maxStreak) maxStreak = streak;
+            } else {
+              streak = 0;
+            }
+          }
+          if (maxStreak > 1) {
+            maxStreak = maxStreak - 1;
+          } else if (maxStreak === 1) {
+            maxStreak = 1;
+          } else {
+            maxStreak = 0;
+          }
+        }
+
+        // 3. Performance (績效 - %) as of frameTime
+        let rateNum = 0;
+        let rateStr = "0.00%";
+        if (data.leadgeC) {
+          const matches = data.leadgeC.filter((item: any) => {
+            if (item.hunter !== hunter || !(item.date || '').includes(awardYear)) return false;
+            if (item.date) {
+              const d = new Date(item.date);
+              if (!isNaN(d.getTime()) && d.getTime() > frameTime) return false;
+            }
+            return true;
+          });
+          let target = null;
+          if (matches.length > 0) {
+            target = matches[matches.length - 1];
+          } else if (awardYear === '2026' && sortedDates.indexOf(dateStr) >= sortedDates.length - 1) {
+            target = data.leadgeC.find((item: any) => item.hunter === hunter);
+          }
+          if (target && target.returnRate && target.returnRate.trim()) {
+            const rawRate = target.returnRate.trim();
+            rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
+            rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+          }
+        }
+
+        return {
+          ...sItem,
+          holdingDays: maxD,
+          consecutiveMonths: maxStreak,
+          returnRateNum: rateNum,
+          returnRateStr: rateStr,
+        };
+      });
+
+      // Sort by currently selected metric
+      result.sort((a: any, b: any) => {
+        if (teamLeaderboardMetric === 'holding') {
+          return (b.holdingDays || 0) - (a.holdingDays || 0);
+        }
+        if (teamLeaderboardMetric === 'streak') {
+          return (b.consecutiveMonths || 0) - (a.consecutiveMonths || 0);
+        }
+        return (b.returnRateNum || 0) - (a.returnRateNum || 0);
+      });
+
+      return { dateLabel: dateStr, data: result };
+    });
+
+    return frames;
+  }, [data.scoreboard, data.leadgeA, data.leadgeC, awardYear, teamLeaderboardMetric]);
+
+  // Stop race when metric or year changes
+  useEffect(() => {
+    if (raceTimerRef.current) { clearInterval(raceTimerRef.current); raceTimerRef.current = null; }
+    setIsRacePlaying(false);
+    setRaceFrameIndex(0);
+  }, [teamLeaderboardMetric, awardYear]);
+
+  const toggleRace = useCallback(() => {
+    if (isRacePlaying) {
+      if (raceTimerRef.current) { clearInterval(raceTimerRef.current); raceTimerRef.current = null; }
+      setIsRacePlaying(false);
+    } else {
+      if (teamLeaderboardFrames.length === 0) return;
+      let startIdx = raceFrameIndex >= teamLeaderboardFrames.length - 1 ? 0 : raceFrameIndex;
+      setRaceFrameIndex(startIdx);
+      setIsRacePlaying(true);
+      raceTimerRef.current = setInterval(() => {
+        setRaceFrameIndex(prev => {
+          if (prev >= teamLeaderboardFrames.length - 1) {
+            if (raceTimerRef.current) { clearInterval(raceTimerRef.current); raceTimerRef.current = null; }
+            setIsRacePlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 200);
+    }
+  }, [isRacePlaying, raceFrameIndex, teamLeaderboardFrames.length]);
+
+  useEffect(() => {
+    return () => { if (raceTimerRef.current) clearInterval(raceTimerRef.current); };
+  }, []);
+
+  const isRaceActive = isRacePlaying || (raceFrameIndex > 0 && raceFrameIndex < teamLeaderboardFrames.length - 1);
+  const displayTeamLeaderboardData = isRaceActive ? (teamLeaderboardFrames[raceFrameIndex]?.data || []) : teamLeaderboardData;
+  const raceCurrentDate = teamLeaderboardFrames[raceFrameIndex]?.dateLabel || '';
 
   // Current hunter's data
   const personalScoreboard = useMemo(() => {
@@ -880,6 +1091,13 @@ export default function HiddenMissionPage() {
                   {/* Team Leaderboard Bar Chart */}
                   <section className="mb-[5px]">
                     <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+                      {/* Race date indicator - above title */}
+                      <div className="h-[16px] mb-1">
+                        {isRaceActive && (
+                          <span className="text-primary/80 text-[11px] font-mono tracking-wider">{raceCurrentDate.replace(/^\d{4}\//, '')}</span>
+                        )}
+                      </div>
+
                       <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
                         <div className="relative">
                           <button 
@@ -911,6 +1129,25 @@ export default function HiddenMissionPage() {
                         </div>
 
                         <div className="flex items-center gap-2">
+                          {/* Play/Pause Race Button */}
+                          <button
+                            onClick={toggleRace}
+                            className="rounded-full bg-primary flex items-center justify-center transition-all hover:brightness-110 active:scale-90 shrink-0"
+                            style={{ width: '26px', height: '26px' }}
+                            title={isRacePlaying ? '暫停' : '播放排名動畫'}
+                          >
+                            {isRacePlaying ? (
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                <rect x="1.5" y="1" width="3" height="10" rx="1" fill="#000" />
+                                <rect x="7.5" y="1" width="3" height="10" rx="1" fill="#000" />
+                              </svg>
+                            ) : (
+                              <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                <path d="M3.5 1L10.5 6L3.5 11V1Z" fill="#000" />
+                              </svg>
+                            )}
+                          </button>
+
                           <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
                             <button 
                               onClick={() => setTeamLeaderboardMetric('holding')}
@@ -929,17 +1166,17 @@ export default function HiddenMissionPage() {
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        {teamLeaderboardData.length > 0 ? (() => {
+                        {displayTeamLeaderboardData.length > 0 ? (() => {
                           const maxVal = Math.max(
-                            ...teamLeaderboardData.map((s: any) => {
+                            ...displayTeamLeaderboardData.map((s: any) => {
                               if (teamLeaderboardMetric === 'holding') return s.holdingDays || 0;
                               if (teamLeaderboardMetric === 'streak') return s.consecutiveMonths || 0;
                               return s.returnRateNum || 0;
                             }),
                             1
                           );
-                          return teamLeaderboardData.map((item: any, index: number) => {
-                            const maxIndex = Math.max(1, teamLeaderboardData.length - 1);
+                          return displayTeamLeaderboardData.map((item: any, index: number) => {
+                            const maxIndex = Math.max(1, displayTeamLeaderboardData.length - 1);
                             const barOpacity = 1 - (0.3 * (index / maxIndex));
                             const val = teamLeaderboardMetric === 'holding'
                               ? (item.holdingDays || 0)
