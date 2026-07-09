@@ -31,6 +31,7 @@ export default function HiddenMissionPage() {
   const [awardYear, setAwardYear] = useState<string>('2026');
   const [isLeaderboardYearDropdownOpen, setIsLeaderboardYearDropdownOpen] = useState(false);
   const [isAwardYearDropdownOpen, setIsAwardYearDropdownOpen] = useState(false);
+  const [teamLeaderboardMetric, setTeamLeaderboardMetric] = useState<'holding' | 'streak' | 'performance'>('holding');
 
   // Modal states for editing / adding Tracker or Reward
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,6 +102,124 @@ export default function HiddenMissionPage() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
+
+  const teamLeaderboardData = useMemo(() => {
+    if (!data.scoreboard || data.scoreboard.length === 0) return [];
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const targetYear = parseInt(awardYear, 10) || currentYear;
+    const nowTime = now.getTime();
+    const maxMonthToCheck = targetYear === currentYear ? currentMonth : (targetYear < currentYear ? 12 : 0);
+
+    const result = data.scoreboard.map((sItem: any) => {
+      const hunter = sItem.hunter;
+
+      // 1. Holding (持有 - 天): max holding days in awardYear from data.leadgeA
+      let maxD = 0;
+      if (data.leadgeA) {
+        const hunterRows = data.leadgeA.filter((item: any) => item.hunter === hunter);
+        for (const item of hunterRows) {
+          if (item.buyDate) {
+            const buy = new Date(item.buyDate);
+            if (!isNaN(buy.getTime()) && buy.getTime() <= nowTime) {
+              const parts = item.buyDate.split(/[/.-]/);
+              if (parts.length >= 1 && parts[0].trim() === awardYear) {
+                const diffMs = nowTime - buy.getTime();
+                const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                if (days > maxD) maxD = days;
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Streak (連續 - 月): consecutive months in awardYear from data.leadgeA
+      let maxStreak = 0;
+      if (data.leadgeA) {
+        const buyMonths = new Set<number>();
+        const hunterRows = data.leadgeA.filter((item: any) => item.hunter === hunter);
+        for (const item of hunterRows) {
+          if (!item.buyDate) continue;
+          const buy = new Date(item.buyDate);
+          if (isNaN(buy.getTime()) || buy.getTime() > nowTime) continue;
+          const parts = item.buyDate.split(/[/.-]/);
+          if (parts.length >= 2) {
+            const y = parts[0].trim();
+            const m = parseInt(parts[1], 10);
+            if (y === awardYear && m >= 1 && m <= 12) {
+              if (targetYear === currentYear && m > currentMonth) continue;
+              if (targetYear > currentYear) continue;
+              buyMonths.add(m);
+            }
+          }
+        }
+        let streak = 0;
+        for (let m = 1; m <= maxMonthToCheck; m++) {
+          if (buyMonths.has(m)) {
+            streak++;
+            if (streak > maxStreak) maxStreak = streak;
+          } else {
+            streak = 0;
+          }
+        }
+        if (maxStreak > 1) {
+          maxStreak = maxStreak - 1;
+        } else if (maxStreak === 1) {
+          maxStreak = 1;
+        } else {
+          maxStreak = 0;
+        }
+      }
+
+      // 3. Performance (績效 - %): returnRate in awardYear from data.leadgeC
+      let rateNum = 0;
+      let rateStr = "0.00%";
+      if (data.leadgeC) {
+        const matches = data.leadgeC.filter((item: any) => {
+          if (item.hunter !== hunter || !(item.date || '').includes(awardYear)) return false;
+          if (item.date) {
+            const d = new Date(item.date);
+            if (!isNaN(d.getTime()) && d.getTime() > nowTime) return false;
+          }
+          return true;
+        });
+        let target = null;
+        if (matches.length > 0) {
+          target = matches[matches.length - 1];
+        } else if (awardYear === '2026') {
+          target = data.leadgeC.find((item: any) => item.hunter === hunter);
+        }
+        if (target && target.returnRate && target.returnRate.trim()) {
+          const rawRate = target.returnRate.trim();
+          rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
+          rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+        }
+      }
+
+      return {
+        ...sItem,
+        holdingDays: maxD,
+        consecutiveMonths: maxStreak,
+        returnRateNum: rateNum,
+        returnRateStr: rateStr,
+      };
+    });
+
+    // Sort by currently selected metric
+    result.sort((a: any, b: any) => {
+      if (teamLeaderboardMetric === 'holding') {
+        return (b.holdingDays || 0) - (a.holdingDays || 0);
+      }
+      if (teamLeaderboardMetric === 'streak') {
+        return (b.consecutiveMonths || 0) - (a.consecutiveMonths || 0);
+      }
+      return (b.returnRateNum || 0) - (a.returnRateNum || 0);
+    });
+
+    return result;
+  }, [data.scoreboard, data.leadgeA, data.leadgeC, awardYear, teamLeaderboardMetric]);
 
   // Current hunter's data
   const personalScoreboard = useMemo(() => {
@@ -790,34 +909,78 @@ export default function HiddenMissionPage() {
                             </>
                           )}
                         </div>
+
+                        <div className="flex items-center gap-2">
+                          <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
+                            <button 
+                              onClick={() => setTeamLeaderboardMetric('holding')}
+                              className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'holding' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >持有</button>
+                            <button 
+                              onClick={() => setTeamLeaderboardMetric('streak')}
+                              className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'streak' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >連續</button>
+                            <button 
+                              onClick={() => setTeamLeaderboardMetric('performance')}
+                              className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'performance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >績效</button>
+                          </div>
+                        </div>
                       </div>
 
                       <div className="flex flex-col gap-2">
-                        {awardYear === '2026' && data.scoreboard.length > 0 ? data.scoreboard.map((item: any, index: number) => {
-                          const maxIndex = Math.max(1, data.scoreboard.length - 1);
-                          const barOpacity = 1 - (0.3 * (index / maxIndex));
-                          const maxReward = Math.max(...data.scoreboard.map((s: any) => s.totalReward || 0), 1);
-                          const barPct = Math.min(100, Math.max(8, ((item.totalReward || 0) / maxReward) * 100));
-                          return (
-                            <div key={item.hunter} className="flex items-center w-full gap-3" style={{ transition: 'transform 0.35s ease-out, opacity 0.35s ease-out' }}>
-                              <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{index + 1}</span>
-                              <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${index < 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
-                                <span className={`text-[12px] ${index === 0 ? 'font-bold' : 'font-normal'}`}>{item.hunter.slice(-1)}</span>
-                              </div>
-                              <div className="flex-1 h-2 bg-primary/10 rounded-r-sm overflow-visible flex relative">
-                                <div 
-                                  className={`h-full bg-primary ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
-                                  style={{ width: `${barPct}%`, opacity: barOpacity, transition: 'width 0.35s ease-out' }}
-                                ></div>
-                              </div>
-                              <div className="w-24 text-right shrink-0">
-                                <div className="flex items-baseline justify-end gap-0.5">
-                                  <span className="text-emerald-400 text-[13px] font-bold font-mono">${(item.totalReward || 0).toLocaleString()}</span>
+                        {teamLeaderboardData.length > 0 ? (() => {
+                          const maxVal = Math.max(
+                            ...teamLeaderboardData.map((s: any) => {
+                              if (teamLeaderboardMetric === 'holding') return s.holdingDays || 0;
+                              if (teamLeaderboardMetric === 'streak') return s.consecutiveMonths || 0;
+                              return s.returnRateNum || 0;
+                            }),
+                            1
+                          );
+                          return teamLeaderboardData.map((item: any, index: number) => {
+                            const maxIndex = Math.max(1, teamLeaderboardData.length - 1);
+                            const barOpacity = 1 - (0.3 * (index / maxIndex));
+                            const val = teamLeaderboardMetric === 'holding'
+                              ? (item.holdingDays || 0)
+                              : teamLeaderboardMetric === 'streak'
+                              ? (item.consecutiveMonths || 0)
+                              : (item.returnRateNum || 0);
+                            const barPct = Math.min(100, Math.max(8, (val / maxVal) * 100));
+                            
+                            return (
+                              <div key={item.hunter} className="flex items-center w-full gap-3" style={{ transition: 'transform 0.35s ease-out, opacity 0.35s ease-out' }}>
+                                <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{index + 1}</span>
+                                <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${index < 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
+                                  <span className={`text-[12px] ${index === 0 ? 'font-bold' : 'font-normal'}`}>{item.hunter.slice(-1)}</span>
+                                </div>
+                                <div className="flex-1 h-2 bg-primary/10 rounded-r-sm overflow-visible flex relative">
+                                  <div 
+                                    className={`h-full bg-primary ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
+                                    style={{ width: `${barPct}%`, opacity: barOpacity, transition: 'width 0.35s ease-out' }}
+                                  ></div>
+                                </div>
+                                <div className="w-24 text-right shrink-0">
+                                  <div className="flex items-baseline justify-end gap-0.5">
+                                    {teamLeaderboardMetric === 'holding' ? (
+                                      <>
+                                        <span className="text-emerald-400 text-[13px] font-bold font-mono">{item.holdingDays || 0}</span>
+                                        <span className="text-[#efe0d2]/70 text-[11px]">天</span>
+                                      </>
+                                    ) : teamLeaderboardMetric === 'streak' ? (
+                                      <>
+                                        <span className="text-emerald-400 text-[13px] font-bold font-mono">{item.consecutiveMonths || 0}</span>
+                                        <span className="text-[#efe0d2]/70 text-[11px]">個月</span>
+                                      </>
+                                    ) : (
+                                      <span className="text-emerald-400 text-[13px] font-bold font-mono">{item.returnRateStr || "0.00%"}</span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        }) : (
+                            );
+                          });
+                        })() : (
                           <div className="text-center text-primary/50 text-xs py-4">本年度暫無團隊數據</div>
                         )}
                       </div>
