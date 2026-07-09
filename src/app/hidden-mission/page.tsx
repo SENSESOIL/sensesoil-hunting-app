@@ -771,22 +771,21 @@ export default function HiddenMissionPage() {
 
   const openAddModal = () => {
     setModalMode('add');
-    const defaultHunter = !canEdit && loggedInHunterName ? loggedInHunterName : '';
     if (activeTab === 'Tracker') {
       setEditingItem({
         date: '',
-        hunter: defaultHunter,
+        hunter: '',
         target: '',
         shares: '',
         amount: '',
-        type: '買'
+        type: ''
       });
     } else {
       setEditingItem({
         date: '',
-        hunter: defaultHunter,
+        hunter: '',
         amount: '',
-        category: 'A耐性'
+        category: ''
       });
     }
     setIsModalOpen(true);
@@ -1255,14 +1254,14 @@ export default function HiddenMissionPage() {
                     </div>
                   </section>
 
-                  {/* Editable Tables Section for Tracker (交易) & Reward (兌獎) */}
-                  <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
-                    {/* Header bar with toggle and add (+) button */}
-                    <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
-                      <div></div> {/* Empty left side as simple style, no titles/complex info */}
-                      <div className="flex items-center gap-2 ml-auto">
-                        {/* Add button (+) in place of play button */}
-                        {canEdit && (
+                  {/* Editable Tables Section for Tracker (交易) & Reward (兌獎) - Visible only to Editor/Admin */}
+                  {canEdit && (
+                    <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+                      {/* Header bar with toggle and add (+) button */}
+                      <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
+                        <div></div> {/* Empty left side as simple style, no titles/complex info */}
+                        <div className="flex items-center gap-2 ml-auto">
+                          {/* Add button (+) in place of play button */}
                           <button
                             onClick={openAddModal}
                             className="rounded-full bg-primary flex items-center justify-center transition-all hover:brightness-110 active:scale-90 shrink-0"
@@ -1271,7 +1270,6 @@ export default function HiddenMissionPage() {
                           >
                             <span className="material-symbols-outlined text-[16px] text-black font-bold leading-none">add</span>
                           </button>
-                        )}
 
                         {/* Toggle Pill Button */}
                         <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
@@ -1415,10 +1413,11 @@ export default function HiddenMissionPage() {
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </div>
+            )}
+          </>
+        )}
         </main>
       </PullToRefresh>
 
@@ -1456,7 +1455,7 @@ export default function HiddenMissionPage() {
                   disabled={!canEdit}
                   onChange={e => setEditingItem({ ...editingItem, hunter: e.target.value })}
                 >
-                  <option value="">請選擇或選取狩獵者</option>
+                  <option value=""></option>
                   {hunterOptions.map((name, idx) => (
                     <option key={idx} value={name}>{name}</option>
                   ))}
@@ -1476,7 +1475,7 @@ export default function HiddenMissionPage() {
                         value={editingItem.target || ''}
                         onChange={e => setEditingItem({ ...editingItem, target: e.target.value })}
                       >
-                        <option value="">請選擇標的</option>
+                        <option value=""></option>
                         <option value="009816">009816</option>
                         <option value="0050">0050</option>
                         <option value="006208">006208</option>
@@ -1510,9 +1509,10 @@ export default function HiddenMissionPage() {
                       <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">交易類型</label>
                       <select
                         className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
-                        value={editingItem.type || '買'}
+                        value={editingItem.type || ''}
                         onChange={e => setEditingItem({ ...editingItem, type: e.target.value })}
                       >
+                        <option value=""></option>
                         <option value="買">買</option>
                         <option value="賣">賣</option>
                       </select>
@@ -1525,9 +1525,10 @@ export default function HiddenMissionPage() {
                     <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">請領類別</label>
                     <select
                       className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
-                      value={editingItem.category || 'A耐性'}
+                      value={editingItem.category || ''}
                       onChange={e => setEditingItem({ ...editingItem, category: e.target.value })}
                     >
+                      <option value=""></option>
                       <option value="A耐性">A耐性</option>
                       <option value="B定性">B定性</option>
                       <option value="C韌性">C韌性</option>
