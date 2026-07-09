@@ -109,10 +109,16 @@ export async function GET() {
           days180: row[7]?.trim() || '',
           days270: row[8]?.trim() || '',
           days360: row[9]?.trim() || '',
-          q1Reward: row[19]?.trim() || '',
-          q2Reward: row[20]?.trim() || '',
-          q3Reward: row[21]?.trim() || '',
-          q4Reward: row[22]?.trim() || '',
+          shares90: row[10]?.trim() || '',
+          shares180: row[11]?.trim() || '',
+          shares270: row[12]?.trim() || '',
+          shares360: row[13]?.trim() || '',
+          shares720: row[14]?.trim() || '',
+          q1Reward: row[15]?.trim() || row[19]?.trim() || '',
+          q2Reward: row[16]?.trim() || row[20]?.trim() || '',
+          q3Reward: row[17]?.trim() || row[21]?.trim() || '',
+          q4Reward: row[18]?.trim() || row[22]?.trim() || '',
+          y2Reward: row[19]?.trim() || '',
         });
       }
     }
