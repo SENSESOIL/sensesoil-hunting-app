@@ -413,9 +413,12 @@ export default function HiddenMissionPage() {
                             </div>
                           </div>
                           {expandedLevel === 'L1' && (
-                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <p className="font-semibold text-white/90">
+                                「耐性」講求延後消費，養成自控力 × 忍耐力
+                              </p>
                               <p className="text-white/60">
-                                根據買入日計算持股屆滿天數（90 / 180 / 270 / 360 / 720 天），分別觸發 Q1~Q4 階梯式長期投資獎金。
+                                根據買入日計算每筆市值型ETF持有天數（90 / 180 / 270 / 360 / 720 天），分別觸發倍增投資獎勵(乘數1~10倍)，並採先進先出交易原則檢視持股時間。
                               </p>
                             </div>
                           )}
@@ -445,9 +448,12 @@ export default function HiddenMissionPage() {
                             </div>
                           </div>
                           {expandedLevel === 'L2' && (
-                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <p className="font-semibold text-white/90">
+                                「定性」講求長期持有，打磨貫徹力 × 續航力
+                              </p>
                               <p className="text-white/60">
-                                定期定額或連續月份買入持股。依據累計投入金額與連續月數，計算底薪率 (1.0%) 與成長率 (0.1%，最高達 3.3%) 獎勵金。
+                                定期定額或連續月份買入市值型ETF，分別觸發階梯式增長投資獎勵（基數1.0% +連續月數成長率0.1%），最高投資獎勵上限 3.3%。
                               </p>
                             </div>
                           )}
@@ -477,9 +483,12 @@ export default function HiddenMissionPage() {
                             </div>
                           </div>
                           {expandedLevel === 'L3' && (
-                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              <p className="font-semibold text-white/90">
+                                「韌性」講求無畏震盪，淬鍊受挫力 × 復原力
+                              </p>
                               <p className="text-white/60">
-                                依據年度結算日之總損益率 <span className="font-mono text-primary">(A+C+E)/(B+D)</span> 排行，競爭年度總獎金池 <span className="font-mono text-primary">$50,000</span>！
+                                依年度投資績效 (含實現與未實現損益) 排行競爭年度總獎金池。冠軍獨得30%、亞軍獨得20%、季軍獨得10%、其他依排名遞減分配。
                               </p>
                             </div>
                           )}
