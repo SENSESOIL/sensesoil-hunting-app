@@ -170,6 +170,54 @@ export default function HiddenMissionPage() {
     return maxM;
   }, [data.leadgeB, selectedHunter, awardYear]);
 
+  const personalLeadgeB_monthsData = useMemo(() => {
+    const months = Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1,
+      status: 'future' as 'invested' | 'interrupted' | 'future'
+    }));
+    if (!selectedHunter || !data.leadgeA) return months;
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const targetYear = parseInt(awardYear, 10) || currentYear;
+
+    const buyMonths = new Set<number>();
+    const hunterRows = data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
+    for (const item of hunterRows) {
+      if (!item.buyDate) continue;
+      const parts = item.buyDate.split(/[/.-]/);
+      if (parts.length >= 2) {
+        const y = parts[0].trim();
+        const m = parseInt(parts[1], 10);
+        if (y === awardYear && m >= 1 && m <= 12) {
+          buyMonths.add(m);
+        }
+      }
+    }
+
+    for (let i = 0; i < 12; i++) {
+      const m = i + 1;
+      let isReached = false;
+      if (targetYear < currentYear) {
+        isReached = true;
+      } else if (targetYear === currentYear) {
+        isReached = m <= currentMonth;
+      } else {
+        isReached = false;
+      }
+
+      if (!isReached) {
+        months[i].status = 'future';
+      } else if (buyMonths.has(m)) {
+        months[i].status = 'invested';
+      } else {
+        months[i].status = 'interrupted';
+      }
+    }
+    return months;
+  }, [data.leadgeA, selectedHunter, awardYear]);
+
   const personalLeadgeC_returnRate = useMemo(() => {
     if (!selectedHunter || !data.leadgeC || data.leadgeC.length === 0) return "0.00%";
     
@@ -513,7 +561,7 @@ export default function HiddenMissionPage() {
                             </div>
                           </div>
                           {expandedLevel === 'L2' && (
-                            <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <div className="mt-3 pt-3 border-t border-white/10 text-xs text-white/80 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-200 flex flex-col gap-1.5" onClick={(e) => e.stopPropagation()}>
                               <p className="font-semibold text-white/90">
                                 「定性」講求長期持有，打磨貫徹力 × 續航力
                               </p>
@@ -522,6 +570,26 @@ export default function HiddenMissionPage() {
                               </p>
                             </div>
                           )}
+
+                          {/* 1-12 Month Circles directly rendered */}
+                          <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
+                            {personalLeadgeB_monthsData.map((mData) => {
+                              return (
+                                <div
+                                  key={mData.month}
+                                  className={`w-7 h-7 mx-auto rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 ${
+                                    mData.status === 'invested'
+                                      ? 'bg-emerald-400/20 border border-emerald-400 text-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]'
+                                      : mData.status === 'interrupted'
+                                      ? 'bg-red-500/15 border border-red-500/30 text-red-400'
+                                      : 'bg-white/5 border border-transparent text-white/30'
+                                  }`}
+                                >
+                                  {mData.status === 'interrupted' ? '✕' : mData.month}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* L3 Asset (Challenge C: 韌性) */}
