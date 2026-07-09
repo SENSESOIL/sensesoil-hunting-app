@@ -100,16 +100,21 @@ export default function HiddenMissionPage() {
   }, [data.scoreboard, selectedHunter, awardYear]);
 
   const personalLeadgeA_maxDays = useMemo(() => {
-    if (awardYear !== '2026' || !selectedHunter || !data.leadgeA) return 0;
+    if (!selectedHunter || !data.leadgeA) return 0;
     const hunterRows = data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
     let maxD = 0;
+    const nowTime = Date.now();
     for (const item of hunterRows) {
       if (item.buyDate) {
         const buy = new Date(item.buyDate);
-        if (!isNaN(buy.getTime())) {
-          const diffMs = Date.now() - buy.getTime();
-          const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-          if (days > maxD) maxD = days;
+        // GATEKEEPER CHECK: future dates cannot be counted!
+        if (!isNaN(buy.getTime()) && buy.getTime() <= nowTime) {
+          const parts = item.buyDate.split(/[/.-]/);
+          if (parts.length >= 1 && parts[0].trim() === awardYear) {
+            const diffMs = nowTime - buy.getTime();
+            const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+            if (days > maxD) maxD = days;
+          }
         }
       }
     }
@@ -131,27 +136,38 @@ export default function HiddenMissionPage() {
       return isNaN(n) ? 0 : n;
     };
 
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const targetYear = parseInt(awardYear, 10) || currentYear;
+    const nowTime = now.getTime();
+
     const hunterRows = data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
     for (const item of hunterRows) {
       if (!item.buyDate) continue;
+      const buy = new Date(item.buyDate);
+      // GATEKEEPER CHECK: skip future dates
+      if (isNaN(buy.getTime()) || buy.getTime() > nowTime) continue;
+
       const parts = item.buyDate.split(/[/.-]/);
       if (parts.length >= 2) {
         const y = parts[0].trim();
         const m = parseInt(parts[1], 10);
         if (y === awardYear && m >= 1 && m <= 12) {
+          // GATEKEEPER CHECK: do not allow months beyond currentMonth in the current year
+          if (targetYear === currentYear && m > currentMonth) continue;
+          if (targetYear > currentYear) continue;
+
           const idx = m - 1;
           months[idx].hasData = true;
           
           const rowReward = cleanNum(item.q1Reward) + cleanNum(item.q2Reward) + cleanNum(item.q3Reward) + cleanNum(item.q4Reward) + cleanNum(item.y2Reward);
           months[idx].totalReward += rowReward;
 
-          const buy = new Date(item.buyDate);
-          if (!isNaN(buy.getTime())) {
-            const diffMs = Date.now() - buy.getTime();
-            const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-            if (days > months[idx].holdingDays) {
-              months[idx].holdingDays = days;
-            }
+          const diffMs = nowTime - buy.getTime();
+          const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+          if (days > months[idx].holdingDays) {
+            months[idx].holdingDays = days;
           }
         }
       }
@@ -160,15 +176,48 @@ export default function HiddenMissionPage() {
   }, [data.leadgeA, selectedHunter, awardYear]);
 
   const personalLeadgeB_maxMonths = useMemo(() => {
-    if (awardYear !== '2026' || !selectedHunter || !data.leadgeB) return 0;
-    const hunterRows = data.leadgeB.filter((item: any) => item.hunter === selectedHunter);
-    let maxM = 0;
+    if (!selectedHunter || !data.leadgeA) return 0;
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const targetYear = parseInt(awardYear, 10) || currentYear;
+    const nowTime = now.getTime();
+
+    const buyMonths = new Set<number>();
+    const hunterRows = data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
     for (const item of hunterRows) {
-      const m = Number(item.consecutiveMonths) || 0;
-      if (m > maxM) maxM = m;
+      if (!item.buyDate) continue;
+      const buy = new Date(item.buyDate);
+      // GATEKEEPER CHECK: skip future dates
+      if (isNaN(buy.getTime()) || buy.getTime() > nowTime) continue;
+      const parts = item.buyDate.split(/[/.-]/);
+      if (parts.length >= 2) {
+        const y = parts[0].trim();
+        const m = parseInt(parts[1], 10);
+        if (y === awardYear && m >= 1 && m <= 12) {
+          if (targetYear === currentYear && m > currentMonth) continue;
+          if (targetYear > currentYear) continue;
+          buyMonths.add(m);
+        }
+      }
     }
-    return maxM;
-  }, [data.leadgeB, selectedHunter, awardYear]);
+
+    const maxMonthToCheck = targetYear === currentYear ? currentMonth : (targetYear < currentYear ? 12 : 0);
+    let streak = 0;
+    let maxStreak = 0;
+    for (let m = 1; m <= maxMonthToCheck; m++) {
+      if (buyMonths.has(m)) {
+        streak++;
+        if (streak > maxStreak) maxStreak = streak;
+      } else {
+        streak = 0;
+      }
+    }
+
+    if (maxStreak === 0) return 0;
+    return maxStreak > 1 ? maxStreak - 1 : 1;
+  }, [data.leadgeA, selectedHunter, awardYear]);
 
   const personalLeadgeB_monthsData = useMemo(() => {
     const months = Array.from({ length: 12 }, (_, i) => ({
@@ -181,16 +230,23 @@ export default function HiddenMissionPage() {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
     const targetYear = parseInt(awardYear, 10) || currentYear;
+    const nowTime = now.getTime();
 
     const buyMonths = new Set<number>();
     const hunterRows = data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
     for (const item of hunterRows) {
       if (!item.buyDate) continue;
+      const buy = new Date(item.buyDate);
+      // GATEKEEPER CHECK: skip future dates
+      if (isNaN(buy.getTime()) || buy.getTime() > nowTime) continue;
+
       const parts = item.buyDate.split(/[/.-]/);
       if (parts.length >= 2) {
         const y = parts[0].trim();
         const m = parseInt(parts[1], 10);
         if (y === awardYear && m >= 1 && m <= 12) {
+          if (targetYear === currentYear && m > currentMonth) continue;
+          if (targetYear > currentYear) continue;
           buyMonths.add(m);
         }
       }
@@ -221,7 +277,15 @@ export default function HiddenMissionPage() {
   const personalLeadgeC_returnRate = useMemo(() => {
     if (!selectedHunter || !data.leadgeC || data.leadgeC.length === 0) return "0.00%";
     
-    const matches = data.leadgeC.filter((item: any) => item.hunter === selectedHunter && (item.date || '').includes(awardYear));
+    const nowTime = Date.now();
+    const matches = data.leadgeC.filter((item: any) => {
+      if (item.hunter !== selectedHunter || !(item.date || '').includes(awardYear)) return false;
+      if (item.date) {
+        const d = new Date(item.date);
+        if (!isNaN(d.getTime()) && d.getTime() > nowTime) return false;
+      }
+      return true;
+    });
     
     let target = null;
     if (matches.length > 0) {
