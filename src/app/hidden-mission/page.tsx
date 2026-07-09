@@ -676,8 +676,8 @@ export default function HiddenMissionPage() {
           values = [[
             editingItem.date || '',
             editingItem.hunter || '',
-            String(editingItem.amount || ''),
-            editingItem.category || 'A耐性'
+            editingItem.category || 'A耐性',
+            String(editingItem.amount || '')
           ]];
         }
         payload = { action: 'append', tab: activeTab, values };
@@ -702,8 +702,8 @@ export default function HiddenMissionPage() {
           values = [[
             editingItem.date || '',
             editingItem.hunter || '',
-            String(editingItem.amount || ''),
-            editingItem.category || 'A耐性'
+            editingItem.category || 'A耐性',
+            String(editingItem.amount || '')
           ]];
         }
         payload = { action: 'update', tab: activeTab, rowIndex: editingItem.rowIndex, values };
@@ -1283,7 +1283,7 @@ export default function HiddenMissionPage() {
                                       <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
                                         <div className="flex flex-col gap-0.5">
                                           <div 
-                                            className={`font-bold text-white ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity underline-offset-2 hover:underline" : ""} truncate`}
+                                            className={`font-bold text-primary ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity underline-offset-2 hover:underline" : ""} truncate`}
                                             onClick={() => {
                                               if (canEdit) openEditModal(row);
                                             }}
@@ -1307,7 +1307,7 @@ export default function HiddenMissionPage() {
                                         {rawAmount && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">元</span>}
                                       </td>
                                       <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center" }}>
-                                        <span className="text-white font-bold">{row.type || '買'}</span>
+                                        <span className={`font-bold ${row.type === '買' ? 'text-red-400' : row.type === '賣' ? 'text-emerald-400' : 'text-white'}`}>{row.type || '買'}</span>
                                       </td>
                                     </tr>
                                   );
@@ -1323,9 +1323,9 @@ export default function HiddenMissionPage() {
                           <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
                             <thead className="sticky top-0 z-10 bg-surface-container-high">
                               <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
-                                <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4 }}>狩獵者</th>
-                                <th className="p-2 font-bold text-right whitespace-nowrap" style={{ width: "38%", padding: 4, textAlign: "right" }}>兌換獎金</th>
-                                <th className="p-2 font-bold text-left whitespace-nowrap" style={{ width: "34%", padding: 4, textAlign: "left" }}>類別</th>
+                                <th className="p-2 font-bold whitespace-nowrap" style={{ width: "30%", padding: 4 }}>狩獵者</th>
+                                <th className="p-2 font-bold text-left whitespace-nowrap" style={{ width: "38%", padding: 4, textAlign: "left" }}>類別</th>
+                                <th className="p-2 font-bold text-right whitespace-nowrap" style={{ width: "32%", padding: 4, textAlign: "right" }}>兌換獎金</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-primary/5">
@@ -1334,10 +1334,10 @@ export default function HiddenMissionPage() {
                                   const rawAmount = (row.amount || '').toString();
                                   return (
                                     <tr key={idx} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
-                                      <td className="p-2 whitespace-nowrap align-middle" style={{ width: "28%", padding: 4 }}>
+                                      <td className="p-2 whitespace-nowrap align-middle" style={{ width: "30%", padding: 4 }}>
                                         <div className="flex flex-col gap-0.5">
                                           <div 
-                                            className={`font-bold text-white ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity underline-offset-2 hover:underline" : ""} truncate`}
+                                            className={`font-bold text-primary ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity underline-offset-2 hover:underline" : ""} truncate`}
                                             onClick={() => {
                                               if (canEdit) openEditModal(row);
                                             }}
@@ -1347,12 +1347,24 @@ export default function HiddenMissionPage() {
                                           <div className="text-[9px] text-[#efe0d2]/60 font-mono">{row.date || '--'}</div>
                                         </div>
                                       </td>
-                                      <td className="p-2 text-right whitespace-nowrap align-middle" style={{ width: "38%", padding: 4, color: "#ffffff", textAlign: "right" }}>
+                                      <td className="p-2 text-left whitespace-nowrap align-middle" style={{ width: "38%", padding: 4, textAlign: "left" }}>
+                                        {(() => {
+                                          const cat = row.category || 'A耐性';
+                                          if (cat.includes('A') || cat.includes('耐性')) {
+                                            return <span className="bg-red-500/20 text-red-400 border border-red-500/40 px-2.5 py-0.5 rounded-md font-bold text-[10px] inline-block tracking-wider">{cat}</span>;
+                                          }
+                                          if (cat.includes('B') || cat.includes('定性')) {
+                                            return <span className="bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2.5 py-0.5 rounded-md font-bold text-[10px] inline-block tracking-wider">{cat}</span>;
+                                          }
+                                          if (cat.includes('C') || cat.includes('韌性')) {
+                                            return <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded-md font-bold text-[10px] inline-block tracking-wider">{cat}</span>;
+                                          }
+                                          return <span className="bg-white/10 text-white/80 border border-white/20 px-2.5 py-0.5 rounded-md font-bold text-[10px] inline-block tracking-wider">{cat}</span>;
+                                        })()}
+                                      </td>
+                                      <td className="p-2 text-right whitespace-nowrap align-middle" style={{ width: "32%", padding: 4, color: "#ffffff", textAlign: "right" }}>
                                         <span className="text-white font-mono font-bold text-xs">{rawAmount.replace(/[元NTD$]/gi, '')}</span>
                                         {rawAmount && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">元</span>}
-                                      </td>
-                                      <td className="p-2 text-left whitespace-nowrap align-middle" style={{ width: "34%", padding: 4, color: "#ffffff", textAlign: "left" }}>
-                                        <span className="text-white font-data-mono">{row.category || 'A耐性'}</span>
                                       </td>
                                     </tr>
                                   );
@@ -1461,16 +1473,6 @@ export default function HiddenMissionPage() {
               ) : (
                 <>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">獎金金額</label>
-                    <input
-                      className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
-                      value={editingItem.amount || ''}
-                      onChange={e => setEditingItem({ ...editingItem, amount: e.target.value })}
-                      placeholder="例如: $3,000"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">請領類別</label>
                     <select
                       className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
@@ -1481,6 +1483,16 @@ export default function HiddenMissionPage() {
                       <option value="B定性">B定性</option>
                       <option value="C韌性">C韌性</option>
                     </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">獎金金額</label>
+                    <input
+                      className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
+                      value={editingItem.amount || ''}
+                      onChange={e => setEditingItem({ ...editingItem, amount: e.target.value })}
+                      placeholder="例如: $3,000"
+                    />
                   </div>
                 </>
               )}

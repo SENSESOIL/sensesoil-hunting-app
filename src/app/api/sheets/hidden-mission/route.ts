@@ -86,8 +86,8 @@ export async function GET() {
           rowIndex: i + 1,
           date: row[0]?.trim() || '',
           hunter: row[1]?.trim() || '',
-          amount: row[2]?.trim() || '',
-          category: row[3]?.trim() || '',
+          category: row[2]?.trim() || '',
+          amount: row[3]?.trim() || '',
         });
       }
     }
