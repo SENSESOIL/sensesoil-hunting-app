@@ -1227,139 +1227,145 @@ export default function HiddenMissionPage() {
                     </div>
                   </section>
 
-                  {/* Editable Tables Section for Tracker (投資) & Reward (請領) */}
-                  <div className="bg-[#141414] border-2 border-primary/50 rounded-2xl p-6 shadow-2xl">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 border-b border-white/10 pb-4">
-                      <div>
-                        <span className="text-[10px] font-label-caps tracking-[0.2em] text-primary/70 uppercase">Management Table</span>
-                        <h3 className="text-xl font-bold font-display text-white flex items-center gap-2">
-                          <span>{activeTab === 'Tracker' ? '投資交易紀錄表 (Tracker)' : '獎金請領撥款表 (Reward)'}</span>
-                          {canEdit ? (
-                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded">直接連動編輯中</span>
-                          ) : (
-                            <span className="text-[10px] bg-white/10 text-white/50 px-2 py-0.5 rounded">僅供瀏覽</span>
-                          )}
-                        </h3>
-                      </div>
-
-                      {/* Chinese Toggle Switch & Add Button */}
-                      <div className="flex items-center gap-3 self-end sm:self-auto">
-                        <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/30">
-                          <button
-                            onClick={() => setActiveTab('Tracker')}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeTab === 'Tracker' ? 'bg-primary text-black shadow-md' : 'text-white/70 hover:text-white'}`}
-                          >
-                            投資
-                          </button>
-                          <button
-                            onClick={() => setActiveTab('Reward')}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeTab === 'Reward' ? 'bg-primary text-black shadow-md' : 'text-white/70 hover:text-white'}`}
-                          >
-                            請領
-                          </button>
-                        </div>
-
+                  {/* Editable Tables Section for Tracker (交易) & Reward (兌獎) */}
+                  <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
+                    {/* Header bar with toggle and add (+) button */}
+                    <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
+                      <div></div> {/* Empty left side as simple style, no titles/complex info */}
+                      <div className="flex items-center gap-2 ml-auto">
+                        {/* Add button (+) in place of play button */}
                         {canEdit && (
                           <button
                             onClick={openAddModal}
-                            className="bg-primary hover:bg-primary/90 text-black font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1 shadow-lg transition-transform active:scale-95"
+                            className="rounded-full bg-primary flex items-center justify-center transition-all hover:brightness-110 active:scale-90 shrink-0"
+                            style={{ width: '26px', height: '26px' }}
+                            title="新增資料"
                           >
-                            <span className="material-symbols-outlined text-[16px]">add</span>
-                            <span>新增{activeTab === 'Tracker' ? '投資' : '請領'}</span>
+                            <span className="material-symbols-outlined text-[16px] text-black font-bold leading-none">add</span>
                           </button>
                         )}
+
+                        {/* Toggle Pill Button */}
+                        <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
+                          <button 
+                            onClick={() => setActiveTab('Tracker')}
+                            className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${activeTab === 'Tracker' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                          >交易</button>
+                          <button 
+                            onClick={() => setActiveTab('Reward')}
+                            className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${activeTab === 'Reward' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                          >兌獎</button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Table Render */}
-                    <div className="overflow-x-auto">
-                      {activeTab === 'Tracker' ? (
-                        <table className="w-full text-left border-collapse font-mono text-xs">
-                          <thead>
-                            <tr className="border-b border-primary/40 text-primary bg-black/60">
-                              <th className="p-3">日期</th>
-                              <th className="p-3">狩獵者</th>
-                              <th className="p-3">標的</th>
-                              <th className="p-3 text-right">股數</th>
-                              <th className="p-3 text-right">金額</th>
-                              <th className="p-3 text-center">交易</th>
-                              {canEdit && <th className="p-3 text-center">操作</th>}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data.tracker.length > 0 ? (
-                              data.tracker.map((row: any, idx: number) => (
-                                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                  <td className="p-3 text-white/80">{row.date}</td>
-                                  <td className="p-3 font-bold text-white">{row.hunter}</td>
-                                  <td className="p-3 text-primary font-bold">{row.target}</td>
-                                  <td className="p-3 text-right text-white">{row.shares}</td>
-                                  <td className="p-3 text-right text-emerald-400 font-bold">{row.amount}</td>
-                                  <td className="p-3 text-center">
-                                    <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${row.type === '買' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}`}>
-                                      {row.type || '買'}
-                                    </span>
-                                  </td>
-                                  {canEdit && (
-                                    <td className="p-3 text-center">
-                                      <button
-                                        onClick={() => openEditModal(row)}
-                                        className="text-primary hover:text-white bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded transition-colors"
-                                        title="編輯/刪除此紀錄"
-                                      >
-                                        <span className="material-symbols-outlined text-[14px]">edit</span>
-                                      </button>
-                                    </td>
-                                  )}
+                    {/* Table Container exactly like running-records */}
+                    <div className="border border-primary/30 bg-transparent rounded-sm overflow-hidden flex flex-col">
+                      <div className="overflow-x-auto overflow-y-auto max-h-[606px] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {activeTab === 'Tracker' ? (
+                          <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
+                            <thead className="sticky top-0 z-10 bg-surface-container-high">
+                              <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
+                                <th className="p-2 font-bold whitespace-nowrap" style={{ width: "23%", padding: 4 }}>狩獵者</th>
+                                <th className="p-2 font-bold whitespace-nowrap" style={{ width: "27%", padding: 4, textAlign: "left" }}>標的</th>
+                                <th className="p-2 font-bold text-right whitespace-nowrap" style={{ width: "17%", padding: 4, textAlign: "right" }}>股數</th>
+                                <th className="p-2 font-bold text-right whitespace-nowrap" style={{ width: "19%", padding: 4, textAlign: "right" }}>金額</th>
+                                <th className="p-2 font-bold text-center whitespace-nowrap" style={{ width: "14%", padding: 4, textAlign: "center" }}>交易</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-primary/5">
+                              {data.tracker && data.tracker.length > 0 ? (
+                                data.tracker.map((row: any, idx: number) => {
+                                  const rawShares = (row.shares || '').toString();
+                                  const rawAmount = (row.amount || '').toString();
+                                  return (
+                                    <tr key={idx} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
+                                      <td className="p-2 whitespace-nowrap align-middle" style={{ width: "23%", padding: 4 }}>
+                                        <div className="flex flex-col gap-0.5">
+                                          <div 
+                                            className={`font-bold text-white ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity underline-offset-2 hover:underline" : ""} truncate`}
+                                            onClick={() => {
+                                              if (canEdit) openEditModal(row);
+                                            }}
+                                          >
+                                            {row.hunter || '--'}
+                                          </div>
+                                          <div className="text-[9px] text-[#efe0d2]/60 font-mono">{row.date || '--'}</div>
+                                        </div>
+                                      </td>
+                                      <td className="p-2 font-data-mono align-middle" style={{ width: "27%", padding: 4, color: "#ffffff", textAlign: "left" }}>
+                                        <div className="truncate leading-tight text-white font-bold">
+                                          {row.target || '--'}
+                                        </div>
+                                      </td>
+                                      <td className="p-2 text-right whitespace-nowrap align-middle" style={{ width: "17%", padding: 4, color: "#ffffff", textAlign: "right" }}>
+                                        <span className="text-white font-mono">{rawShares.replace(/[股]/g, '')}</span>
+                                        {rawShares && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">股</span>}
+                                      </td>
+                                      <td className="p-2 text-right whitespace-nowrap align-middle" style={{ width: "19%", padding: 4, color: "#ffffff", textAlign: "right" }}>
+                                        <span className="text-white font-mono font-bold">{rawAmount.replace(/[元NTD$]/gi, '')}</span>
+                                        {rawAmount && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">元</span>}
+                                      </td>
+                                      <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center" }}>
+                                        <span className="text-white font-bold">{row.type || '買'}</span>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              ) : (
+                                <tr>
+                                  <td colSpan={5} className="p-6 text-center text-white/40 font-sans">目前尚無交易紀錄</td>
                                 </tr>
-                              ))
-                            ) : (
-                              <tr><td colSpan={7} className="p-6 text-center text-white/40 font-sans">目前尚無投資交易紀錄</td></tr>
-                            )}
-                          </tbody>
-                        </table>
-                      ) : (
-                        <table className="w-full text-left border-collapse font-mono text-xs">
-                          <thead>
-                            <tr className="border-b border-primary/40 text-primary bg-black/60">
-                              <th className="p-3">請領日期</th>
-                              <th className="p-3">狩獵者</th>
-                              <th className="p-3 text-right">獎金金額</th>
-                              <th className="p-3">請領類別</th>
-                              {canEdit && <th className="p-3 text-center">操作</th>}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data.reward.length > 0 ? (
-                              data.reward.map((row: any, idx: number) => (
-                                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                  <td className="p-3 text-white/80">{row.date}</td>
-                                  <td className="p-3 font-bold text-white">{row.hunter}</td>
-                                  <td className="p-3 text-right text-emerald-400 font-bold text-sm">{row.amount}</td>
-                                  <td className="p-3">
-                                    <span className="bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded font-bold text-[10px]">
-                                      {row.category || 'A耐性'}
-                                    </span>
-                                  </td>
-                                  {canEdit && (
-                                    <td className="p-3 text-center">
-                                      <button
-                                        onClick={() => openEditModal(row)}
-                                        className="text-primary hover:text-white bg-primary/10 hover:bg-primary/20 px-2 py-1 rounded transition-colors"
-                                        title="編輯/刪除此紀錄"
-                                      >
-                                        <span className="material-symbols-outlined text-[14px]">edit</span>
-                                      </button>
-                                    </td>
-                                  )}
+                              )}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <table className="w-full text-left font-data-mono border-collapse table-fixed text-[10px]">
+                            <thead className="sticky top-0 z-10 bg-surface-container-high">
+                              <tr className="text-[#efe0d2]/70 border-b border-primary/20 h-[30px]">
+                                <th className="p-2 font-bold whitespace-nowrap" style={{ width: "28%", padding: 4 }}>狩獵者</th>
+                                <th className="p-2 font-bold text-right whitespace-nowrap" style={{ width: "38%", padding: 4, textAlign: "right" }}>兌換獎金</th>
+                                <th className="p-2 font-bold text-left whitespace-nowrap" style={{ width: "34%", padding: 4, textAlign: "left" }}>類別</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-primary/5">
+                              {data.reward && data.reward.length > 0 ? (
+                                data.reward.map((row: any, idx: number) => {
+                                  const rawAmount = (row.amount || '').toString();
+                                  return (
+                                    <tr key={idx} className={`h-[32px] ${idx % 2 === 1 ? "bg-primary/10" : ""}`}>
+                                      <td className="p-2 whitespace-nowrap align-middle" style={{ width: "28%", padding: 4 }}>
+                                        <div className="flex flex-col gap-0.5">
+                                          <div 
+                                            className={`font-bold text-white ${canEdit ? "cursor-pointer hover:opacity-70 transition-opacity underline-offset-2 hover:underline" : ""} truncate`}
+                                            onClick={() => {
+                                              if (canEdit) openEditModal(row);
+                                            }}
+                                          >
+                                            {row.hunter || '--'}
+                                          </div>
+                                          <div className="text-[9px] text-[#efe0d2]/60 font-mono">{row.date || '--'}</div>
+                                        </div>
+                                      </td>
+                                      <td className="p-2 text-right whitespace-nowrap align-middle" style={{ width: "38%", padding: 4, color: "#ffffff", textAlign: "right" }}>
+                                        <span className="text-white font-mono font-bold text-xs">{rawAmount.replace(/[元NTD$]/gi, '')}</span>
+                                        {rawAmount && <span className="text-[8px] text-[#efe0d2]/60 ml-0.5">元</span>}
+                                      </td>
+                                      <td className="p-2 text-left whitespace-nowrap align-middle" style={{ width: "34%", padding: 4, color: "#ffffff", textAlign: "left" }}>
+                                        <span className="text-white font-data-mono">{row.category || 'A耐性'}</span>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              ) : (
+                                <tr>
+                                  <td colSpan={3} className="p-6 text-center text-white/40 font-sans">目前尚無兌獎紀錄</td>
                                 </tr>
-                              ))
-                            ) : (
-                              <tr><td colSpan={5} className="p-6 text-center text-white/40 font-sans">目前尚無獎金請領紀錄</td></tr>
-                            )}
-                          </tbody>
-                        </table>
-                      )}
+                              )}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
