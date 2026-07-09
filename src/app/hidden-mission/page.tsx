@@ -283,8 +283,9 @@ export default function HiddenMissionPage() {
     return months;
   }, [data.leadgeA, selectedHunter, awardYear]);
 
-  const personalLeadgeC_returnRate = useMemo(() => {
-    if (!selectedHunter || !data.leadgeC || data.leadgeC.length === 0) return "0.00%";
+  const personalLeadgeC_info = useMemo(() => {
+    const defaultRes = { rate: "0.00%", label: "年度績效" };
+    if (!selectedHunter || !data.leadgeC || data.leadgeC.length === 0) return defaultRes;
     
     const nowTime = Date.now();
     const matches = data.leadgeC.filter((item: any) => {
@@ -303,10 +304,24 @@ export default function HiddenMissionPage() {
       target = data.leadgeC.find((item: any) => item.hunter === selectedHunter);
     }
     
-    if (!target || !target.returnRate || !target.returnRate.trim()) return "0.00%";
-    const rate = target.returnRate.trim();
-    return rate.endsWith('%') ? rate : `${rate}%`;
+    if (!target) return defaultRes;
+
+    const rawRate = target.returnRate && target.returnRate.trim() ? target.returnRate.trim() : "0.00%";
+    const rate = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
+
+    const dateStr = (target.date || '').trim();
+    let label = "年度績效";
+    if (dateStr.includes("6/30") || dateStr.includes("06/30") || dateStr.includes("06-30") || dateStr.includes("6-30") || dateStr.includes("年中")) {
+      label = "年中績效";
+    } else if (dateStr.includes("12/31") || dateStr.includes("12-31") || dateStr.includes("年度")) {
+      label = "年度績效";
+    }
+
+    return { rate, label };
   }, [data.leadgeC, selectedHunter, awardYear]);
+
+  const personalLeadgeC_returnRate = personalLeadgeC_info.rate;
+  const personalLeadgeC_label = personalLeadgeC_info.label;
 
   // Handle Save / Add
   const handleSave = async () => {
@@ -402,7 +417,7 @@ export default function HiddenMissionPage() {
 
   const openAddModal = () => {
     setModalMode('add');
-    const defaultHunter = !isAdmin && loggedInHunterName ? loggedInHunterName : (selectedHunter || loggedInHunterName || session?.user?.name || '');
+    const defaultHunter = !canEdit && loggedInHunterName ? loggedInHunterName : (selectedHunter || loggedInHunterName || session?.user?.name || '');
     if (activeTab === 'Tracker') {
       const today = new Date().toISOString().split('T')[0].replace(/-/g, '/');
       setEditingItem({
@@ -691,7 +706,7 @@ export default function HiddenMissionPage() {
                               </span>
                             </div>
                             <div className="flex items-baseline justify-between">
-                              <span className="text-white font-bold text-sm">年度績效 {personalLeadgeC_returnRate}</span>
+                              <span className="text-white font-bold text-sm">{personalLeadgeC_label} {personalLeadgeC_returnRate}</span>
                               {(personalScoreboard?.challengeC.total || 0) > 0 && (
                                 <span className="text-[11px] text-emerald-400/70 font-display">
                                   +${(personalScoreboard?.challengeC.total || 0).toLocaleString()} 價值 | 餘額 ${(personalScoreboard?.challengeC.balance || 0).toLocaleString()}
@@ -983,7 +998,7 @@ export default function HiddenMissionPage() {
                 <input
                   className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   value={editingItem.hunter || ''}
-                  disabled={!isAdmin}
+                  disabled={!canEdit}
                   onChange={e => setEditingItem({ ...editingItem, hunter: e.target.value })}
                   placeholder="例如: 陳政剛"
                 />
