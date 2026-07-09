@@ -16,7 +16,7 @@ export default function HiddenMissionPage() {
   const [lastScrollY, setLastScrollY] = useState(0);
 
   // View toggle: individual vs team
-  const [view, setView] = useState<'individual' | 'team'>('individual');
+  const [view, setView] = useState<'individual' | 'team'>('team');
 
   // Active table tab for Team View: 'Tracker' (投資) vs 'Reward' (請領)
   const [activeTab, setActiveTab] = useState<'Tracker' | 'Reward'>('Tracker');
@@ -60,23 +60,32 @@ export default function HiddenMissionPage() {
     };
   }, [rawData]);
 
-  // Check user role
+  // Check user role & hunter name
+  const loggedInHunterName = (session?.user as any)?.hunterName || session?.user?.name || "";
   const roles = (session?.user as any)?.roles || {};
   const userRole = roles["hidden"] || "viewer";
+  const isAdmin = userRole === "admin";
   const canEdit = userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development";
 
-  // Set default hunter to logged in user or first in scoreboard
+  // Enforce permission-based hunter selection in Personal Module
   useEffect(() => {
-    if (!selectedHunter && data.scoreboard.length > 0) {
-      const currentUserName = session?.user?.name || "";
-      const match = data.scoreboard.find((item: any) => item.hunter === currentUserName);
-      if (match) {
-        setSelectedHunter(match.hunter);
+    if (data.scoreboard.length > 0) {
+      if (!isAdmin) {
+        // Non-admin (editor / general): strictly only allowed to see themselves
+        if (loggedInHunterName && selectedHunter !== loggedInHunterName) {
+          setSelectedHunter(loggedInHunterName);
+        } else if (!loggedInHunterName && !selectedHunter) {
+          setSelectedHunter(data.scoreboard[0].hunter);
+        }
       } else {
-        setSelectedHunter(data.scoreboard[0].hunter);
+        // Admin: can see any hunter. If empty or on load, default to logged in hunter or first scoreboard item
+        if (!selectedHunter) {
+          const match = data.scoreboard.find((item: any) => item.hunter === loggedInHunterName);
+          setSelectedHunter(match ? match.hunter : data.scoreboard[0].hunter);
+        }
       }
     }
-  }, [data.scoreboard, session, selectedHunter]);
+  }, [data.scoreboard, isAdmin, loggedInHunterName, selectedHunter, view]);
 
   // Handle scroll to hide/show navbar
   useEffect(() => {
@@ -393,11 +402,12 @@ export default function HiddenMissionPage() {
 
   const openAddModal = () => {
     setModalMode('add');
+    const defaultHunter = !isAdmin && loggedInHunterName ? loggedInHunterName : (selectedHunter || loggedInHunterName || session?.user?.name || '');
     if (activeTab === 'Tracker') {
       const today = new Date().toISOString().split('T')[0].replace(/-/g, '/');
       setEditingItem({
         date: today,
-        hunter: selectedHunter || session?.user?.name || '',
+        hunter: defaultHunter,
         target: '0050',
         shares: '50',
         amount: '$10,000',
@@ -407,7 +417,7 @@ export default function HiddenMissionPage() {
       const today = new Date().toISOString().split('T')[0].replace(/-/g, '/');
       setEditingItem({
         date: today,
-        hunter: selectedHunter || session?.user?.name || '',
+        hunter: defaultHunter,
         amount: '$3,000',
         category: 'A耐性'
       });
@@ -436,7 +446,15 @@ export default function HiddenMissionPage() {
         <div className="flex items-center gap-2">
           <button
             className="flex items-center justify-center p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-            onClick={() => setView(view === 'individual' ? 'team' : 'individual')}
+            onClick={() => {
+              const nextView = view === 'individual' ? 'team' : 'individual';
+              setView(nextView);
+              if (nextView === 'individual' && loggedInHunterName) {
+                if (!isAdmin || !selectedHunter) {
+                  setSelectedHunter(loggedInHunterName);
+                }
+              }
+            }}
             title={view === 'individual' ? "切換至團隊視角" : "切換至個人視角"}
           >
             <span className="material-symbols-outlined text-[24px]">
@@ -487,7 +505,9 @@ export default function HiddenMissionPage() {
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setIsHunterDropdownOpen(false)} />
                           <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto scrollbar-hide">
-                            {data.scoreboard.map((item: any) => (
+                            {data.scoreboard
+                              .filter((item: any) => isAdmin || item.hunter === loggedInHunterName || (!loggedInHunterName && item.hunter === selectedHunter))
+                              .map((item: any) => (
                               <div
                                 key={item.hunter}
                                 className={`px-4 py-3 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm border-b border-primary/10 last:border-b-0 ${selectedHunter === item.hunter ? 'bg-primary/30 text-primary font-bold' : ''}`}
@@ -961,8 +981,9 @@ export default function HiddenMissionPage() {
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] text-primary/80 font-sans uppercase tracking-widest font-bold">狩獵者名稱</label>
                 <input
-                  className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none"
+                  className="bg-black/60 border border-primary/40 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   value={editingItem.hunter || ''}
+                  disabled={!isAdmin}
                   onChange={e => setEditingItem({ ...editingItem, hunter: e.target.value })}
                   placeholder="例如: 陳政剛"
                 />
