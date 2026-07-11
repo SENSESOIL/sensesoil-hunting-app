@@ -57,7 +57,7 @@ export async function appendSheet(
     spreadsheetId,
     range,
     valueInputOption: "USER_ENTERED",
-    insertDataOption: "INSERT_ROWS",
+    insertDataOption: "OVERWRITE",
     requestBody: { values },
   });
 }

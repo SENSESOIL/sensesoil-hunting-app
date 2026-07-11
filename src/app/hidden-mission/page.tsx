@@ -677,22 +677,28 @@ export default function HiddenMissionPage() {
         return '$' + Math.round(num).toLocaleString('en-US');
       };
 
+      const cleanStr = (val: any, def: string = '') => {
+        if (!val) return def;
+        const s = String(val).trim();
+        return s === '' ? def : s;
+      };
+
       if (modalMode === 'add') {
         let values: string[][] = [];
         if (activeTab === 'Tracker') {
           values = [[
-            editingItem.date || '',
-            editingItem.hunter || '',
-            editingItem.target || '',
+            cleanStr(editingItem.date),
+            cleanStr(editingItem.hunter),
+            cleanStr(editingItem.target),
             cleanSharesForSheet(editingItem.shares),
             formatAmountForSheet(editingItem.amount),
-            editingItem.type || '買'
+            cleanStr(editingItem.type, '買')
           ]];
         } else {
           values = [[
-            editingItem.date || '',
-            editingItem.hunter || '',
-            editingItem.category || 'A耐性',
+            cleanStr(editingItem.date),
+            cleanStr(editingItem.hunter),
+            cleanStr(editingItem.category, 'A耐性'),
             formatAmountForSheet(editingItem.amount)
           ]];
         }
@@ -707,18 +713,18 @@ export default function HiddenMissionPage() {
         let values: string[][] = [];
         if (activeTab === 'Tracker') {
           values = [[
-            editingItem.date || '',
-            editingItem.hunter || '',
-            editingItem.target || '',
+            cleanStr(editingItem.date),
+            cleanStr(editingItem.hunter),
+            cleanStr(editingItem.target),
             cleanSharesForSheet(editingItem.shares),
             formatAmountForSheet(editingItem.amount),
-            editingItem.type || '買'
+            cleanStr(editingItem.type, '買')
           ]];
         } else {
           values = [[
-            editingItem.date || '',
-            editingItem.hunter || '',
-            editingItem.category || 'A耐性',
+            cleanStr(editingItem.date),
+            cleanStr(editingItem.hunter),
+            cleanStr(editingItem.category, 'A耐性'),
             formatAmountForSheet(editingItem.amount)
           ]];
         }
