@@ -1600,13 +1600,15 @@ export default function HiddenMissionPage() {
                           return displayTeamLeaderboardData.map((item: any, index: number) => {
                             const maxIndex = Math.max(1, displayTeamLeaderboardData.length - 1);
                             const barOpacity = 1 - (0.3 * (index / maxIndex));
-                            const val = teamLeaderboardMetric === 'holding'
+                            const rawVal = teamLeaderboardMetric === 'holding'
                               ? (item.holdingDays || 0)
                               : teamLeaderboardMetric === 'streak'
                               ? (item.consecutiveMonths || 0)
                               : teamLeaderboardMetric === 'profit'
-                              ? Math.abs(item.profitNum || 0)
-                              : Math.abs(item.returnRateNum || 0);
+                              ? (item.profitNum || 0)
+                              : (item.returnRateNum || 0);
+                            const isNegative = rawVal < 0;
+                            const val = Math.abs(rawVal);
                             const barPct = Math.min(100, Math.max(8, (val / maxVal) * 100));
                             
                             return (
@@ -1615,10 +1617,10 @@ export default function HiddenMissionPage() {
                                 <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${index < 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
                                   <span className={`text-[12px] ${index === 0 ? 'font-bold' : 'font-normal'}`}>{item.hunter.slice(-1)}</span>
                                 </div>
-                                <div className="flex-1 h-2 bg-primary/10 rounded-r-sm overflow-visible flex relative">
+                                <div className={`flex-1 h-2 rounded-r-sm overflow-visible flex relative ${isNegative ? 'bg-white/5' : 'bg-primary/10'}`}>
                                   <div 
-                                    className={`h-full bg-primary ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
-                                    style={{ width: `${barPct}%`, opacity: barOpacity, transition: 'width 0.35s ease-out' }}
+                                    className={`h-full rounded-r-sm ${isNegative ? 'bg-[#6B7280]' : `bg-primary ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}`} 
+                                    style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.35s ease-out' }}
                                   ></div>
                                 </div>
                                 <div className="w-24 text-right shrink-0">
