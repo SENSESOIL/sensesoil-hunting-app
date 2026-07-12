@@ -541,10 +541,14 @@ export default function BasicMissionPage() {
 
     return list.map((item, idx) => {
       const barPct = Math.min(100, Math.max(8, (item.score / maxScore) * 100));
+      const displayScore = (leaderboardMetric === 'mission' || leaderboardMetric === 'awakening' || (leaderboardMetric as any) === 'score')
+        ? item.score.toFixed(1)
+        : item.score.toString();
       return {
         rank: idx + 1,
         name: item.name,
         score: item.score,
+        displayScore,
         barPct
       };
     });
@@ -1252,7 +1256,7 @@ export default function BasicMissionPage() {
                     </div>
                     <div className="w-20 text-right shrink-0">
                       <div className="flex items-baseline justify-end gap-0.5">
-                        <span className="text-white text-[13px] font-bold font-mono">{item.score}</span>
+                        <span className="text-white text-[13px] font-bold font-mono">{item.displayScore ?? item.score}</span>
                         <span className="text-white/70 text-[10px]">pts</span>
                       </div>
                     </div>
