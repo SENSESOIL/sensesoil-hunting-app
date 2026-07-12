@@ -395,6 +395,125 @@ export default function HiddenMissionPage() {
     return frames;
   }, [data.scoreboard, data.leadgeA, data.leadgeC, awardYear, teamLeaderboardMetric]);
 
+  const monthlyChampionStats = useMemo(() => {
+    if (!data.scoreboard || data.scoreboard.length === 0) {
+      return { champion: "-", consecutiveMonths: "-" };
+    }
+    const cleanNumLocal = (val: any) => {
+      if (!val || typeof val !== 'string') return 0;
+      const n = parseFloat(val.replace(/[^0-9.-]+/g, ''));
+      return isNaN(n) ? 0 : n;
+    };
+    const targetYearStr = awardYear || "2026";
+    const targetYear = parseInt(targetYearStr, 10);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = targetYear === currentYear ? (now.getMonth() + 1) : (targetYear < currentYear ? 12 : 0);
+
+    if (currentMonth <= 0) {
+      return { champion: "-", consecutiveMonths: "-" };
+    }
+
+    const monthlyChampions = new Map<number, string>();
+
+    for (let m = 1; m <= currentMonth; m++) {
+      const endOfMonthTime = new Date(targetYear, m, 0, 23, 59, 59, 999).getTime();
+      let maxTotal = -1;
+      let champs: string[] = [];
+
+      for (const sItem of data.scoreboard) {
+        const hunter = sItem.hunter;
+        let totalA = 0;
+        let totalB = 0;
+        let totalC = 0;
+
+        if (data.leadgeA) {
+          const rowsA = data.leadgeA.filter((r: any) => r.hunter === hunter);
+          for (const r of rowsA) {
+            if (!r.buyDate) continue;
+            const buy = new Date(r.buyDate);
+            if (!isNaN(buy.getTime()) && buy.getTime() <= endOfMonthTime) {
+              const parts = r.buyDate.split(/[/.-]/);
+              if (parts.length >= 1 && parts[0].trim() === targetYearStr) {
+                if (r.days90) {
+                  const d90 = new Date(r.days90);
+                  if (!isNaN(d90.getTime()) && d90.getTime() <= endOfMonthTime) totalA += cleanNumLocal(r.q1Reward);
+                }
+                if (r.days180) {
+                  const d180 = new Date(r.days180);
+                  if (!isNaN(d180.getTime()) && d180.getTime() <= endOfMonthTime) totalA += cleanNumLocal(r.q2Reward);
+                }
+                if (r.days270) {
+                  const d270 = new Date(r.days270);
+                  if (!isNaN(d270.getTime()) && d270.getTime() <= endOfMonthTime) totalA += cleanNumLocal(r.q3Reward);
+                }
+                if (r.days360) {
+                  const d360 = new Date(r.days360);
+                  if (!isNaN(d360.getTime()) && d360.getTime() <= endOfMonthTime) totalA += cleanNumLocal(r.q4Reward);
+                }
+                if (r.shares720 && r.y2Reward) {
+                  totalA += cleanNumLocal(r.y2Reward);
+                }
+              }
+            }
+          }
+        }
+
+        if (data.reward) {
+          for (const r of data.reward) {
+            if (r.hunter !== hunter) continue;
+            if (!r.date) continue;
+            const rd = new Date(r.date);
+            if (!isNaN(rd.getTime()) && rd.getTime() <= endOfMonthTime) {
+              const parts = r.date.split(/[/.-]/);
+              if (parts.length >= 1 && parts[0].trim() === targetYearStr) {
+                if (r.category === 'B定性') totalB += cleanNumLocal(r.amount);
+                if (r.category === 'C韌性') totalC += cleanNumLocal(r.amount);
+              }
+            }
+          }
+        }
+
+        const totalABC = (m === currentMonth && targetYearStr === '2026') ? (sItem.totalReward || 0) : (totalA + totalB + totalC);
+
+        if (totalABC > maxTotal && totalABC > 0) {
+          maxTotal = totalABC;
+          champs = [hunter];
+        } else if (totalABC === maxTotal && totalABC > 0) {
+          champs.push(hunter);
+        }
+      }
+
+      if (champs.length > 0) {
+        monthlyChampions.set(m, champs[0]);
+      }
+    }
+
+    const latestChamp = data.scoreboard[0]?.hunter || "-";
+    if (latestChamp === "-" || !monthlyChampions.has(currentMonth)) {
+      return {
+        champion: latestChamp,
+        consecutiveMonths: latestChamp !== "-" ? "01" : "-",
+      };
+    }
+
+    let streak = 0;
+    for (let m = currentMonth; m >= 1; m--) {
+      if (monthlyChampions.get(m) === latestChamp) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    if (streak <= 0) streak = 1;
+
+    return {
+      champion: latestChamp,
+      consecutiveMonths: streak.toString().padStart(2, "0"),
+    };
+  }, [data.scoreboard, data.leadgeA, data.reward, awardYear]);
+
   // Stop race when metric or year changes
   useEffect(() => {
     if (raceTimerRef.current) { clearInterval(raceTimerRef.current); raceTimerRef.current = null; }
@@ -1095,29 +1214,29 @@ export default function HiddenMissionPage() {
 
               {/* TEAM VIEW */}
               {view === 'team' && (
-                <div className="flex flex-col gap-6 animate-fade-in">
+                <div className="animate-fade-in">
                   {/* Top Header - Team View */}
                   <div className="flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] h-[60px]" style={{ marginTop: 32, marginBottom: 32 }}>
                     <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
-                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵季排行榜</p>
+                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵月排行榜</p>
                       <div className="h-[30px] flex items-center w-full">
                         <h2 className="text-white font-bold tracking-wider uppercase w-full"
                           style={{
-                            fontSize: (awardYear === '2026' ? (data.scoreboard[0]?.hunter || "-") : "-").length <= 4 ? '30px' :
-                                      (awardYear === '2026' ? (data.scoreboard[0]?.hunter || "-") : "-").length <= 10 ? '20px' : '14px',
-                            lineHeight: (awardYear === '2026' ? (data.scoreboard[0]?.hunter || "-") : "-").length <= 10 ? '30px' : '15px',
+                            fontSize: (monthlyChampionStats.champion).length <= 4 ? '30px' :
+                                      (monthlyChampionStats.champion).length <= 10 ? '20px' : '14px',
+                            lineHeight: (monthlyChampionStats.champion).length <= 10 ? '30px' : '15px',
                             display: '-webkit-box',
                             WebkitLineClamp: 1,
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
                             wordBreak: 'break-all'
                           }}
-                        >{awardYear === '2026' ? (data.scoreboard[0]?.hunter || "-") : "-"}</h2>
+                        >{monthlyChampionStats.champion}</h2>
                       </div>
                     </div>
                     <div className="text-right flex flex-col justify-end flex-shrink-0">
-                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯季數冠軍</p>
-                      <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{awardYear === '2026' ? "01" : "-"}</p>
+                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍月數</p>
+                      <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{monthlyChampionStats.consecutiveMonths}</p>
                     </div>
                   </div>
 
