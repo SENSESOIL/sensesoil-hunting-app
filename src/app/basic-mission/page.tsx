@@ -1001,7 +1001,7 @@ export default function BasicMissionPage() {
 
       <PullToRefresh>
         <main className="relative pt-16 px-4">
-        <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
+        <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] h-[60px] ${view === 'individual' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
             <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵週排行榜</p>
             <div className="h-[30px] flex items-center w-full">
@@ -1030,7 +1030,7 @@ export default function BasicMissionPage() {
           </div>
         </div>
 
-        <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] ${view === 'team' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
+        <div className={`flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] h-[60px] ${view === 'team' ? 'hidden' : ''}`} style={{ marginTop: 32, marginBottom: 32 }}>
           <div className="flex flex-col border-l-[3px] border-primary pl-3 relative">
             <style>{`
               @keyframes textReveal {
@@ -1149,8 +1149,8 @@ export default function BasicMissionPage() {
           </div>
         </section>
 
-        {/* Team Module */}
-        <section className={`space-y-[18px] mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
+        {/* Team Leaderboard Bar Chart */}
+        <section className={`mb-[5px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             {/* Race date indicator - above title */}
             <div className="h-[16px] mb-1">
@@ -1267,6 +1267,10 @@ export default function BasicMissionPage() {
               )}
             </div>
           </div>
+        </section>
+
+        {/* Team Module Content (Weekly Stats) */}
+        <section className={`space-y-[18px] mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm">
             <div className="flex justify-between mb-6 items-baseline relative">
               <div className="relative">
