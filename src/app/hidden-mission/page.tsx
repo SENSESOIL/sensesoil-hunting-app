@@ -1286,7 +1286,7 @@ export default function HiddenMissionPage() {
                             onClick={() => setIsLeaderboardYearDropdownOpen(!isLeaderboardYearDropdownOpen)}
                             className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-emerald-400 transition-colors"
                           >
-                            {awardYear} 年度排行榜
+                            {awardYear} 排行榜
                           </button>
                           
                           {isLeaderboardYearDropdownOpen && (
