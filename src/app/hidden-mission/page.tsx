@@ -9,6 +9,92 @@ import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+// Helper function to calculate exact FIFO holding days using Tracker buy/sell records
+function computeHoldingDays(hunter: string, frameTime: number, awardYear: string, data: any): number {
+  let maxOpenDays = 0;
+  let maxClosedDays = 0;
+  let hasTrackerRows = false;
+
+  if (data.tracker && data.tracker.length > 0) {
+    const trackerMatches = data.tracker.filter((t: any) => {
+      if (t.hunter !== hunter || !(t.date || '').includes(awardYear)) return false;
+      const d = new Date(t.date);
+      return !isNaN(d.getTime()) && d.getTime() <= frameTime;
+    });
+
+    if (trackerMatches.length > 0) {
+      hasTrackerRows = true;
+      // Sort chronologically
+      const sorted = [...trackerMatches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const openBatches: Record<string, Array<{ buyTime: number; shares: number }>> = {};
+
+      for (const t of sorted) {
+        const target = t.target?.trim();
+        if (!target) continue;
+        const shares = parseFloat(String(t.shares).replace(/,/g, '')) || 0;
+        if (shares <= 0) continue;
+        const tTime = new Date(t.date).getTime();
+        if (isNaN(tTime)) continue;
+
+        if (!openBatches[target]) openBatches[target] = [];
+
+        if (t.type === '買' || !t.type || t.type.trim() === '') {
+          openBatches[target].push({ buyTime: tTime, shares });
+        } else if (t.type === '賣') {
+          let rem = shares;
+          while (rem > 0 && openBatches[target].length > 0) {
+            const batch = openBatches[target][0];
+            const held = Math.max(0, Math.floor((tTime - batch.buyTime) / (1000 * 60 * 60 * 24)));
+            if (held > maxClosedDays) maxClosedDays = held;
+
+            if (batch.shares <= rem) {
+              rem -= batch.shares;
+              openBatches[target].shift();
+            } else {
+              batch.shares -= rem;
+              rem = 0;
+            }
+          }
+        }
+      }
+
+      // Check remaining open batches as of frameTime
+      for (const batches of Object.values(openBatches)) {
+        for (const b of batches) {
+          if (b.shares > 0) {
+            const held = Math.max(0, Math.floor((frameTime - b.buyTime) / (1000 * 60 * 60 * 24)));
+            if (held > maxOpenDays) maxOpenDays = held;
+          }
+        }
+      }
+    }
+  }
+
+  const fifoMax = Math.max(maxOpenDays, maxClosedDays);
+  if (hasTrackerRows && fifoMax > 0) return fifoMax;
+
+  // Fallback to LeadgeA if no tracker rows or 0
+  let maxD = 0;
+  if (data.leadgeA) {
+    const hunterRows = data.leadgeA.filter((item: any) => item.hunter === hunter);
+    for (const item of hunterRows) {
+      if (item.buyDate) {
+        const buy = new Date(item.buyDate);
+        if (!isNaN(buy.getTime()) && buy.getTime() <= frameTime) {
+          const parts = item.buyDate.split(/[/.-]/);
+          if (parts.length >= 1 && parts[0].trim() === awardYear) {
+            const diffMs = frameTime - buy.getTime();
+            const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+            if (days > maxD) maxD = days;
+          }
+        }
+      }
+    }
+  }
+
+  return Math.max(fifoMax, maxD);
+}
+
 export default function HiddenMissionPage() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -121,24 +207,8 @@ export default function HiddenMissionPage() {
     const result = data.scoreboard.map((sItem: any) => {
       const hunter = sItem.hunter;
 
-      // 1. Holding (持有 - 天): max holding days in awardYear from data.leadgeA
-      let maxD = 0;
-      if (data.leadgeA) {
-        const hunterRows = data.leadgeA.filter((item: any) => item.hunter === hunter);
-        for (const item of hunterRows) {
-          if (item.buyDate) {
-            const buy = new Date(item.buyDate);
-            if (!isNaN(buy.getTime()) && buy.getTime() <= nowTime) {
-              const parts = item.buyDate.split(/[/.-]/);
-              if (parts.length >= 1 && parts[0].trim() === awardYear) {
-                const diffMs = nowTime - buy.getTime();
-                const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-                if (days > maxD) maxD = days;
-              }
-            }
-          }
-        }
-      }
+      // 1. Holding (持有 - 天): max FIFO holding days using Tracker buy/sell records
+      const maxD = computeHoldingDays(hunter, nowTime, awardYear, data);
 
       // 2. Streak (連續 - 月): consecutive months in awardYear from data.leadgeA
       let maxStreak = 0;
@@ -401,23 +471,7 @@ export default function HiddenMissionPage() {
         const hunter = sItem.hunter;
 
         // 1. Holding (持有 - 天) as of frameTime
-        let maxD = 0;
-        if (data.leadgeA) {
-          const hunterRows = data.leadgeA.filter((item: any) => item.hunter === hunter);
-          for (const item of hunterRows) {
-            if (item.buyDate) {
-              const buy = new Date(item.buyDate);
-              if (!isNaN(buy.getTime()) && buy.getTime() <= frameTime) {
-                const parts = item.buyDate.split(/[/.-]/);
-                if (parts.length >= 1 && parts[0].trim() === awardYear) {
-                  const diffMs = frameTime - buy.getTime();
-                  const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-                  if (days > maxD) maxD = days;
-                }
-              }
-            }
-          }
-        }
+        const maxD = computeHoldingDays(hunter, frameTime, awardYear, data);
 
         // 2. Streak (連續 - 月) as of frameMonth
         let maxStreak = 0;
