@@ -15,13 +15,14 @@ function cleanNum(val: any): number {
 
 export async function GET() {
   try {
-    const [scoreboardRes, trackerRes, rewardRes, leadgeARes, leadgeBRes, leadgeCRes] = await Promise.allSettled([
+    const [scoreboardRes, trackerRes, rewardRes, leadgeARes, leadgeBRes, leadgeCRes, marketDataRes] = await Promise.allSettled([
       readSheet(sheetId, 'Scoreboard!A:K'),
       readSheet(sheetId, 'Tracker!A:F'),
       readSheet(sheetId, 'Reward!A:D'),
       readSheet(sheetId, 'LeadgeA!A:W'),
       readSheet(sheetId, 'LeadgeB!A:D'),
-      readSheet(sheetId, 'LeadgeC!A:J'),
+      readSheet(sheetId, 'LeadgeC!A:K'),
+      readSheet(sheetId, 'MarketData!A:G'),
     ]);
 
     const scoreboardRows = scoreboardRes.status === 'fulfilled' ? scoreboardRes.value : [];
@@ -30,6 +31,7 @@ export async function GET() {
     const leadgeARows = leadgeARes.status === 'fulfilled' ? leadgeARes.value : [];
     const leadgeBRows = leadgeBRes.status === 'fulfilled' ? leadgeBRes.value : [];
     const leadgeCRows = leadgeCRes.status === 'fulfilled' ? leadgeCRes.value : [];
+    const marketDataRows = marketDataRes.status === 'fulfilled' ? marketDataRes.value : [];
 
     // Parse Scoreboard (Rows 3+, index 2+)
     const scoreboard = [];
@@ -164,6 +166,44 @@ export async function GET() {
       }
     }
 
+    // Parse MarketData (Rows 2+, index 1+)
+    const marketData = {
+      currentPrices: {} as Record<string, number>,
+      history: [] as { date: string; prices: Record<string, number> }[]
+    };
+    if (marketDataRows && marketDataRows.length > 1) {
+      const headerRow = marketDataRows[0] || [];
+      const historyTargets: string[] = [];
+      for (let col = 3; col < headerRow.length; col++) {
+        const t = headerRow[col]?.trim();
+        if (t) historyTargets[col] = t;
+      }
+      for (let i = 1; i < marketDataRows.length; i++) {
+        const row = marketDataRows[i];
+        if (!row) continue;
+        // Col A & B: current price
+        const target = row[0]?.trim();
+        const price = cleanNum(row[1]);
+        if (target && price > 0) {
+          marketData.currentPrices[target] = price;
+        }
+        // Col C+: historical date & prices
+        const dateStr = row[2]?.trim();
+        if (dateStr) {
+          const prices: Record<string, number> = {};
+          for (let col = 3; col < row.length; col++) {
+            const t = historyTargets[col];
+            const p = cleanNum(row[col]);
+            if (t && p > 0) {
+              prices[t] = p;
+            }
+          }
+          marketData.history.push({ date: dateStr, prices });
+        }
+      }
+      marketData.history.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -173,6 +213,7 @@ export async function GET() {
         leadgeA,
         leadgeB,
         leadgeC,
+        marketData,
       }
     });
   } catch (error) {

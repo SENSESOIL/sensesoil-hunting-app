@@ -178,11 +178,13 @@ export default function HiddenMissionPage() {
         }
       }
 
-      // 3. Performance & Profit: returnRate & totalProfit in awardYear from data.leadgeC
+      // 3. Performance & Profit: check LeadgeC first or compute from Tracker + MarketData
       let rateNum = 0;
       let rateStr = "0.00%";
       let profitNum = 0;
       let profitStr = "$0";
+
+      let target = null;
       if (data.leadgeC) {
         const matches = data.leadgeC.filter((item: any) => {
           if (item.hunter !== hunter || !(item.date || '').includes(awardYear)) return false;
@@ -192,24 +194,94 @@ export default function HiddenMissionPage() {
           }
           return true;
         });
-        let target = null;
         if (matches.length > 0) {
           target = matches[matches.length - 1];
         } else if (awardYear === '2026') {
           target = data.leadgeC.find((item: any) => item.hunter === hunter);
         }
-        if (target) {
-          if (target.returnRate && target.returnRate.trim()) {
-            const rawRate = target.returnRate.trim();
-            rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
-            rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+      }
+
+      if (target) {
+        if (target.returnRate && target.returnRate.trim()) {
+          const rawRate = target.returnRate.trim();
+          rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
+          rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+        }
+        if (target.totalProfit && target.totalProfit.trim()) {
+          const rawProfit = target.totalProfit.trim();
+          const num = parseFloat(rawProfit.replace(/[^0-9.-]+/g, ''));
+          profitNum = isNaN(num) ? 0 : num;
+          profitStr = rawProfit.startsWith('$') || rawProfit.startsWith('-$') ? rawProfit : (profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`);
+        }
+      }
+
+      // If LeadgeC returned 0 or no entry found, calculate dynamically from Tracker + MarketData + Reward
+      if (profitNum === 0 && data.tracker && data.tracker.length > 0) {
+        const trackerMatches = data.tracker.filter((t: any) => {
+          if (t.hunter !== hunter || !(t.date || '').includes(awardYear)) return false;
+          const d = new Date(t.date);
+          return !isNaN(d.getTime()) && d.getTime() <= nowTime;
+        });
+
+        if (trackerMatches.length > 0) {
+          let totalCost = 0;
+          let realizedProceeds = 0;
+          const holdings: Record<string, number> = {};
+          const costBasis: Record<string, number> = {};
+
+          for (const t of trackerMatches) {
+            const tgt = t.target?.trim();
+            if (!tgt) continue;
+            const shares = parseFloat(String(t.shares).replace(/,/g, '')) || 0;
+            const amount = parseFloat(String(t.amount).replace(/[^0-9.-]+/g, '')) || 0;
+
+            if (t.type === '買' || !t.type || t.type.trim() === '') {
+              holdings[tgt] = (holdings[tgt] || 0) + shares;
+              costBasis[tgt] = (costBasis[tgt] || 0) + amount;
+              totalCost += amount;
+            } else if (t.type === '賣') {
+              holdings[tgt] = Math.max(0, (holdings[tgt] || 0) - shares);
+              realizedProceeds += amount;
+            }
           }
-          if (target.totalProfit && target.totalProfit.trim()) {
-            const rawProfit = target.totalProfit.trim();
-            const num = parseFloat(rawProfit.replace(/[^0-9.-]+/g, ''));
-            profitNum = isNaN(num) ? 0 : num;
-            profitStr = rawProfit.startsWith('$') || rawProfit.startsWith('-$') ? rawProfit : (profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`);
+
+          const getPriceAtNow = (tgt: string) => {
+            if (data.marketData && data.marketData.currentPrices && data.marketData.currentPrices[tgt] > 0) {
+              return data.marketData.currentPrices[tgt];
+            }
+            if (data.marketData && data.marketData.history && data.marketData.history.length > 0) {
+              const latest = data.marketData.history[data.marketData.history.length - 1];
+              if (latest && latest.prices && latest.prices[tgt] > 0) return latest.prices[tgt];
+            }
+            if (holdings[tgt] > 0 && costBasis[tgt] > 0) return costBasis[tgt] / holdings[tgt];
+            return 0;
+          };
+
+          let marketValue = 0;
+          for (const [tgt, sh] of Object.entries(holdings)) {
+            if (sh > 0) {
+              marketValue += sh * getPriceAtNow(tgt);
+            }
           }
+
+          let dividend = 0;
+          if (data.reward) {
+            for (const r of data.reward) {
+              if (r.hunter === hunter && r.date && r.date.includes(awardYear)) {
+                const rTime = new Date(r.date).getTime();
+                if (!isNaN(rTime) && rTime <= nowTime) {
+                  if (r.category && (r.category.includes('韌性') || r.category.includes('結算') || r.category.includes('配息'))) {
+                    dividend += parseFloat(String(r.amount).replace(/[^0-9.-]+/g, '')) || 0;
+                  }
+                }
+              }
+            }
+          }
+
+          profitNum = Math.round(marketValue + realizedProceeds - totalCost + dividend);
+          profitStr = profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`;
+          rateNum = totalCost > 0 ? parseFloat(((profitNum / totalCost) * 100).toFixed(2)) : 0;
+          rateStr = `${rateNum}%`;
         }
       }
 
@@ -293,6 +365,30 @@ export default function HiddenMissionPage() {
       }
     }
 
+    // Add dates from tracker and marketData history
+    if (data.tracker) {
+      for (const t of data.tracker) {
+        if (!t.date || !t.date.includes(awardYear)) continue;
+        const d = new Date(t.date);
+        if (!isNaN(d.getTime()) && d.getTime() <= nowTime && d.getFullYear() === targetYear) {
+          const mStr = (d.getMonth() + 1).toString().padStart(2, '0');
+          const dStr = d.getDate().toString().padStart(2, '0');
+          dateSet.add(`${targetYear}/${mStr}/${dStr}`);
+        }
+      }
+    }
+    if (data.marketData && data.marketData.history) {
+      for (const h of data.marketData.history) {
+        if (!h.date || !h.date.includes(awardYear)) continue;
+        const d = new Date(h.date);
+        if (!isNaN(d.getTime()) && d.getTime() <= nowTime && d.getFullYear() === targetYear) {
+          const mStr = (d.getMonth() + 1).toString().padStart(2, '0');
+          const dStr = d.getDate().toString().padStart(2, '0');
+          dateSet.add(`${targetYear}/${mStr}/${dStr}`);
+        }
+      }
+    }
+
     // Sort dates chronologically
     const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
@@ -364,6 +460,9 @@ export default function HiddenMissionPage() {
         let rateStr = "0.00%";
         let profitNum = 0;
         let profitStr = "$0";
+
+        // Step 3a: Check LeadgeC historic/exact snapshot first up to frameTime
+        let leadgeCTarget = null;
         if (data.leadgeC) {
           const matches = data.leadgeC.filter((item: any) => {
             if (item.hunter !== hunter || !(item.date || '').includes(awardYear)) return false;
@@ -373,24 +472,106 @@ export default function HiddenMissionPage() {
             }
             return true;
           });
-          let target = null;
           if (matches.length > 0) {
-            target = matches[matches.length - 1];
+            leadgeCTarget = matches[matches.length - 1];
           } else if (awardYear === '2026' && sortedDates.indexOf(dateStr) >= sortedDates.length - 1) {
-            target = data.leadgeC.find((item: any) => item.hunter === hunter);
+            leadgeCTarget = data.leadgeC.find((item: any) => item.hunter === hunter);
           }
-          if (target) {
-            if (target.returnRate && target.returnRate.trim()) {
-              const rawRate = target.returnRate.trim();
-              rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
-              rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+        }
+
+        // Step 3b: Calculate dynamically using Tracker + MarketData + Reward up to frameTime
+        if (data.tracker && data.tracker.length > 0) {
+          const trackerMatches = data.tracker.filter((t: any) => {
+            if (t.hunter !== hunter || !(t.date || '').includes(awardYear)) return false;
+            const d = new Date(t.date);
+            return !isNaN(d.getTime()) && d.getTime() <= frameTime;
+          });
+
+          if (trackerMatches.length > 0) {
+            let totalCost = 0;
+            let realizedProceeds = 0;
+            const holdings: Record<string, number> = {};
+            const costBasis: Record<string, number> = {};
+
+            for (const t of trackerMatches) {
+              const target = t.target?.trim();
+              if (!target) continue;
+              const shares = parseFloat(String(t.shares).replace(/,/g, '')) || 0;
+              const amount = parseFloat(String(t.amount).replace(/[^0-9.-]+/g, '')) || 0;
+
+              if (t.type === '買' || !t.type || t.type.trim() === '') {
+                holdings[target] = (holdings[target] || 0) + shares;
+                costBasis[target] = (costBasis[target] || 0) + amount;
+                totalCost += amount;
+              } else if (t.type === '賣') {
+                holdings[target] = Math.max(0, (holdings[target] || 0) - shares);
+                realizedProceeds += amount;
+              }
             }
-            if (target.totalProfit && target.totalProfit.trim()) {
-              const rawProfit = target.totalProfit.trim();
-              const num = parseFloat(rawProfit.replace(/[^0-9.-]+/g, ''));
-              profitNum = isNaN(num) ? 0 : num;
-              profitStr = rawProfit.startsWith('$') || rawProfit.startsWith('-$') ? rawProfit : (profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`);
+
+            const getPriceAt = (tgt: string, time: number) => {
+              if (data.marketData && data.marketData.history && data.marketData.history.length > 0) {
+                let bestPrice = 0;
+                for (const h of data.marketData.history) {
+                  const hTime = new Date(h.date).getTime();
+                  if (!isNaN(hTime) && hTime <= time) {
+                    if (h.prices && h.prices[tgt] > 0) {
+                      bestPrice = h.prices[tgt];
+                    }
+                  }
+                }
+                if (bestPrice > 0) return bestPrice;
+                for (const h of data.marketData.history) {
+                  if (h.prices && h.prices[tgt] > 0) return h.prices[tgt];
+                }
+              }
+              if (data.marketData && data.marketData.currentPrices && data.marketData.currentPrices[tgt] > 0) {
+                return data.marketData.currentPrices[tgt];
+              }
+              if (holdings[tgt] > 0 && costBasis[tgt] > 0) return costBasis[tgt] / holdings[tgt];
+              return 0;
+            };
+
+            let marketValue = 0;
+            for (const [tgt, sh] of Object.entries(holdings)) {
+              if (sh > 0) {
+                marketValue += sh * getPriceAt(tgt, frameTime);
+              }
             }
+
+            let dividend = 0;
+            if (data.reward) {
+              for (const r of data.reward) {
+                if (r.hunter === hunter && r.date && r.date.includes(awardYear)) {
+                  const rTime = new Date(r.date).getTime();
+                  if (!isNaN(rTime) && rTime <= frameTime) {
+                    if (r.category && (r.category.includes('韌性') || r.category.includes('結算') || r.category.includes('配息'))) {
+                      dividend += parseFloat(String(r.amount).replace(/[^0-9.-]+/g, '')) || 0;
+                    }
+                  }
+                }
+              }
+            }
+
+            profitNum = Math.round(marketValue + realizedProceeds - totalCost + dividend);
+            profitStr = profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`;
+            rateNum = totalCost > 0 ? parseFloat(((profitNum / totalCost) * 100).toFixed(2)) : 0;
+            rateStr = `${rateNum}%`;
+          }
+        }
+
+        // If at the very last frame or if LeadgeC exact snapshot exists and Tracker gave 0, override with exact LeadgeC audit numbers
+        if (leadgeCTarget && (profitNum === 0 || sortedDates.indexOf(dateStr) === sortedDates.length - 1)) {
+          if (leadgeCTarget.returnRate && leadgeCTarget.returnRate.trim()) {
+            const rawRate = leadgeCTarget.returnRate.trim();
+            rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
+            rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+          }
+          if (leadgeCTarget.totalProfit && leadgeCTarget.totalProfit.trim()) {
+            const rawProfit = leadgeCTarget.totalProfit.trim();
+            const num = parseFloat(rawProfit.replace(/[^0-9.-]+/g, ''));
+            profitNum = isNaN(num) ? 0 : num;
+            profitStr = rawProfit.startsWith('$') || rawProfit.startsWith('-$') ? rawProfit : (profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`);
           }
         }
 
