@@ -369,12 +369,26 @@ export default function BasicMissionPage() {
     const championsByDate = new Map<string, { display: string, first: string }>();
     const validDates: string[] = [];
     const recordsByDate: Record<string, Array<{ name: string; score: number }>> = {};
+    const cumulativeScoresMap = new Map<string, number>();
 
     for (const date of sortedDates) {
       if (!date.startsWith(awardYear)) continue; // 過濾所選年度
       if (new Date(date).getTime() > maxAllowedTime) continue; // 忽略尚未結算的未來日期
       const records = dateMap.get(date)!;
-      recordsByDate[date] = records.map(r => ({ name: r.name, score: parseFloat(r.score.toFixed(1)) }));
+
+      // 累加該年度截至當前日期的覺醒點數
+      for (const r of records) {
+        const current = cumulativeScoresMap.get(r.name) || 0;
+        cumulativeScoresMap.set(r.name, current + r.score);
+      }
+
+      // 快照截至當前日期所有獵人的累積覺醒點數
+      const cumulativeSnapshot: Array<{ name: string; score: number }> = [];
+      for (const [name, score] of cumulativeScoresMap.entries()) {
+        cumulativeSnapshot.push({ name, score: parseFloat(score.toFixed(1)) });
+      }
+      recordsByDate[date] = cumulativeSnapshot;
+
       const maxScore = Math.max(...records.map(r => r.score));
       if (maxScore > 0) {
         // 尋找最高分的人 (若有同分則全部列出)
