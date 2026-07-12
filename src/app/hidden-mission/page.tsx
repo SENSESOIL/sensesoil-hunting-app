@@ -31,7 +31,7 @@ export default function HiddenMissionPage() {
   const [awardYear, setAwardYear] = useState<string>('2026');
   const [isLeaderboardYearDropdownOpen, setIsLeaderboardYearDropdownOpen] = useState(false);
   const [isAwardYearDropdownOpen, setIsAwardYearDropdownOpen] = useState(false);
-  const [teamLeaderboardMetric, setTeamLeaderboardMetric] = useState<'holding' | 'streak' | 'performance'>('holding');
+  const [teamLeaderboardMetric, setTeamLeaderboardMetric] = useState<'holding' | 'streak' | 'profit' | 'performance'>('holding');
 
   // Race playback states for Team Leaderboard
   const [isRacePlaying, setIsRacePlaying] = useState(false);
@@ -178,9 +178,11 @@ export default function HiddenMissionPage() {
         }
       }
 
-      // 3. Performance (績效 - %): returnRate in awardYear from data.leadgeC
+      // 3. Performance & Profit: returnRate & totalProfit in awardYear from data.leadgeC
       let rateNum = 0;
       let rateStr = "0.00%";
+      let profitNum = 0;
+      let profitStr = "$0";
       if (data.leadgeC) {
         const matches = data.leadgeC.filter((item: any) => {
           if (item.hunter !== hunter || !(item.date || '').includes(awardYear)) return false;
@@ -196,10 +198,18 @@ export default function HiddenMissionPage() {
         } else if (awardYear === '2026') {
           target = data.leadgeC.find((item: any) => item.hunter === hunter);
         }
-        if (target && target.returnRate && target.returnRate.trim()) {
-          const rawRate = target.returnRate.trim();
-          rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
-          rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+        if (target) {
+          if (target.returnRate && target.returnRate.trim()) {
+            const rawRate = target.returnRate.trim();
+            rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
+            rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+          }
+          if (target.totalProfit && target.totalProfit.trim()) {
+            const rawProfit = target.totalProfit.trim();
+            const num = parseFloat(rawProfit.replace(/[^0-9.-]+/g, ''));
+            profitNum = isNaN(num) ? 0 : num;
+            profitStr = rawProfit.startsWith('$') || rawProfit.startsWith('-$') ? rawProfit : (profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`);
+          }
         }
       }
 
@@ -209,6 +219,8 @@ export default function HiddenMissionPage() {
         consecutiveMonths: maxStreak,
         returnRateNum: rateNum,
         returnRateStr: rateStr,
+        profitNum,
+        profitStr,
       };
     });
 
@@ -219,6 +231,9 @@ export default function HiddenMissionPage() {
       }
       if (teamLeaderboardMetric === 'streak') {
         return (b.consecutiveMonths || 0) - (a.consecutiveMonths || 0);
+      }
+      if (teamLeaderboardMetric === 'profit') {
+        return (b.profitNum || 0) - (a.profitNum || 0);
       }
       return (b.returnRateNum || 0) - (a.returnRateNum || 0);
     });
@@ -344,9 +359,11 @@ export default function HiddenMissionPage() {
           }
         }
 
-        // 3. Performance (績效 - %) as of frameTime
+        // 3. Performance & Profit as of frameTime
         let rateNum = 0;
         let rateStr = "0.00%";
+        let profitNum = 0;
+        let profitStr = "$0";
         if (data.leadgeC) {
           const matches = data.leadgeC.filter((item: any) => {
             if (item.hunter !== hunter || !(item.date || '').includes(awardYear)) return false;
@@ -362,10 +379,18 @@ export default function HiddenMissionPage() {
           } else if (awardYear === '2026' && sortedDates.indexOf(dateStr) >= sortedDates.length - 1) {
             target = data.leadgeC.find((item: any) => item.hunter === hunter);
           }
-          if (target && target.returnRate && target.returnRate.trim()) {
-            const rawRate = target.returnRate.trim();
-            rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
-            rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+          if (target) {
+            if (target.returnRate && target.returnRate.trim()) {
+              const rawRate = target.returnRate.trim();
+              rateStr = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
+              rateNum = parseFloat(rawRate.replace(/[^0-9.-]+/g, '')) || 0;
+            }
+            if (target.totalProfit && target.totalProfit.trim()) {
+              const rawProfit = target.totalProfit.trim();
+              const num = parseFloat(rawProfit.replace(/[^0-9.-]+/g, ''));
+              profitNum = isNaN(num) ? 0 : num;
+              profitStr = rawProfit.startsWith('$') || rawProfit.startsWith('-$') ? rawProfit : (profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`);
+            }
           }
         }
 
@@ -375,6 +400,8 @@ export default function HiddenMissionPage() {
           consecutiveMonths: maxStreak,
           returnRateNum: rateNum,
           returnRateStr: rateStr,
+          profitNum,
+          profitStr,
         };
       });
 
@@ -385,6 +412,9 @@ export default function HiddenMissionPage() {
         }
         if (teamLeaderboardMetric === 'streak') {
           return (b.consecutiveMonths || 0) - (a.consecutiveMonths || 0);
+        }
+        if (teamLeaderboardMetric === 'profit') {
+          return (b.profitNum || 0) - (a.profitNum || 0);
         }
         return (b.returnRateNum || 0) - (a.returnRateNum || 0);
       });
@@ -1310,6 +1340,10 @@ export default function HiddenMissionPage() {
                               className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'streak' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                             >連續</button>
                             <button 
+                              onClick={() => setTeamLeaderboardMetric('profit')}
+                              className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'profit' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >損益</button>
+                            <button 
                               onClick={() => setTeamLeaderboardMetric('performance')}
                               className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'performance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
                             >績效</button>
@@ -1323,7 +1357,8 @@ export default function HiddenMissionPage() {
                             ...displayTeamLeaderboardData.map((s: any) => {
                               if (teamLeaderboardMetric === 'holding') return s.holdingDays || 0;
                               if (teamLeaderboardMetric === 'streak') return s.consecutiveMonths || 0;
-                              return s.returnRateNum || 0;
+                              if (teamLeaderboardMetric === 'profit') return Math.abs(s.profitNum || 0);
+                              return Math.abs(s.returnRateNum || 0);
                             }),
                             1
                           );
@@ -1334,7 +1369,9 @@ export default function HiddenMissionPage() {
                               ? (item.holdingDays || 0)
                               : teamLeaderboardMetric === 'streak'
                               ? (item.consecutiveMonths || 0)
-                              : (item.returnRateNum || 0);
+                              : teamLeaderboardMetric === 'profit'
+                              ? Math.abs(item.profitNum || 0)
+                              : Math.abs(item.returnRateNum || 0);
                             const barPct = Math.min(100, Math.max(8, (val / maxVal) * 100));
                             
                             return (
@@ -1360,6 +1397,10 @@ export default function HiddenMissionPage() {
                                       <>
                                         <span className="text-white text-[13px] font-bold font-mono">{item.consecutiveMonths || 0}</span>
                                         <span className="text-white/70 text-[10px]">月</span>
+                                      </>
+                                    ) : teamLeaderboardMetric === 'profit' ? (
+                                      <>
+                                        <span className="text-white text-[13px] font-bold font-mono">{item.profitStr || "$0"}</span>
                                       </>
                                     ) : (
                                       <>

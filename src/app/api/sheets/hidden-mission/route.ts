@@ -156,9 +156,10 @@ export async function GET() {
           realizedPnlC: row[4]?.trim() || '',
           withdrawnD: row[5]?.trim() || '',
           dividendE: row[6]?.trim() || '',
-          returnRate: row[7]?.trim() || '',
-          totalPool: row[8]?.trim() || '',
-          rankReward: row[9]?.trim() || '',
+          totalProfit: row[7]?.trim() || '',
+          returnRate: row[8]?.trim() || '',
+          totalPool: row[9]?.trim() || '',
+          rankReward: row[10]?.trim() || '',
         });
       }
     }
