@@ -466,7 +466,7 @@ export default function BasicMissionPage() {
 
   const [isRacePlaying, setIsRacePlaying] = useState(false);
   const [raceFrameIndex, setRaceFrameIndex] = useState(0);
-  const [leaderboardMetric, setLeaderboardMetric] = useState<'mission' | 'physique' | 'mindset' | 'awakening'>('mission');
+  const [leaderboardMetric, setLeaderboardMetric] = useState<'mission' | 'physique' | 'mindset' | 'awakening'>('awakening');
   const raceTimerRef = useRef<any>(null);
 
   const toggleRace = () => {
