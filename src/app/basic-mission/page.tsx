@@ -327,29 +327,44 @@ export default function BasicMissionPage() {
     const rows = data.rows;
     // 尋找「總分」所在的欄位 index
     const scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂') || h.includes('覺醒'));
-    const colPIdx = 15; // Col P
+    const colPIdx = 15; // Col P (誠 / 任務)
+    const colQIdx = 16; // Col Q (體 / 體能)
+    const colRIdx = 17; // Col R (格 / 格局)
     const nameIdx = 1;
     const dateIdx = 0;
 
+    const parseRankScore = (val: any): number => {
+      if (!val) return 0;
+      const str = String(val).trim();
+      if (str === '高') return 3;
+      if (str === '中') return 2;
+      if (str === '低') return 1;
+      if (str === '無' || str === '×') return 0;
+      const num = parseFloat(str);
+      return !isNaN(num) ? num : 0;
+    };
+
     if (scoreIdx === -1) {
-      return { name: "資料錯誤", weeks: "00", completionRate: "0.0", averageScore: "0.0", validDates: [] as string[], recordsByDate: {} as Record<string, Array<{ name: string; score: number }>> };
+      return { name: "資料錯誤", weeks: "00", completionRate: "0.0", averageScore: "0.0", validDates: [] as string[], recordsByDate: {} as Record<string, Array<{ name: string; score: number; mission: number; physique: number; mindset: number; awakening: number }>> };
     }
 
     // 依據日期分組
-    const dateMap = new Map<string, { name: string, score: number, colP: number }[]>();
+    const dateMap = new Map<string, { name: string, score: number, colP: number, colQ: number, colR: number }[]>();
     for (let i = 2; i < rows.length; i++) {
       const row = rows[i];
       const date = row[dateIdx];
       const name = row[nameIdx];
       const score = parseFloat(row[scoreIdx]) || 0;
       const colP = parseFloat(row[colPIdx]) || 0;
+      const colQ = parseRankScore(row[colQIdx]);
+      const colR = parseRankScore(row[colRIdx]);
 
       if (!date || !name) continue;
 
       if (!dateMap.has(date)) {
         dateMap.set(date, []);
       }
-      dateMap.get(date)!.push({ name, score, colP });
+      dateMap.get(date)!.push({ name, score, colP, colQ, colR });
     }
 
     // 依據時間先後排序日期
@@ -368,24 +383,36 @@ export default function BasicMissionPage() {
     // 計算每天的冠軍
     const championsByDate = new Map<string, { display: string, first: string }>();
     const validDates: string[] = [];
-    const recordsByDate: Record<string, Array<{ name: string; score: number }>> = {};
-    const cumulativeScoresMap = new Map<string, number>();
+    const recordsByDate: Record<string, Array<{ name: string; score: number; mission: number; physique: number; mindset: number; awakening: number }>> = {};
+    const cumulativeScoresMap = new Map<string, { mission: number; physique: number; mindset: number; awakening: number }>();
 
     for (const date of sortedDates) {
       if (!date.startsWith(awardYear)) continue; // 過濾所選年度
       if (new Date(date).getTime() > maxAllowedTime) continue; // 忽略尚未結算的未來日期
       const records = dateMap.get(date)!;
 
-      // 累加該年度截至當前日期的覺醒點數
+      // 累加該年度截至當前日期的各項累積點數/積分
       for (const r of records) {
-        const current = cumulativeScoresMap.get(r.name) || 0;
-        cumulativeScoresMap.set(r.name, current + r.score);
+        const current = cumulativeScoresMap.get(r.name) || { mission: 0, physique: 0, mindset: 0, awakening: 0 };
+        cumulativeScoresMap.set(r.name, {
+          mission: parseFloat((current.mission + r.colP).toFixed(1)),
+          physique: parseFloat((current.physique + r.colQ).toFixed(1)),
+          mindset: parseFloat((current.mindset + r.colR).toFixed(1)),
+          awakening: parseFloat((current.awakening + r.score).toFixed(1))
+        });
       }
 
-      // 快照截至當前日期所有獵人的累積覺醒點數
-      const cumulativeSnapshot: Array<{ name: string; score: number }> = [];
-      for (const [name, score] of cumulativeScoresMap.entries()) {
-        cumulativeSnapshot.push({ name, score: parseFloat(score.toFixed(1)) });
+      // 快照截至當前日期所有獵人的累積總分
+      const cumulativeSnapshot: Array<{ name: string; score: number; mission: number; physique: number; mindset: number; awakening: number }> = [];
+      for (const [name, totals] of cumulativeScoresMap.entries()) {
+        cumulativeSnapshot.push({
+          name,
+          score: totals.awakening,
+          mission: totals.mission,
+          physique: totals.physique,
+          mindset: totals.mindset,
+          awakening: totals.awakening
+        });
       }
       recordsByDate[date] = cumulativeSnapshot;
 
@@ -439,7 +466,7 @@ export default function BasicMissionPage() {
 
   const [isRacePlaying, setIsRacePlaying] = useState(false);
   const [raceFrameIndex, setRaceFrameIndex] = useState(0);
-  const [leaderboardMetric, setLeaderboardMetric] = useState<'score'>('score');
+  const [leaderboardMetric, setLeaderboardMetric] = useState<'mission' | 'physique' | 'mindset' | 'awakening'>('mission');
   const raceTimerRef = useRef<any>(null);
 
   const toggleRace = () => {
@@ -500,8 +527,10 @@ export default function BasicMissionPage() {
 
     const hunterMap = new Map<string, number>();
     for (const r of records) {
+      const metricKey = (leaderboardMetric === 'awakening' ? 'awakening' : leaderboardMetric) as keyof typeof r;
+      const val = (r[metricKey] as number) || 0;
       const cur = hunterMap.get(r.name) || 0;
-      if (r.score > cur) hunterMap.set(r.name, r.score);
+      if (val > cur) hunterMap.set(r.name, val);
     }
 
     const list = Array.from(hunterMap.entries())
@@ -519,7 +548,7 @@ export default function BasicMissionPage() {
         barPct
       };
     });
-  }, [dashboardData, isRacePlaying, raceFrameIndex]);
+  }, [dashboardData, isRacePlaying, raceFrameIndex, leaderboardMetric]);
 
   const raceCurrentDate = useMemo(() => {
     const validDates = dashboardData.validDates || [];
@@ -1178,10 +1207,28 @@ export default function BasicMissionPage() {
 
                 <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
                   <button
-                    onClick={() => setLeaderboardMetric('score')}
-                    className="px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors bg-primary text-black font-bold"
+                    onClick={() => setLeaderboardMetric('mission')}
+                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'mission' ? 'bg-primary text-black font-bold' : 'text-[#efe0d2]/70 hover:text-white'}`}
                   >
-                    覺醒點數
+                    任務
+                  </button>
+                  <button
+                    onClick={() => setLeaderboardMetric('physique')}
+                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'physique' ? 'bg-primary text-black font-bold' : 'text-[#efe0d2]/70 hover:text-white'}`}
+                  >
+                    體能
+                  </button>
+                  <button
+                    onClick={() => setLeaderboardMetric('mindset')}
+                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'mindset' ? 'bg-primary text-black font-bold' : 'text-[#efe0d2]/70 hover:text-white'}`}
+                  >
+                    格局
+                  </button>
+                  <button
+                    onClick={() => setLeaderboardMetric('awakening')}
+                    className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${leaderboardMetric === 'awakening' || (leaderboardMetric as any) === 'score' ? 'bg-primary text-black font-bold' : 'text-[#efe0d2]/70 hover:text-white'}`}
+                  >
+                    覺醒
                   </button>
                 </div>
               </div>
