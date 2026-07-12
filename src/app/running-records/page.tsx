@@ -1425,9 +1425,9 @@ export default function RunningRecordsPage() {
                     <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
                       <span className={`text-[12px] ${item.rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.name.slice(-1)}</span>
                     </div>
-                    <div className="flex-1 h-2 bg-primary/10 rounded-r-sm overflow-visible flex relative">
+                    <div className="flex-1 h-2 bg-primary/10 rounded-r-full overflow-visible flex relative">
                       <div 
-                        className={`h-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
+                        className={`h-full rounded-r-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
                         style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.35s ease-out' }}
                       ></div>
                     </div>

@@ -1617,9 +1617,9 @@ export default function HiddenMissionPage() {
                                 <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${index < 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
                                   <span className={`text-[12px] ${index === 0 ? 'font-bold' : 'font-normal'}`}>{item.hunter.slice(-1)}</span>
                                 </div>
-                                <div className={`flex-1 h-2 rounded-r-sm overflow-visible flex relative ${isNegative ? 'bg-white/5' : 'bg-primary/10'}`}>
+                                <div className={`flex-1 h-2 rounded-r-full overflow-visible flex relative ${isNegative ? 'bg-white/5' : 'bg-primary/10'}`}>
                                   <div 
-                                    className={`h-full rounded-r-sm ${isNegative ? 'bg-[#6B7280]' : `bg-primary ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}`} 
+                                    className={`h-full rounded-r-full ${isNegative ? 'bg-[#6B7280]' : `bg-primary ${index === 0 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}`} 
                                     style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.35s ease-out' }}
                                   ></div>
                                 </div>
