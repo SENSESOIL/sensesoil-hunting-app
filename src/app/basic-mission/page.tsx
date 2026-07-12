@@ -318,7 +318,7 @@ export default function BasicMissionPage() {
   // 計算本週狩獵冠軍、蟬聯週數與團隊狀態
   const dashboardData = useMemo(() => {
     if (!data?.rows || data.rows.length < 3) {
-      return { name: "計算中...", weeks: "00", completionRate: "0.0", averageScore: "0.0" };
+      return { name: "計算中...", weeks: "00", completionRate: "0.0", averageScore: "0.0", validDates: [] as string[], recordsByDate: {} as Record<string, Array<{ name: string; score: number }>> };
     }
 
     const rows = data.rows;
@@ -329,7 +329,7 @@ export default function BasicMissionPage() {
     const dateIdx = 0;
 
     if (scoreIdx === -1) {
-      return { name: "資料錯誤", weeks: "00", completionRate: "0.0", averageScore: "0.0" };
+      return { name: "資料錯誤", weeks: "00", completionRate: "0.0", averageScore: "0.0", validDates: [] as string[], recordsByDate: {} as Record<string, Array<{ name: string; score: number }>> };
     }
 
     // 依據日期分組
@@ -365,10 +365,12 @@ export default function BasicMissionPage() {
     // 計算每天的冠軍
     const championsByDate = new Map<string, { display: string, first: string }>();
     const validDates: string[] = [];
+    const recordsByDate: Record<string, Array<{ name: string; score: number }>> = {};
 
     for (const date of sortedDates) {
       if (new Date(date).getTime() > maxAllowedTime) continue; // 忽略尚未結算的未來日期
       const records = dateMap.get(date)!;
+      recordsByDate[date] = records.map(r => ({ name: r.name, score: parseFloat(r.score.toFixed(1)) }));
       const maxScore = Math.max(...records.map(r => r.score));
       if (maxScore > 0) {
         // 尋找最高分的人 (若有同分則全部列出)
@@ -380,7 +382,7 @@ export default function BasicMissionPage() {
     }
 
     if (validDates.length === 0) {
-      return { name: "無數據", firstChamp: "", weeks: "00", completionRate: "0.0", averageScore: "0.0" };
+      return { name: "無數據", firstChamp: "", weeks: "00", completionRate: "0.0", averageScore: "0.0", validDates: [] as string[], recordsByDate: {} as Record<string, Array<{ name: string; score: number }>> };
     }
 
     // 取得最新一週的有效數據
@@ -411,9 +413,98 @@ export default function BasicMissionPage() {
       firstChamp: currentChampData.first,
       weeks: consecutiveWeeks.toString().padStart(2, '0'),
       completionRate: completionRate.toFixed(1),
-      averageScore: averageScore.toFixed(1)
+      averageScore: averageScore.toFixed(1),
+      validDates,
+      recordsByDate
     };
   }, [data]);
+
+  const [isRacePlaying, setIsRacePlaying] = useState(false);
+  const [raceFrameIndex, setRaceFrameIndex] = useState(0);
+  const [leaderboardMetric, setLeaderboardMetric] = useState<'score'>('score');
+  const raceTimerRef = useRef<any>(null);
+
+  const toggleRace = () => {
+    if (isRacePlaying) {
+      setIsRacePlaying(false);
+      if (raceTimerRef.current) clearInterval(raceTimerRef.current);
+    } else {
+      setIsRacePlaying(true);
+      const validDates = dashboardData.validDates || [];
+      if (validDates.length > 0 && raceFrameIndex >= validDates.length - 1) {
+        setRaceFrameIndex(0);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (isRacePlaying) {
+      raceTimerRef.current = setInterval(() => {
+        setRaceFrameIndex(prev => {
+          const validDates = dashboardData.validDates || [];
+          if (prev >= validDates.length - 1) {
+            setIsRacePlaying(false);
+            clearInterval(raceTimerRef.current);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else if (raceTimerRef.current) {
+      clearInterval(raceTimerRef.current);
+    }
+    return () => {
+      if (raceTimerRef.current) clearInterval(raceTimerRef.current);
+    };
+  }, [isRacePlaying, dashboardData.validDates]);
+
+  useEffect(() => {
+    if (!isRacePlaying && dashboardData.validDates && dashboardData.validDates.length > 0) {
+      setRaceFrameIndex(dashboardData.validDates.length - 1);
+    }
+  }, [dashboardData.validDates, isRacePlaying]);
+
+  const displayLeaderboardData = useMemo(() => {
+    const validDates = dashboardData.validDates || [];
+    const recordsByDate = dashboardData.recordsByDate || {};
+    if (validDates.length === 0) return [];
+
+    const targetDate = isRacePlaying || raceFrameIndex < validDates.length
+      ? validDates[Math.min(raceFrameIndex, validDates.length - 1)]
+      : validDates[validDates.length - 1];
+
+    const records = recordsByDate[targetDate] || [];
+    if (records.length === 0) return [];
+
+    const hunterMap = new Map<string, number>();
+    for (const r of records) {
+      const cur = hunterMap.get(r.name) || 0;
+      if (r.score > cur) hunterMap.set(r.name, r.score);
+    }
+
+    const list = Array.from(hunterMap.entries())
+      .map(([name, score]) => ({ name, score }))
+      .sort((a, b) => b.score - a.score);
+
+    const maxScore = Math.max(...list.map(item => item.score), 1);
+
+    return list.map((item, idx) => {
+      const barPct = Math.min(100, Math.max(8, (item.score / maxScore) * 100));
+      return {
+        rank: idx + 1,
+        name: item.name,
+        score: item.score,
+        barPct
+      };
+    });
+  }, [dashboardData, isRacePlaying, raceFrameIndex]);
+
+  const raceCurrentDate = useMemo(() => {
+    const validDates = dashboardData.validDates || [];
+    if (validDates.length === 0) return "";
+    const idx = Math.min(raceFrameIndex, validDates.length - 1);
+    return validDates[idx] || "";
+  }, [dashboardData.validDates, raceFrameIndex]);
 
   const [selectedTeamHunter, setSelectedTeamHunter] = useState<string>("");
   const [selectedPersonalHunter, setSelectedPersonalHunter] = useState<string>("");
@@ -1005,23 +1096,79 @@ export default function BasicMissionPage() {
 
         {/* Team Module */}
         <section className={`space-y-[18px] mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
-          <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm shadow-[0_0_15px_rgba(243,156,18,0.05)]">
-            <h3 className="text-white font-bold text-[12px] tracking-[0.1em] uppercase mb-4">團隊狀態</h3>
-            <div className="flex gap-4">
-              <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
-                <p className="text-[12px] font-normal text-[#efe0d2]/70 uppercase tracking-wider mb-1">任務完成度</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-white tracking-tighter">{dashboardData.completionRate}</span>
-                  <span className="text-[10px] text-white">%</span>
+          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display rounded-sm shadow-[0_0_15px_rgba(243,156,18,0.05)] border border-primary/30">
+            {/* Race date indicator - above title */}
+            <div className="h-[16px] mb-1">
+              {isRacePlaying && (
+                <span className="text-primary/80 text-[11px] font-mono tracking-wider">{raceCurrentDate.replace(/^\d{4}\//, '')}</span>
+              )}
+            </div>
+
+            <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
+              <div className="relative">
+                <span className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase">
+                  排行榜
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Play/Pause Race Button */}
+                <button
+                  onClick={toggleRace}
+                  className="rounded-full bg-primary flex items-center justify-center transition-all hover:brightness-110 active:scale-90 shrink-0"
+                  style={{ width: '26px', height: '26px' }}
+                  title={isRacePlaying ? '暫停' : '播放排名動畫'}
+                >
+                  {isRacePlaying ? (
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <rect x="1.5" y="1" width="3" height="10" rx="1" fill="#000" />
+                      <rect x="7.5" y="1" width="3" height="10" rx="1" fill="#000" />
+                    </svg>
+                  ) : (
+                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                      <path d="M3.5 1L10.5 6L3.5 11V1Z" fill="#000" />
+                    </svg>
+                  )}
+                </button>
+
+                <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
+                  <button
+                    onClick={() => setLeaderboardMetric('score')}
+                    className="px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors bg-primary text-black font-bold"
+                  >
+                    覺醒點數
+                  </button>
                 </div>
               </div>
-              <div className="flex-1 p-3 border border-primary/20 rounded-[4px] shadow-[0_0_10px_rgba(243,156,18,0.1)]">
-                <p className="text-[12px] font-normal text-[#efe0d2]/70 uppercase tracking-wider mb-1">覺醒平均值</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-white tracking-tighter">{dashboardData.averageScore}</span>
-                  <span className="text-[10px] text-white">pts</span>
-                </div>
-              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {displayLeaderboardData.length > 0 ? displayLeaderboardData.map((item: any, index: number) => {
+                const maxIndex = Math.max(1, displayLeaderboardData.length - 1);
+                const barOpacity = 1 - (0.3 * (index / maxIndex));
+                return (
+                  <div key={item.name} className="flex items-center w-full gap-3" style={{ transition: 'transform 0.35s ease-out, opacity 0.35s ease-out' }}>
+                    <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{item.rank}</span>
+                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
+                      <span className={`text-[12px] ${item.rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.name.slice(-1)}</span>
+                    </div>
+                    <div className="flex-1 h-2 bg-primary/10 rounded-r-full overflow-visible flex relative">
+                      <div
+                        className={`h-full rounded-r-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}
+                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.35s ease-out' }}
+                      ></div>
+                    </div>
+                    <div className="w-20 text-right shrink-0">
+                      <div className="flex items-baseline justify-end gap-0.5">
+                        <span className="text-white text-[13px] font-bold font-mono">{item.score}</span>
+                        <span className="text-white/70 text-[10px]">pts</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <div className="text-center text-primary/50 text-xs py-4">本週暫無數據</div>
+              )}
             </div>
           </div>
           <div className="p-4 border border-primary/30 bg-surface-container-low/50 font-display rounded-sm">
