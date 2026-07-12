@@ -315,6 +315,9 @@ export default function BasicMissionPage() {
     console.log("[Google Sheets API Data]", data);
   }
 
+  const [awardYear, setAwardYear] = useState('2026');
+  const [isLeaderboardYearDropdownOpen, setIsLeaderboardYearDropdownOpen] = useState(false);
+
   // 計算本週狩獵冠軍、蟬聯週數與團隊狀態
   const dashboardData = useMemo(() => {
     if (!data?.rows || data.rows.length < 3) {
@@ -368,6 +371,7 @@ export default function BasicMissionPage() {
     const recordsByDate: Record<string, Array<{ name: string; score: number }>> = {};
 
     for (const date of sortedDates) {
+      if (!date.startsWith(awardYear)) continue; // 過濾所選年度
       if (new Date(date).getTime() > maxAllowedTime) continue; // 忽略尚未結算的未來日期
       const records = dateMap.get(date)!;
       recordsByDate[date] = records.map(r => ({ name: r.name, score: parseFloat(r.score.toFixed(1)) }));
@@ -417,7 +421,7 @@ export default function BasicMissionPage() {
       validDates,
       recordsByDate
     };
-  }, [data]);
+  }, [data, awardYear]);
 
   const [isRacePlaying, setIsRacePlaying] = useState(false);
   const [raceFrameIndex, setRaceFrameIndex] = useState(0);
@@ -449,7 +453,7 @@ export default function BasicMissionPage() {
           }
           return prev + 1;
         });
-      }, 1000);
+      }, 200);
     } else if (raceTimerRef.current) {
       clearInterval(raceTimerRef.current);
     }
@@ -463,6 +467,10 @@ export default function BasicMissionPage() {
       setRaceFrameIndex(dashboardData.validDates.length - 1);
     }
   }, [dashboardData.validDates, isRacePlaying]);
+
+  useEffect(() => {
+    setIsRacePlaying(false);
+  }, [awardYear, leaderboardMetric]);
 
   const displayLeaderboardData = useMemo(() => {
     const validDates = dashboardData.validDates || [];
@@ -1096,7 +1104,7 @@ export default function BasicMissionPage() {
 
         {/* Team Module */}
         <section className={`space-y-[18px] mb-[32px] ${view === 'individual' ? 'hidden' : ''}`}>
-          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display rounded-sm shadow-[0_0_15px_rgba(243,156,18,0.05)] border border-primary/30">
+          <div className="pt-5 pb-8 px-5 sm:px-6 -mx-4 bg-[#121212] font-display">
             {/* Race date indicator - above title */}
             <div className="h-[16px] mb-1">
               {isRacePlaying && (
@@ -1106,9 +1114,32 @@ export default function BasicMissionPage() {
 
             <div className="flex justify-between items-center mb-6 relative z-10 h-[32px]">
               <div className="relative">
-                <span className="font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase">
-                  排行榜
-                </span>
+                <button 
+                  onClick={() => setIsLeaderboardYearDropdownOpen(!isLeaderboardYearDropdownOpen)}
+                  className="flex items-center gap-1 font-label-caps text-primary font-bold text-[12px] tracking-[0.1em] leading-none uppercase hover:text-[#00E5FF] transition-colors"
+                >
+                  {awardYear} 排行榜
+                </button>
+                
+                {isLeaderboardYearDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsLeaderboardYearDropdownOpen(false)} />
+                    <div className="absolute top-full left-0 mt-2 bg-[#1A1A1A] border border-primary/30 rounded-lg shadow-xl z-50 min-w-[120px] overflow-hidden">
+                      {['2026', '2027', '2028', '2029'].map(year => (
+                        <button
+                          key={year}
+                          className={`w-full text-left px-4 py-3 font-display font-bold text-[16px] transition-colors ${awardYear === year ? 'text-black bg-primary' : 'text-[#efe0d2] hover:bg-white/10'}`}
+                          onClick={() => {
+                            setAwardYear(year);
+                            setIsLeaderboardYearDropdownOpen(false);
+                          }}
+                        >
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
