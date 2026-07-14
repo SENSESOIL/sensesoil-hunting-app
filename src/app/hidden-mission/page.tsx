@@ -26,7 +26,7 @@ function computeHoldingDays(hunter: string, frameTime: number, awardYear: string
       hasTrackerRows = true;
       // Sort chronologically
       const sorted = [...trackerMatches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      const openBatches: Record<string, Array<{ buyTime: number; shares: number }>> = {};
+      const targetStates: Record<string, { currentShares: number; periodStartTime: number | null }> = {};
 
       for (const t of sorted) {
         const target = t.target?.trim();
@@ -36,42 +36,41 @@ function computeHoldingDays(hunter: string, frameTime: number, awardYear: string
         const tTime = new Date(t.date).getTime();
         if (isNaN(tTime)) continue;
 
-        if (!openBatches[target]) openBatches[target] = [];
+        if (!targetStates[target]) {
+          targetStates[target] = { currentShares: 0, periodStartTime: null };
+        }
+        const state = targetStates[target];
 
         if (t.type === '買' || !t.type || t.type.trim() === '') {
-          openBatches[target].push({ buyTime: tTime, shares });
+          if (state.currentShares <= 0 || state.periodStartTime === null) {
+            state.periodStartTime = tTime;
+          }
+          state.currentShares += shares;
         } else if (t.type === '賣') {
-          let rem = shares;
-          while (rem > 0 && openBatches[target].length > 0) {
-            const batch = openBatches[target][0];
-            const held = Math.max(0, Math.floor((tTime - batch.buyTime) / (1000 * 60 * 60 * 24)));
-            if (held > maxClosedDays) maxClosedDays = held;
-
-            if (batch.shares <= rem) {
-              rem -= batch.shares;
-              openBatches[target].shift();
-            } else {
-              batch.shares -= rem;
-              rem = 0;
+          state.currentShares -= shares;
+          if (state.currentShares <= 0) {
+            if (state.periodStartTime !== null) {
+              const closedDays = Math.max(0, Math.floor((tTime - state.periodStartTime) / (1000 * 60 * 60 * 24)));
+              if (closedDays > maxClosedDays) maxClosedDays = closedDays;
             }
+            state.currentShares = 0;
+            state.periodStartTime = null;
           }
         }
       }
 
-      // Check remaining open batches as of frameTime
-      for (const batches of Object.values(openBatches)) {
-        for (const b of batches) {
-          if (b.shares > 0) {
-            const held = Math.max(0, Math.floor((frameTime - b.buyTime) / (1000 * 60 * 60 * 24)));
-            if (held > maxOpenDays) maxOpenDays = held;
-          }
+      // Check remaining open positions as of frameTime
+      for (const state of Object.values(targetStates)) {
+        if (state.currentShares > 0 && state.periodStartTime !== null) {
+          const openDays = Math.max(0, Math.floor((frameTime - state.periodStartTime) / (1000 * 60 * 60 * 24)));
+          if (openDays > maxOpenDays) maxOpenDays = openDays;
         }
       }
     }
   }
 
-  const fifoMax = Math.max(maxOpenDays, maxClosedDays);
-  if (hasTrackerRows && fifoMax > 0) return fifoMax;
+  const trackerMax = Math.max(maxOpenDays, maxClosedDays);
+  if (hasTrackerRows && trackerMax > 0) return trackerMax;
 
   // Fallback to LeadgeA if no tracker rows or 0
   let maxD = 0;
@@ -829,26 +828,9 @@ export default function HiddenMissionPage() {
   }, [data.scoreboard, selectedHunter, awardYear]);
 
   const personalLeadgeA_maxDays = useMemo(() => {
-    if (!selectedHunter || !data.leadgeA) return 0;
-    const hunterRows = data.leadgeA.filter((item: any) => item.hunter === selectedHunter);
-    let maxD = 0;
-    const nowTime = Date.now();
-    for (const item of hunterRows) {
-      if (item.buyDate) {
-        const buy = new Date(item.buyDate);
-        // GATEKEEPER CHECK: future dates cannot be counted!
-        if (!isNaN(buy.getTime()) && buy.getTime() <= nowTime) {
-          const parts = item.buyDate.split(/[/.-]/);
-          if (parts.length >= 1 && parts[0].trim() === awardYear) {
-            const diffMs = nowTime - buy.getTime();
-            const days = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-            if (days > maxD) maxD = days;
-          }
-        }
-      }
-    }
-    return maxD;
-  }, [data.leadgeA, selectedHunter, awardYear]);
+    if (!selectedHunter) return 0;
+    return computeHoldingDays(selectedHunter, Date.now(), awardYear, data);
+  }, [data, selectedHunter, awardYear]);
 
   const personalLeadgeA_monthsData = useMemo(() => {
     const months = Array.from({ length: 12 }, (_, i) => ({
