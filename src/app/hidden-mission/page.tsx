@@ -257,9 +257,12 @@ export default function HiddenMissionPage() {
       let target = null;
       if (data.leadgeC) {
         const matches = data.leadgeC.filter((item: any) => {
-          if (item.hunter !== hunter || !(item.date || '').includes(awardYear)) return false;
-          if (item.date) {
-            const d = new Date(item.date);
+          if (item.hunter !== hunter) return false;
+          const dateStr = (item.date || '').trim();
+          const isYearMatch = dateStr.includes(awardYear) || (!isNaN(new Date(dateStr).getTime()) && new Date(dateStr).getFullYear().toString() === awardYear);
+          if (!isYearMatch) return false;
+          if (dateStr) {
+            const d = new Date(dateStr);
             if (!isNaN(d.getTime()) && d.getTime() > nowTime) return false;
           }
           return true;
@@ -519,9 +522,12 @@ export default function HiddenMissionPage() {
         let leadgeCTarget = null;
         if (data.leadgeC) {
           const matches = data.leadgeC.filter((item: any) => {
-            if (item.hunter !== hunter || !(item.date || '').includes(awardYear)) return false;
-            if (item.date) {
-              const d = new Date(item.date);
+            if (item.hunter !== hunter) return false;
+            const dateStr = (item.date || '').trim();
+            const isYearMatch = dateStr.includes(awardYear) || (!isNaN(new Date(dateStr).getTime()) && new Date(dateStr).getFullYear().toString() === awardYear);
+            if (!isYearMatch) return false;
+            if (dateStr) {
+              const d = new Date(dateStr);
               if (!isNaN(d.getTime()) && d.getTime() > frameTime) return false;
             }
             return true;
@@ -1003,9 +1009,12 @@ export default function HiddenMissionPage() {
     
     const nowTime = Date.now();
     const matches = data.leadgeC.filter((item: any) => {
-      if (item.hunter !== selectedHunter || !(item.date || '').includes(awardYear)) return false;
-      if (item.date) {
-        const d = new Date(item.date);
+      if (item.hunter !== selectedHunter) return false;
+      const dateStr = (item.date || '').trim();
+      const isYearMatch = dateStr.includes(awardYear) || (!isNaN(new Date(dateStr).getTime()) && new Date(dateStr).getFullYear().toString() === awardYear);
+      if (!isYearMatch) return false;
+      if (dateStr) {
+        const d = new Date(dateStr);
         if (!isNaN(d.getTime()) && d.getTime() > nowTime) return false;
       }
       return true;
@@ -1022,14 +1031,7 @@ export default function HiddenMissionPage() {
 
     const rawRate = target.returnRate && target.returnRate.trim() ? target.returnRate.trim() : "0.00%";
     const rate = rawRate.endsWith('%') ? rawRate : `${rawRate}%`;
-
-    const dateStr = (target.date || '').trim();
-    let label = "年度績效";
-    if (dateStr.includes("6/30") || dateStr.includes("06/30") || dateStr.includes("06-30") || dateStr.includes("6-30") || dateStr.includes("年中")) {
-      label = "年中績效";
-    } else if (dateStr.includes("12/31") || dateStr.includes("12-31") || dateStr.includes("年度")) {
-      label = "年度績效";
-    }
+    const label = "年度績效";
 
     return { rate, label };
   }, [data.leadgeC, selectedHunter, awardYear]);
