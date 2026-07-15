@@ -1278,10 +1278,7 @@ export default function BasicMissionPage() {
               onClick={() => setShowThresholdRules(!showThresholdRules)}
               title="點選展開/收合規則說明"
             >
-              <div className="flex items-center gap-2">
-                <span className={`material-symbols-outlined text-[20px] ${personalAwardThresholdData.isMet ? 'text-primary animate-pulse' : 'text-[#efe0d2]/70 group-hover:text-primary transition-colors'}`} style={{ fontVariationSettings: personalAwardThresholdData.isMet ? "'FILL' 1" : "'FILL' 0" }}>
-                  {personalAwardThresholdData.isMet ? 'verified' : 'military_tech'}
-                </span>
+              <div className="flex items-center">
                 <h3 className="text-primary text-[13px] font-bold tracking-[0.1em] uppercase group-hover:text-primary/80 transition-colors">
                   獎金兌換資格
                 </h3>
@@ -1383,8 +1380,7 @@ export default function BasicMissionPage() {
             <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px]">
               {personalAwardThresholdData.isMet ? (
                 <div className="text-primary font-bold flex items-center gap-1.5 animate-pulse">
-                  <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>celebration</span>
-                  <span>恭喜！{selectedPersonalHunter || "您"}已連續 4 週通過考核標準，正式解鎖兌獎資格！繼續堅持不懈，突破自我！</span>
+                  <span>{selectedPersonalHunter || "您"}已連續 4 週通過考核標準，正式解鎖兌獎資格！繼續堅持不懈，突破自我！</span>
                 </div>
               ) : (
                 <div className="text-[#efe0d2]/70 flex items-center gap-1.5">
