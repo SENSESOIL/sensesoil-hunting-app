@@ -12,15 +12,15 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const getWeekRange = (dateObj: Date) => {
   const d = new Date(dateObj);
   const day = d.getDay();
-  const diffToMon = d.getDate() - day + (day === 0 ? -6 : 1);
-  const mon = new Date(d.setDate(diffToMon));
-  mon.setHours(0,0,0,0);
+  const diffToSun = d.getDate() - day;
+  const sun = new Date(d.setDate(diffToSun));
+  sun.setHours(0,0,0,0);
   
-  const sun = new Date(mon);
-  sun.setDate(mon.getDate() + 6);
-  sun.setHours(23,59,59,999);
+  const sat = new Date(sun);
+  sat.setDate(sun.getDate() + 6);
+  sat.setHours(23,59,59,999);
   
-  return { start: mon.getTime(), end: sun.getTime() };
+  return { start: sun.getTime(), end: sat.getTime() };
 };
 
 const calculatePace = (timeMins: number, distanceKm: number) => {
@@ -396,11 +396,11 @@ export default function RunningRecordsPage() {
       return n;
     };
 
-    // 遊戲規則：禮拜一才結算上週數據。
-    // 過濾出「已經結算」的日期 (上個禮拜天(含)之前)
+    // 遊戲規則：禮拜六是每週最後一天，禮拜天是週結算的起始日。
+    // 過濾出「已經結算」的日期 (上個禮拜六(含)之前)
     const now = new Date();
     const dayOfWeek = now.getDay();
-    const daysToSubtract = dayOfWeek === 0 ? 7 : dayOfWeek;
+    const daysToSubtract = dayOfWeek === 6 ? 7 : (dayOfWeek + 1);
     const maxAllowedDate = new Date(now);
     maxAllowedDate.setDate(now.getDate() - daysToSubtract);
     maxAllowedDate.setHours(23, 59, 59, 999);
@@ -1045,7 +1045,7 @@ export default function RunningRecordsPage() {
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
         <div className="flex items-center gap-3 flex-nowrap cursor-pointer" onClick={() => router.push("/diversion")}>
           <Image priority alt="SenseSoil Logo" width={28} height={28} className="h-[28px] w-auto object-contain flex-shrink-0 translate-y-[-2px]" src="/Logo｜Orange.svg" />
-          <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">自我覺醒試煉</h1>
+          <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">跨越安逸試煉</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -1761,7 +1761,7 @@ export default function RunningRecordsPage() {
                         </td>
                         <td className="p-2 font-data-mono align-middle" style={{ width: "35%", padding: 4, color: "#ffffff", textAlign: "left" }}>
                           <div className="line-clamp-2 leading-tight">
-                            {row.date === "--" ? "--" : (row.activity || "自我覺醒試煉")}
+                            {row.date === "--" ? "--" : (row.activity || "跨越安逸試煉")}
                           </div>
                         </td>
                         <td className="p-2 text-center whitespace-nowrap align-middle" style={{ width: "14%", padding: 4, color: "#ffffff", textAlign: "center" }}>
@@ -1901,7 +1901,7 @@ export default function RunningRecordsPage() {
                 <p className="text-primary font-label-caps text-[10px] tracking-widest mb-1">
                   今年的第 {selectedDayRecords[0].nthRun} 次試煉
                 </p>
-                <h3 className="text-white text-xl font-bold font-display">{selectedDayRecords[0].activity || "自我覺醒試煉"}</h3>
+                <h3 className="text-white text-xl font-bold font-display">{selectedDayRecords[0].activity || "跨越安逸試煉"}</h3>
               </div>
               <button className="text-white/50 hover:text-white" onClick={() => setSelectedDayRecords(null)}>
                 <span className="material-symbols-outlined">close</span>
@@ -1911,7 +1911,7 @@ export default function RunningRecordsPage() {
             {selectedDayRecords.map((record, idx) => (
               <div key={idx} className="flex flex-col gap-4">
                 {idx > 0 && <div className="h-px bg-white/10 w-full" />}
-                {idx > 0 && <h3 className="text-white/80 text-lg font-bold font-display">{record.activity || "自我覺醒試煉"}</h3>}
+                {idx > 0 && <h3 className="text-white/80 text-lg font-bold font-display">{record.activity || "跨越安逸試煉"}</h3>}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col border-l-2 border-primary/30 pl-3">
                     <span className="text-[#efe0d2]/50 text-[10px] font-label-caps tracking-widest mb-1">距離</span>
@@ -1959,7 +1959,7 @@ export default function RunningRecordsPage() {
         </button>
         <button className="flex flex-col items-center gap-1 text-primary">
           <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>directions_run</span>
-          <span className="font-label-caps text-[11px] tracking-[0.1em]">覺醒</span>
+          <span className="font-label-caps text-[11px] tracking-[0.1em]">跨越</span>
         </button>
       </nav>
     </div>
