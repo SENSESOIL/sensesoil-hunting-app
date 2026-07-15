@@ -1359,14 +1359,18 @@ export default function BasicMissionPage() {
                       {idx === 0 ? (
                         <div className="flex justify-between items-center pt-0.5">
                           <span className="text-white/60 text-[10px]">體格分</span>
-                          <span className={`font-sans font-bold text-[16px] inline-block scale-110 leading-none ${week.awardPass ? 'text-white' : 'text-[#ff3b30]'}`}>
+                          <span className={`font-bold ${
+                            (week.displayAward === '✕' || week.displayAward === '×' || week.displayAward === 'X' || week.displayAward === 'x' || week.displayAward === '--' || !week.displayAward)
+                              ? 'font-data-mono text-[11px]' 
+                              : 'font-sans text-[16px] inline-block scale-110 leading-none'
+                          } ${week.awardPass ? 'text-white' : 'text-[#ff3b30]'}`}>
                             {week.displayAward || '--'}
                           </span>
                         </div>
                       ) : (
                         <div className="flex justify-between items-center pt-0.5 opacity-0 pointer-events-none select-none">
                           <span className="text-white/60 text-[10px]">佔位</span>
-                          <span className="font-sans font-bold text-[16px] inline-block scale-110 leading-none">--</span>
+                          <span className="font-data-mono font-bold text-[11px]">--</span>
                         </div>
                       )}
                     </div>
