@@ -569,6 +569,7 @@ export default function BasicMissionPage() {
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
   const [selectedPersonalDate, setSelectedPersonalDate] = useState<string>("");
   const [isPersonalDateDropdownOpen, setIsPersonalDateDropdownOpen] = useState(false);
+  const [showThresholdRules, setShowThresholdRules] = useState(false);
 
   const hunterRank = useMemo(() => {
     if (!data?.settings || !selectedPersonalHunter) return "S級狩獵者";
@@ -1005,8 +1006,9 @@ export default function BasicMissionPage() {
       const dayStr = row ? (row[13] || "") : "";
       const timeStr = row ? (row[14] || "") : "";
       const chengStr = row ? (row[15] || "") : "";
+      const awardStr = row ? (row[12] || "") : "";
 
-      // 1. 判斷天與時：沒有超過「日的晚上9:00」，在日晚上9:00前都算及格。若超過，或出現「後」、或「 ✕」都算不及格。
+      // 1. 判斷天與時（發布日）：沒有超過「日的晚上9:00」，在日晚上9:00前都算及格。若超過，或出現「後」、或「 ✕」都算不及格。
       let timePass = false;
       if (row && dayStr.trim() !== "") {
         const d = dayStr.trim();
@@ -1031,14 +1033,23 @@ export default function BasicMissionPage() {
         }
       }
 
-      // 2. 判斷「誠」：連續四個禮拜達3.5分或以上才及格。
+      // 2. 判斷「誠」（完成度）：達 3.5 分或以上為單週及格基準
       let chengPass = false;
       if (row && chengStr.trim() !== "") {
         const val = parseFloat(chengStr.trim());
         chengPass = !isNaN(val) && val >= 3.5;
       }
 
-      const weekPass = !!row && timePass && chengPass;
+      // 3. 判斷「獎」（體格分）：當週狩獵任務的體能或格局完成度達「✕」以上（即 ○ 或 △）
+      let awardPass = false;
+      if (row && awardStr.trim() !== "") {
+        const a = awardStr.trim();
+        if (a !== "✕" && a !== "×" && a !== "X" && a !== "x" && a !== "-" && a !== "--") {
+          awardPass = true;
+        }
+      }
+
+      const weekPass = !!row && timePass && chengPass && awardPass;
 
       return {
         dateStr,
@@ -1046,15 +1057,21 @@ export default function BasicMissionPage() {
         dayStr: dayStr || "-",
         timeStr: timeStr || "-",
         chengStr: chengStr || "-",
+        awardStr: awardStr || "-",
         timePass,
         chengPass,
+        awardPass,
         weekPass
       };
     });
 
-    const isMet = isSufficientWeeks && weeks.every(w => w.weekPass);
+    const avgCheng = weeks.length > 0
+      ? weeks.reduce((sum, w) => sum + (parseFloat(w.chengStr) || 0), 0) / weeks.length
+      : 0;
 
-    return { isMet, weeks, isSufficientWeeks };
+    const isMet = isSufficientWeeks && weeks.every(w => w.hasRow && w.timePass && w.awardPass) && avgCheng >= 3.5;
+
+    return { isMet, weeks, isSufficientWeeks, avgCheng };
   }, [data, selectedPersonalHunter, selectedPersonalDate, options?.dates]);
 
   return (
@@ -1232,39 +1249,50 @@ export default function BasicMissionPage() {
               ? 'border-primary bg-primary/10 shadow-[0_0_20px_rgba(243,156,18,0.25)]' 
               : 'border-primary/30 bg-surface-container-low/80'
           }`}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-3.5 pb-3 border-b border-primary/20">
-              <div className="flex items-center gap-2">
-                <span className={`material-symbols-outlined text-[20px] ${personalAwardThresholdData.isMet ? 'text-primary animate-pulse' : 'text-[#efe0d2]/70'}`} style={{ fontVariationSettings: personalAwardThresholdData.isMet ? "'FILL' 1" : "'FILL' 0" }}>
+            <div className="flex justify-between items-center mb-3.5 pb-3 border-b border-primary/20">
+              <div 
+                className="flex items-center gap-2 cursor-pointer group select-none"
+                onClick={() => setShowThresholdRules(!showThresholdRules)}
+                title="點選展開/收合考核說明"
+              >
+                <span className={`material-symbols-outlined text-[20px] ${personalAwardThresholdData.isMet ? 'text-primary animate-pulse' : 'text-[#efe0d2]/70 group-hover:text-primary transition-colors'}`} style={{ fontVariationSettings: personalAwardThresholdData.isMet ? "'FILL' 1" : "'FILL' 0" }}>
                   {personalAwardThresholdData.isMet ? 'verified' : 'military_tech'}
                 </span>
-                <h3 className="text-white text-[13px] font-bold tracking-[0.1em] uppercase">隱藏與跨越試煉｜獎金兌換資格門檻</h3>
+                <h3 className="text-white text-[13px] font-bold tracking-[0.1em] uppercase group-hover:text-primary transition-colors flex items-center gap-1">
+                  <span>獎金兌換資格</span>
+                  <span className="material-symbols-outlined text-[16px] text-primary/70 transition-transform duration-200" style={{ transform: showThresholdRules ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
+                </h3>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center shrink-0">
                 {personalAwardThresholdData.isMet ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary text-black font-extrabold font-label-caps text-[11px] tracking-wider rounded-full shadow-[0_0_12px_rgba(243,156,18,0.6)]">
-                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    門檻已達標｜可進行對獎
+                  <span className="inline-flex items-center px-3 py-1 bg-primary text-black font-extrabold font-label-caps text-[11px] tracking-wider rounded-full shadow-[0_0_12px_rgba(243,156,18,0.6)]">
+                    門檻解鎖
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#121212] border border-primary/40 text-[#efe0d2]/70 font-bold font-label-caps text-[11px] tracking-wider rounded-full">
-                    <span className="material-symbols-outlined text-[14px]">pending</span>
-                    考核進行中｜尚未達標
+                  <span className="inline-flex items-center px-3 py-1 bg-[#121212] border border-primary/40 text-[#efe0d2]/70 font-bold font-label-caps text-[11px] tracking-wider rounded-full">
+                    尚未達標
                   </span>
                 )}
               </div>
             </div>
 
-            {/* 考核說明與提示 */}
-            <div className="text-[11px] text-[#efe0d2]/80 space-y-1.5 mb-4 bg-black/40 p-3 rounded border border-white/5 leading-relaxed">
-              <div className="flex items-start gap-1.5">
-                <span className="text-primary font-bold shrink-0">① 天與時：</span>
-                <span>連續 4 週任務不中斷，且繳交時間須於<strong className="text-white">週日晚間 9:00 (21:00) 前</strong>。超過時間、標記「後」或「✕」皆為不及格。</span>
+            {/* 考核說明與提示（點擊標題展開） */}
+            {showThresholdRules && (
+              <div className="text-[11px] text-[#efe0d2]/80 space-y-1.5 mb-4 bg-black/40 p-3 rounded border border-white/5 leading-relaxed">
+                <div className="flex items-start gap-1.5">
+                  <span className="text-primary font-bold shrink-0">① 狩獵任務發布日：</span>
+                  <span>連續 4 週任務不中斷，於<strong className="text-white">週日 21:00 前</strong>交付。</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-primary font-bold shrink-0">② 狩獵任務完成度：</span>
+                  <span>連續 4 週完成度平均達<strong className="text-white"> 3.5 分或以上</strong>。</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="text-primary font-bold shrink-0">③ 狩獵任務體格分：</span>
+                  <span>當週狩獵任務的體能或格局完成度達<strong className="text-white">「✕」以上</strong>。</span>
+                </div>
               </div>
-              <div className="flex items-start gap-1.5">
-                <span className="text-primary font-bold shrink-0">② 誠計分：</span>
-                <span>連續 4 週之「誠」計分皆須達<strong className="text-white"> 3.5 分或以上</strong>。</span>
-              </div>
-            </div>
+            )}
 
             {/* 連續 4 週考核追蹤網格 */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
@@ -1288,24 +1316,35 @@ export default function BasicMissionPage() {
                     </div>
 
                     <div className="space-y-1.5 text-[11px]">
-                      {/* 天與時 status */}
+                      {/* 發布日 status */}
                       <div className="flex justify-between items-center">
-                        <span className="text-white/60 text-[10px]">天與時</span>
+                        <span className="text-white/60 text-[10px]">發布日</span>
                         <div className="flex items-center gap-1 font-data-mono font-bold">
-                          <span>{week.dayStr === '-' ? '--' : week.dayStr} {week.timeStr !== '-' && week.timeStr !== '' ? `(${week.timeStr})` : ''}</span>
+                          <span>{week.dayStr === '-' ? '--' : week.dayStr} {week.timeStr !== '-' && week.timeStr !== '' ? week.timeStr : ''}</span>
                           <span className={`material-symbols-outlined text-[13px] ${week.timePass ? 'text-primary' : 'text-red-400'}`}>
                             {week.timePass ? 'check' : 'close'}
                           </span>
                         </div>
                       </div>
 
-                      {/* 誠計分 status */}
+                      {/* 完成度 status */}
                       <div className="flex justify-between items-center">
-                        <span className="text-white/60 text-[10px]">誠計分</span>
+                        <span className="text-white/60 text-[10px]">完成度</span>
                         <div className="flex items-center gap-1 font-data-mono font-bold">
                           <span className={week.chengPass ? 'text-white' : 'text-red-400'}>{week.chengStr === '-' ? '--' : `${week.chengStr}分`}</span>
                           <span className={`material-symbols-outlined text-[13px] ${week.chengPass ? 'text-primary' : 'text-red-400'}`}>
                             {week.chengPass ? 'check' : 'close'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 體格分 status */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/60 text-[10px]">體格分</span>
+                        <div className="flex items-center gap-1 font-data-mono font-bold">
+                          <span className={week.awardPass ? 'text-white' : 'text-red-400'}>{week.awardStr === '-' ? '--' : week.awardStr}</span>
+                          <span className={`material-symbols-outlined text-[13px] ${week.awardPass ? 'text-primary' : 'text-red-400'}`}>
+                            {week.awardPass ? 'check' : 'close'}
                           </span>
                         </div>
                       </div>
@@ -1320,12 +1359,12 @@ export default function BasicMissionPage() {
               {personalAwardThresholdData.isMet ? (
                 <div className="text-primary font-bold flex items-center gap-1.5 animate-pulse">
                   <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>celebration</span>
-                  <span>恭喜！您已連續 4 週通過考核標準，正式解鎖隱藏試煉與跨越試煉之兌獎資格！</span>
+                  <span>恭喜！{selectedPersonalHunter || "您"}已連續 4 週通過考核標準，正式解鎖兌獎資格！繼續堅持不懈，突破自我！</span>
                 </div>
               ) : (
                 <div className="text-[#efe0d2]/70 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">info</span>
-                  <span>欲啟動隱藏/跨越試煉兌獎資格，須達成連續 4 週考核及格。堅持不懈，突破自我！</span>
+                  <span>欲啟動兌獎資格，須達成連續 4 週考核及格。堅持每一天1%的成長，思想決定行動，行動決定未來！</span>
                 </div>
               )}
             </div>
