@@ -870,11 +870,12 @@ export default function BasicMissionPage() {
         const val = parseFloat(r[15]);
         if (!isNaN(val)) pStr = val.toFixed(1);
       }
+      const awardStr = (r[12] || "").trim() || "-";
       const qStr = (r[16] || "").trim() || "-";
       const rStr = (r[17] || "").trim() || "-";
 
-      let taskStr = `${pStr}/${qStr}/${rStr}`;
-      if (taskStr === "-/-/-") {
+      let taskStr = `${pStr}/${awardStr}/${qStr}/${rStr}`;
+      if (taskStr === "-/-/-/-") {
         taskStr = "-";
       }
 
@@ -973,6 +974,7 @@ export default function BasicMissionPage() {
     const val = parseFloat(pRecord[15]);
     taskCompletion = isNaN(val) ? pRecord[15] : val.toFixed(1);
   }
+  const taskAward = pRecord ? mapSymbolToIcon(pRecord[12]) : "remove";
   const taskPhysical = pRecord && pRecord[16] ? pRecord[16] : "-";
   const taskPattern = pRecord && pRecord[17] ? pRecord[17] : "-";
 
@@ -1207,8 +1209,9 @@ export default function BasicMissionPage() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-white text-[12px] font-bold tracking-[0.1em] uppercase">狩獵任務</h2>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <PersonalIndicatorCard label="任務完成度" symbol={taskCompletion} note={pNotes[15]} isSymbolText />
+              <PersonalIndicatorCard label="試煉獎勵" symbol={taskAward} note={pNotes[12]} />
               <PersonalIndicatorCard label="體能強化度" symbol={taskPhysical} note={pNotes[16]} isSymbolText />
               <PersonalIndicatorCard label="格局進化度" symbol={taskPattern} note={pNotes[17]} isSymbolText />
             </div>
@@ -1681,7 +1684,7 @@ export default function BasicMissionPage() {
                     {/* 任務 */}
                     <div className="border border-primary/20 rounded-[4px] p-3 bg-surface-container-low">
                       <h4 className="text-[12px] text-primary mb-2 uppercase tracking-widest">任務</h4>
-                      <div className="grid grid-cols-5 gap-2">
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                         <div className="space-y-1">
                           <DayCellEdit 
                             label="天"
@@ -1704,6 +1707,15 @@ export default function BasicMissionPage() {
                             symbolInputId={`edit-col-15`}
                             noteInputId={`edit-note-15`}
                             options={["5.0", "4.5", "4.0", "3.5", "3.0", "2.5", "2.0", "1.5", "1.0", "0.5", "0.0", ""]}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <DayCellEdit 
+                            label="獎"
+                            defaultSymbol={editingRow.rawData[12] || ""}
+                            defaultNote={editingRow.rawNotes?.[12] || ""}
+                            symbolInputId={`edit-col-12`}
+                            noteInputId={`edit-note-12`}
                           />
                         </div>
                         <div className="space-y-1">
@@ -1755,13 +1767,13 @@ export default function BasicMissionPage() {
                             values: [[getVal('edit-col-10'), getVal('edit-col-11')]]
                           },
                           {
-                            range: `N${editingRow.originalIndex}:R${editingRow.originalIndex}`,
-                            values: [[getVal('edit-col-13'), getVal('edit-col-14'), getVal('edit-col-15'), getVal('edit-col-16'), getVal('edit-col-17')]]
+                            range: `M${editingRow.originalIndex}:R${editingRow.originalIndex}`,
+                            values: [[getVal('edit-col-12'), getVal('edit-col-13'), getVal('edit-col-14'), getVal('edit-col-15'), getVal('edit-col-16'), getVal('edit-col-17')]]
                           }
                         ];
 
                         const notesUpdates = [
-                          2, 3, 4, 5, 6, 7, 10, 11, 13, 15, 16, 17
+                          2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 15, 16, 17
                         ].map(colIndex => ({
                           rowIndex: editingRow.originalIndex - 1,
                           colIndex: colIndex,
