@@ -733,111 +733,205 @@ export default function HiddenMissionPage() {
     return frames;
   }, [data.scoreboard, data.leadgeA, data.leadgeC, awardYear, teamLeaderboardMetric]);
 
-  const monthlyChampionStats = useMemo(() => {
+  const weeklyChampionStats = useMemo(() => {
     if (!data.scoreboard || data.scoreboard.length === 0) {
-      return { champion: "-", consecutiveMonths: "-" };
+      return { champion: "-", consecutiveWeeks: "-" };
     }
-    const cleanNumLocal = (val: any) => {
-      if (!val || typeof val !== 'string') return 0;
-      const n = parseFloat(val.replace(/[^0-9.-]+/g, ''));
-      return isNaN(n) ? 0 : n;
-    };
     const targetYearStr = awardYear || "2026";
     const targetYear = parseInt(targetYearStr, 10);
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentMonth = targetYear === currentYear ? (now.getMonth() + 1) : (targetYear < currentYear ? 12 : 0);
+    const nowTime = now.getTime();
 
-    if (currentMonth <= 0) {
-      return { champion: "-", consecutiveMonths: "-" };
+    let currentWeek = 0;
+    if (targetYear === currentYear) {
+      const startOfYear = new Date(targetYear, 0, 1).getTime();
+      const diffDays = Math.max(0, Math.floor((nowTime - startOfYear) / (1000 * 60 * 60 * 24)));
+      currentWeek = Math.max(1, Math.ceil(diffDays / 7));
+    } else if (targetYear < currentYear) {
+      currentWeek = 52;
+    } else {
+      currentWeek = 0;
     }
 
-    const monthlyChampions = new Map<number, string>();
+    if (currentWeek <= 0) {
+      return { champion: "-", consecutiveWeeks: "-" };
+    }
 
-    for (let m = 1; m <= currentMonth; m++) {
-      const endOfMonthTime = new Date(targetYear, m, 0, 23, 59, 59, 999).getTime();
-      let maxTotal = -1;
+    const weeklyChampions = new Map<number, string>();
+
+    for (let w = 1; w <= currentWeek; w++) {
+      const endOfWeekTime = new Date(targetYear, 0, w * 7, 23, 59, 59, 999).getTime();
+      let maxWeighted = -999999;
       let champs: string[] = [];
 
       for (const sItem of data.scoreboard) {
         const hunter = sItem.hunter;
-        let totalA = 0;
-        let totalB = 0;
-        let totalC = 0;
+        let weightedNum = 0;
 
-        if (data.leadgeA) {
-          const rowsA = data.leadgeA.filter((r: any) => r.hunter === hunter);
-          for (const r of rowsA) {
-            if (!r.buyDate) continue;
-            const buy = new Date(r.buyDate);
-            if (!isNaN(buy.getTime()) && buy.getTime() <= endOfMonthTime) {
-              const parts = r.buyDate.split(/[/.-]/);
-              if (parts.length >= 1 && parts[0].trim() === targetYearStr) {
-                if (r.days90) {
-                  const d90 = new Date(r.days90);
-                  if (!isNaN(d90.getTime()) && d90.getTime() <= endOfMonthTime) totalA += cleanNumLocal(r.q1Reward);
-                }
-                if (r.days180) {
-                  const d180 = new Date(r.days180);
-                  if (!isNaN(d180.getTime()) && d180.getTime() <= endOfMonthTime) totalA += cleanNumLocal(r.q2Reward);
-                }
-                if (r.days270) {
-                  const d270 = new Date(r.days270);
-                  if (!isNaN(d270.getTime()) && d270.getTime() <= endOfMonthTime) totalA += cleanNumLocal(r.q3Reward);
-                }
-                if (r.days360) {
-                  const d360 = new Date(r.days360);
-                  if (!isNaN(d360.getTime()) && d360.getTime() <= endOfMonthTime) totalA += cleanNumLocal(r.q4Reward);
-                }
-                if (r.shares720 && r.y2Reward) {
-                  totalA += cleanNumLocal(r.y2Reward);
-                }
-              }
+        if (data.leadgeC && data.leadgeC.length > 0) {
+          const matches = data.leadgeC.filter((c: any) => {
+            if (c.hunter !== hunter) return false;
+            const d = new Date(c.date || '');
+            return !isNaN(d.getTime()) && d.getTime() <= endOfWeekTime && (c.date || '').includes(targetYearStr);
+          });
+          if (matches.length > 0) {
+            const last = matches[matches.length - 1];
+            if (last.weighted !== undefined && last.weighted.trim() !== '') {
+              const num = parseFloat(last.weighted.replace(/[^0-9.-]+/g, ''));
+              if (!isNaN(num)) weightedNum = num;
             }
           }
         }
 
-        if (data.reward) {
-          for (const r of data.reward) {
-            if (r.hunter !== hunter) continue;
-            if (!r.date) continue;
-            const rd = new Date(r.date);
-            if (!isNaN(rd.getTime()) && rd.getTime() <= endOfMonthTime) {
-              const parts = r.date.split(/[/.-]/);
-              if (parts.length >= 1 && parts[0].trim() === targetYearStr) {
-                if (r.category === 'B定性') totalB += cleanNumLocal(r.amount);
-                if (r.category === 'C韌性') totalC += cleanNumLocal(r.amount);
+        if (weightedNum === 0 && data.tracker && data.tracker.length > 0) {
+          const trackerMatches = data.tracker.filter((t: any) => {
+            if (t.hunter !== hunter || !(t.date || '').includes(targetYearStr)) return false;
+            const d = new Date(t.date);
+            return !isNaN(d.getTime()) && d.getTime() <= endOfWeekTime;
+          });
+
+          if (trackerMatches.length > 0) {
+            let totalCost = 0;
+            let realizedProceeds = 0;
+            const holdings: Record<string, number> = {};
+            const costBasis: Record<string, number> = {};
+
+            for (const t of trackerMatches) {
+              const tgt = t.target?.trim();
+              if (!tgt) continue;
+              const shares = parseFloat(String(t.shares).replace(/,/g, '')) || 0;
+              const amount = parseFloat(String(t.amount).replace(/[^0-9.-]+/g, '')) || 0;
+
+              if (t.type === '買' || !t.type || t.type.trim() === '') {
+                holdings[tgt] = (holdings[tgt] || 0) + shares;
+                costBasis[tgt] = (costBasis[tgt] || 0) + amount;
+                totalCost += amount;
+              } else if (t.type === '賣') {
+                holdings[tgt] = Math.max(0, (holdings[tgt] || 0) - shares);
+                realizedProceeds += amount;
               }
             }
+
+            const getPriceAt = (tgt: string, time: number) => {
+              if (data.marketData && data.marketData.history && data.marketData.history.length > 0) {
+                let bestPrice = 0;
+                for (const h of data.marketData.history) {
+                  const hTime = new Date(h.date).getTime();
+                  if (!isNaN(hTime) && hTime <= time) {
+                    if (h.prices && h.prices[tgt] > 0) bestPrice = h.prices[tgt];
+                  }
+                }
+                if (bestPrice > 0) return bestPrice;
+                for (const h of data.marketData.history) {
+                  if (h.prices && h.prices[tgt] > 0) return h.prices[tgt];
+                }
+              }
+              if (data.marketData && data.marketData.currentPrices && data.marketData.currentPrices[tgt] > 0) {
+                return data.marketData.currentPrices[tgt];
+              }
+              if (holdings[tgt] > 0 && costBasis[tgt] > 0) return costBasis[tgt] / holdings[tgt];
+              return 0;
+            };
+
+            let marketValue = 0;
+            for (const [tgt, sh] of Object.entries(holdings)) {
+              if (sh > 0) marketValue += sh * getPriceAt(tgt, endOfWeekTime);
+            }
+
+            let dividend = 0;
+            if (data.reward) {
+              for (const r of data.reward) {
+                if (r.hunter === hunter && r.date && r.date.includes(targetYearStr)) {
+                  const rTime = new Date(r.date).getTime();
+                  if (!isNaN(rTime) && rTime <= endOfWeekTime) {
+                    if (r.category && (r.category.includes('韌性') || r.category.includes('結算') || r.category.includes('配息'))) {
+                      dividend += parseFloat(String(r.amount).replace(/[^0-9.-]+/g, '')) || 0;
+                    }
+                  }
+                }
+              }
+            }
+
+            const profitNum = Math.round(marketValue + realizedProceeds - totalCost + dividend);
+            const rateNum = totalCost > 0 ? parseFloat(((profitNum / totalCost) * 100).toFixed(2)) : 0;
+
+            let maxStreak = 0;
+            if (data.leadgeA) {
+              const buyMonths = new Set<number>();
+              const hunterRows = data.leadgeA.filter((item: any) => item.hunter === hunter);
+              for (const item of hunterRows) {
+                if (!item.buyDate) continue;
+                const buy = new Date(item.buyDate);
+                if (isNaN(buy.getTime()) || buy.getTime() > endOfWeekTime) continue;
+                const parts = item.buyDate.split(/[/.-]/);
+                if (parts.length >= 2) {
+                  const y = parts[0].trim();
+                  const m = parseInt(parts[1], 10);
+                  if (y === targetYearStr && m >= 1 && m <= 12) buyMonths.add(m);
+                }
+              }
+              let streak = 0;
+              for (let m = 1; m <= 12; m++) {
+                if (buyMonths.has(m)) {
+                  streak++;
+                  if (streak > maxStreak) maxStreak = streak;
+                } else {
+                  streak = 0;
+                }
+              }
+            }
+
+            const mult = getHunterWeightMultiplier(hunter, maxStreak, data);
+            weightedNum = parseFloat(((rateNum / 100) * mult).toFixed(4));
           }
         }
 
-        const totalABC = (m === currentMonth && targetYearStr === '2026') ? (sItem.totalReward || 0) : (totalA + totalB + totalC);
-
-        if (totalABC > maxTotal && totalABC > 0) {
-          maxTotal = totalABC;
+        if (weightedNum > maxWeighted && (weightedNum !== 0 || maxWeighted === -999999)) {
+          maxWeighted = weightedNum;
           champs = [hunter];
-        } else if (totalABC === maxTotal && totalABC > 0) {
+        } else if (weightedNum === maxWeighted && weightedNum !== 0) {
           champs.push(hunter);
         }
       }
 
-      if (champs.length > 0) {
-        monthlyChampions.set(m, champs[0]);
+      if (champs.length > 0 && maxWeighted !== -999999) {
+        weeklyChampions.set(w, champs[0]);
       }
     }
 
-    const latestChamp = data.scoreboard[0]?.hunter || "-";
-    if (latestChamp === "-" || !monthlyChampions.has(currentMonth)) {
+    let latestChamp = "-";
+    if (weeklyChampions.has(currentWeek)) {
+      latestChamp = weeklyChampions.get(currentWeek)!;
+    } else {
+      let bestW = -999999;
+      for (const sItem of data.scoreboard) {
+        const h = sItem.hunter;
+        let wNum = 0;
+        if (data.leadgeC && data.leadgeC.length > 0) {
+          const matches = data.leadgeC.filter((c: any) => c.hunter === h && (c.date || '').includes(targetYearStr));
+          if (matches.length > 0) {
+            const num = parseFloat(matches[matches.length - 1].weighted.replace(/[^0-9.-]+/g, ''));
+            if (!isNaN(num)) wNum = num;
+          }
+        }
+        if (wNum > bestW) {
+          bestW = wNum;
+          latestChamp = h;
+        }
+      }
+    }
+
+    if (latestChamp === "-" || !weeklyChampions.has(currentWeek)) {
       return {
         champion: latestChamp,
-        consecutiveMonths: latestChamp !== "-" ? "01" : "-",
+        consecutiveWeeks: latestChamp !== "-" ? "01" : "-",
       };
     }
 
     let streak = 0;
-    for (let m = currentMonth; m >= 1; m--) {
-      if (monthlyChampions.get(m) === latestChamp) {
+    for (let w = currentWeek; w >= 1; w--) {
+      if (weeklyChampions.get(w) === latestChamp) {
         streak++;
       } else {
         break;
@@ -848,9 +942,10 @@ export default function HiddenMissionPage() {
 
     return {
       champion: latestChamp,
-      consecutiveMonths: streak.toString().padStart(2, "0"),
+      consecutiveWeeks: streak.toString().padStart(2, "0"),
     };
-  }, [data.scoreboard, data.leadgeA, data.reward, awardYear]);
+  }, [data.scoreboard, data.tracker, data.leadgeA, data.leadgeC, data.reward, data.marketData, awardYear]);
+
 
   // Stop race when metric or year changes
   useEffect(() => {
@@ -1552,25 +1647,25 @@ export default function HiddenMissionPage() {
                   {/* Top Header - Team View */}
                   <div className="flex flex-row justify-between items-start shadow-[inset_0_0_15px_rgba(243,156,18,0.05)] h-[60px]" style={{ marginTop: 32, marginBottom: 32 }}>
                     <div className="flex flex-col border-l-[3px] border-primary pl-3 flex-1 pr-4">
-                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵月排行榜</p>
+                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 leading-none whitespace-nowrap">狩獵週排行榜</p>
                       <div className="h-[30px] flex items-center w-full">
                         <h2 className="text-white font-bold tracking-wider uppercase w-full"
                           style={{
-                            fontSize: (monthlyChampionStats.champion).length <= 4 ? '30px' :
-                                      (monthlyChampionStats.champion).length <= 10 ? '20px' : '14px',
-                            lineHeight: (monthlyChampionStats.champion).length <= 10 ? '30px' : '15px',
+                            fontSize: (weeklyChampionStats.champion).length <= 4 ? '30px' :
+                                      (weeklyChampionStats.champion).length <= 10 ? '20px' : '14px',
+                            lineHeight: (weeklyChampionStats.champion).length <= 10 ? '30px' : '15px',
                             display: '-webkit-box',
                             WebkitLineClamp: 1,
                             WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
                             wordBreak: 'break-all'
                           }}
-                        >{monthlyChampionStats.champion}</h2>
+                        >{weeklyChampionStats.champion}</h2>
                       </div>
                     </div>
                     <div className="text-right flex flex-col justify-end flex-shrink-0">
-                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍月數</p>
-                      <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{monthlyChampionStats.consecutiveMonths}</p>
+                      <p className="font-label-caps text-white font-bold text-[12px] tracking-[0.1em] mb-3 uppercase leading-none whitespace-nowrap">蟬聯冠軍週數</p>
+                      <p className="font-headline-lg text-white text-3xl font-bold tracking-tighter font-display shadow-primary/20 flex items-baseline justify-end gap-1 leading-none">{weeklyChampionStats.consecutiveWeeks}</p>
                     </div>
                   </div>
 
