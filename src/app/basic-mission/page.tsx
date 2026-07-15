@@ -1054,7 +1054,7 @@ export default function BasicMissionPage() {
         const gePass = ge !== "" && ge !== "✕" && ge !== "×" && ge !== "X" && ge !== "x" && ge !== "-" && ge !== "--";
         const aPass = a !== "" && a !== "✕" && a !== "×" && a !== "X" && a !== "x" && a !== "-" && a !== "--";
 
-        if (aPass || (tiPass && gePass)) {
+        if (aPass || (tiPass && gePass && a !== "✕" && a !== "×" && a !== "X" && a !== "x")) {
           awardPass = true;
           if (a === "o" || a === "O" || a === "0" || a === "〇" || a === "○" || a === "") {
             displayAward = "○";
@@ -1068,6 +1068,9 @@ export default function BasicMissionPage() {
           } else {
             displayAward = "✕";
           }
+        }
+        if (displayAward === "✕" || displayAward === "×" || displayAward === "X" || displayAward === "x") {
+          awardPass = false;
         }
       }
 
@@ -1360,7 +1363,7 @@ export default function BasicMissionPage() {
                             (week.displayAward === '✕' || week.displayAward === '×' || week.displayAward === 'X' || week.displayAward === 'x' || week.displayAward === '--' || !week.displayAward)
                               ? 'font-data-mono text-[11px]' 
                               : 'font-sans text-[18px] font-black inline-block scale-[1.15] leading-none [text-shadow:_0_0_1.5px_currentColor]'
-                          } ${week.awardPass ? 'text-white' : 'text-[#ff3b30]'}`}>
+                          } ${(week.awardPass && week.displayAward !== '✕' && week.displayAward !== '×' && week.displayAward !== 'X' && week.displayAward !== 'x') ? 'text-white' : 'text-[#ff3b30]'}`}>
                             {week.displayAward || '--'}
                           </span>
                         </div>
