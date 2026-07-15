@@ -1348,7 +1348,7 @@ export default function BasicMissionPage() {
                       <div className="flex justify-between items-center">
                         <span className="text-white/60 text-[10px]">完成度</span>
                         <span className={`font-data-mono font-bold ${week.chengPass ? 'text-white' : 'text-[#ff3b30]'}`}>
-                          {week.chengStr === '-' ? '--' : `${week.chengStr}分`}
+                          {week.chengStr === '-' ? '--' : week.chengStr}
                         </span>
                       </div>
 
@@ -1359,7 +1359,7 @@ export default function BasicMissionPage() {
                           <span className={`font-bold ${
                             (week.displayAward === '✕' || week.displayAward === '×' || week.displayAward === 'X' || week.displayAward === 'x' || week.displayAward === '--' || !week.displayAward)
                               ? 'font-data-mono text-[11px]' 
-                              : 'font-sans text-[16px] inline-block scale-110 leading-none'
+                              : 'font-sans text-[18px] font-black inline-block scale-[1.15] leading-none [text-shadow:_0_0_1.5px_currentColor]'
                           } ${week.awardPass ? 'text-white' : 'text-[#ff3b30]'}`}>
                             {week.displayAward || '--'}
                           </span>
@@ -1380,6 +1380,7 @@ export default function BasicMissionPage() {
             <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px]">
               {personalAwardThresholdData.isMet ? (
                 <div className="text-primary font-bold flex items-center gap-1.5 animate-pulse">
+                  <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>celebration</span>
                   <span>{selectedPersonalHunter || "您"}已連續 4 週通過考核標準，正式解鎖兌獎資格！繼續堅持不懈，突破自我！</span>
                 </div>
               ) : (
