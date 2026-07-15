@@ -1384,7 +1384,7 @@ export default function BasicMissionPage() {
               {personalAwardThresholdData.isMet ? (
                 <div className="text-primary font-bold flex items-center gap-1.5 animate-pulse">
                   <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>celebration</span>
-                  <span>{selectedPersonalHunter || "您"}已連續 4 週通過考核標準，正式解鎖兌獎資格！繼續堅持不懈，突破自我！</span>
+                  <span>{selectedPersonalHunter || "您"}已通過考核標準，正式解鎖兌獎資格！繼續堅持不懈，突破自我！</span>
                 </div>
               ) : (
                 <div className="text-[#efe0d2]/70 flex items-center gap-1.5">
