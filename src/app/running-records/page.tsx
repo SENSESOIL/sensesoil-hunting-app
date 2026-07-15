@@ -698,11 +698,11 @@ export default function RunningRecordsPage() {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
     
-    let startDayOfWeek = firstDay.getDay() === 0 ? 7 : firstDay.getDay();
+    const startDayOfWeek = firstDay.getDay();
     
     const calendarDays = [];
     const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
-    for (let i = startDayOfWeek - 1; i > 0; i--) {
+    for (let i = startDayOfWeek; i > 0; i--) {
       calendarDays.push({ day: prevMonthLastDay - i + 1, active: false, isCurrentMonth: false, id: `prev-${i}` });
     }
     
@@ -1629,7 +1629,7 @@ export default function RunningRecordsPage() {
               <div className="flex justify-between w-full">
                 {/* Left Calendar Headers */}
                 <div className="flex justify-between flex-1 mr-6 sm:mr-10 md:mr-16">
-                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
                     <div key={i} className="w-7 sm:w-8 text-center text-[#efe0d2]/60 text-xs font-bold flex items-center justify-center">
                       {day}
                     </div>
