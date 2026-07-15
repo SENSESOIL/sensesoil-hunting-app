@@ -21,7 +21,7 @@ export async function GET() {
       readSheet(sheetId, 'Reward!A:D'),
       readSheet(sheetId, 'LeadgeA!A:W'),
       readSheet(sheetId, 'LeadgeB!A:D'),
-      readSheet(sheetId, 'LeadgeC!A:K'),
+      readSheet(sheetId, 'LeadgeC!A:M'),
       readSheet(sheetId, 'MarketData!A:G'),
     ]);
 
@@ -162,6 +162,8 @@ export async function GET() {
           returnRate: row[8]?.trim() || '',
           totalPool: row[9]?.trim() || '',
           rankReward: row[10]?.trim() || '',
+          weighted: row[11]?.trim() || '',
+          rank: row[12]?.trim() || '',
         });
       }
     }

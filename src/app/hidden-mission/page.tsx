@@ -117,7 +117,7 @@ export default function HiddenMissionPage() {
   const [awardYear, setAwardYear] = useState<string>('2026');
   const [isLeaderboardYearDropdownOpen, setIsLeaderboardYearDropdownOpen] = useState(false);
   const [isAwardYearDropdownOpen, setIsAwardYearDropdownOpen] = useState(false);
-  const [teamLeaderboardMetric, setTeamLeaderboardMetric] = useState<'holding' | 'streak' | 'profit' | 'performance'>('holding');
+  const [teamLeaderboardMetric, setTeamLeaderboardMetric] = useState<'holding' | 'streak' | 'profit' | 'performance' | 'weighted'>('holding');
 
   // Race playback states for Team Leaderboard
   const [isRacePlaying, setIsRacePlaying] = useState(false);
@@ -253,6 +253,8 @@ export default function HiddenMissionPage() {
       let rateStr = "0.00%";
       let profitNum = 0;
       let profitStr = "$0";
+      let weightedNum = 0;
+      let weightedStr = "0.0000";
 
       let target = null;
       if (data.leadgeC) {
@@ -285,6 +287,12 @@ export default function HiddenMissionPage() {
           const num = parseFloat(rawProfit.replace(/[^0-9.-]+/g, ''));
           profitNum = isNaN(num) ? 0 : num;
           profitStr = rawProfit.startsWith('$') || rawProfit.startsWith('-$') ? rawProfit : (profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`);
+        }
+        if (target.weighted !== undefined && target.weighted.trim() !== '') {
+          const rawWeighted = target.weighted.trim();
+          const num = parseFloat(rawWeighted.replace(/[^0-9.-]+/g, ''));
+          weightedNum = isNaN(num) ? 0 : num;
+          weightedStr = rawWeighted;
         }
       }
 
@@ -366,6 +374,8 @@ export default function HiddenMissionPage() {
         returnRateStr: rateStr,
         profitNum,
         profitStr,
+        weightedNum,
+        weightedStr,
       };
     });
 
@@ -379,6 +389,9 @@ export default function HiddenMissionPage() {
       }
       if (teamLeaderboardMetric === 'profit') {
         return (b.profitNum || 0) - (a.profitNum || 0);
+      }
+      if (teamLeaderboardMetric === 'weighted') {
+        return (b.weightedNum || 0) - (a.weightedNum || 0);
       }
       return (b.returnRateNum || 0) - (a.returnRateNum || 0);
     });
@@ -517,6 +530,8 @@ export default function HiddenMissionPage() {
         let rateStr = "0.00%";
         let profitNum = 0;
         let profitStr = "$0";
+        let weightedNum = 0;
+        let weightedStr = "0.0000";
 
         // Step 3a: Check LeadgeC historic/exact snapshot first up to frameTime
         let leadgeCTarget = null;
@@ -536,6 +551,15 @@ export default function HiddenMissionPage() {
             leadgeCTarget = matches[matches.length - 1];
           } else if (awardYear === '2026' && sortedDates.indexOf(dateStr) >= sortedDates.length - 1) {
             leadgeCTarget = data.leadgeC.find((item: any) => item.hunter === hunter);
+          }
+        }
+
+        if (leadgeCTarget) {
+          if (leadgeCTarget.weighted !== undefined && leadgeCTarget.weighted.trim() !== '') {
+            const rawWeighted = leadgeCTarget.weighted.trim();
+            const num = parseFloat(rawWeighted.replace(/[^0-9.-]+/g, ''));
+            weightedNum = isNaN(num) ? 0 : num;
+            weightedStr = rawWeighted;
           }
         }
 
@@ -643,6 +667,8 @@ export default function HiddenMissionPage() {
           returnRateStr: rateStr,
           profitNum,
           profitStr,
+          weightedNum,
+          weightedStr,
         };
       });
 
@@ -656,6 +682,9 @@ export default function HiddenMissionPage() {
         }
         if (teamLeaderboardMetric === 'profit') {
           return (b.profitNum || 0) - (a.profitNum || 0);
+        }
+        if (teamLeaderboardMetric === 'weighted') {
+          return (b.weightedNum || 0) - (a.weightedNum || 0);
         }
         return (b.returnRateNum || 0) - (a.returnRateNum || 0);
       });
@@ -1570,20 +1599,24 @@ export default function HiddenMissionPage() {
                           <div className="flex bg-[#1E1E1E] rounded-full p-1 border border-primary/20">
                             <button 
                               onClick={() => setTeamLeaderboardMetric('holding')}
-                              className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'holding' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                            >持有</button>
+                              className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-[12px] tracking-wider transition-colors ${teamLeaderboardMetric === 'holding' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >持</button>
                             <button 
                               onClick={() => setTeamLeaderboardMetric('streak')}
-                              className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'streak' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                            >連續</button>
+                              className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-[12px] tracking-wider transition-colors ${teamLeaderboardMetric === 'streak' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >續</button>
                             <button 
                               onClick={() => setTeamLeaderboardMetric('profit')}
-                              className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'profit' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                            >損益</button>
+                              className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-[12px] tracking-wider transition-colors ${teamLeaderboardMetric === 'profit' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >$</button>
                             <button 
                               onClick={() => setTeamLeaderboardMetric('performance')}
-                              className={`px-3 py-1 rounded-full text-[10px] tracking-wider transition-colors ${teamLeaderboardMetric === 'performance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
-                            >績效</button>
+                              className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-[12px] tracking-wider transition-colors ${teamLeaderboardMetric === 'performance' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >%</button>
+                            <button 
+                              onClick={() => setTeamLeaderboardMetric('weighted')}
+                              className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-[12px] tracking-wider transition-colors ${teamLeaderboardMetric === 'weighted' ? 'bg-primary text-black font-bold' : 'text-white/60 hover:text-white font-normal'}`}
+                            >權</button>
                           </div>
                         </div>
                       </div>
@@ -1595,9 +1628,10 @@ export default function HiddenMissionPage() {
                               if (teamLeaderboardMetric === 'holding') return s.holdingDays || 0;
                               if (teamLeaderboardMetric === 'streak') return s.consecutiveMonths || 0;
                               if (teamLeaderboardMetric === 'profit') return Math.abs(s.profitNum || 0);
+                              if (teamLeaderboardMetric === 'weighted') return Math.abs(s.weightedNum || 0);
                               return Math.abs(s.returnRateNum || 0);
                             }),
-                            1
+                            1e-6
                           );
                           return displayTeamLeaderboardData.map((item: any, index: number) => {
                             const maxIndex = Math.max(1, displayTeamLeaderboardData.length - 1);
@@ -1608,6 +1642,8 @@ export default function HiddenMissionPage() {
                               ? (item.consecutiveMonths || 0)
                               : teamLeaderboardMetric === 'profit'
                               ? (item.profitNum || 0)
+                              : teamLeaderboardMetric === 'weighted'
+                              ? (item.weightedNum || 0)
                               : (item.returnRateNum || 0);
                             const isNegative = rawVal < 0;
                             const val = Math.abs(rawVal);
@@ -1640,6 +1676,10 @@ export default function HiddenMissionPage() {
                                     ) : teamLeaderboardMetric === 'profit' ? (
                                       <>
                                         <span className="text-white text-[13px] font-bold font-mono">{item.profitStr || "$0"}</span>
+                                      </>
+                                    ) : teamLeaderboardMetric === 'weighted' ? (
+                                      <>
+                                        <span className="text-white text-[13px] font-bold font-mono">{item.weightedStr || "0.0000"}</span>
                                       </>
                                     ) : (
                                       <>
