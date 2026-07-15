@@ -980,6 +980,81 @@ export default function BasicMissionPage() {
   if (pScoreIdx === undefined || pScoreIdx === -1) pScoreIdx = 22;
   const personalScoreValue = pRecord && pRecord[pScoreIdx] ? parseFloat(pRecord[pScoreIdx]).toFixed(1) : "0.0";
 
+  const personalAwardThresholdData = useMemo(() => {
+    if (!data?.rows || !selectedPersonalHunter || !selectedPersonalDate || !options?.dates) {
+      return { isMet: false, weeks: [], isSufficientWeeks: false };
+    }
+
+    // 找到 selectedPersonalDate 前(含)最遠 4 週的日期列表 (由近到遠排序)
+    const targetDates = options.dates
+      .filter((d: string) => new Date(d).getTime() <= new Date(selectedPersonalDate).getTime())
+      .slice(0, 4);
+
+    const isSufficientWeeks = targetDates.length === 4;
+    const weeks = targetDates.map((dateStr: string) => {
+      let row: string[] | null = null;
+      for (let i = 2; i < data.rows.length; i++) {
+        if (data.rows[i][0] === dateStr && data.rows[i][1] === selectedPersonalHunter) {
+          row = data.rows[i];
+          break;
+        }
+      }
+
+      const dayStr = row ? (row[13] || "") : "";
+      const timeStr = row ? (row[14] || "") : "";
+      const chengStr = row ? (row[15] || "") : "";
+
+      // 1. 判斷天與時：沒有超過「日的晚上9:00」，在日晚上9:00前都算及格。若超過，或出現「後」、或「 ✕」都算不及格。
+      let timePass = false;
+      if (row && dayStr.trim() !== "") {
+        const d = dayStr.trim();
+        if (d === "後" || d === "✕" || d === "×" || d === "X" || d === "x" || d === "-" || d === "--") {
+          timePass = false;
+        } else if (d === "五" || d === "六" || d === "一" || d === "二" || d === "三" || d === "四") {
+          timePass = true;
+        } else if (d === "日") {
+          if (timeStr && timeStr.trim() && timeStr.trim() !== "-" && timeStr.trim() !== "--") {
+            const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})/);
+            if (match) {
+              const totalMins = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+              timePass = totalMins <= 1260; // 21:00 = 1260 分鐘
+            } else {
+              timePass = true;
+            }
+          } else {
+            timePass = true; // 選擇日但未輸入時間，預設及格
+          }
+        } else {
+          timePass = true;
+        }
+      }
+
+      // 2. 判斷「誠」：連續四個禮拜達3.5分或以上才及格。
+      let chengPass = false;
+      if (row && chengStr.trim() !== "") {
+        const val = parseFloat(chengStr.trim());
+        chengPass = !isNaN(val) && val >= 3.5;
+      }
+
+      const weekPass = !!row && timePass && chengPass;
+
+      return {
+        dateStr,
+        hasRow: !!row,
+        dayStr: dayStr || "-",
+        timeStr: timeStr || "-",
+        chengStr: chengStr || "-",
+        timePass,
+        chengPass,
+        weekPass
+      };
+    });
+
+    const isMet = isSufficientWeeks && weeks.every(w => w.weekPass);
+
+    return { isMet, weeks, isSufficientWeeks };
+  }, [data, selectedPersonalHunter, selectedPersonalDate, options?.dates]);
+
   return (
     <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
       <header className="fixed top-0 w-full z-50 flex justify-between items-center shrink-0 h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
@@ -1145,6 +1220,111 @@ export default function BasicMissionPage() {
                 {personalScoreValue}
               </span>
               <span className="text-[10px] font-normal lowercase tracking-normal">pts</span>
+            </div>
+          </div>
+
+          {/* 隱藏與跨越試煉：獎金兌換資格考核門檻面板 */}
+          <div className={`relative border p-4 backdrop-blur-md rounded-[4px] transition-all duration-300 shadow-xl ${
+            personalAwardThresholdData.isMet 
+              ? 'border-primary bg-primary/10 shadow-[0_0_20px_rgba(243,156,18,0.25)]' 
+              : 'border-primary/30 bg-surface-container-low/80'
+          }`}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-3.5 pb-3 border-b border-primary/20">
+              <div className="flex items-center gap-2">
+                <span className={`material-symbols-outlined text-[20px] ${personalAwardThresholdData.isMet ? 'text-primary animate-pulse' : 'text-[#efe0d2]/70'}`} style={{ fontVariationSettings: personalAwardThresholdData.isMet ? "'FILL' 1" : "'FILL' 0" }}>
+                  {personalAwardThresholdData.isMet ? 'verified' : 'military_tech'}
+                </span>
+                <h3 className="text-white text-[13px] font-bold tracking-[0.1em] uppercase">隱藏與跨越試煉｜獎金兌換資格門檻</h3>
+              </div>
+              <div className="flex items-center">
+                {personalAwardThresholdData.isMet ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary text-black font-extrabold font-label-caps text-[11px] tracking-wider rounded-full shadow-[0_0_12px_rgba(243,156,18,0.6)]">
+                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    門檻已達標｜可進行對獎
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#121212] border border-primary/40 text-[#efe0d2]/70 font-bold font-label-caps text-[11px] tracking-wider rounded-full">
+                    <span className="material-symbols-outlined text-[14px]">pending</span>
+                    考核進行中｜尚未達標
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* 考核說明與提示 */}
+            <div className="text-[11px] text-[#efe0d2]/80 space-y-1.5 mb-4 bg-black/40 p-3 rounded border border-white/5 leading-relaxed">
+              <div className="flex items-start gap-1.5">
+                <span className="text-primary font-bold shrink-0">① 天與時：</span>
+                <span>連續 4 週任務不中斷，且繳交時間須於<strong className="text-white">週日晚間 9:00 (21:00) 前</strong>。超過時間、標記「後」或「✕」皆為不及格。</span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <span className="text-primary font-bold shrink-0">② 誠計分：</span>
+                <span>連續 4 週之「誠」計分皆須達<strong className="text-white"> 3.5 分或以上</strong>。</span>
+              </div>
+            </div>
+
+            {/* 連續 4 週考核追蹤網格 */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
+              {personalAwardThresholdData.weeks.map((week, idx) => {
+                return (
+                  <div 
+                    key={week.dateStr} 
+                    className={`flex flex-col p-2.5 rounded border transition-all ${
+                      week.weekPass 
+                        ? 'bg-primary/10 border-primary/50 text-white shadow-[0_0_8px_rgba(243,156,18,0.1)]' 
+                        : week.hasRow 
+                          ? 'bg-red-500/10 border-red-500/40 text-red-200' 
+                          : 'bg-white/5 border-white/10 text-white/40'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-2 pb-1 border-b border-white/10">
+                      <span className="font-data-mono text-[11px] font-bold tracking-wider">{week.dateStr.substring(5)}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${week.weekPass ? 'bg-primary text-black' : 'bg-white/10 text-white/70'}`}>
+                        {idx === 0 ? '當前選取' : `前 ${idx} 週`}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 text-[11px]">
+                      {/* 天與時 status */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/60 text-[10px]">天與時</span>
+                        <div className="flex items-center gap-1 font-data-mono font-bold">
+                          <span>{week.dayStr === '-' ? '--' : week.dayStr} {week.timeStr !== '-' && week.timeStr !== '' ? `(${week.timeStr})` : ''}</span>
+                          <span className={`material-symbols-outlined text-[13px] ${week.timePass ? 'text-primary' : 'text-red-400'}`}>
+                            {week.timePass ? 'check' : 'close'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 誠計分 status */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/60 text-[10px]">誠計分</span>
+                        <div className="flex items-center gap-1 font-data-mono font-bold">
+                          <span className={week.chengPass ? 'text-white' : 'text-red-400'}>{week.chengStr === '-' ? '--' : `${week.chengStr}分`}</span>
+                          <span className={`material-symbols-outlined text-[13px] ${week.chengPass ? 'text-primary' : 'text-red-400'}`}>
+                            {week.chengPass ? 'check' : 'close'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 底部總結提示語 */}
+            <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px]">
+              {personalAwardThresholdData.isMet ? (
+                <div className="text-primary font-bold flex items-center gap-1.5 animate-pulse">
+                  <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>celebration</span>
+                  <span>恭喜！您已連續 4 週通過考核標準，正式解鎖隱藏試煉與跨越試煉之兌獎資格！</span>
+                </div>
+              ) : (
+                <div className="text-[#efe0d2]/70 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px]">info</span>
+                  <span>欲啟動隱藏/跨越試煉兌獎資格，須達成連續 4 週考核及格。堅持不懈，突破自我！</span>
+                </div>
+              )}
             </div>
           </div>
         </section>
