@@ -1389,7 +1389,7 @@ export default function BasicMissionPage() {
               ) : (
                 <div className="text-[#efe0d2]/70 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">info</span>
-                  <span>堅持每一天1%的成長，思想決定行動，行動決定未來！</span>
+                  <span>堅持每天 1% 的成長，思想決定行動，行動決定未來！</span>
                 </div>
               )}
             </div>
