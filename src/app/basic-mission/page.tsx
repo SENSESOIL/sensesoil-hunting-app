@@ -1324,7 +1324,7 @@ export default function BasicMissionPage() {
                   <div 
                     key={week.dateStr} 
                     className={`flex flex-col justify-between p-2.5 rounded border transition-all min-h-[105px] ${
-                      week.weekPass 
+                      (week.weekPass || personalAwardThresholdData.isMet) 
                         ? 'bg-primary/10 border-primary/50 text-white shadow-[0_0_8px_rgba(243,156,18,0.1)]' 
                         : 'bg-[#ff3b30]/10 border-[#ff3b30]/50 text-white'
                     }`}
