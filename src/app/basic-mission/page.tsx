@@ -1040,16 +1040,39 @@ export default function BasicMissionPage() {
         chengPass = !isNaN(val) && val >= 3.5;
       }
 
-      // 3. 判斷「獎」（體格分）：當週狩獵任務的體能或格局完成度達「✕」以上（即 ○ 或 △）
+      const tiStr = row ? (row[16] || "") : "";
+      const geStr = row ? (row[17] || "") : "";
+
+      // 3. 判斷「體格分」：體能和格局完成度皆「✕」以上，或「獎」為及格符號（○或△）
       let awardPass = false;
-      if (row && awardStr.trim() !== "") {
+      let displayAward = "--";
+      if (row) {
         const a = awardStr.trim();
-        if (a !== "✕" && a !== "×" && a !== "X" && a !== "x" && a !== "-" && a !== "--") {
+        const ti = tiStr.trim();
+        const ge = geStr.trim();
+        const tiPass = ti !== "" && ti !== "✕" && ti !== "×" && ti !== "X" && ti !== "x" && ti !== "-" && ti !== "--";
+        const gePass = ge !== "" && ge !== "✕" && ge !== "×" && ge !== "X" && ge !== "x" && ge !== "-" && ge !== "--";
+        const aPass = a !== "" && a !== "✕" && a !== "×" && a !== "X" && a !== "x" && a !== "-" && a !== "--";
+
+        if (aPass || (tiPass && gePass)) {
           awardPass = true;
+          if (a === "o" || a === "O" || a === "0" || a === "〇" || a === "○" || a === "") {
+            displayAward = "○";
+          } else {
+            displayAward = a;
+          }
+        } else {
+          awardPass = false;
+          if (a !== "" && a !== "-" && a !== "--") {
+            displayAward = (a === "X" || a === "x" || a === "×") ? "✕" : a;
+          } else {
+            displayAward = "✕";
+          }
         }
       }
 
-      const weekPass = !!row && timePass && chengPass && awardPass;
+      const idx = targetDates.indexOf(dateStr);
+      const weekPass = !!row && timePass && chengPass && (idx === 0 ? awardPass : true);
 
       return {
         dateStr,
@@ -1058,6 +1081,7 @@ export default function BasicMissionPage() {
         timeStr: timeStr || "-",
         chengStr: chengStr || "-",
         awardStr: awardStr || "-",
+        displayAward,
         timePass,
         chengPass,
         awardPass,
@@ -1069,7 +1093,7 @@ export default function BasicMissionPage() {
       ? weeks.reduce((sum, w) => sum + (parseFloat(w.chengStr) || 0), 0) / weeks.length
       : 0;
 
-    const isMet = isSufficientWeeks && weeks.every(w => w.hasRow && w.timePass && w.awardPass) && avgCheng >= 3.5;
+    const isMet = isSufficientWeeks && weeks.every(w => w.hasRow && w.timePass) && (weeks.length > 0 && weeks[0].awardPass) && avgCheng >= 3.5;
 
     return { isMet, weeks, isSufficientWeeks, avgCheng };
   }, [data, selectedPersonalHunter, selectedPersonalDate, options?.dates]);
@@ -1249,18 +1273,17 @@ export default function BasicMissionPage() {
               ? 'border-primary bg-primary/10 shadow-[0_0_20px_rgba(243,156,18,0.25)]' 
               : 'border-primary/30 bg-surface-container-low/80'
           }`}>
-            <div className="flex justify-between items-center mb-3.5 pb-3 border-b border-primary/20">
-              <div 
-                className="flex items-center gap-2 cursor-pointer group select-none"
-                onClick={() => setShowThresholdRules(!showThresholdRules)}
-                title="點選展開/收合考核說明"
-              >
+            <div 
+              className="flex justify-between items-center mb-3.5 pb-3 border-b border-primary/20 cursor-pointer select-none group"
+              onClick={() => setShowThresholdRules(!showThresholdRules)}
+              title="點選展開/收合規則說明"
+            >
+              <div className="flex items-center gap-2">
                 <span className={`material-symbols-outlined text-[20px] ${personalAwardThresholdData.isMet ? 'text-primary animate-pulse' : 'text-[#efe0d2]/70 group-hover:text-primary transition-colors'}`} style={{ fontVariationSettings: personalAwardThresholdData.isMet ? "'FILL' 1" : "'FILL' 0" }}>
                   {personalAwardThresholdData.isMet ? 'verified' : 'military_tech'}
                 </span>
-                <h3 className="text-white text-[13px] font-bold tracking-[0.1em] uppercase group-hover:text-primary transition-colors flex items-center gap-1">
-                  <span>獎金兌換資格</span>
-                  <span className="material-symbols-outlined text-[16px] text-primary/70 transition-transform duration-200" style={{ transform: showThresholdRules ? 'rotate(180deg)' : 'rotate(0deg)' }}>expand_more</span>
+                <h3 className="text-white text-[13px] font-bold tracking-[0.1em] uppercase group-hover:text-primary transition-colors">
+                  獎金兌換資格
                 </h3>
               </div>
               <div className="flex items-center shrink-0">
@@ -1276,7 +1299,7 @@ export default function BasicMissionPage() {
               </div>
             </div>
 
-            {/* 考核說明與提示（點擊標題展開） */}
+            {/* 考核說明與提示（點選標題行展開） */}
             {showThresholdRules && (
               <div className="text-[11px] text-[#efe0d2]/80 space-y-1.5 mb-4 bg-black/40 p-3 rounded border border-white/5 leading-relaxed">
                 <div className="flex items-start gap-1.5">
@@ -1289,7 +1312,7 @@ export default function BasicMissionPage() {
                 </div>
                 <div className="flex items-start gap-1.5">
                   <span className="text-primary font-bold shrink-0">③ 狩獵任務體格分：</span>
-                  <span>當週狩獵任務的體能或格局完成度達<strong className="text-white">「✕」以上</strong>。</span>
+                  <span>當週狩獵任務的體能和格局完成度皆<strong className="text-white">「✕」以上</strong>。</span>
                 </div>
               </div>
             )}
@@ -1300,54 +1323,52 @@ export default function BasicMissionPage() {
                 return (
                   <div 
                     key={week.dateStr} 
-                    className={`flex flex-col p-2.5 rounded border transition-all ${
+                    className={`flex flex-col justify-between p-2.5 rounded border transition-all min-h-[105px] ${
                       week.weekPass 
                         ? 'bg-primary/10 border-primary/50 text-white shadow-[0_0_8px_rgba(243,156,18,0.1)]' 
-                        : week.hasRow 
-                          ? 'bg-red-500/10 border-red-500/40 text-red-200' 
-                          : 'bg-white/5 border-white/10 text-white/40'
+                        : 'bg-[#ff3b30]/10 border-[#ff3b30]/50 text-white'
                     }`}
                   >
                     <div className="flex justify-between items-center mb-2 pb-1 border-b border-white/10">
-                      <span className="font-data-mono text-[11px] font-bold tracking-wider">{week.dateStr.substring(5)}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${week.weekPass ? 'bg-primary text-black' : 'bg-white/10 text-white/70'}`}>
-                        {idx === 0 ? '當前選取' : `前 ${idx} 週`}
+                      <span className={`font-data-mono text-[11px] font-bold tracking-wider ${week.weekPass ? 'text-white' : 'text-[#ff3b30]'}`}>
+                        {week.dateStr.substring(5)}
+                      </span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${week.weekPass ? 'bg-primary text-black' : 'bg-[#ff3b30]/20 border border-[#ff3b30]/40 text-[#ff3b30]'}`}>
+                        前 {idx + 1} 週
                       </span>
                     </div>
 
-                    <div className="space-y-1.5 text-[11px]">
+                    <div className="space-y-1.5 text-[11px] flex flex-col justify-between flex-1">
                       {/* 發布日 status */}
                       <div className="flex justify-between items-center">
                         <span className="text-white/60 text-[10px]">發布日</span>
-                        <div className="flex items-center gap-1 font-data-mono font-bold">
-                          <span>{week.dayStr === '-' ? '--' : week.dayStr} {week.timeStr !== '-' && week.timeStr !== '' ? week.timeStr : ''}</span>
-                          <span className={`material-symbols-outlined text-[13px] ${week.timePass ? 'text-primary' : 'text-red-400'}`}>
-                            {week.timePass ? 'check' : 'close'}
-                          </span>
-                        </div>
+                        <span className={`font-data-mono font-bold ${week.timePass ? 'text-white' : 'text-[#ff3b30]'}`}>
+                          {week.dayStr === '-' ? '--' : week.dayStr} {week.timeStr !== '-' && week.timeStr !== '' ? week.timeStr : ''}
+                        </span>
                       </div>
 
                       {/* 完成度 status */}
                       <div className="flex justify-between items-center">
                         <span className="text-white/60 text-[10px]">完成度</span>
-                        <div className="flex items-center gap-1 font-data-mono font-bold">
-                          <span className={week.chengPass ? 'text-white' : 'text-red-400'}>{week.chengStr === '-' ? '--' : `${week.chengStr}分`}</span>
-                          <span className={`material-symbols-outlined text-[13px] ${week.chengPass ? 'text-primary' : 'text-red-400'}`}>
-                            {week.chengPass ? 'check' : 'close'}
-                          </span>
-                        </div>
+                        <span className={`font-data-mono font-bold ${week.chengPass ? 'text-white' : 'text-[#ff3b30]'}`}>
+                          {week.chengStr === '-' ? '--' : `${week.chengStr}分`}
+                        </span>
                       </div>
 
-                      {/* 體格分 status */}
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60 text-[10px]">體格分</span>
-                        <div className="flex items-center gap-1 font-data-mono font-bold">
-                          <span className={week.awardPass ? 'text-white' : 'text-red-400'}>{week.awardStr === '-' ? '--' : week.awardStr}</span>
-                          <span className={`material-symbols-outlined text-[13px] ${week.awardPass ? 'text-primary' : 'text-red-400'}`}>
-                            {week.awardPass ? 'check' : 'close'}
+                      {/* 體格分 status (僅第1格計算與顯示，其餘三格維持高度等高) */}
+                      {idx === 0 ? (
+                        <div className="flex justify-between items-center pt-0.5">
+                          <span className="text-white/60 text-[10px]">體格分</span>
+                          <span className={`font-sans font-bold text-[14px] leading-none ${week.awardPass ? 'text-white' : 'text-[#ff3b30]'}`}>
+                            {week.displayAward || '--'}
                           </span>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex justify-between items-center pt-0.5 opacity-0 pointer-events-none select-none">
+                          <span className="text-white/60 text-[10px]">佔位</span>
+                          <span className="font-sans font-bold text-[14px] leading-none">--</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
