@@ -1282,7 +1282,7 @@ export default function BasicMissionPage() {
                 <span className={`material-symbols-outlined text-[20px] ${personalAwardThresholdData.isMet ? 'text-primary animate-pulse' : 'text-[#efe0d2]/70 group-hover:text-primary transition-colors'}`} style={{ fontVariationSettings: personalAwardThresholdData.isMet ? "'FILL' 1" : "'FILL' 0" }}>
                   {personalAwardThresholdData.isMet ? 'verified' : 'military_tech'}
                 </span>
-                <h3 className="text-white text-[13px] font-bold tracking-[0.1em] uppercase group-hover:text-primary transition-colors">
+                <h3 className="text-primary text-[13px] font-bold tracking-[0.1em] uppercase group-hover:text-primary/80 transition-colors">
                   獎金兌換資格
                 </h3>
               </div>
@@ -1359,14 +1359,14 @@ export default function BasicMissionPage() {
                       {idx === 0 ? (
                         <div className="flex justify-between items-center pt-0.5">
                           <span className="text-white/60 text-[10px]">體格分</span>
-                          <span className={`font-sans font-bold text-[14px] leading-none ${week.awardPass ? 'text-white' : 'text-[#ff3b30]'}`}>
+                          <span className={`font-sans font-bold text-[16px] inline-block scale-110 leading-none ${week.awardPass ? 'text-white' : 'text-[#ff3b30]'}`}>
                             {week.displayAward || '--'}
                           </span>
                         </div>
                       ) : (
                         <div className="flex justify-between items-center pt-0.5 opacity-0 pointer-events-none select-none">
                           <span className="text-white/60 text-[10px]">佔位</span>
-                          <span className="font-sans font-bold text-[14px] leading-none">--</span>
+                          <span className="font-sans font-bold text-[16px] inline-block scale-110 leading-none">--</span>
                         </div>
                       )}
                     </div>
@@ -1385,7 +1385,7 @@ export default function BasicMissionPage() {
               ) : (
                 <div className="text-[#efe0d2]/70 flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-[16px]">info</span>
-                  <span>欲啟動兌獎資格，須達成連續 4 週考核及格。堅持每一天1%的成長，思想決定行動，行動決定未來！</span>
+                  <span>堅持每一天1%的成長，思想決定行動，行動決定未來！</span>
                 </div>
               )}
             </div>
