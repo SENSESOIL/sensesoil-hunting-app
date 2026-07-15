@@ -1359,10 +1359,12 @@ export default function BasicMissionPage() {
                       {idx === 0 ? (
                         <div className="flex justify-between items-center pt-0.5">
                           <span className="text-white/60 text-[10px]">體格分</span>
-                          <span className={`font-bold ${
+                          <span className={`${
                             (week.displayAward === '✕' || week.displayAward === '×' || week.displayAward === 'X' || week.displayAward === 'x' || week.displayAward === '--' || !week.displayAward)
-                              ? 'font-data-mono text-[11px]' 
-                              : 'font-sans text-[18px] font-black inline-block scale-[1.15] leading-none [text-shadow:_0_0_1.5px_currentColor]'
+                              ? 'font-data-mono font-bold text-[11px]'
+                              : (week.displayAward === '○' || week.displayAward === 'o' || week.displayAward === 'O' || week.displayAward === '0' || week.displayAward === '〇')
+                                ? 'font-data-mono font-normal text-[11px]'
+                                : 'font-sans text-[18px] font-black inline-block scale-[1.15] leading-none [text-shadow:_0_0_1.5px_currentColor]'
                           } ${(week.awardPass && week.displayAward !== '✕' && week.displayAward !== '×' && week.displayAward !== 'X' && week.displayAward !== 'x') ? 'text-white' : 'text-[#ff3b30]'}`}>
                             {week.displayAward || '--'}
                           </span>
