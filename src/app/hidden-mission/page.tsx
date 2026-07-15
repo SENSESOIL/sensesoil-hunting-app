@@ -95,6 +95,32 @@ function computeHoldingDays(hunter: string, frameTime: number, awardYear: string
   return Math.max(fifoMax, maxD);
 }
 
+function getHunterWeightMultiplier(hunterName: string, streak: number, dataObj: any) {
+  let mult = 1;
+  if (dataObj && dataObj.leadgeC) {
+    const allMatches = dataObj.leadgeC.filter((item: any) => item.hunter === hunterName);
+    for (let i = allMatches.length - 1; i >= 0; i--) {
+      const item = allMatches[i];
+      if (item.returnRate && item.weighted) {
+        const r = parseFloat(String(item.returnRate).replace(/[^0-9.-]+/g, ''));
+        const w = parseFloat(String(item.weighted).replace(/[^0-9.-]+/g, ''));
+        if (!isNaN(r) && !isNaN(w) && Math.abs(r) > 0.0001) {
+          const m = Math.round(w / (r / 100));
+          if (m >= 1 && m <= 20) {
+            mult = m;
+            break;
+          }
+        }
+      }
+    }
+  }
+  if (mult > 1) return mult;
+  if (streak >= 6) return 5;
+  if (streak >= 4) return 3;
+  if (streak >= 2) return 2;
+  return 1;
+}
+
 export default function HiddenMissionPage() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -364,6 +390,12 @@ export default function HiddenMissionPage() {
           rateNum = totalCost > 0 ? parseFloat(((profitNum / totalCost) * 100).toFixed(2)) : 0;
           rateStr = `${rateNum}%`;
         }
+      }
+
+      if (weightedNum === 0) {
+        const mult = getHunterWeightMultiplier(hunter, maxStreak, data);
+        weightedNum = parseFloat(((rateNum / 100) * mult).toFixed(4));
+        weightedStr = weightedNum.toFixed(4);
       }
 
       return {
@@ -657,6 +689,12 @@ export default function HiddenMissionPage() {
             profitNum = isNaN(num) ? 0 : num;
             profitStr = rawProfit.startsWith('$') || rawProfit.startsWith('-$') ? rawProfit : (profitNum < 0 ? `-$${Math.abs(profitNum).toLocaleString()}` : `$${profitNum.toLocaleString()}`);
           }
+        }
+
+        if (weightedNum === 0) {
+          const mult = getHunterWeightMultiplier(hunter, maxStreak, data);
+          weightedNum = parseFloat(((rateNum / 100) * mult).toFixed(4));
+          weightedStr = weightedNum.toFixed(4);
         }
 
         return {
