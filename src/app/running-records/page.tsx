@@ -1041,7 +1041,7 @@ export default function RunningRecordsPage() {
           }
           return prev + 1;
         });
-      }, 200);
+      }, 650);
     }
   }, [isRacePlaying, raceFrameIndex, raceFrames.length]);
 
@@ -1439,7 +1439,7 @@ export default function RunningRecordsPage() {
                     className="absolute left-0 right-0 flex items-center gap-3 h-[26px]"
                     style={{
                       top: `${index * 34}px`,
-                      transition: 'top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease-out',
+                      transition: 'top 0.55s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease-out',
                       zIndex: displayLeaderboardData.length - index
                     }}
                   >
@@ -1450,7 +1450,7 @@ export default function RunningRecordsPage() {
                     <div className="flex-1 h-2 bg-primary/10 rounded-r-full overflow-visible flex relative">
                       <div 
                         className={`h-full rounded-r-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
-                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.55s cubic-bezier(0.4, 0, 0.2, 1)' }}
                       ></div>
                     </div>
                     <div className="w-16 text-right shrink-0">

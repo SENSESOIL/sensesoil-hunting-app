@@ -972,7 +972,7 @@ export default function HiddenMissionPage() {
           }
           return prev + 1;
         });
-      }, 200);
+      }, 650);
     }
   }, [isRacePlaying, raceFrameIndex, teamLeaderboardFrames.length]);
 
@@ -1802,7 +1802,7 @@ export default function HiddenMissionPage() {
                                 className="absolute left-0 right-0 flex items-center gap-3 h-[26px]"
                                 style={{
                                   top: `${index * 34}px`,
-                                  transition: 'top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease-out',
+                                  transition: 'top 0.55s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease-out',
                                   zIndex: displayTeamLeaderboardData.length - index
                                 }}
                               >
@@ -1813,7 +1813,7 @@ export default function HiddenMissionPage() {
                                 <div className={`flex-1 h-2 rounded-r-full overflow-visible flex relative ${isNegative ? 'bg-white/5' : 'bg-primary/10'}`}>
                                   <div 
                                     className={`h-full rounded-r-full ${isNegative ? 'bg-[#6B7280]' : `bg-primary ${rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}`} 
-                                    style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+                                    style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.55s cubic-bezier(0.4, 0, 0.2, 1)' }}
                                   ></div>
                                 </div>
                                 <div className="w-24 text-right shrink-0">
