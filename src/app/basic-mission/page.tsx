@@ -1365,7 +1365,7 @@ export default function BasicMissionPage() {
                               ? 'font-data-mono font-bold text-[11px]'
                               : (week.displayAward === '○' || week.displayAward === 'o' || week.displayAward === 'O' || week.displayAward === '0' || week.displayAward === '〇')
                                 ? 'font-sans font-bold text-[14px] inline-block leading-none'
-                                : 'font-sans text-[18px] font-black inline-block scale-[1.15] leading-none [text-shadow:_0_0_1.5px_currentColor]'
+                                : 'font-sans text-[18px] font-normal inline-block scale-[1.15] leading-none'
                           } ${(week.awardPass && week.displayAward !== '✕' && week.displayAward !== '×' && week.displayAward !== 'X' && week.displayAward !== 'x') ? 'text-white' : 'text-[#ff3b30]'}`}>
                             {week.displayAward || '--'}
                           </span>
