@@ -886,13 +886,20 @@ export default function RunningRecordsPage() {
       result[result.length - 1].paceRaw
     ) : 1;
 
-    return result.map((item, idx) => ({
-      ...item,
-      rank: idx + 1,
-      barPct: maxVal > 0 ? (leaderboardMetric === 'distance' ? (item.distance / maxVal) * 100 :
-              leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
-              (result[0].paceRaw / item.paceRaw) * 100) : 0 
-    }));
+    return result.map((item, idx) => {
+      const firstIdx = result.findIndex(it => {
+        if (leaderboardMetric === 'distance') return it.distance === item.distance;
+        if (leaderboardMetric === 'elevation') return it.elevation === item.elevation;
+        return it.paceRaw === item.paceRaw;
+      });
+      return {
+        ...item,
+        rank: (firstIdx !== -1 ? firstIdx : idx) + 1,
+        barPct: maxVal > 0 ? (leaderboardMetric === 'distance' ? (item.distance / maxVal) * 100 :
+                leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
+                (result[0].paceRaw / item.paceRaw) * 100) : 0 
+      };
+    });
   }, [runningData, selectedCalendarDate, leaderboardMetric, awardYear]);
 
   // === Bar Chart Race Animation ===
@@ -986,13 +993,20 @@ export default function RunningRecordsPage() {
         result[result.length - 1].paceRaw
       ) : 1;
 
-      const frameData = result.map((item, idx) => ({
-        ...item,
-        rank: idx + 1,
-        barPct: maxVal > 0 ? (leaderboardMetric === 'distance' ? (item.distance / maxVal) * 100 :
-                leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
-                (result[0].paceRaw / item.paceRaw) * 100) : 0
-      }));
+      const frameData = result.map((item, idx) => {
+        const firstIdx = result.findIndex(it => {
+          if (leaderboardMetric === 'distance') return it.distance === item.distance;
+          if (leaderboardMetric === 'elevation') return it.elevation === item.elevation;
+          return it.paceRaw === item.paceRaw;
+        });
+        return {
+          ...item,
+          rank: (firstIdx !== -1 ? firstIdx : idx) + 1,
+          barPct: maxVal > 0 ? (leaderboardMetric === 'distance' ? (item.distance / maxVal) * 100 :
+                  leaderboardMetric === 'elevation' ? (item.elevation / maxVal) * 100 :
+                  (result[0].paceRaw / item.paceRaw) * 100) : 0
+        };
+      });
 
       frames.push({ dateLabel: dateStr, data: frameData });
     }

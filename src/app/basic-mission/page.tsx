@@ -9,7 +9,7 @@ import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const SymbolSelect = ({ defaultValue, inputId, allowCrossCircle = false }: { defaultValue: string, inputId: string, allowCrossCircle?: boolean }) => {
+const SymbolSelect = ({ defaultValue, inputId, allowCrossCircle = false, openUpwards = false }: { defaultValue: string, inputId: string, allowCrossCircle?: boolean, openUpwards?: boolean }) => {
   const [value, setValue] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
   
@@ -43,7 +43,7 @@ const SymbolSelect = ({ defaultValue, inputId, allowCrossCircle = false }: { def
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[110]" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute top-full left-0 w-full mt-1 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] overflow-hidden">
+          <div className={`absolute left-0 w-full bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] overflow-hidden ${openUpwards ? "bottom-full mb-1" : "top-full mt-1"}`}>
             {options.map(opt => (
               <div
                 key={opt.val}
@@ -65,7 +65,7 @@ const SymbolSelect = ({ defaultValue, inputId, allowCrossCircle = false }: { def
   );
 };
 
-const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInputId, placeholder = "輸入備註", options, allowCrossCircle = false }: { label: string, defaultSymbol: string, defaultNote: string, symbolInputId: string, noteInputId: string, placeholder?: string, options?: string[], allowCrossCircle?: boolean }) => {
+const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInputId, placeholder = "輸入備註", options, allowCrossCircle = false, openUpwards = false }: { label: string, defaultSymbol: string, defaultNote: string, symbolInputId: string, noteInputId: string, placeholder?: string, options?: string[], allowCrossCircle?: boolean, openUpwards?: boolean }) => {
   const [showNote, setShowNote] = useState(false);
   const [note, setNote] = useState(defaultNote);
 
@@ -79,9 +79,9 @@ const DayCellEdit = ({ label, defaultSymbol, defaultNote, symbolInputId, noteInp
         {label}
       </label>
       {options ? (
-        <TaskSelect options={options} defaultValue={defaultSymbol} inputId={symbolInputId} />
+        <TaskSelect options={options} defaultValue={defaultSymbol} inputId={symbolInputId} openUpwards={openUpwards} />
       ) : (
-        <SymbolSelect defaultValue={defaultSymbol} inputId={symbolInputId} allowCrossCircle={allowCrossCircle} />
+        <SymbolSelect defaultValue={defaultSymbol} inputId={symbolInputId} allowCrossCircle={allowCrossCircle} openUpwards={openUpwards} />
       )}
       <input type="hidden" id={noteInputId} value={note} />
       
@@ -188,7 +188,7 @@ const CustomTimePicker = ({ defaultTime, inputId }: { defaultTime: string, input
   );
 };
 
-const TaskSelect = ({ options, defaultValue, inputId }: { options: string[], defaultValue: string, inputId: string }) => {
+const TaskSelect = ({ options, defaultValue, inputId, openUpwards = true }: { options: string[], defaultValue: string, inputId: string, openUpwards?: boolean }) => {
   const [value, setValue] = useState(defaultValue === "X" ? "✕" : defaultValue);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -219,7 +219,7 @@ const TaskSelect = ({ options, defaultValue, inputId }: { options: string[], def
       {isOpen && (
         <>
           <div className="fixed inset-0 z-[110]" onClick={() => setIsOpen(false)}></div>
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 min-w-[40px] w-full max-h-[150px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] overflow-y-auto scrollbar-hide">
+          <div className={`absolute left-1/2 -translate-x-1/2 min-w-[40px] w-full max-h-[150px] bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] overflow-y-auto scrollbar-hide ${openUpwards ? "bottom-full mb-1" : "top-full mt-1"}`}>
             {options.map(opt => (
               <div
                 key={opt}
@@ -544,8 +544,9 @@ export default function BasicMissionPage() {
       const displayScore = (leaderboardMetric === 'mission' || leaderboardMetric === 'awakening' || (leaderboardMetric as any) === 'score')
         ? item.score.toFixed(1)
         : item.score.toString();
+      const firstIdx = list.findIndex(it => it.score === item.score);
       return {
-        rank: idx + 1,
+        rank: (firstIdx !== -1 ? firstIdx : idx) + 1,
         name: item.name,
         score: item.score,
         displayScore,
@@ -1303,16 +1304,16 @@ export default function BasicMissionPage() {
             {showThresholdRules && (
               <div className="text-[11px] text-[#efe0d2]/80 space-y-1.5 mb-4 bg-black/40 p-3 rounded border border-white/5 leading-relaxed">
                 <div className="flex items-start gap-1.5">
-                  <span className="text-primary font-bold shrink-0">① 狩獵任務發布日：</span>
-                  <span>連續 4 週任務不中斷，於<strong className="text-white">週日 21:00 前</strong>交付。</span>
+                  <span className="text-primary font-bold shrink-0">① 發布日：</span>
+                  <span>狩獵任務4 週不中斷，於<strong className="text-white">週日 21:00 前</strong>交付。</span>
                 </div>
                 <div className="flex items-start gap-1.5">
-                  <span className="text-primary font-bold shrink-0">② 狩獵任務完成度：</span>
-                  <span>連續 4 週完成度平均達<strong className="text-white"> 3.5 分或以上</strong>。</span>
+                  <span className="text-primary font-bold shrink-0">② 完成度：</span>
+                  <span>狩獵任務連續 4 週完成度平均達<strong className="text-white"> 3.5分 或以上</strong>。</span>
                 </div>
                 <div className="flex items-start gap-1.5">
-                  <span className="text-primary font-bold shrink-0">③ 狩獵任務體格分：</span>
-                  <span>當週狩獵任務的體能和格局完成度皆<strong className="text-white">「✕」以上</strong>。</span>
+                  <span className="text-primary font-bold shrink-0">③ 體格分：</span>
+                  <span>上週狩獵任務的體能和格局完成度皆<strong className="text-white"> ✕ 以上</strong>。</span>
                 </div>
               </div>
             )}
@@ -1782,6 +1783,7 @@ export default function BasicMissionPage() {
                             defaultNote={editingRow.rawNotes?.[12] || ""}
                             symbolInputId={`edit-col-12`}
                             noteInputId={`edit-note-12`}
+                            openUpwards={true}
                           />
                         </div>
                         <div className="space-y-1">
@@ -1792,6 +1794,7 @@ export default function BasicMissionPage() {
                             symbolInputId={`edit-col-16`}
                             noteInputId={`edit-note-16`}
                             options={["高", "中", "低", "✕", ""]}
+                            openUpwards={true}
                           />
                         </div>
                         <div className="space-y-1">
@@ -1802,6 +1805,7 @@ export default function BasicMissionPage() {
                             symbolInputId={`edit-col-17`}
                             noteInputId={`edit-note-17`}
                             options={["高", "中", "低", "✕", ""]}
+                            openUpwards={true}
                           />
                         </div>
                       </div>
