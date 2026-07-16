@@ -1768,6 +1768,8 @@ export default function HiddenMissionPage() {
                           1e-6
                         ) : 1;
                         const maxIndex = Math.max(1, itemCount - 1);
+                        // Stable rendering order: sorted by hunter name so React never reorders DOM nodes
+                        const stableItems = [...displayTeamLeaderboardData].sort((a: any, b: any) => a.hunter.localeCompare(b.hunter));
                         return (
                           <div className="relative w-full" style={{ height: `${containerH}px`, transition: 'height 0.4s ease-out' }}>
                             {/* Fixed rank numbers layer */}
@@ -1801,8 +1803,9 @@ export default function HiddenMissionPage() {
                                 </div>
                               );
                             })}
-                            {/* Floating content rows */}
-                            {itemCount > 0 ? displayTeamLeaderboardData.map((item: any, index: number, arr: any[]) => {
+                            {/* Floating content rows — rendered in STABLE hunter-name order */}
+                            {itemCount > 0 ? stableItems.map((item: any) => {
+                              const index = displayTeamLeaderboardData.indexOf(item);
                               const rawVal = teamLeaderboardMetric === 'holding'
                                 ? (item.holdingDays || 0)
                                 : teamLeaderboardMetric === 'streak'
@@ -1815,7 +1818,7 @@ export default function HiddenMissionPage() {
                               const isNegative = rawVal < 0;
                               const val = Math.abs(rawVal);
                               const barPct = Math.min(100, Math.max(8, (val / maxVal) * 100));
-                              const firstIdx = arr.findIndex((it: any) => {
+                              const firstIdx = displayTeamLeaderboardData.findIndex((it: any) => {
                                 const itVal = teamLeaderboardMetric === 'holding'
                                   ? (it.holdingDays || 0)
                                   : teamLeaderboardMetric === 'streak'

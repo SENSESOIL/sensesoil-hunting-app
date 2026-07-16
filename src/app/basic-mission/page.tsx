@@ -1503,9 +1503,11 @@ export default function BasicMissionPage() {
             {(() => {
               const itemCount = displayLeaderboardData.length;
               const containerH = itemCount > 0 ? itemCount * 34 : 60;
-              // Build a position map: name -> index in sorted array
+              // Build a position map: name -> index in score-sorted array
               const posMap = new Map<string, number>();
               displayLeaderboardData.forEach((item: any, idx: number) => { posMap.set(item.name, idx); });
+              // Stable rendering order: always sorted by name so React never reorders DOM nodes
+              const stableItems = [...displayLeaderboardData].sort((a: any, b: any) => a.name.localeCompare(b.name));
               const maxIndex = Math.max(1, itemCount - 1);
               return (
                 <div className="relative w-full" style={{ height: `${containerH}px`, transition: 'height 0.4s ease-out' }}>
@@ -1515,8 +1517,8 @@ export default function BasicMissionPage() {
                       <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{displayLeaderboardData[i]?.rank ?? i + 1}</span>
                     </div>
                   ))}
-                  {/* Floating content rows — rendered in stable key order, positioned by current rank */}
-                  {itemCount > 0 ? displayLeaderboardData.map((item: any) => {
+                  {/* Floating content rows — rendered in STABLE name order, positioned by score rank */}
+                  {itemCount > 0 ? stableItems.map((item: any) => {
                     const sortedIdx = posMap.get(item.name) ?? 0;
                     const barOpacity = 1 - (0.3 * (sortedIdx / maxIndex));
                     return (

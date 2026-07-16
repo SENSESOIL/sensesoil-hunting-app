@@ -1433,6 +1433,11 @@ export default function RunningRecordsPage() {
                 const itemCount = displayLeaderboardData.length;
                 const containerH = itemCount > 0 ? itemCount * 34 : 60;
                 const maxIndex = Math.max(1, itemCount - 1);
+                // Build position map: name -> index in score-sorted array
+                const posMap = new Map<string, number>();
+                displayLeaderboardData.forEach((item, idx) => { posMap.set(item.name, idx); });
+                // Stable rendering order: sorted by name so React never reorders DOM nodes
+                const stableItems = [...displayLeaderboardData].sort((a, b) => a.name.localeCompare(b.name));
                 return (
                   <div className="relative w-full" style={{ height: `${containerH}px`, transition: 'height 0.4s ease-out' }}>
                     {/* Fixed rank numbers layer */}
@@ -1441,15 +1446,16 @@ export default function RunningRecordsPage() {
                         <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{displayLeaderboardData[i]?.rank ?? i + 1}</span>
                       </div>
                     ))}
-                    {/* Floating content rows */}
-                    {itemCount > 0 ? displayLeaderboardData.map((item, index) => {
-                      const barOpacity = 1 - (0.3 * (index / maxIndex));
+                    {/* Floating content rows — rendered in STABLE name order */}
+                    {itemCount > 0 ? stableItems.map((item) => {
+                      const sortedIdx = posMap.get(item.name) ?? 0;
+                      const barOpacity = 1 - (0.3 * (sortedIdx / maxIndex));
                       return (
                       <div
                         key={item.name}
                         className="absolute top-0 left-0 right-0 h-[26px] flex items-center gap-3 will-change-transform"
                         style={{
-                          transform: `translate3d(0, ${index * 34}px, 0)`,
+                          transform: `translate3d(0, ${sortedIdx * 34}px, 0)`,
                           transition: 'transform 0.58s ease-in-out',
                           paddingLeft: '28px',
                         }}
