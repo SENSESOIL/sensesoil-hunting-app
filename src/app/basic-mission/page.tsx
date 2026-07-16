@@ -1360,15 +1360,27 @@ export default function BasicMissionPage() {
                       {idx === 0 ? (
                         <div className="flex justify-between items-center pt-0.5">
                           <span className="text-white/60 text-[10px]">體格分</span>
-                          <span className={`${
-                            (week.displayAward === '✕' || week.displayAward === '×' || week.displayAward === 'X' || week.displayAward === 'x' || week.displayAward === '--' || !week.displayAward)
-                              ? 'font-data-mono font-bold text-[11px]'
-                              : (week.displayAward === '○' || week.displayAward === 'o' || week.displayAward === 'O' || week.displayAward === '0' || week.displayAward === '〇')
-                                ? 'font-sans font-bold text-[14px] inline-block leading-none'
-                                : 'font-sans text-[18px] font-normal inline-block scale-[1.15] leading-none'
-                          } ${(week.awardPass && week.displayAward !== '✕' && week.displayAward !== '×' && week.displayAward !== 'X' && week.displayAward !== 'x') ? 'text-white' : 'text-[#ff3b30]'}`}>
-                            {week.displayAward || '--'}
-                          </span>
+                          {(week.displayAward === '△' || week.displayAward === '^' || week.displayAward === '中') ? (
+                            <span 
+                              className="text-white text-[18px] leading-none inline-block select-none scale-[1.15]" 
+                              style={{ 
+                                fontFamily: "'Material Symbols Outlined'", 
+                                fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24" 
+                              }}
+                            >
+                              change_history
+                            </span>
+                          ) : (
+                            <span className={`${
+                              (week.displayAward === '✕' || week.displayAward === '×' || week.displayAward === 'X' || week.displayAward === 'x' || week.displayAward === '--' || !week.displayAward)
+                                ? 'font-data-mono font-bold text-[11px]'
+                                : (week.displayAward === '○' || week.displayAward === 'o' || week.displayAward === 'O' || week.displayAward === '0' || week.displayAward === '〇')
+                                  ? 'font-sans font-bold text-[14px] inline-block leading-none'
+                                  : 'font-sans text-[18px] font-normal inline-block scale-[1.15] leading-none'
+                            } ${(week.awardPass && week.displayAward !== '✕' && week.displayAward !== '×' && week.displayAward !== 'X' && week.displayAward !== 'x') ? 'text-white' : 'text-[#ff3b30]'}`}>
+                              {week.displayAward || '--'}
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <div className="flex justify-between items-center pt-0.5 opacity-0 pointer-events-none select-none">
