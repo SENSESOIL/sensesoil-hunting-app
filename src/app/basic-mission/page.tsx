@@ -494,7 +494,7 @@ export default function BasicMissionPage() {
           }
           return prev + 1;
         });
-      }, 650);
+      }, 600);
     } else if (raceTimerRef.current) {
       clearInterval(raceTimerRef.current);
     }
@@ -1527,7 +1527,7 @@ export default function BasicMissionPage() {
                         className="absolute top-0 left-0 right-0 h-[26px] flex items-center gap-3 will-change-transform"
                         style={{
                           transform: `translate3d(0, ${sortedIdx * 34}px, 0)`,
-                          transition: 'transform 0.58s ease-in-out',
+                          transition: 'transform 0.55s ease-in-out',
                           paddingLeft: '28px',
                         }}
                       >
@@ -1537,7 +1537,7 @@ export default function BasicMissionPage() {
                         <div className="flex-1 h-2 bg-primary/10 rounded-r-full overflow-visible flex relative">
                           <div
                             className={`h-full rounded-r-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}
-                            style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.58s ease-in-out' }}
+                            style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.55s ease-in-out' }}
                           ></div>
                         </div>
                         <div className="w-20 text-right shrink-0">
