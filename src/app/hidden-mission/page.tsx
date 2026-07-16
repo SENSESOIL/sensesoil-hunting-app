@@ -1851,7 +1851,7 @@ export default function HiddenMissionPage() {
                                       style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.55s ease-in-out' }}
                                     ></div>
                                   </div>
-                                  <div className="w-24 text-right shrink-0">
+                                  <div className="w-16 text-right shrink-0">
                                     <div className="flex items-baseline justify-end gap-0.5">
                                       {teamLeaderboardMetric === 'holding' ? (
                                         <>

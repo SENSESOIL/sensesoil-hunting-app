@@ -1540,7 +1540,7 @@ export default function BasicMissionPage() {
                             style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.55s ease-in-out' }}
                           ></div>
                         </div>
-                        <div className="w-20 text-right shrink-0">
+                        <div className="w-16 text-right shrink-0">
                           <div className="flex items-baseline justify-end gap-0.5">
                             <span className="text-white text-[13px] font-bold font-mono">{item.displayScore ?? item.score}</span>
                             <span className="text-white/70 text-[10px]">pts</span>
