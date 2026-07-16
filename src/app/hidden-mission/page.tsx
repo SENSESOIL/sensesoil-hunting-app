@@ -1754,7 +1754,7 @@ export default function HiddenMissionPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-2">
+                      <div className="relative w-full" style={{ height: displayTeamLeaderboardData.length > 0 ? `${displayTeamLeaderboardData.length * 34}px` : '60px', transition: 'height 0.4s ease-out' }}>
                         {displayTeamLeaderboardData.length > 0 ? (() => {
                           const maxVal = Math.max(
                             ...displayTeamLeaderboardData.map((s: any) => {
@@ -1797,7 +1797,15 @@ export default function HiddenMissionPage() {
                             const rank = (firstIdx !== -1 ? firstIdx : index) + 1;
                             
                             return (
-                              <div key={item.hunter} className="flex items-center w-full gap-3" style={{ transition: 'transform 0.35s ease-out, opacity 0.35s ease-out' }}>
+                              <div
+                                key={item.hunter}
+                                className="absolute left-0 right-0 flex items-center gap-3 h-[26px]"
+                                style={{
+                                  top: `${index * 34}px`,
+                                  transition: 'top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease-out',
+                                  zIndex: displayTeamLeaderboardData.length - index
+                                }}
+                              >
                                 <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{rank}</span>
                                 <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
                                   <span className={`text-[12px] ${rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.hunter.slice(-1)}</span>
@@ -1805,7 +1813,7 @@ export default function HiddenMissionPage() {
                                 <div className={`flex-1 h-2 rounded-r-full overflow-visible flex relative ${isNegative ? 'bg-white/5' : 'bg-primary/10'}`}>
                                   <div 
                                     className={`h-full rounded-r-full ${isNegative ? 'bg-[#6B7280]' : `bg-primary ${rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}`} 
-                                    style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.35s ease-out' }}
+                                    style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                                   ></div>
                                 </div>
                                 <div className="w-24 text-right shrink-0">
@@ -1840,7 +1848,7 @@ export default function HiddenMissionPage() {
                             );
                           });
                         })() : (
-                          <div className="text-center text-primary/50 text-xs py-4">本年度暫無團隊數據</div>
+                          <div className="text-center text-primary/50 text-xs py-4 w-full">本年度暫無團隊數據</div>
                         )}
                       </div>
                     </div>

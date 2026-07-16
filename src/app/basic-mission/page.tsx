@@ -1500,12 +1500,20 @@ export default function BasicMissionPage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="relative w-full" style={{ height: displayLeaderboardData.length > 0 ? `${displayLeaderboardData.length * 34}px` : '60px', transition: 'height 0.4s ease-out' }}>
               {displayLeaderboardData.length > 0 ? displayLeaderboardData.map((item: any, index: number) => {
                 const maxIndex = Math.max(1, displayLeaderboardData.length - 1);
                 const barOpacity = 1 - (0.3 * (index / maxIndex));
                 return (
-                  <div key={item.name} className="flex items-center w-full gap-3" style={{ transition: 'transform 0.35s ease-out, opacity 0.35s ease-out' }}>
+                  <div
+                    key={item.name}
+                    className="absolute left-0 right-0 flex items-center gap-3 h-[26px]"
+                    style={{
+                      top: `${index * 34}px`,
+                      transition: 'top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease-out',
+                      zIndex: displayLeaderboardData.length - index
+                    }}
+                  >
                     <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{item.rank}</span>
                     <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
                       <span className={`text-[12px] ${item.rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.name.slice(-1)}</span>
@@ -1513,7 +1521,7 @@ export default function BasicMissionPage() {
                     <div className="flex-1 h-2 bg-primary/10 rounded-r-full overflow-visible flex relative">
                       <div
                         className={`h-full rounded-r-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}
-                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.35s ease-out' }}
+                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
                       ></div>
                     </div>
                     <div className="w-20 text-right shrink-0">
@@ -1525,7 +1533,7 @@ export default function BasicMissionPage() {
                   </div>
                 );
               }) : (
-                <div className="text-center text-primary/50 text-xs py-4">本週暫無數據</div>
+                <div className="text-center text-primary/50 text-xs py-4 w-full">本週暫無數據</div>
               )}
             </div>
           </div>
