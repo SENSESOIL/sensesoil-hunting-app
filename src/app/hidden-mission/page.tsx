@@ -1799,10 +1799,10 @@ export default function HiddenMissionPage() {
                             return (
                               <div
                                 key={item.hunter}
-                                className="absolute left-0 right-0 flex items-center gap-3 h-[26px]"
+                                className="absolute top-0 left-0 right-0 flex items-center gap-3 h-[26px] will-change-transform"
                                 style={{
-                                  top: `${index * 34}px`,
-                                  transition: 'top 0.55s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease-out',
+                                  transform: `translate3d(0, ${index * 34}px, 0)`,
+                                  transition: 'transform 0.58s ease-in-out, opacity 0.35s ease-out',
                                   zIndex: displayTeamLeaderboardData.length - index
                                 }}
                               >
@@ -1813,7 +1813,7 @@ export default function HiddenMissionPage() {
                                 <div className={`flex-1 h-2 rounded-r-full overflow-visible flex relative ${isNegative ? 'bg-white/5' : 'bg-primary/10'}`}>
                                   <div 
                                     className={`h-full rounded-r-full ${isNegative ? 'bg-[#6B7280]' : `bg-primary ${rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}`} 
-                                    style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.55s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                                    style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.58s ease-in-out' }}
                                   ></div>
                                 </div>
                                 <div className="w-24 text-right shrink-0">

@@ -1436,10 +1436,10 @@ export default function RunningRecordsPage() {
                   return (
                   <div
                     key={item.name}
-                    className="absolute left-0 right-0 flex items-center gap-3 h-[26px]"
+                    className="absolute top-0 left-0 right-0 flex items-center gap-3 h-[26px] will-change-transform"
                     style={{
-                      top: `${index * 34}px`,
-                      transition: 'top 0.55s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease-out',
+                      transform: `translate3d(0, ${index * 34}px, 0)`,
+                      transition: 'transform 0.58s ease-in-out, opacity 0.35s ease-out',
                       zIndex: displayLeaderboardData.length - index
                     }}
                   >
@@ -1450,7 +1450,7 @@ export default function RunningRecordsPage() {
                     <div className="flex-1 h-2 bg-primary/10 rounded-r-full overflow-visible flex relative">
                       <div 
                         className={`h-full rounded-r-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`} 
-                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.55s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.58s ease-in-out' }}
                       ></div>
                     </div>
                     <div className="w-16 text-right shrink-0">
