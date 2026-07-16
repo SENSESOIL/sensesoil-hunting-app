@@ -1500,42 +1500,58 @@ export default function BasicMissionPage() {
               </div>
             </div>
 
-            <div className="relative w-full" style={{ height: displayLeaderboardData.length > 0 ? `${displayLeaderboardData.length * 34}px` : '60px', transition: 'height 0.4s ease-out' }}>
-              {displayLeaderboardData.length > 0 ? displayLeaderboardData.map((item: any, index: number) => {
-                const maxIndex = Math.max(1, displayLeaderboardData.length - 1);
-                const barOpacity = 1 - (0.3 * (index / maxIndex));
-                return (
-                  <div
-                    key={item.name}
-                    className="absolute top-0 left-0 right-0 flex items-center gap-3 h-[26px] will-change-transform"
-                    style={{
-                      transform: `translate3d(0, ${index * 34}px, 0)`,
-                      transition: 'transform 0.58s ease-in-out, opacity 0.35s ease-out',
-                      zIndex: displayLeaderboardData.length - index
-                    }}
-                  >
-                    <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{item.rank}</span>
-                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
-                      <span className={`text-[12px] ${item.rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.name.slice(-1)}</span>
+            {(() => {
+              const itemCount = displayLeaderboardData.length;
+              const containerH = itemCount > 0 ? itemCount * 34 : 60;
+              // Build a position map: name -> index in sorted array
+              const posMap = new Map<string, number>();
+              displayLeaderboardData.forEach((item: any, idx: number) => { posMap.set(item.name, idx); });
+              const maxIndex = Math.max(1, itemCount - 1);
+              return (
+                <div className="relative w-full" style={{ height: `${containerH}px`, transition: 'height 0.4s ease-out' }}>
+                  {/* Fixed rank numbers layer */}
+                  {itemCount > 0 && Array.from({ length: itemCount }, (_, i) => (
+                    <div key={`rank-${i}`} className="absolute left-0 h-[26px] flex items-center" style={{ top: `${i * 34}px` }}>
+                      <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{displayLeaderboardData[i]?.rank ?? i + 1}</span>
                     </div>
-                    <div className="flex-1 h-2 bg-primary/10 rounded-r-full overflow-visible flex relative">
+                  ))}
+                  {/* Floating content rows — rendered in stable key order, positioned by current rank */}
+                  {itemCount > 0 ? displayLeaderboardData.map((item: any) => {
+                    const sortedIdx = posMap.get(item.name) ?? 0;
+                    const barOpacity = 1 - (0.3 * (sortedIdx / maxIndex));
+                    return (
                       <div
-                        className={`h-full rounded-r-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}
-                        style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.58s ease-in-out' }}
-                      ></div>
-                    </div>
-                    <div className="w-20 text-right shrink-0">
-                      <div className="flex items-baseline justify-end gap-0.5">
-                        <span className="text-white text-[13px] font-bold font-mono">{item.displayScore ?? item.score}</span>
-                        <span className="text-white/70 text-[10px]">pts</span>
+                        key={item.name}
+                        className="absolute top-0 left-0 right-0 h-[26px] flex items-center gap-3 will-change-transform"
+                        style={{
+                          transform: `translate3d(0, ${sortedIdx * 34}px, 0)`,
+                          transition: 'transform 0.58s ease-in-out',
+                          paddingLeft: '28px',
+                        }}
+                      >
+                        <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${item.rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
+                          <span className={`text-[12px] ${item.rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.name.slice(-1)}</span>
+                        </div>
+                        <div className="flex-1 h-2 bg-primary/10 rounded-r-full overflow-visible flex relative">
+                          <div
+                            className={`h-full rounded-r-full bg-primary ${item.rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}
+                            style={{ width: `${item.barPct}%`, opacity: barOpacity, transition: 'width 0.58s ease-in-out' }}
+                          ></div>
+                        </div>
+                        <div className="w-20 text-right shrink-0">
+                          <div className="flex items-baseline justify-end gap-0.5">
+                            <span className="text-white text-[13px] font-bold font-mono">{item.displayScore ?? item.score}</span>
+                            <span className="text-white/70 text-[10px]">pts</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              }) : (
-                <div className="text-center text-primary/50 text-xs py-4 w-full">本週暫無數據</div>
-              )}
-            </div>
+                    );
+                  }) : (
+                    <div className="text-center text-primary/50 text-xs py-4 w-full">本週暫無數據</div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </section>
 

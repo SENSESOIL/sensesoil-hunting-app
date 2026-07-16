@@ -1754,103 +1754,136 @@ export default function HiddenMissionPage() {
                         </div>
                       </div>
 
-                      <div className="relative w-full" style={{ height: displayTeamLeaderboardData.length > 0 ? `${displayTeamLeaderboardData.length * 34}px` : '60px', transition: 'height 0.4s ease-out' }}>
-                        {displayTeamLeaderboardData.length > 0 ? (() => {
-                          const maxVal = Math.max(
-                            ...displayTeamLeaderboardData.map((s: any) => {
-                              if (teamLeaderboardMetric === 'holding') return s.holdingDays || 0;
-                              if (teamLeaderboardMetric === 'streak') return s.consecutiveMonths || 0;
-                              if (teamLeaderboardMetric === 'profit') return Math.abs(s.profitNum || 0);
-                              if (teamLeaderboardMetric === 'weighted') return Math.abs(s.weightedNum || 0);
-                              return Math.abs(s.returnRateNum || 0);
-                            }),
-                            1e-6
-                          );
-                          return displayTeamLeaderboardData.map((item: any, index: number, arr: any[]) => {
-                            const maxIndex = Math.max(1, displayTeamLeaderboardData.length - 1);
-                            const barOpacity = 1 - (0.3 * (index / maxIndex));
-                            const rawVal = teamLeaderboardMetric === 'holding'
-                              ? (item.holdingDays || 0)
-                              : teamLeaderboardMetric === 'streak'
-                              ? (item.consecutiveMonths || 0)
-                              : teamLeaderboardMetric === 'profit'
-                              ? (item.profitNum || 0)
-                              : teamLeaderboardMetric === 'weighted'
-                              ? (item.weightedNum || 0)
-                              : (item.returnRateNum || 0);
-                            const isNegative = rawVal < 0;
-                            const val = Math.abs(rawVal);
-                            const barPct = Math.min(100, Math.max(8, (val / maxVal) * 100));
-                            
-                            const firstIdx = arr.findIndex((it: any) => {
-                              const itVal = teamLeaderboardMetric === 'holding'
-                                ? (it.holdingDays || 0)
+                      {(() => {
+                        const itemCount = displayTeamLeaderboardData.length;
+                        const containerH = itemCount > 0 ? itemCount * 34 : 60;
+                        const maxVal = itemCount > 0 ? Math.max(
+                          ...displayTeamLeaderboardData.map((s: any) => {
+                            if (teamLeaderboardMetric === 'holding') return s.holdingDays || 0;
+                            if (teamLeaderboardMetric === 'streak') return s.consecutiveMonths || 0;
+                            if (teamLeaderboardMetric === 'profit') return Math.abs(s.profitNum || 0);
+                            if (teamLeaderboardMetric === 'weighted') return Math.abs(s.weightedNum || 0);
+                            return Math.abs(s.returnRateNum || 0);
+                          }),
+                          1e-6
+                        ) : 1;
+                        const maxIndex = Math.max(1, itemCount - 1);
+                        return (
+                          <div className="relative w-full" style={{ height: `${containerH}px`, transition: 'height 0.4s ease-out' }}>
+                            {/* Fixed rank numbers layer */}
+                            {itemCount > 0 && Array.from({ length: itemCount }, (_, i) => {
+                              const item = displayTeamLeaderboardData[i];
+                              const rawVal = teamLeaderboardMetric === 'holding'
+                                ? (item?.holdingDays || 0)
                                 : teamLeaderboardMetric === 'streak'
-                                ? (it.consecutiveMonths || 0)
+                                ? (item?.consecutiveMonths || 0)
                                 : teamLeaderboardMetric === 'profit'
-                                ? (it.profitNum || 0)
+                                ? (item?.profitNum || 0)
                                 : teamLeaderboardMetric === 'weighted'
-                                ? (it.weightedNum || 0)
-                                : (it.returnRateNum || 0);
-                              return itVal === rawVal;
-                            });
-                            const rank = (firstIdx !== -1 ? firstIdx : index) + 1;
-                            
-                            return (
-                              <div
-                                key={item.hunter}
-                                className="absolute top-0 left-0 right-0 flex items-center gap-3 h-[26px] will-change-transform"
-                                style={{
-                                  transform: `translate3d(0, ${index * 34}px, 0)`,
-                                  transition: 'transform 0.58s ease-in-out, opacity 0.35s ease-out',
-                                  zIndex: displayTeamLeaderboardData.length - index
-                                }}
-                              >
-                                <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{rank}</span>
-                                <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
-                                  <span className={`text-[12px] ${rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.hunter.slice(-1)}</span>
+                                ? (item?.weightedNum || 0)
+                                : (item?.returnRateNum || 0);
+                              const firstIdx = displayTeamLeaderboardData.findIndex((it: any) => {
+                                const itVal = teamLeaderboardMetric === 'holding'
+                                  ? (it.holdingDays || 0)
+                                  : teamLeaderboardMetric === 'streak'
+                                  ? (it.consecutiveMonths || 0)
+                                  : teamLeaderboardMetric === 'profit'
+                                  ? (it.profitNum || 0)
+                                  : teamLeaderboardMetric === 'weighted'
+                                  ? (it.weightedNum || 0)
+                                  : (it.returnRateNum || 0);
+                                return itVal === rawVal;
+                              });
+                              const rank = (firstIdx !== -1 ? firstIdx : i) + 1;
+                              return (
+                                <div key={`rank-${i}`} className="absolute left-0 h-[26px] flex items-center" style={{ top: `${i * 34}px` }}>
+                                  <span className="text-[#efe0d2]/70 text-[12px] font-display w-4 text-left shrink-0">{rank}</span>
                                 </div>
-                                <div className={`flex-1 h-2 rounded-r-full overflow-visible flex relative ${isNegative ? 'bg-white/5' : 'bg-primary/10'}`}>
-                                  <div 
-                                    className={`h-full rounded-r-full ${isNegative ? 'bg-[#6B7280]' : `bg-primary ${rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}`} 
-                                    style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.58s ease-in-out' }}
-                                  ></div>
-                                </div>
-                                <div className="w-24 text-right shrink-0">
-                                  <div className="flex items-baseline justify-end gap-0.5">
-                                    {teamLeaderboardMetric === 'holding' ? (
-                                      <>
-                                        <span className="text-white text-[13px] font-bold font-mono">{item.holdingDays || 0}</span>
-                                        <span className="text-white/70 text-[10px]">天</span>
-                                      </>
-                                    ) : teamLeaderboardMetric === 'streak' ? (
-                                      <>
-                                        <span className="text-white text-[13px] font-bold font-mono">{item.consecutiveMonths || 0}</span>
-                                        <span className="text-white/70 text-[10px]">月</span>
-                                      </>
-                                    ) : teamLeaderboardMetric === 'profit' ? (
-                                      <>
-                                        <span className="text-white text-[13px] font-bold font-mono">{item.profitStr || "$0"}</span>
-                                      </>
-                                    ) : teamLeaderboardMetric === 'weighted' ? (
-                                      <>
-                                        <span className="text-white text-[13px] font-bold font-mono">{item.weightedStr || "0.0000"}</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <span className="text-white text-[13px] font-bold font-mono">{(item.returnRateStr || "0.00%").replace(/%/g, '')}</span>
-                                        <span className="text-white/70 text-[10px]">%</span>
-                                      </>
-                                    )}
+                              );
+                            })}
+                            {/* Floating content rows */}
+                            {itemCount > 0 ? displayTeamLeaderboardData.map((item: any, index: number, arr: any[]) => {
+                              const rawVal = teamLeaderboardMetric === 'holding'
+                                ? (item.holdingDays || 0)
+                                : teamLeaderboardMetric === 'streak'
+                                ? (item.consecutiveMonths || 0)
+                                : teamLeaderboardMetric === 'profit'
+                                ? (item.profitNum || 0)
+                                : teamLeaderboardMetric === 'weighted'
+                                ? (item.weightedNum || 0)
+                                : (item.returnRateNum || 0);
+                              const isNegative = rawVal < 0;
+                              const val = Math.abs(rawVal);
+                              const barPct = Math.min(100, Math.max(8, (val / maxVal) * 100));
+                              const firstIdx = arr.findIndex((it: any) => {
+                                const itVal = teamLeaderboardMetric === 'holding'
+                                  ? (it.holdingDays || 0)
+                                  : teamLeaderboardMetric === 'streak'
+                                  ? (it.consecutiveMonths || 0)
+                                  : teamLeaderboardMetric === 'profit'
+                                  ? (it.profitNum || 0)
+                                  : teamLeaderboardMetric === 'weighted'
+                                  ? (it.weightedNum || 0)
+                                  : (it.returnRateNum || 0);
+                                return itVal === rawVal;
+                              });
+                              const rank = (firstIdx !== -1 ? firstIdx : index) + 1;
+                              const barOpacity = 1 - (0.3 * (index / maxIndex));
+                              return (
+                                <div
+                                  key={item.hunter}
+                                  className="absolute top-0 left-0 right-0 h-[26px] flex items-center gap-3 will-change-transform"
+                                  style={{
+                                    transform: `translate3d(0, ${index * 34}px, 0)`,
+                                    transition: 'transform 0.58s ease-in-out',
+                                    paddingLeft: '28px',
+                                  }}
+                                >
+                                  <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${rank <= 3 ? 'bg-primary/20 border-primary text-primary' : 'bg-white/10 border-white/20 text-white/80'} ${rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}>
+                                    <span className={`text-[12px] ${rank === 1 ? 'font-bold' : 'font-normal'}`}>{item.hunter.slice(-1)}</span>
+                                  </div>
+                                  <div className={`flex-1 h-2 rounded-r-full overflow-visible flex relative ${isNegative ? 'bg-white/5' : 'bg-primary/10'}`}>
+                                    <div 
+                                      className={`h-full rounded-r-full ${isNegative ? 'bg-[#6B7280]' : `bg-primary ${rank === 1 ? 'shadow-[0_0_8px_rgba(243,156,18,0.8)]' : ''}`}`} 
+                                      style={{ width: `${barPct}%`, opacity: isNegative ? 0.75 : barOpacity, transition: 'width 0.58s ease-in-out' }}
+                                    ></div>
+                                  </div>
+                                  <div className="w-24 text-right shrink-0">
+                                    <div className="flex items-baseline justify-end gap-0.5">
+                                      {teamLeaderboardMetric === 'holding' ? (
+                                        <>
+                                          <span className="text-white text-[13px] font-bold font-mono">{item.holdingDays || 0}</span>
+                                          <span className="text-white/70 text-[10px]">天</span>
+                                        </>
+                                      ) : teamLeaderboardMetric === 'streak' ? (
+                                        <>
+                                          <span className="text-white text-[13px] font-bold font-mono">{item.consecutiveMonths || 0}</span>
+                                          <span className="text-white/70 text-[10px]">月</span>
+                                        </>
+                                      ) : teamLeaderboardMetric === 'profit' ? (
+                                        <>
+                                          <span className="text-white text-[13px] font-bold font-mono">{item.profitStr || "$0"}</span>
+                                        </>
+                                      ) : teamLeaderboardMetric === 'weighted' ? (
+                                        <>
+                                          <span className="text-white text-[13px] font-bold font-mono">{item.weightedStr || "0.0000"}</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className="text-white text-[13px] font-bold font-mono">{(item.returnRateStr || "0.00%").replace(/%/g, '')}</span>
+                                          <span className="text-white/70 text-[10px]">%</span>
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          });
-                        })() : (
-                          <div className="text-center text-primary/50 text-xs py-4 w-full">本年度暫無團隊數據</div>
-                        )}
-                      </div>
+                              );
+                            }) : (
+                              <div className="text-center text-primary/50 text-xs py-4 w-full">本年度暫無團隊數據</div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </section>
 
