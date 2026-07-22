@@ -326,8 +326,9 @@ export default function BasicMissionPage() {
 
     const rows = data.rows;
     // 尋找「總分」所在的欄位 index
-    const scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂') || h.includes('覺醒'));
-    const colPIdx = 15; // Col P (誠 / 任務)
+    let scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂') || h.includes('覺醒'));
+    if (scoreIdx === -1 || scoreIdx < 20) scoreIdx = 22; // 強制預設為 Col W (總分)
+    const colPIdx = 21; // Col V (任務得分)
     const colQIdx = 16; // Col Q (體 / 體能)
     const colRIdx = 17; // Col R (格 / 格局)
     const nameIdx = 1;
@@ -336,10 +337,10 @@ export default function BasicMissionPage() {
     const parseRankScore = (val: any): number => {
       if (!val) return 0;
       const str = String(val).trim();
-      if (str === '高') return 3;
-      if (str === '中') return 2;
+      if (str === '高' || str === '〇' || str === 'O') return 3;
+      if (str === '中' || str === '△') return 2;
       if (str === '低') return 1;
-      if (str === '無' || str === '×') return 0;
+      if (str === '無' || str === '×' || str === 'x' || str === 'X') return 0;
       const num = parseFloat(str);
       return !isNaN(num) ? num : 0;
     };
@@ -685,15 +686,16 @@ export default function BasicMissionPage() {
     }
 
     const rows = data.rows;
-    const scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂'));
+    let scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂'));
+    if (scoreIdx === -1 || scoreIdx < 20) scoreIdx = 22; // 強制預設為 Col W (總分)
     const dateIdx = 0;
     const nameIdx = 1;
 
     const colSIdx = 18; // 日誌
     const colTIdx = 19; // 紀錄
-    const colPIdx = 15; // 任務 (時/志)
-    const colQIdx = 16; // 健康 (勇/志)
-    const colRIdx = 17; // 生活 (底)
+    const colPIdx = 21; // 任務 (V)
+    const colQIdx = 16; // 體能 (Q)
+    const colRIdx = 17; // 格局 (R)
 
     const startTimestamp = new Date(selectedStartDate).getTime();
     const records = [];
@@ -716,9 +718,11 @@ export default function BasicMissionPage() {
     let sumS = 0, sumT = 0, sumP = 0, sumQ = 0, sumR = 0, sumW = 0;
 
     const rankToScore = (val: string) => {
-      if (val === "高") return 3;
-      if (val === "中") return 2;
-      if (val === "低") return 1;
+      if (!val) return 0;
+      const s = String(val).trim();
+      if (s === "高" || s === "〇" || s === "O") return 3;
+      if (s === "中" || s === "△") return 2;
+      if (s === "低") return 1;
       return 0;
     };
 
