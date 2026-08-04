@@ -108,10 +108,22 @@ export default function HuntingManagementPage() {
       <aside className={`hidden md:flex flex-col bg-[#FAFAFA] border-r border-[#E4E4E7]/60 h-screen sticky top-0 shrink-0 z-50 transition-[width] duration-300 ease-in-out overflow-x-hidden ${isSidebarCollapsed ? 'w-[72px]' : 'w-[240px]'}`}>
         
         {/* Row 1: Logo & Toggle — aligned with title row */}
-        <div className="h-[70px] flex items-end pb-[14px] shrink-0 overflow-hidden relative w-full" style={{ paddingLeft: isSidebarCollapsed ? '18.5px' : '17.5px', transition: 'padding 300ms ease-in-out' }}>
-          <div className="flex items-end gap-3 cursor-pointer shrink-0" onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : router.push('/diversion')}>
-            <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0">
-              <img src="/Logo｜Orange.svg" alt="SENSESOIL" className="w-full h-full object-contain" />
+        <div className="h-[70px] flex items-end pb-[14px] shrink-0 overflow-hidden relative w-full group" style={{ paddingLeft: isSidebarCollapsed ? '18.5px' : '17.5px', transition: 'padding 300ms ease-in-out' }}>
+          <div className="flex items-end gap-3 cursor-pointer shrink-0 relative" onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : router.push('/diversion')}>
+            <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative">
+              <img 
+                src="/Logo｜Orange.svg" 
+                alt="SENSESOIL" 
+                className={`w-full h-full object-contain transition-all duration-300 ${isSidebarCollapsed ? 'opacity-100 group-hover:opacity-0 group-hover:scale-75' : 'opacity-100'}`} 
+              />
+              {/* Expand Icon (only visible when collapsed and hovered) */}
+              <div className={`absolute inset-0 flex items-center justify-center text-[#A1A1AA] group-hover:text-[#18181B] transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100' : 'opacity-0 pointer-events-none'}`}>
+                <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="1" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.4" />
+                  <line x1="7.5" y1="1" x2="7.5" y2="19" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M10.5 7.5L13.5 10L10.5 12.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </div>
           </div>
           <button 
