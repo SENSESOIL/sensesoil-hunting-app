@@ -268,7 +268,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     const totalTodo = week.tasks.filter(t => t.status === "todo").length;
 
     return (
-      <div className="bg-[#FFFFFF] p-6 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full relative">
+      <div className="bg-[#FFFFFF] p-6 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full relative">
         {isLoading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 rounded-[24px] flex items-center justify-center">
              <div className="w-6 h-6 border-2 border-[#F39C12] border-t-transparent rounded-full animate-spin"></div>
@@ -369,7 +369,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                               <div 
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                className={`flex items-center py-1 px-1 rounded-[10px] transition-colors group/sub ${snapshot.isDragging ? 'bg-[#FFFFFF] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#E4E4E7] z-50' : highlightUnfinished && isThisWeek && sub.status === 'todo' ? 'bg-red-50 border border-red-200' : 'hover:bg-[#FAFAFA]'}`}
+                                className={`flex items-center py-1 px-1 rounded-[10px] transition-colors group/sub ${snapshot.isDragging ? 'bg-[#FFFFFF] shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-[#E4E4E7] z-50' : highlightUnfinished && isThisWeek && sub.status === 'todo' ? 'bg-red-50 border border-red-200' : 'hover:bg-[#FAFAFA]'}`}
                               >
                                 <div 
                                   {...provided.dragHandleProps}

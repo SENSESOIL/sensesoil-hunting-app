@@ -209,7 +209,7 @@ export default function HuntingManagementPage() {
             </div>
             
             {isSettingsOpen && (
-              <div className={`absolute bottom-full mb-2 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-2 z-50 left-0 ${isSidebarCollapsed ? 'w-48' : 'w-[200px]'}`}>
+              <div className={`absolute bottom-full mb-2 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50 left-0 ${isSidebarCollapsed ? 'w-48' : 'w-[200px]'}`}>
                 <div className="px-4 py-2 border-b border-[#E4E4E7]/60 mb-1">
                   <p className="text-sm font-semibold text-[#18181B]">{userName}</p>
                   <p className="text-[11px] text-[#A1A1AA]">{userEmail}</p>
@@ -268,7 +268,7 @@ export default function HuntingManagementPage() {
                 </div>
                 
                 {isSettingsOpen && (
-                  <div className="absolute right-0 top-12 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-2 z-50">
+                  <div className="absolute right-0 top-12 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50">
                     <div className="px-4 py-2 border-b border-[#E4E4E7]/60 mb-1">
                       <p className="text-sm font-semibold text-[#18181B]">{userName}</p>
                       <p className="text-[11px] text-[#A1A1AA]">{userEmail}</p>
@@ -309,7 +309,7 @@ export default function HuntingManagementPage() {
               </button>
               
               {isShareOpen && (
-                <div className="absolute right-0 top-10 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-2 z-50">
+                <div className="absolute right-0 top-10 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50">
                   <button onClick={handleCopy} className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
                     <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>content_copy</span>
                     複製內容
@@ -348,7 +348,7 @@ export default function HuntingManagementPage() {
           
           {/* Col 1: Portfolio Rank -> Task Status */}
           <div className="lg:col-span-1 flex flex-col gap-4">
-            <div className="bg-transparent md:bg-[#FFFFFF] p-0 md:p-5 rounded-[24px] border-none md:border-solid md:border-[#E4E4E7] shadow-none md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full">
+            <div className="bg-transparent md:bg-[#FFFFFF] p-0 md:p-5 rounded-[24px] border-none md:border-solid md:border-[#E4E4E7] shadow-none md:shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full">
               <div className="hidden md:block mb-5">
                 <h3 className="font-semibold text-[17px] text-[#18181B]">任務狀態</h3>
               </div>
@@ -407,7 +407,7 @@ export default function HuntingManagementPage() {
               <h2 className="font-bold text-[24px] text-[#1d1d1f]">專案列表</h2>
             </div>
 
-            <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full">
+            <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full">
               {/* Desktop Section Title Inside Panel */}
               <div className="hidden md:block mb-5">
                 <h3 className="font-semibold text-[17px] text-[#18181B]">專案列表</h3>
@@ -464,7 +464,7 @@ export default function HuntingManagementPage() {
 
           {/* Col 4: Recent Activity (LIVE) */}
           <div className="lg:col-span-1 flex flex-col gap-2">
-            <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
+            <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col">
               <div className="flex justify-between items-center mb-5">
                 <h3 className="font-semibold text-[17px] text-[#18181B]">近期戰報</h3>
                 <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">Live</span>
@@ -503,7 +503,7 @@ export default function HuntingManagementPage() {
       {/* Mobile Floating Bottom Navigation */}
       <div className="md:hidden fixed bottom-6 left-0 right-0 z-50 flex items-center justify-center gap-4 pointer-events-none">
         {/* Navigation Pill */}
-        <div className="bg-white/90 backdrop-blur-xl border border-[#E4E4E7] shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-full p-1.5 flex items-center gap-1 pointer-events-auto">
+        <div className="bg-white/90 backdrop-blur-xl border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.12)] rounded-full p-1.5 flex items-center gap-1 pointer-events-auto">
           {navItems.map(item => {
             const isActive = activeNav === item.id;
             return (
