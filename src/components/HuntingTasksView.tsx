@@ -268,7 +268,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     const totalTodo = week.tasks.filter(t => t.status === "todo").length;
 
     return (
-      <div className="bg-[#FFFFFF] p-6 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full relative">
+      <div className="bg-[#FFFFFF] p-6 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full relative transform-gpu">
         {isLoading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 rounded-[24px] flex items-center justify-center">
              <div className="w-6 h-6 border-2 border-[#F39C12] border-t-transparent rounded-full animate-spin"></div>
@@ -462,13 +462,15 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
           <div className="w-full h-full">
             <div className="flex flex-col md:flex-row gap-6 md:h-[calc(100vh-220px)]">
               {/* Left Card */}
-              <div className="w-full md:w-1/2 flex-1 md:overflow-y-auto hide-scrollbar pb-10">
+              <div className="w-full md:w-1/2 flex-1 md:overflow-y-auto hide-scrollbar flex flex-col">
                 {renderCard(currentWeek, false)}
+                <div className="h-10 shrink-0 md:block hidden"></div>
               </div>
               
               {/* Right Card */}
-              <div className="w-full md:w-1/2 flex-1 md:overflow-y-auto hide-scrollbar pb-10">
+              <div className="w-full md:w-1/2 flex-1 md:overflow-y-auto hide-scrollbar flex flex-col">
                 {renderCard(nextWeek, true)}
+                <div className="h-10 shrink-0 md:block hidden"></div>
               </div>
             </div>
           </div>
