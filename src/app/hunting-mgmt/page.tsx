@@ -1,0 +1,524 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import HuntingTasksView, { HuntingTasksViewRef } from "@/components/HuntingTasksView";
+
+// Mock Data
+const projects = [
+  { id: "P001", name: "徐公館裝修工程", location: "信義區, 台北", status: "進行中", progress: 65, crew: 34, milestone: "木作天花板封板", tag: "On Track", tagColor: "border border-[#E4E4E7] text-[#A1A1AA] bg-[#FAFAFA]" },
+  { id: "P002", name: "微熱山丘裝修工程", location: "南投市, 南投", status: "待處理", progress: 10, crew: 12, milestone: "現場尺寸丈量", tag: "Pending", tagColor: "border border-[#E4E4E7] text-[#A1A1AA] bg-[#FAFAFA]" },
+  { id: "P003", name: "A區防水補漏專案", location: "內湖區, 台北", status: "異常", progress: 45, crew: 8, milestone: "防水漆塗佈", tag: "Issue", tagColor: "border border-[#E4E4E7] text-[#A1A1AA] bg-[#FAFAFA]" },
+];
+
+const liveFeed = [
+  { id: 1, name: "德霖", action: "完成「地下室鋼筋勘驗」", time: "15 分鐘前", project: "PRJ-A", icon: "done", iconColor: "text-[#F39C12]", iconBg: "bg-white border border-[#F39C12]/30 shadow-sm" },
+  { id: 2, name: "阿剛", action: "新增 4 項任務至 PRJ-B", time: "1 小時前", project: "已指派", icon: "add", iconColor: "text-[#18181B]", iconBg: "bg-white border border-[#E4E4E7] shadow-sm" },
+  { id: 3, name: "阿威", action: "晉升為 A 級獵人", time: "3 小時前", project: "戰力 +320", icon: "north", iconColor: "text-[#F39C12]", iconBg: "bg-white border border-[#F39C12]/30 shadow-sm" },
+];
+
+const navItems = [
+  { id: "project_info", label: "專案情報", icon: "desktop_windows" },
+  { id: "schedule", label: "工進排程", icon: "calendar_today" },
+  { id: "task_tracking", label: "任務追蹤", icon: "folder" },
+  { id: "hunting_tasks", label: "狩獵任務", icon: "adjust" },
+  { id: "command_center", label: "指揮中心", icon: "grid_view" },
+];
+
+export default function HuntingManagementPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const userName = (session?.user as any)?.hunterName || session?.user?.name || "System Admin";
+  const userEmail = session?.user?.email || "admin@sensesoil.tw";
+  const userAvatar = session?.user?.image || "https://i.pravatar.cc/150?img=68";
+
+  const [activeNav, setActiveNav] = useState("hunting_tasks");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const shareRef = useRef<HTMLDivElement>(null);
+  const tasksViewRef = useRef<HuntingTasksViewRef>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+      if (shareRef.current && !shareRef.current.contains(event.target as Node)) {
+        setIsShareOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleCopy = () => {
+    if (tasksViewRef.current) {
+      try {
+        const text = tasksViewRef.current.getShareText();
+        navigator.clipboard.writeText(text).then(() => {
+          setIsShareOpen(false);
+          alert("已複製當週與下週的任務資料！");
+        }).catch(err => {
+          console.error("Failed to copy text: ", err);
+        });
+      } catch (err: any) {
+        alert(err.message);
+        setIsShareOpen(false);
+      }
+    }
+  };
+
+  const handleShareLine = () => {
+    if (tasksViewRef.current) {
+      try {
+        const text = tasksViewRef.current.getShareText();
+        window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, "_blank");
+        setIsShareOpen(false);
+      } catch (err: any) {
+        alert(err.message);
+        setIsShareOpen(false);
+      }
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex pb-20 md:pb-0">
+      
+      {/* Left Sidebar (Desktop Only) */}
+      <aside className={`hidden md:flex flex-col bg-[#FAFAFA] border-r border-[#E4E4E7]/60 h-screen sticky top-0 shrink-0 z-50 transition-[width] duration-300 ease-in-out overflow-x-hidden ${isSidebarCollapsed ? 'w-[72px]' : 'w-[240px]'}`}>
+        
+        {/* Row 1: Logo & Toggle — aligned with title row */}
+        <div className="h-[70px] flex items-end pb-[14px] shrink-0 overflow-hidden relative w-full" style={{ paddingLeft: isSidebarCollapsed ? '18.5px' : '17.5px', transition: 'padding 300ms ease-in-out' }}>
+          <div className="flex items-end gap-3 cursor-pointer shrink-0" onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : router.push('/diversion')}>
+            <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0">
+              <img src="/Logo｜Orange.svg" alt="SENSESOIL" className="w-full h-full object-contain" />
+            </div>
+          </div>
+          <button 
+            onClick={() => setIsSidebarCollapsed(true)} 
+            className={`text-[#A1A1AA] hover:text-[#18181B] transition-opacity duration-300 p-1 shrink-0 absolute right-4 bottom-[14px] ${isSidebarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.3" />
+              <line x1="7.5" y1="1" x2="7.5" y2="19" stroke="currentColor" strokeWidth="1.3" />
+              <path d="M14 7.5L11.5 10L14 12.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Row 2: Search Bar — h-[48px] to align with sub-tabs row */}
+        <div className="h-[48px] flex items-center shrink-0 overflow-hidden relative w-full" style={{ paddingLeft: isSidebarCollapsed ? '18px' : '12px', paddingRight: isSidebarCollapsed ? '18px' : '12px', transition: 'padding 300ms ease-in-out' }}>
+          <div 
+            className="relative group flex items-center transition-all duration-300 bg-[#F4F4F5] h-9 shrink-0 focus-within:ring-1 focus-within:ring-[#F39C12] focus-within:bg-white overflow-hidden" 
+            style={{ width: isSidebarCollapsed ? '36px' : '100%', borderRadius: isSidebarCollapsed ? '18px' : '12px', cursor: isSidebarCollapsed ? 'pointer' : 'text' }}
+            onClick={() => { if(isSidebarCollapsed) setIsSidebarCollapsed(false); }}
+          >
+            <span className={`material-symbols-outlined absolute text-[13px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-all duration-300 ${isSidebarCollapsed ? 'left-1/2 -translate-x-1/2' : 'left-3 translate-x-0'}`} style={{ fontVariationSettings: "'wght' 200" }}>search</span>
+            <input 
+              type="text" 
+              placeholder="Search..." 
+              className={`bg-transparent outline-none border-none text-[#18181B] text-[13px] h-full transition-all duration-300 placeholder:text-[#A1A1AA] absolute right-0 focus:ring-0 ${isSidebarCollapsed ? 'w-0 opacity-0 pr-0' : 'w-[calc(100%-36px)] opacity-100 pr-4'}`}
+              readOnly={isSidebarCollapsed}
+            />
+          </div>
+        </div>
+
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
+          {/* Navigation */}
+          <nav className="pt-4 flex flex-col gap-0.5 px-4 pb-4 relative w-full">
+            {navItems.map(item => {
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveNav(item.id)}
+                  className={`w-full flex items-center h-9 rounded-[12px] transition-colors relative outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12] shrink-0 ${
+                    isActive 
+                      ? 'bg-[#F4F4F5] text-[#18181B]' 
+                      : 'text-[#71717A] hover:bg-[#F4F4F5]/60 hover:text-[#18181B]'
+                  } px-2`}
+                >
+                  {/* Orange indicator on the divider line */}
+                  {isActive && (
+                    <div className="absolute top-1/2 -translate-y-1/2 w-[2px] h-[18px] bg-[#F39C12] rounded-l-full shadow-[0_0_6px_rgba(243,156,18,0.4)] -right-[16px]"></div>
+                  )}
+                  <div className="w-[22px] h-[22px] flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-[13px] transition-colors shrink-0" style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
+                      {item.icon}
+                    </span>
+                  </div>
+                  <span className={`text-[12px] font-medium whitespace-nowrap tracking-wide transition-all duration-300 overflow-hidden text-left ${isSidebarCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>
+                    {item.label}
+                  </span>
+                </button>
+              )
+            })}
+          </nav>
+
+          {/* Online Team */}
+          <div className="pb-6 pt-4 border-t border-[#E4E4E7]/60 flex flex-col gap-0.5 px-4 relative w-full">
+            {[
+              { name: "陳政威", avatar: "https://i.pravatar.cc/150?u=chen" },
+              { name: "盧德洋", avatar: "https://i.pravatar.cc/150?u=lu" },
+              { name: "彭詩渝", avatar: "https://i.pravatar.cc/150?u=peng" }
+            ].map((user, idx) => (
+              <div key={idx} className="flex items-center h-9 rounded-[12px] cursor-pointer group w-full shrink-0 transition-colors hover:bg-[#F4F4F5]/60 px-2">
+                <div className="w-[22px] h-[22px] rounded-full overflow-hidden shrink-0 border border-[#E4E4E7] flex items-center justify-center">
+                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                </div>
+                <span className={`text-[12px] font-medium text-[#71717A] group-hover:text-[#18181B] transition-all duration-300 overflow-hidden whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>{user.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* User Profile / Settings (Bottom Left) */}
+        <div className="shrink-0 border-t border-[#E4E4E7]/60 py-4 px-4 relative w-full">
+          <div className="relative w-full shrink-0" ref={settingsRef}>
+            <div 
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              className="flex items-center w-full rounded-[12px] py-1.5 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12] hover:bg-[#F4F4F5] shrink-0"
+              style={{ paddingLeft: isSidebarCollapsed ? '4px' : '3px', paddingRight: isSidebarCollapsed ? '4px' : '3px', transition: 'padding 300ms ease-in-out' }}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-[#E4E4E7]">
+                <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+              </div>
+              <div className={`flex flex-col min-w-0 transition-all duration-300 overflow-hidden whitespace-nowrap text-left ${isSidebarCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-0.5'}`}>
+                <span className="text-[13px] font-medium text-[#18181B] leading-tight">{userName}</span>
+                <span className="text-[11px] text-[#A1A1AA]">{userEmail}</span>
+              </div>
+            </div>
+            
+            {isSettingsOpen && (
+              <div className={`absolute bottom-full mb-2 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-2 z-50 left-0 ${isSidebarCollapsed ? 'w-48' : 'w-[200px]'}`}>
+                <div className="px-4 py-2 border-b border-[#E4E4E7]/60 mb-1">
+                  <p className="text-sm font-semibold text-[#18181B]">{userName}</p>
+                  <p className="text-[11px] text-[#A1A1AA]">{userEmail}</p>
+                </div>
+                <button className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
+                  <span className="material-symbols-outlined text-[13px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>person</span>
+                  個人設定
+                </button>
+                <button 
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors outline-none focus-visible:bg-red-50"
+                >
+                  <span className="material-symbols-outlined text-[13px] text-red-500" style={{ fontVariationSettings: "'wght' 200" }}>logout</span>
+                  登出
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col min-w-0">
+        
+        {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
+        <header className="sticky top-0 z-40 bg-[#FAFAFA]">
+          <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">
+            {/* Mobile Logo */}
+            <div className="flex md:hidden items-end gap-3 cursor-pointer" onClick={() => router.push('/diversion')}>
+              <div className="w-[35px] h-[35px] flex items-center justify-center">
+                <img src="/Logo｜Orange.svg" alt="SENSESOIL" className="w-full h-full object-contain" />
+              </div>
+            </div>
+            {/* Page Title */}
+            <div className="hidden md:flex items-end">
+              <h1 className="text-[22px] font-semibold text-[#18181B] tracking-tight leading-none">{navItems.find(item => item.id === activeNav)?.label}</h1>
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-1 md:gap-3">
+              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] transition-all text-[#71717A] hover:text-[#18181B] relative outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12]">
+                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>notifications_none</span>
+                <span className="absolute top-2 right-2 w-2 h-2 bg-[#F39C12] rounded-full border-[1.5px] border-[#FAFAFA] box-content"></span>
+              </button>
+              
+              {/* Mobile Avatar */}
+              <div className="relative md:hidden">
+                <div 
+                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                  className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center cursor-pointer ring-2 ring-transparent hover:ring-[#E4E4E7] outline-none focus-visible:ring-[#F39C12] transition-all"
+                  role="button"
+                  tabIndex={0}
+                >
+                  <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                </div>
+                
+                {isSettingsOpen && (
+                  <div className="absolute right-0 top-12 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-2 z-50">
+                    <div className="px-4 py-2 border-b border-[#E4E4E7]/60 mb-1">
+                      <p className="text-sm font-semibold text-[#18181B]">{userName}</p>
+                      <p className="text-[11px] text-[#A1A1AA]">{userEmail}</p>
+                    </div>
+                    <button className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
+                      <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>person</span>
+                      個人設定
+                    </button>
+                    <button 
+                      onClick={() => signOut({ callbackUrl: '/' })}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors outline-none focus-visible:bg-red-50"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-red-500" style={{ fontVariationSettings: "'wght' 200" }}>logout</span>
+                      登出
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Sub-tabs — aligned with sidebar search bar row */}
+          <div className="h-[48px] px-6 lg:px-10 flex items-center justify-between border-b border-[#E4E4E7]/60">
+            <div className="flex items-center gap-1">
+              {["每週任務", "年度完成"].map((tab, idx) => (
+                <button 
+                  key={idx} 
+                  className={`px-4 h-8 flex items-center justify-center text-[12px] font-medium tracking-wide rounded-[12px] relative transition-all ${idx === 0 ? 'bg-white text-[#18181B] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E4E4E7]/40' : 'text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]'}`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            
+            <div className="relative" ref={shareRef}>
+              <button onClick={() => setIsShareOpen(!isShareOpen)} className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? 'bg-[#F4F4F5] text-[#18181B]' : 'hover:bg-[#F4F4F5] text-[#71717A]'}`} title="分享">
+                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>ios_share</span>
+              </button>
+              
+              {isShareOpen && (
+                <div className="absolute right-0 top-10 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-2 z-50">
+                  <button onClick={handleCopy} className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
+                    <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>content_copy</span>
+                    複製內容
+                  </button>
+                  <button onClick={handleShareLine} className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
+                    <svg className="w-[18px] h-[18px] text-[#06C755]" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.987 8.946 9.539 9.619.382.083.896.257 1.026.592.115.304.075.776.036 1.096l-.168 1c-.052.316-.242 1.184 1.042.645 1.282-.538 6.924-4.084 9.428-6.95.845-1.027 3.097-3.089 3.097-6.002zM7.747 13.064H5.973a.473.473 0 0 1-.473-.473v-4.52c0-.261.212-.473.473-.473h1.774c.26 0 .473.212.473.473s-.213.473-.473.473H6.446v1.332h1.301c.26 0 .473.212.473.473s-.213.473-.473.473H6.446v1.334h1.301c.26 0 .473.212.473.473s-.213.473-.473.473zm2.544 0H9.345a.473.473 0 0 1-.473-.473v-4.52c0-.261.212-.473.473-.473h.946c.26 0 .473.212.473.473v4.52c0 .261-.212.473-.473.473zm3.766-3.834h-1.39v3.361c0 .261-.212.473-.473.473h-.946a.473.473 0 0 1-.473-.473v-4.52c0-.261.212-.473.473-.473h.946c.203 0 .385.127.45.316l1.371 3.551v-3.394c0-.261.212-.473.473-.473h.946c.26 0 .473.212.473.473v4.52c0 .261-.212.473-.473.473h-.946a.473.473 0 0 1-.45-.316l-1.373-3.551v3.394c0 .261-.212.473-.473.473zM18.849 9.23H17.55V7.896c0-.261-.212-.473-.473-.473h-.946c-.26 0-.473.212-.473.473v4.52c0 .261.212.473.473.473h2.718c.26 0 .473-.212.473-.473s-.212-.473-.473-.473h-1.774v-1.332h1.299c.26 0 .473-.212.473-.473s-.213-.473-.473-.473z"/>
+                    </svg>
+                    分享至 LINE
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+      {/* Content Container */}
+      <div className="flex-1 w-full flex flex-col gap-6 pt-6 pb-12">
+
+        {/* Mobile Search Bar */}
+        <div className="px-6 md:hidden">
+          <div className="relative group w-full">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors" style={{ fontVariationSettings: "'wght' 200" }}>search</span>
+            <input type="text" placeholder="Search project, task, event..." className="w-full bg-[#FFFFFF] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] focus:border-[#F39C12] focus:ring-1 focus:ring-[#F39C12] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-all placeholder:text-[#A1A1AA]" />
+          </div>
+        </div>
+
+        {activeNav === 'hunting_tasks' ? (
+          /* ============ 狩獵任務 View ============ */
+          <HuntingTasksView ref={tasksViewRef} />
+        ) : (
+          /* ============ Default Dashboard View ============ */
+          <>
+        {/* 4-Column Grid */}
+        <div className="px-6 lg:px-10 grid grid-cols-1 lg:grid-cols-4 gap-2">
+          
+          {/* Col 1: Portfolio Rank -> Task Status */}
+          <div className="lg:col-span-1 flex flex-col gap-4">
+            <div className="bg-transparent md:bg-[#FFFFFF] p-0 md:p-5 rounded-[24px] border-none md:border-solid md:border-[#E4E4E7] shadow-none md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full">
+              <div className="hidden md:block mb-5">
+                <h3 className="font-semibold text-[17px] text-[#18181B]">任務狀態</h3>
+              </div>
+              
+              <div className="hidden md:flex flex-col items-center justify-center mb-6 mt-2">
+                <span className="text-[72px] leading-none font-light tracking-tighter text-[#1d1d1f]">5</span>
+                <span className="text-gray-400 text-sm font-bold tracking-widest mt-2">今天</span>
+              </div>
+
+              {/* Desktop View: List */}
+              <div className="hidden md:flex flex-col gap-3.5 pt-4 border-t border-[#E4E4E7]/60">
+                {[
+                  { label: "待辦", count: 12, icon: "note" },
+                  { label: "緊急", count: 2, icon: "error" },
+                  { label: "重要", count: 8, icon: "bookmark" },
+                  { label: "超時", count: 1, icon: "schedule" },
+                  { label: "完成", count: 24, icon: "check_circle" }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center group cursor-pointer">
+                    <div className="flex items-center gap-2.5 text-[#A1A1AA] group-hover:text-[#F39C12] transition-colors">
+                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 200" }}>{item.icon}</span>
+                      <span className="text-[12px] font-medium uppercase tracking-widest">{item.label}</span>
+                    </div>
+                    <span className="text-[14px] font-bold text-[#18181B] group-hover:text-[#F39C12] transition-colors">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Mobile View: Minimalist Grid */}
+              <div className="grid md:hidden grid-cols-2 gap-2">
+                {[
+                  { label: "今天", count: 5, icon: "calendar_today" },
+                  { label: "待辦", count: 12, icon: "note" },
+                  { label: "緊急", count: 2, icon: "error" },
+                  { label: "重要", count: 8, icon: "bookmark" },
+                  { label: "超時", count: 1, icon: "schedule" },
+                  { label: "完成", count: 24, icon: "check_circle" }
+                ].map((item, idx) => (
+                  <button key={idx} className="relative overflow-hidden rounded-[14px] p-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-[#E4E4E7] flex flex-col justify-between h-[76px] bg-white text-left outline-none focus-visible:ring-1 focus-visible:ring-[#F39C12] focus-visible:border-[#F39C12] hover:border-[#F39C12]/50 transition-colors group">
+                    <div className="flex justify-between items-start w-full">
+                      <span className="material-symbols-outlined text-[20px] text-[#A1A1AA] group-hover:text-[#F39C12] transition-colors" style={{ fontVariationSettings: "'wght' 200" }}>{item.icon}</span>
+                      <span className="text-[24px] font-bold leading-none text-[#18181B] tracking-tight">{item.count}</span>
+                    </div>
+                    <span className="font-semibold text-[10px] text-[#A1A1AA] uppercase tracking-widest mt-1">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Col 2 & 3: Active Projects List */}
+          <div className="lg:col-span-2 flex flex-col gap-2">
+            
+            {/* Mobile Section Title Outside Panel */}
+            <div className="md:hidden px-2 pt-5 pb-1">
+              <h2 className="font-bold text-[24px] text-[#1d1d1f]">專案列表</h2>
+            </div>
+
+            <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full">
+              {/* Desktop Section Title Inside Panel */}
+              <div className="hidden md:block mb-5">
+                <h3 className="font-semibold text-[17px] text-[#18181B]">專案列表</h3>
+              </div>
+
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 pb-3 border-b border-dashed border-[#E4E4E7] text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest">
+                <div className="col-span-4">專案</div>
+                <div className="col-span-2 text-center">狀態</div>
+                <div className="col-span-3">進度</div>
+                <div className="col-span-3">下一步里程碑</div>
+              </div>
+
+              {/* Table Rows */}
+              <div className="flex flex-col pt-3 gap-0">
+                {projects.map((p, idx) => (
+                  <div key={p.id} className={`grid grid-cols-12 gap-4 items-center group cursor-pointer py-4 ${idx !== projects.length - 1 ? 'border-b border-dashed border-[#E4E4E7]' : ''}`}>
+                    <div className="col-span-4 flex flex-col">
+                      <span className="text-[14px] font-semibold text-[#18181B] group-hover:text-[#F39C12] transition-colors">{p.name}</span>
+                      <span className="text-[11px] text-[#A1A1AA] flex items-center gap-1 mt-0.5 uppercase tracking-wide">
+                        <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'wght' 200" }}>pin_drop</span>
+                        {p.location}
+                      </span>
+                    </div>
+                    
+                    <div className="col-span-2 flex justify-center">
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ${p.tagColor}`}>
+                        {p.tag}
+                      </span>
+                    </div>
+
+                    <div className="col-span-3 flex items-center gap-3">
+                      <div className="w-full bg-[#F4F4F5] rounded-full h-1 overflow-hidden">
+                        <div 
+                          className="h-full rounded-full bg-[#F39C12]" 
+                          style={{ width: `${p.progress}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-[10px] font-bold text-[#A1A1AA] w-8">{p.progress}%</span>
+                    </div>
+
+                    <div className="col-span-3 flex items-center justify-between">
+                      <span className="text-[12px] text-[#A1A1AA] font-medium truncate">{p.milestone}</span>
+                      <div className="flex items-center gap-1 text-[#A1A1AA]">
+                        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'wght' 200" }}>people</span>
+                        <span className="text-[11px] font-semibold">{p.crew}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Col 4: Recent Activity (LIVE) */}
+          <div className="lg:col-span-1 flex flex-col gap-2">
+            <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col">
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="font-semibold text-[17px] text-[#18181B]">近期戰報</h3>
+                <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">Live</span>
+              </div>
+              
+              <div className="flex flex-col gap-5">
+                {liveFeed.map(feed => (
+                  <div key={feed.id} className="flex gap-4 items-start group">
+                    <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${feed.iconBg}`}>
+                      <span className={`material-symbols-outlined text-[16px] ${feed.iconColor}`} style={{ fontVariationSettings: "'wght' 200" }}>{feed.icon}</span>
+                    </div>
+                    <div className="flex flex-col pt-0.5">
+                      <p className="text-[13px] text-[#18181B] font-medium leading-tight mb-1">
+                        <span className="font-semibold">{feed.name}</span> <span className="text-[#A1A1AA]">{feed.action}</span>
+                      </p>
+                      <p className="text-[10px] uppercase tracking-widest text-[#A1A1AA] font-semibold">
+                        {feed.time} · {feed.project}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <button className="mt-6 w-full py-2.5 rounded-full border border-[#E4E4E7] text-[11px] uppercase tracking-widest font-bold text-[#18181B] hover:bg-[#F4F4F5] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12] focus-visible:border-[#F39C12]">
+                View All
+              </button>
+            </div>
+          </div>
+
+        </div>
+          </>
+        )}
+      </div>
+      </main>
+
+      {/* Mobile Floating Bottom Navigation */}
+      <div className="md:hidden fixed bottom-6 left-0 right-0 z-50 flex items-center justify-center gap-4 pointer-events-none">
+        {/* Navigation Pill */}
+        <div className="bg-white/90 backdrop-blur-xl border border-[#E4E4E7] shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-full p-1.5 flex items-center gap-1 pointer-events-auto">
+          {navItems.map(item => {
+            const isActive = activeNav === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveNav(item.id)}
+                className={`w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none ${
+                  isActive ? 'text-[#18181B]' : 'text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
+                  {item.icon}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        
+        {/* Floating Action Button */}
+        <button className="w-14 h-14 bg-[#18181B] text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(24,24,27,0.3)] outline-none hover:bg-[#27272A] transition-transform active:scale-95 shrink-0 pointer-events-auto">
+          <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'wght' 200" }}>add</span>
+        </button>
+      </div>
+      
+      {/* Mobile FAB padding spacer */}
+      <div className="h-[84px] md:hidden shrink-0"></div>
+
+    </div>
+  );
+}

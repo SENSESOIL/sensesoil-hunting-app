@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
+    "@supabase/supabase-js": "^2.112.0",
     "@types/gapi.client.sheets": "^4.0.20201031",
     "googleapis": "latest",
     "jimp": "^1.6.1",

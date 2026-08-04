@@ -44,6 +44,17 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     } catch (e) {
       console.warn("Could not read settings sheet", e);
     }
+    
+    // DEBUG DUMP
+    if (sheetKey === 'basic-mission') {
+      require('fs').writeFileSync('sheet_dump.json', JSON.stringify({
+        r0: rows[0],
+        r1: rows[1],
+        r2: rows[2],
+        r8: rows[8]
+      }, null, 2));
+    }
+    
     return NextResponse.json({ rows, settings, label: config.label, sheetId, notes }, { status: 200 });
   } catch (err) {
     console.error(`[Sheets GET] ${sheetKey}:`, err);
