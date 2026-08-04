@@ -118,7 +118,7 @@ export default function HuntingManagementPage() {
               />
               {/* Expand Icon (only visible when collapsed and hovered) */}
               <div className={`absolute inset-0 items-center justify-center text-[#52525B] hover:text-[#18181B] ${isSidebarCollapsed ? 'hidden group-hover:flex' : 'hidden'}`}>
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="translate-y-[2px]">
                   <rect x="1" y="1" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.3" />
                   <line x1="7.5" y1="1" x2="7.5" y2="19" stroke="currentColor" strokeWidth="1.3" />
                   <path d="M10.5 7.5L13.5 10L10.5 12.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
