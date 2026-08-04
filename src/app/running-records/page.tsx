@@ -1275,7 +1275,7 @@ export default function RunningRecordsPage() {
                     <span className="text-primary text-[12px] font-bold tracking-widest mb-1">
                       L4 月度挑戰
                     </span>
-                    <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.filter(m => m && m.reward && m.reward !== '0' && m.reward !== '-').length}/12 個月</span>
+                    <span className="text-white font-bold text-sm">已達成 {displayAward.L4.months.filter((m: any) => m && m.reward && m.reward !== '0' && m.reward !== '-').length}/12 個月</span>
                   </div>
                   <div className="text-right flex flex-col justify-end">
                     <span className={`text-[16px] font-mono font-bold ${displayAward.L4.totalB > 0 ? 'text-[#00E5FF]' : 'text-white/30'}`}>
@@ -1296,7 +1296,7 @@ export default function RunningRecordsPage() {
                 {/* Monthly Details Grid */}
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   {Array.from({ length: 12 }).map((_, i) => {
-                    const monthData = displayAward.L4.months.find(m => m.month === i + 1);
+                    const monthData = displayAward.L4.months.find((m: any) => m.month === i + 1);
                     const achieved = monthData && monthData.reward && monthData.reward !== '0' && monthData.reward !== '-';
                     return (
                       <div key={i} className={`flex justify-between items-center px-3 py-2 rounded ${achieved ? 'bg-[#00E5FF]/10 border border-[#00E5FF]/30' : 'bg-white/5 border border-transparent'}`}>
