@@ -110,7 +110,7 @@ export default function HuntingManagementPage() {
         {/* Row 1: Logo & Toggle — aligned with title row */}
         <div className="h-[70px] flex items-end pb-[14px] pl-[17.5px] shrink-0 overflow-hidden relative w-full group">
           <div className="flex items-end gap-3 cursor-pointer shrink-0 relative" onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : router.push('/diversion')}>
-            <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative translate-y-1.5">
+            <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative translate-y-1">
               <img 
                 src="/Logo｜Orange.svg" 
                 alt="SENSESOIL" 
@@ -240,7 +240,7 @@ export default function HuntingManagementPage() {
           <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">
             {/* Mobile Logo */}
             <div className="flex md:hidden items-end gap-3 cursor-pointer" onClick={() => router.push('/diversion')}>
-              <div className="w-[35px] h-[35px] flex items-center justify-center translate-y-1.5">
+              <div className="w-[35px] h-[35px] flex items-center justify-center translate-y-1">
                 <img src="/Logo｜Orange.svg" alt="SENSESOIL" className="w-full h-full object-contain" />
               </div>
             </div>
