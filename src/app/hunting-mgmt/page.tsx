@@ -1,12 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import useSWR from "swr";
+import { supabase } from "@/lib/supabase";
 import HuntingTasksView, { HuntingTasksViewRef } from "@/components/HuntingTasksView";
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+// Get display initials: last 2 chars, or full name if <= 2 chars
+const getInitials = (name: string) => {
+  if (name.length <= 2) return name;
+  return name.slice(-2);
+};
 
 // Mock Data
 const projects = [
@@ -57,9 +64,53 @@ export default function HuntingManagementPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
 
-  // Fetch team members who have hunting-mgmt access
-  const { data: teamData } = useSWR('/api/hunting-mgmt-users', fetcher);
-  const teamMembers: { name: string; email: string }[] = teamData?.users || [];
+  // --- Online presence: heartbeat + query ---
+  const [onlineUsers, setOnlineUsers] = useState<{ hunter_name: string; email: string }[]>([]);
+
+  // Send heartbeat every 30 seconds
+  useEffect(() => {
+    if (!userName || !userEmail || userName === 'System Admin') return;
+
+    const sendHeartbeat = async () => {
+      try {
+        await supabase.from('online_status').upsert(
+          { email: userEmail, hunter_name: userName, last_seen: new Date().toISOString() },
+          { onConflict: 'email' }
+        );
+      } catch (e) {
+        console.warn('Heartbeat failed:', e);
+      }
+    };
+
+    sendHeartbeat(); // Send immediately on mount
+    const interval = setInterval(sendHeartbeat, 30000); // Every 30s
+
+    // Cleanup: remove from online_status on unmount
+    return () => {
+      clearInterval(interval);
+      supabase.from('online_status').delete().eq('email', userEmail).then(() => {});
+    };
+  }, [userName, userEmail]);
+
+  // Poll online users every 30 seconds
+  useEffect(() => {
+    const fetchOnline = async () => {
+      try {
+        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+        const { data } = await supabase
+          .from('online_status')
+          .select('hunter_name, email')
+          .gte('last_seen', twoMinutesAgo);
+        if (data) setOnlineUsers(data);
+      } catch (e) {
+        console.warn('Online query failed:', e);
+      }
+    };
+
+    fetchOnline();
+    const interval = setInterval(fetchOnline, 30000);
+    return () => clearInterval(interval);
+  }, []);
   
   const settingsRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
@@ -184,9 +235,10 @@ export default function HuntingManagementPage() {
           </nav>
 
           {/* Online Team */}
+          {onlineUsers.length > 0 && (
           <div className="pb-6 pt-4 border-t border-[#E4E4E7]/60 flex flex-col gap-0.5 px-4 relative w-full">
-            {teamMembers.map((user, idx) => {
-              const initials = user.name.slice(0, 2);
+            {onlineUsers.map((user, idx) => {
+              const initials = getInitials(user.hunter_name);
               const colors = [
                 'bg-[#F39C12]/15 text-[#B27308]',
                 'bg-[#E67E22]/15 text-[#A85D18]',
@@ -198,20 +250,17 @@ export default function HuntingManagementPage() {
                 'bg-[#3498DB]/15 text-[#2471A3]',
               ];
               const colorClass = colors[idx % colors.length];
-              const isCurrentUser = user.email === userEmail;
               return (
-                <div key={idx} className={`flex items-center h-9 rounded-[12px] group w-full shrink-0 transition-colors hover:bg-[#F4F4F5]/60 px-2 ${isCurrentUser ? 'bg-[#F4F4F5]/40' : ''}`}>
+                <div key={user.email} className="flex items-center h-9 rounded-[12px] group w-full shrink-0 transition-colors hover:bg-[#F4F4F5]/60 px-2">
                   <div className={`w-[22px] h-[22px] rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold ${colorClass}`}>
                     {initials}
                   </div>
-                  <span className={`text-[12px] font-medium text-[#71717A] group-hover:text-[#18181B] transition-all duration-300 overflow-hidden whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>{user.name}</span>
-                  {isCurrentUser && !isSidebarCollapsed && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#22C55E] shrink-0" />
-                  )}
+                  <span className={`text-[12px] font-medium text-[#71717A] group-hover:text-[#18181B] transition-all duration-300 overflow-hidden whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>{user.hunter_name}</span>
                 </div>
               );
             })}
           </div>
+          )}
         </div>
 
         {/* User Profile / Settings (Bottom Left) */}
