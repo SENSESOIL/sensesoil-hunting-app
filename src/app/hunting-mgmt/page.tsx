@@ -108,7 +108,7 @@ export default function HuntingManagementPage() {
       <aside className={`hidden md:flex flex-col bg-[#FAFAFA] border-r border-[#E4E4E7]/60 h-screen sticky top-0 shrink-0 z-50 transition-[width] duration-300 ease-in-out overflow-x-hidden ${isSidebarCollapsed ? 'w-[72px]' : 'w-[240px]'}`}>
         
         {/* Row 1: Logo & Toggle — aligned with title row */}
-        <div className="h-[70px] flex items-end pb-[14px] shrink-0 overflow-hidden relative w-full group" style={{ paddingLeft: isSidebarCollapsed ? '18.5px' : '17.5px', transition: 'padding 300ms ease-in-out' }}>
+        <div className="h-[70px] flex items-end pb-[14px] pl-[17.5px] shrink-0 overflow-hidden relative w-full group">
           <div className="flex items-end gap-3 cursor-pointer shrink-0 relative" onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : router.push('/diversion')}>
             <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative">
               <img 
@@ -139,17 +139,17 @@ export default function HuntingManagementPage() {
         </div>
 
         {/* Row 2: Search Bar — h-[48px] to align with sub-tabs row */}
-        <div className="h-[48px] flex items-center shrink-0 overflow-hidden relative w-full" style={{ paddingLeft: isSidebarCollapsed ? '18px' : '12px', paddingRight: isSidebarCollapsed ? '18px' : '12px', transition: 'padding 300ms ease-in-out' }}>
+        <div className="h-[48px] flex items-center shrink-0 overflow-hidden relative w-full px-4">
           <div 
             className="relative group flex items-center transition-all duration-300 bg-[#F4F4F5] h-9 shrink-0 focus-within:ring-1 focus-within:ring-[#F39C12] focus-within:bg-white overflow-hidden" 
-            style={{ width: isSidebarCollapsed ? '36px' : '100%', borderRadius: isSidebarCollapsed ? '18px' : '12px', cursor: isSidebarCollapsed ? 'pointer' : 'text' }}
+            style={{ width: isSidebarCollapsed ? '38px' : '100%', borderRadius: isSidebarCollapsed ? '19px' : '12px', cursor: isSidebarCollapsed ? 'pointer' : 'text' }}
             onClick={() => { if(isSidebarCollapsed) setIsSidebarCollapsed(false); }}
           >
-            <span className={`material-symbols-outlined absolute text-[13px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-all duration-300 ${isSidebarCollapsed ? 'left-1/2 -translate-x-1/2' : 'left-3 translate-x-0'}`} style={{ fontVariationSettings: "'wght' 200" }}>search</span>
+            <span className="material-symbols-outlined absolute text-[13px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors duration-300 left-[19px] -translate-x-1/2" style={{ fontVariationSettings: "'wght' 200" }}>search</span>
             <input 
               type="text" 
               placeholder="Search..." 
-              className={`bg-transparent outline-none border-none text-[#18181B] text-[13px] h-full transition-all duration-300 placeholder:text-[#A1A1AA] absolute right-0 focus:ring-0 ${isSidebarCollapsed ? 'w-0 opacity-0 pr-0' : 'w-[calc(100%-36px)] opacity-100 pr-4'}`}
+              className={`bg-transparent outline-none border-none text-[#18181B] text-[13px] h-full transition-all duration-300 placeholder:text-[#A1A1AA] absolute right-0 focus:ring-0 ${isSidebarCollapsed ? 'w-0 opacity-0 pr-0' : 'w-[calc(100%-38px)] opacity-100 pr-4'}`}
               readOnly={isSidebarCollapsed}
             />
           </div>
