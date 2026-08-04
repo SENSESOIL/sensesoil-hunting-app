@@ -114,14 +114,14 @@ export default function HuntingManagementPage() {
               <img 
                 src="/Logo｜Orange.svg" 
                 alt="SENSESOIL" 
-                className={`w-full h-full object-contain transition-all duration-300 ${isSidebarCollapsed ? 'opacity-100 group-hover:opacity-0 group-hover:scale-75' : 'opacity-100'}`} 
+                className={`w-full h-full object-contain ${isSidebarCollapsed ? 'block group-hover:hidden' : 'block'}`} 
               />
               {/* Expand Icon (only visible when collapsed and hovered) */}
-              <div className={`absolute inset-0 flex items-center justify-center text-[#A1A1AA] group-hover:text-[#18181B] transition-all duration-300 ${isSidebarCollapsed ? 'opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100' : 'opacity-0 pointer-events-none'}`}>
-                <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="1" y="1" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.4" />
-                  <line x1="7.5" y1="1" x2="7.5" y2="19" stroke="currentColor" strokeWidth="1.4" />
-                  <path d="M10.5 7.5L13.5 10L10.5 12.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              <div className={`absolute inset-0 items-center justify-center text-[#52525B] hover:text-[#18181B] ${isSidebarCollapsed ? 'hidden group-hover:flex' : 'hidden'}`}>
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="1" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.3" />
+                  <line x1="7.5" y1="1" x2="7.5" y2="19" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M10.5 7.5L13.5 10L10.5 12.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
