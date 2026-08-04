@@ -18,13 +18,15 @@ const liveFeed = [
   { id: 3, name: "阿威", action: "晉升為 A 級獵人", time: "3 小時前", project: "戰力 +320", icon: "north", iconColor: "text-[#F39C12]", iconBg: "bg-white border border-[#F39C12]/30 shadow-sm" },
 ];
 
-const navItems = [
-  { id: "project_info", label: "專案情報", icon: "desktop_windows" },
-  { id: "schedule", label: "工進排程", icon: "calendar_today" },
-  { id: "task_tracking", label: "任務追蹤", icon: "folder" },
-  { id: "hunting_tasks", label: "狩獵任務", icon: "adjust" },
-  { id: "command_center", label: "指揮中心", icon: "grid_view" },
+const allNavItems = [
+  { id: "project_info", label: "專案情報", icon: "desktop_windows", permKey: "專案情報" },
+  { id: "schedule", label: "工進排程", icon: "calendar_today", permKey: "工進排程" },
+  { id: "task_tracking", label: "任務追蹤", icon: "folder", permKey: "任務追蹤" },
+  { id: "hunting_tasks", label: "狩獵任務", icon: "adjust", permKey: "狩獵任務" },
+  { id: "command_center", label: "指揮中心", icon: "grid_view", permKey: "指揮中心" },
 ];
+
+const HUNTING_MGMT_PERM_KEYS = ["專案情報", "工進排程", "任務追蹤", "狩獵任務", "指揮中心"];
 
 export default function HuntingManagementPage() {
   const router = useRouter();
@@ -32,8 +34,22 @@ export default function HuntingManagementPage() {
   const userName = (session?.user as any)?.hunterName || session?.user?.name || "System Admin";
   const userEmail = session?.user?.email || "admin@sensesoil.tw";
   const userAvatar = session?.user?.image || "https://i.pravatar.cc/150?img=68";
+  const roles: Record<string, string> = (session?.user as any)?.roles || {};
 
-  const [activeNav, setActiveNav] = useState("hunting_tasks");
+  // Check if user is admin (any role is admin)
+  const isAdmin = Object.values(roles).some(r => r === 'admin');
+
+  // Filter nav items based on permissions
+  const navItems = isAdmin
+    ? allNavItems
+    : allNavItems.filter(item => {
+        const role = roles[item.permKey];
+        return role === 'admin' || role === 'editor' || role === 'viewer';
+      });
+
+  // Default to first allowed nav item
+  const defaultNav = navItems.length > 0 ? navItems[0].id : "hunting_tasks";
+  const [activeNav, setActiveNav] = useState(defaultNav);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);

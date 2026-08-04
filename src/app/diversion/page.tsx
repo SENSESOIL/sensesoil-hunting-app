@@ -8,6 +8,25 @@ export default function DiversionPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const roles: Record<string, string> = (session?.user as any)?.roles || {};
+
+  const HUNTING_MGMT_PERM_KEYS = ["專案情報", "工進排程", "任務追蹤", "狩獵任務", "指揮中心"];
+  const hasHuntingMgmtAccess = HUNTING_MGMT_PERM_KEYS.some(key => {
+    const role = roles[key];
+    return role === 'admin' || role === 'editor' || role === 'viewer';
+  });
+
+  const handleEnterHuntingMgmt = () => {
+    if (!session) {
+      alert("權限不足，請以狩獵者身分登入");
+      return;
+    }
+    if (!hasHuntingMgmtAccess) {
+      alert("您尚未開放「狩獵管理」的權限，請聯繫管理員。");
+      return;
+    }
+    router.push('/hunting-mgmt');
+  };
 
   const handleEnterMission = () => {
     if (!session) {
@@ -53,8 +72,8 @@ export default function DiversionPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl px-margin mt-16 md:mt-0">
         {/* Card 1: Hunting Management */}
         <div 
-          className="group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded-[4px] border-primary"
-          onClick={() => router.push('/hunting-mgmt')}
+          className={`group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded-[4px] border-primary ${!hasHuntingMgmtAccess && session ? 'opacity-40 cursor-not-allowed' : ''}`}
+          onClick={handleEnterHuntingMgmt}
         >
           <div className="mb-8">
             <span
