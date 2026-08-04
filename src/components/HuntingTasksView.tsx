@@ -268,7 +268,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     const totalTodo = week.tasks.filter(t => t.status === "todo").length;
 
     return (
-      <div className="bg-[#FFFFFF] p-6 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full relative transform-gpu">
+      <div className="bg-[#FFFFFF] p-6 rounded-[24px] border border-[#E4E4E7] shadow-sm flex flex-col h-full relative">
         {isLoading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 rounded-[24px] flex items-center justify-center">
              <div className="w-6 h-6 border-2 border-[#F39C12] border-t-transparent rounded-full animate-spin"></div>
