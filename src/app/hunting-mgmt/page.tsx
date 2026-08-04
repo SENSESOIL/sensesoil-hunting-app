@@ -3,7 +3,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import useSWR from "swr";
 import HuntingTasksView, { HuntingTasksViewRef } from "@/components/HuntingTasksView";
+
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 // Mock Data
 const projects = [
@@ -53,6 +56,10 @@ export default function HuntingManagementPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+
+  // Fetch team members who have hunting-mgmt access
+  const { data: teamData } = useSWR('/api/hunting-mgmt-users', fetcher);
+  const teamMembers: { name: string; email: string }[] = teamData?.users || [];
   
   const settingsRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
@@ -178,18 +185,32 @@ export default function HuntingManagementPage() {
 
           {/* Online Team */}
           <div className="pb-6 pt-4 border-t border-[#E4E4E7]/60 flex flex-col gap-0.5 px-4 relative w-full">
-            {[
-              { name: "陳政威", avatar: "https://i.pravatar.cc/150?u=chen" },
-              { name: "盧德洋", avatar: "https://i.pravatar.cc/150?u=lu" },
-              { name: "彭詩渝", avatar: "https://i.pravatar.cc/150?u=peng" }
-            ].map((user, idx) => (
-              <div key={idx} className="flex items-center h-9 rounded-[12px] cursor-pointer group w-full shrink-0 transition-colors hover:bg-[#F4F4F5]/60 px-2">
-                <div className="w-[22px] h-[22px] rounded-full overflow-hidden shrink-0 border border-[#E4E4E7] flex items-center justify-center">
-                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            {teamMembers.map((user, idx) => {
+              const initials = user.name.slice(0, 2);
+              const colors = [
+                'bg-[#F39C12]/15 text-[#B27308]',
+                'bg-[#E67E22]/15 text-[#A85D18]',
+                'bg-[#D35400]/15 text-[#9A3E00]',
+                'bg-[#F1C40F]/15 text-[#9A7D0A]',
+                'bg-[#E74C3C]/15 text-[#A93226]',
+                'bg-[#8E44AD]/15 text-[#6C3483]',
+                'bg-[#2ECC71]/15 text-[#1E8449]',
+                'bg-[#3498DB]/15 text-[#2471A3]',
+              ];
+              const colorClass = colors[idx % colors.length];
+              const isCurrentUser = user.email === userEmail;
+              return (
+                <div key={idx} className={`flex items-center h-9 rounded-[12px] group w-full shrink-0 transition-colors hover:bg-[#F4F4F5]/60 px-2 ${isCurrentUser ? 'bg-[#F4F4F5]/40' : ''}`}>
+                  <div className={`w-[22px] h-[22px] rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold ${colorClass}`}>
+                    {initials}
+                  </div>
+                  <span className={`text-[12px] font-medium text-[#71717A] group-hover:text-[#18181B] transition-all duration-300 overflow-hidden whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>{user.name}</span>
+                  {isCurrentUser && !isSidebarCollapsed && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#22C55E] shrink-0" />
+                  )}
                 </div>
-                <span className={`text-[12px] font-medium text-[#71717A] group-hover:text-[#18181B] transition-all duration-300 overflow-hidden whitespace-nowrap ${isSidebarCollapsed ? 'max-w-0 opacity-0 ml-0' : 'max-w-[150px] opacity-100 ml-3'}`}>{user.name}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
