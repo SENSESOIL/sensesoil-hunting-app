@@ -580,7 +580,7 @@ export default function BasicMissionPage() {
     for (let i = 0; i < settings.length; i++) {
       const row = settings[i];
       if (row.includes(selectedPersonalHunter)) {
-        const rank = row[3];
+        const rank = row[4];
         if (!rank) return "S級狩獵者";
         return rank.includes("狩獵者") ? rank : `${rank}級狩獵者`;
       }
@@ -754,11 +754,22 @@ export default function BasicMissionPage() {
     const avgQ = sumQ / count;
     const avgR = sumR / count;
 
+    let isExempt = false;
+    if (data?.settings) {
+      for (let i = 0; i < data.settings.length; i++) {
+        const rowSettings = data.settings[i];
+        if (rowSettings.includes(selectedTeamHunter)) {
+          isExempt = rowSettings[0] === "〇" || rowSettings[0] === "○" || rowSettings[0] === "O";
+          break;
+        }
+      }
+    }
+
     return {
       items: [
         { label: "日誌完整度", percent: `${percentS}%`, width: `${percentS}%` },
         { label: "紀錄穩定度", percent: `${percentT}%`, width: `${percentT}%` },
-        { label: "任務完成度", percent: `${percentP}%`, width: `${percentP}%` },
+        { label: isExempt ? "任務完成度 (職責無任務紀錄)" : "任務完成度", percent: isExempt ? "無" : `${percentP}%`, width: isExempt ? "0%" : `${percentP}%` },
         { label: "體能強化度", percent: scoreToRank(avgQ), width: `${percentQNum}%` },
         { label: "格局進化度", percent: scoreToRank(avgR), width: `${percentRNum}%` }
       ],

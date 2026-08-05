@@ -528,7 +528,7 @@ export default function RunningRecordsPage() {
     if (!basicData?.settings || !selectedPersonalHunter) return "S級狩獵者";
     for (let i = 0; i < basicData.settings.length; i++) {
       if (basicData.settings[i].includes(selectedPersonalHunter)) {
-        const rank = basicData.settings[i][3];
+        const rank = basicData.settings[i][4];
         if (!rank) return "S級狩獵者";
         return rank.includes("狩獵者") ? rank : `${rank}級狩獵者`;
       }
