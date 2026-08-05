@@ -340,7 +340,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                       className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#E4E4E7] text-[#A1A1AA] transition-colors"
                       title="新增子任務"
                     >
-                      <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontSize: '10px' }}>add</span>
+                      <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontSize: '11px' }}>add</span>
                     </button>
                     {idx >= 5 && (
                       <button 
@@ -348,7 +348,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                         className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-[#A1A1AA] hover:text-red-500 transition-colors"
                         title="刪除任務"
                       >
-                        <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontSize: '10px' }}>remove</span>
+                        <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontSize: '11px' }}>remove</span>
                       </button>
                     )}
                   </div>
@@ -404,10 +404,10 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                 {!isContentLocked && (
                                   <button 
                                     onClick={() => deleteTask(sub.id)}
-                                  className="opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-[#A1A1AA] hover:text-red-500 transition-colors absolute right-2 top-1/2 -translate-y-1/2"
+                                  className="opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-[#A1A1AA] hover:text-red-500 transition-colors absolute right-2 top-1/2 -translate-y-1/2"
                                   title="刪除子任務"
                                 >
-                                  <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontSize: '10px' }}>remove</span>
+                                  <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontSize: '11px' }}>remove</span>
                                 </button>
                                 )}
                               </div>
@@ -427,7 +427,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
               onClick={() => handleAddTask(week.id)}
               className="mt-2 w-full py-2.5 rounded-[12px] border border-dashed border-[#E4E4E7] text-[12px] font-semibold text-[#A1A1AA] hover:text-[#18181B] hover:border-[#A1A1AA] hover:bg-[#FAFAFA] transition-all flex items-center justify-center gap-1.5 outline-none"
             >
-              <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontVariationSettings: "'wght' 200", fontSize: '10px' }}>add</span>
+              <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontVariationSettings: "'wght' 200", fontSize: '11px' }}>add</span>
               新增主任務
             </button>
           )}
