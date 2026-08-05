@@ -329,7 +329,7 @@ export default function BasicMissionPage() {
     // 尋找「總分」所在的欄位 index
     let scoreIdx = rows[1].findIndex((h: string) => h.includes('總分') || h.includes('魂') || h.includes('覺醒'));
     if (scoreIdx === -1 || scoreIdx < 20) scoreIdx = 22; // 強制預設為 Col W (總分)
-    const colPIdx = 21; // Col V (任務得分)
+    const colPIdx = 15; // Col P (誠 - 任務完成度)
     const colQIdx = 16; // Col Q (體 / 體能)
     const colRIdx = 17; // Col R (格 / 格局)
     const nameIdx = 1;
@@ -694,7 +694,7 @@ export default function BasicMissionPage() {
 
     const colSIdx = 18; // 日誌
     const colTIdx = 19; // 紀錄
-    const colPIdx = 21; // 任務 (V)
+    const colPIdx = 15; // 誠 - 任務 (Col P)
     const colQIdx = 16; // 體能 (Q)
     const colRIdx = 17; // 格局 (R)
 
