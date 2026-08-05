@@ -1415,19 +1415,19 @@ export default function HiddenMissionPage() {
                         }
                       `}</style>
                       <p 
-                        className="font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none cursor-pointer"
-                        onClick={() => setIsHunterDropdownOpen(!isHunterDropdownOpen)}
+                        className={`font-label-caps text-primary font-bold text-[12px] tracking-[0.2em] mb-3 leading-none ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                        onClick={() => isAdmin && setIsHunterDropdownOpen(!isHunterDropdownOpen)}
                       >
                         S級狩獵者
                       </p>
                       <h2 
                         key={selectedHunter}
-                        className="font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity cursor-pointer hover:opacity-80 animate-text-reveal"
-                        onClick={() => setIsHunterDropdownOpen(!isHunterDropdownOpen)}
+                        className={`font-headline-lg text-primary text-3xl font-bold tracking-wider uppercase leading-none transition-opacity animate-text-reveal ${isAdmin ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                        onClick={() => isAdmin && setIsHunterDropdownOpen(!isHunterDropdownOpen)}
                       >
                         {selectedHunter || "選擇狩獵者"}
                       </h2>
-                      {isHunterDropdownOpen && (
+                      {isHunterDropdownOpen && isAdmin && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setIsHunterDropdownOpen(false)} />
                           <div className="absolute top-full left-0 mt-2 w-48 bg-surface-container-high border border-primary/30 rounded-[4px] shadow-lg z-[120] max-h-48 overflow-y-auto scrollbar-hide">
