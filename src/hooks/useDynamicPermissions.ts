@@ -27,7 +27,10 @@ export function useDynamicPermissions() {
   );
 
   return {
-    permissions: data || null,
+    permissions: data || {
+      roles: (session?.user as any)?.roles || {},
+      hunterName: (session?.user as any)?.hunterName || session?.user?.name || "",
+    },
     isLoading: status === "loading" || (status === "authenticated" && isLoading),
     error,
     session,
