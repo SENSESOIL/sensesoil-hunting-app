@@ -288,7 +288,7 @@ export default function HuntingManagementPage() {
             <span className="material-symbols-outlined absolute text-[13px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors duration-300 left-[19px] -translate-x-1/2" style={{ fontVariationSettings: "'wght' 200" }}>search</span>
             <input 
               type="text" 
-              placeholder="Search..." 
+              placeholder="" 
               className={`bg-transparent outline-none border-none text-[#18181B] text-[13px] h-full transition-all duration-300 placeholder:text-[#A1A1AA] absolute right-0 focus:ring-0 ${isSidebarCollapsed ? 'w-0 opacity-0 pr-0' : 'w-[calc(100%-38px)] opacity-100 pr-4'}`}
               readOnly={isSidebarCollapsed}
             />
@@ -502,7 +502,7 @@ export default function HuntingManagementPage() {
         <div className="px-6 md:hidden">
           <div className="relative group w-full">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors" style={{ fontVariationSettings: "'wght' 200" }}>search</span>
-            <input type="text" placeholder="Search project, task, event..." className="w-full bg-[#FFFFFF] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] focus:border-[#F39C12] focus:ring-1 focus:ring-[#F39C12] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-all placeholder:text-[#A1A1AA]" />
+            <input type="text" placeholder="" className="w-full bg-[#FFFFFF] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] focus:border-[#F39C12] focus:ring-1 focus:ring-[#F39C12] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-all placeholder:text-[#A1A1AA]" />
           </div>
         </div>
 
