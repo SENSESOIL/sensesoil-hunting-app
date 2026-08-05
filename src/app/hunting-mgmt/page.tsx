@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { mutate } from "swr";
 import HuntingTasksView, { HuntingTasksViewRef } from "@/components/HuntingTasksView";
 
 // Mock Data
@@ -80,7 +81,8 @@ export default function HuntingManagementPage() {
         if (currentScrollY < -80 && !isRefreshing) {
           setIsRefreshing(true);
           setTimeout(() => {
-             window.location.reload();
+             mutate(() => true, undefined, { revalidate: true });
+             setTimeout(() => setIsRefreshing(false), 500); // Reset spinner after half a second
           }, 800);
         }
       } else {
