@@ -212,7 +212,7 @@ export default function HuntingManagementPage() {
         {/* Row 2: Search Bar — h-[48px] to align with sub-tabs row */}
         <div className="h-[48px] flex items-center shrink-0 overflow-hidden relative w-full px-4">
           <div 
-            className="relative group flex items-center transition-all duration-300 bg-[#F4F4F5] h-9 shrink-0 focus-within:ring-1 focus-within:ring-[#F39C12] focus-within:bg-white overflow-hidden" 
+            className="relative group flex items-center transition-all duration-300 bg-[#F4F4F5] h-9 shrink-0 focus-within:bg-white overflow-hidden" 
             style={{ width: isSidebarCollapsed ? '38px' : '100%', borderRadius: isSidebarCollapsed ? '19px' : '12px', cursor: isSidebarCollapsed ? 'pointer' : 'text' }}
             onClick={() => { if(isSidebarCollapsed) setIsSidebarCollapsed(false); }}
           >
@@ -236,7 +236,7 @@ export default function HuntingManagementPage() {
                 <button
                   key={item.id}
                   onClick={() => setActiveNav(item.id)}
-                  className={`w-full flex items-center h-9 rounded-[12px] transition-colors relative outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12] shrink-0 ${
+                  className={`w-full flex items-center h-9 rounded-[12px] transition-colors relative outline-none shrink-0 ${
                     isActive 
                       ? 'bg-[#F4F4F5] text-[#18181B]' 
                       : 'text-[#71717A] hover:bg-[#F4F4F5]/60 hover:text-[#18181B]'
@@ -265,7 +265,7 @@ export default function HuntingManagementPage() {
           <div className="relative w-full shrink-0" ref={settingsRef}>
             <div 
               onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              className="flex items-center w-full rounded-[12px] py-1.5 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12] hover:bg-[#F4F4F5] shrink-0"
+              className="flex items-center w-full rounded-[12px] py-1.5 transition-colors cursor-pointer outline-none hover:bg-[#F4F4F5] shrink-0"
               style={{ paddingLeft: isSidebarCollapsed ? '4px' : '3px', paddingRight: isSidebarCollapsed ? '4px' : '3px', transition: 'padding 300ms ease-in-out' }}
               role="button"
               tabIndex={0}
@@ -325,7 +325,7 @@ export default function HuntingManagementPage() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1 md:gap-3 translate-y-[5px]">
-              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] transition-all text-[#71717A] hover:text-[#18181B] relative outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12]">
+              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] transition-all text-[#71717A] hover:text-[#18181B] relative outline-none">
                 <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>notifications_none</span>
                 <span className="absolute top-2 right-2 w-2 h-2 bg-[#F39C12] rounded-full border-[1.5px] border-[#FAFAFA] box-content"></span>
               </button>
@@ -334,7 +334,7 @@ export default function HuntingManagementPage() {
               <div className="relative md:hidden">
                 <div 
                   onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                  className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center cursor-pointer ring-2 ring-transparent hover:ring-[#E4E4E7] outline-none focus-visible:ring-[#F39C12] transition-all"
+                  className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center cursor-pointer ring-2 ring-transparent hover:ring-[#E4E4E7] outline-none transition-all"
                   role="button"
                   tabIndex={0}
                 >
@@ -469,7 +469,7 @@ export default function HuntingManagementPage() {
                   { label: "超時", count: 1, icon: "schedule" },
                   { label: "完成", count: 24, icon: "check_circle" }
                 ].map((item, idx) => (
-                  <button key={idx} className="relative overflow-hidden rounded-[14px] p-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-[#E4E4E7] flex flex-col justify-between h-[76px] bg-white text-left outline-none focus-visible:ring-1 focus-visible:ring-[#F39C12] focus-visible:border-[#F39C12] hover:border-[#F39C12]/50 transition-colors group">
+                  <button key={idx} className="relative overflow-hidden rounded-[14px] p-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-[#E4E4E7] flex flex-col justify-between h-[76px] bg-white text-left outline-none hover:border-[#F39C12]/50 transition-colors group">
                     <div className="flex justify-between items-start w-full">
                       <span className="material-symbols-outlined text-[20px] text-[#A1A1AA] group-hover:text-[#F39C12] transition-colors" style={{ fontVariationSettings: "'wght' 200" }}>{item.icon}</span>
                       <span className="text-[24px] font-bold leading-none text-[#18181B] tracking-tight">{item.count}</span>
@@ -570,7 +570,7 @@ export default function HuntingManagementPage() {
                 ))}
               </div>
               
-              <button className="mt-6 w-full py-2.5 rounded-full border border-[#E4E4E7] text-[11px] uppercase tracking-widest font-bold text-[#18181B] hover:bg-[#F4F4F5] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12] focus-visible:border-[#F39C12]">
+              <button className="mt-6 w-full py-2.5 rounded-full border border-[#E4E4E7] text-[11px] uppercase tracking-widest font-bold text-[#18181B] hover:bg-[#F4F4F5] transition-colors outline-none">
                 View All
               </button>
             </div>
