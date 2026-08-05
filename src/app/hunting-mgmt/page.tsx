@@ -371,7 +371,8 @@ export default function HuntingManagementPage() {
                 <button 
                   key={tab} 
                   onClick={() => setActiveSubTab(tab)}
-                  className={`px-4 h-8 flex items-center justify-center text-[12px] font-medium tracking-wide rounded-[12px] relative transition-all ${activeSubTab === tab ? 'bg-white text-[#18181B] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E4E4E7]/40' : 'text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]'}`}
+                  style={{ outline: 'none', WebkitTapHighlightColor: 'transparent' }}
+                  className={`px-4 h-8 flex items-center justify-center text-[12px] font-medium tracking-wide rounded-[12px] relative transition-colors ${activeSubTab === tab ? 'bg-white text-[#18181B] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E4E4E7]/40' : 'text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]'}`}
                 >
                   {tab}
                 </button>
