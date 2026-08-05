@@ -168,9 +168,9 @@ export default function HuntingManagementPage() {
       <aside className={`hidden md:flex flex-col bg-[#FAFAFA] border-r border-[#E4E4E7]/60 h-screen sticky top-0 shrink-0 z-50 transition-[width] duration-300 ease-in-out overflow-x-hidden ${isSidebarCollapsed ? 'w-[72px]' : 'w-[240px]'}`}>
         
         {/* Row 1: Logo & Toggle — aligned with title row */}
-        <div className="h-[70px] flex items-end pb-[14px] pl-[17.5px] shrink-0 overflow-hidden relative w-full group">
+        <div className="h-[70px] flex items-end pb-[14px] pl-[17.5px] shrink-0 overflow-hidden relative w-full">
           <div className="flex items-end gap-3 cursor-pointer shrink-0 relative" onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : router.push('/diversion')}>
-            <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative">
+            <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative group">
               <img 
                 src="/Logo｜Orange.svg" 
                 alt="SENSESOIL" 

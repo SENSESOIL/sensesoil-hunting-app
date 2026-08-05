@@ -1367,7 +1367,9 @@ export default function HiddenMissionPage() {
       {/* Fixed Header */}
       <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
         <div className="flex items-center gap-3 flex-nowrap cursor-pointer" onClick={() => router.push("/diversion")}>
-          <Image priority alt="SenseSoil Logo" width={28} height={28} className="h-[28px] w-auto object-contain flex-shrink-0 translate-y-[-2px]" src="/Logo｜Orange.svg" />
+          <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0">
+            <Image priority alt="SenseSoil Logo" width={35} height={35} className="w-full h-full object-contain" src="/Logo｜Orange.svg" />
+          </div>
           <h1 className="font-headline-md uppercase tracking-widest font-bold text-primary text-[24px] leading-none">隱藏任務試煉</h1>
         </div>
         <div className="flex items-center gap-2">
