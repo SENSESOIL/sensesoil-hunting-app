@@ -105,7 +105,6 @@ export function useHuntingTasks() {
     hunterName ? ['hunting_tasks', hunterName] : null,
     fetcher,
     {
-      fallbackData: [],
       revalidateOnFocus: true,
     }
   );
@@ -198,11 +197,11 @@ export function useHuntingTasks() {
   const populatedWeeks = React.useRef<Set<string>>(new Set());
 
   const populateDefaultTasks = async (weekId: string) => {
-    if (!hunterName) return;
+    if (!hunterName || !dbTasks) return;
     
     // Prevent double population by checking if tasks already exist in current cache or if already populating
     if (populatedWeeks.current.has(weekId)) return;
-    if (dbTasks && dbTasks.some(t => t.week_id === weekId)) {
+    if (dbTasks.some(t => t.week_id === weekId)) {
       populatedWeeks.current.add(weekId);
       return;
     }

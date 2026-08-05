@@ -311,7 +311,7 @@ export default function HuntingManagementPage() {
             </div>
 
             {/* Right: Actions */}
-            <div className="flex items-center gap-1 md:gap-3">
+            <div className="flex items-center gap-1 md:gap-3 translate-y-[5px]">
               <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] transition-all text-[#71717A] hover:text-[#18181B] relative outline-none focus-visible:ring-2 focus-visible:ring-[#F39C12]">
                 <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>notifications_none</span>
                 <span className="absolute top-2 right-2 w-2 h-2 bg-[#F39C12] rounded-full border-[1.5px] border-[#FAFAFA] box-content"></span>
