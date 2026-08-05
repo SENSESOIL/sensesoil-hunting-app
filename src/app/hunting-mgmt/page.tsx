@@ -58,6 +58,30 @@ export default function HuntingManagementPage() {
   const shareRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
 
+  const [overscrollY, setOverscrollY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // In iOS Safari, window.scrollY becomes negative during top bounce (pull-to-refresh)
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < 0) {
+        setOverscrollY(-currentScrollY);
+        // Trigger refresh if pulled down past a threshold
+        if (currentScrollY < -80 && !isRefreshing) {
+          setIsRefreshing(true);
+          setTimeout(() => {
+             window.location.reload();
+          }, 800);
+        }
+      } else {
+        setOverscrollY(0);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isRefreshing]);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
@@ -102,7 +126,30 @@ export default function HuntingManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex pb-20 md:pb-0">
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex pb-20 md:pb-0 relative">
+      
+      {/* iOS Pull to Refresh Indicator */}
+      <div 
+        className="fixed left-0 right-0 z-[100] flex items-center justify-center pointer-events-none md:hidden transition-transform duration-200"
+        style={{ 
+          top: -40,
+          transform: `translateY(${isRefreshing ? 100 : (overscrollY > 0 ? overscrollY * 0.8 : 0)}px)`,
+          opacity: overscrollY > 10 || isRefreshing ? 1 : 0
+        }}
+      >
+        <div className={`w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center ${isRefreshing ? 'animate-spin' : ''}`}>
+          <span 
+            className="material-symbols-outlined text-[#F39C12] text-[20px]" 
+            style={{ 
+              fontVariationSettings: "'wght' 400",
+              transform: isRefreshing ? 'none' : `rotate(${overscrollY * 4}deg)`
+            }}
+          >
+            sync
+          </span>
+        </div>
+      </div>
+
       
       {/* Left Sidebar (Desktop Only) */}
       <aside className={`hidden md:flex flex-col bg-[#FAFAFA] border-r border-[#E4E4E7]/60 h-screen sticky top-0 shrink-0 z-50 transition-[width] duration-300 ease-in-out overflow-x-hidden ${isSidebarCollapsed ? 'w-[72px]' : 'w-[240px]'}`}>
