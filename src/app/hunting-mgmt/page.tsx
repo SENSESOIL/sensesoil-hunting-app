@@ -510,7 +510,7 @@ export default function HuntingManagementPage() {
           /* ============ Sliding Panel Container ============ */
           <div className="flex-1 overflow-hidden relative">
             <div 
-              className="flex w-[200%] h-full"
+              className="flex w-[200%] md:w-full h-full md:!transform-none"
               style={{ 
                 transform: activeSubTab === "狩獵任務" 
                   ? `translateX(calc(-50% + ${swipeOffset}px))` 
@@ -519,14 +519,14 @@ export default function HuntingManagementPage() {
               }}
             >
               {/* Panel 1: 任務清單 */}
-              <div className="w-1/2 flex-shrink-0 h-full overflow-y-auto">
+              <div className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== '任務清單' ? 'md:hidden' : ''}`}>
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
                   <span className="material-symbols-outlined text-[48px] text-[#E4E4E7] mb-4" style={{ fontVariationSettings: "'wght' 200" }}>construction</span>
                   <p className="text-[#A1A1AA] text-sm tracking-widest font-medium">設計施工中</p>
                 </div>
               </div>
               {/* Panel 2: 狩獵任務 */}
-              <div className="w-1/2 flex-shrink-0 h-full overflow-y-auto">
+              <div className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== '狩獵任務' ? 'md:hidden' : ''}`}>
                 <HuntingTasksView ref={tasksViewRef} />
               </div>
             </div>
