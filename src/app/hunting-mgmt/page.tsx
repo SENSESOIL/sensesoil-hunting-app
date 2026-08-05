@@ -301,13 +301,13 @@ export default function HuntingManagementPage() {
               <div className="w-[35px] h-[35px] flex items-center justify-center">
                 <img src="/Logo｜Orange.svg" alt="SENSESOIL" className="w-full h-full object-contain" />
               </div>
-              <h1 className="text-[22px] font-semibold text-[#18181B] tracking-tight leading-none mb-[6px]">
+              <h1 className="text-[22px] font-semibold text-[#18181B] tracking-tight leading-none mb-[2px]">
                 {navItems.find(item => item.id === activeNav)?.label}
               </h1>
             </div>
             {/* Page Title */}
             <div className="hidden md:flex items-end">
-              <h1 className="text-[22px] font-semibold text-[#18181B] tracking-tight leading-none mb-[6px]">{navItems.find(item => item.id === activeNav)?.label}</h1>
+              <h1 className="text-[22px] font-semibold text-[#18181B] tracking-tight leading-none mb-[2px]">{navItems.find(item => item.id === activeNav)?.label}</h1>
             </div>
 
             {/* Right: Actions */}
