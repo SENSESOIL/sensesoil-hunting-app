@@ -298,7 +298,7 @@ export function useHuntingTasks() {
     
     // For simplicity in UI, we just map everything locally and update the single item's order, but Supabase handles floats perfectly.
     const sourceSubs = dbTasks.filter(t => t.parent_id === sourceTaskId).sort((a,b) => a.order_index - b.order_index);
-    const destSubs = dbTasks.filter(t => t.parent_id === destTaskId).sort((a,b) => a.order_index - b.order_index);
+    const destSubs = sourceTaskId === destTaskId ? sourceSubs : dbTasks.filter(t => t.parent_id === destTaskId).sort((a,b) => a.order_index - b.order_index);
     
     const [movedItem] = sourceSubs.splice(sourceIndex, 1);
     movedItem.parent_id = destTaskId; // Move to new parent
@@ -319,13 +319,16 @@ export function useHuntingTasks() {
 
     movedItem.order_index = newOrder;
 
+    // Optimistic update — immediately reflect in UI
     mutate(current => {
       if (!current) return current;
       return current.map(t => t.id === movedItem.id ? { ...t, parent_id: destTaskId, order_index: newOrder } : t);
     }, false);
 
+    // Save to DB without triggering revalidation immediately 
     await supabase.from('hunting_tasks').update({ parent_id: destTaskId, order_index: newOrder }).eq('id', movedItem.id);
-    mutate();
+    // Delay revalidation to avoid conflicting with DnD animation
+    setTimeout(() => mutate(), 500);
   };
 
   return {
