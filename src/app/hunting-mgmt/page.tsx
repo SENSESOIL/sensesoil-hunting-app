@@ -59,9 +59,30 @@ export default function HuntingManagementPage() {
   const settingsRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const [overscrollY, setOverscrollY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Swipe gesture handler for mobile sub-tab switching
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (activeNav !== 'hunting_tasks') return;
+    touchStartX.current = e.touches[0].clientX;
+  }, [activeNav]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (activeNav !== 'hunting_tasks' || touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(diff) < 60) return; // minimum swipe distance
+    if (diff > 0) {
+      // Swipe right → go to first tab
+      setActiveSubTab("任務清單");
+    } else {
+      // Swipe left → go to second tab
+      setActiveSubTab("狩獵任務");
+    }
+  }, [activeNav]);
 
   // Set body background to #FAFAFA for this page only, revert to black on unmount
   useEffect(() => {
@@ -366,17 +387,36 @@ export default function HuntingManagementPage() {
 
           {/* Row 2: Sub-tabs — aligned with sidebar search bar row */}
           <div className="h-[48px] px-6 lg:px-10 flex items-center justify-between border-b border-[#E4E4E7]/60">
-            <div className="flex items-center gap-1">
-              {activeNav === 'hunting_tasks' && ["任務清單", "狩獵任務"].map((tab) => (
-                <button 
-                  key={tab} 
-                  onClick={() => setActiveSubTab(tab)}
-                  style={{ outline: 'none', WebkitTapHighlightColor: 'transparent' }}
-                  className={`px-4 h-8 flex items-center justify-center text-[12px] font-medium tracking-wide rounded-[12px] relative transition-colors ${activeSubTab === tab ? 'bg-white text-[#18181B] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E4E4E7]/40' : 'text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]'}`}
-                >
-                  {tab}
-                </button>
-              ))}
+            <div className="flex items-center">
+              {activeNav === 'hunting_tasks' && (() => {
+                const tabs = ["任務清單", "狩獵任務"];
+                const activeIdx = tabs.indexOf(activeSubTab);
+                return (
+                  <div 
+                    className="relative flex items-center bg-[#F4F4F5] rounded-[10px] p-[3px] cursor-pointer select-none"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
+                    onClick={() => setActiveSubTab(activeSubTab === "任務清單" ? "狩獵任務" : "任務清單")}
+                  >
+                    {/* Sliding pill indicator */}
+                    <div 
+                      className="absolute top-[3px] bottom-[3px] rounded-[8px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+                      style={{ 
+                        width: 'calc(50% - 3px)', 
+                        left: activeIdx === 0 ? '3px' : 'calc(50%)',
+                      }}
+                    />
+                    {/* Tab labels */}
+                    {tabs.map((tab) => (
+                      <div
+                        key={tab}
+                        className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[11px] font-semibold tracking-wide transition-colors duration-300 ${activeSubTab === tab ? 'text-[#18181B]' : 'text-[#A1A1AA]'}`}
+                      >
+                        {tab}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
             
             <div className="relative" ref={shareRef}>
@@ -403,7 +443,11 @@ export default function HuntingManagementPage() {
         </header>
 
       {/* Content Container */}
-      <div className="flex-1 w-full flex flex-col gap-6 pt-6 pb-12">
+      <div 
+        className="flex-1 w-full flex flex-col gap-6 pt-6 pb-12"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
 
         {/* Mobile Search Bar */}
         <div className="px-6 md:hidden">
