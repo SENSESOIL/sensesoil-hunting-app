@@ -236,7 +236,7 @@ export default function HuntingManagementPage() {
                     <div className="absolute top-1/2 -translate-y-1/2 w-[2px] h-[18px] bg-[#F39C12] rounded-l-full shadow-[0_0_6px_rgba(243,156,18,0.4)] -right-[16px]"></div>
                   )}
                   <div className="w-[22px] h-[22px] flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-[13px] transition-colors shrink-0" style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
+                    <span className={`material-symbols-outlined transition-colors shrink-0 ${item.icon === 'home' ? 'text-[15px]' : 'text-[13px]'}`} style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
                       {item.icon}
                     </span>
                   </div>
@@ -577,7 +577,7 @@ export default function HuntingManagementPage() {
                   isActive ? 'text-[#18181B]' : 'text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5]'
                 }`}
               >
-                <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
+                <span className={`material-symbols-outlined ${item.icon === 'home' ? 'text-[26px]' : 'text-[22px]'}`} style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
                   {item.icon}
                 </span>
               </button>
