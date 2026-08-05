@@ -23,8 +23,7 @@ const liveFeed = [
 const allNavItems = [
   { id: "project_info", label: "專案情報", icon: "home", permKey: "專案情報" },
   { id: "schedule", label: "工進排程", icon: "calendar_today", permKey: "工進排程" },
-  { id: "task_tracking", label: "任務追蹤", icon: "folder", permKey: "任務追蹤" },
-  { id: "hunting_tasks", label: "狩獵任務", icon: "check_circle", permKey: "狩獵任務" },
+  { id: "hunting_tasks", label: "任務追蹤", icon: "check_circle", permKey: "狩獵任務" },
   { id: "command_center", label: "指揮中心", icon: "grid_view", permKey: "指揮中心" },
 ];
 
