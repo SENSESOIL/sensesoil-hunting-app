@@ -390,7 +390,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                     onChange={(e) => setEditingText(e.target.value)}
                                     onBlur={saveEdit}
                                     onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                                    className="flex-1 bg-transparent text-[16px] md:text-[13px] font-medium text-[#18181B] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] p-0"
+                                    className="flex-1 bg-transparent text-[16px] md:text-[13px] font-normal text-[#71717A] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] p-0"
                                   />
                                 ) : (
                                   <div 
