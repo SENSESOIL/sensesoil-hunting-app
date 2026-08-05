@@ -23,9 +23,20 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Remove default focus outline on buttons globally */
+/* Remove default focus outline on all interactive elements globally */
+*:focus,
+*:focus-visible,
+*:focus-within,
 button:focus,
-button:focus-visible {
+button:focus-visible,
+[role="button"]:focus,
+[role="button"]:focus-visible,
+[tabindex]:focus,
+[tabindex]:focus-visible {
   outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
   box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
