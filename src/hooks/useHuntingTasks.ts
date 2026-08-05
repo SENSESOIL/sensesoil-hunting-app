@@ -96,7 +96,8 @@ export function useHuntingTasks() {
       .from('hunting_tasks')
       .select('*')
       .eq('hunter_name', hName)
-      .order('order_index', { ascending: true });
+      .order('order_index', { ascending: true })
+      .order('created_at', { ascending: true });
     if (error) throw error;
     return data as DBTask[];
   };
