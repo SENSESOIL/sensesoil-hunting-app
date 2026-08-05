@@ -457,7 +457,7 @@ export default function HuntingManagementPage() {
                     {tabs.map((tab) => (
                       <div
                         key={tab}
-                        className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[11px] font-semibold tracking-wide transition-colors duration-300 ${activeSubTab === tab ? 'text-[#18181B]' : 'text-[#A1A1AA]'}`}
+                        className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[12px] font-semibold tracking-wide transition-colors duration-300 ${activeSubTab === tab ? 'text-[#18181B]' : 'text-[#A1A1AA]'}`}
                       >
                         {tab}
                       </div>
