@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import useSWR from "swr";
 
@@ -226,9 +227,9 @@ export default function RunningRecordsPage() {
   }, []);
 
   const [view, setView] = useState<"individual" | "team">("team");
-  const { data: session, status } = useSession();
-  const userHunterName = (session?.user as any)?.hunterName || "";
-  const roles = (session?.user as any)?.roles || {};
+  const { permissions, session, status } = useDynamicPermissions();
+  const userHunterName = permissions?.hunterName || (session?.user as any)?.hunterName || "";
+  const roles = permissions?.roles || {};
   const userRole = roles["running"] || "viewer";
   const canEdit = userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development";
   const isAdmin = userRole === "admin" || process.env.NODE_ENV === "development";

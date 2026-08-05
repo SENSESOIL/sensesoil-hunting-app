@@ -4,7 +4,8 @@
 export const SHEET_REGISTRY = {
   // 基礎任務試煉
   "basic-mission": {
-    spreadsheetId: process.env.SHEET_ID_BASIC_MISSION!,
+    // 強制指定回正確的「基礎任務」Google Sheet ID，避免 Vercel 環境變數錯誤導致讀不到數據
+    spreadsheetId: "1uRnOIQ3vhINawQYGJFq4alHlS2uTKatn41NIM_reMGE",
     defaultRange: "A:Z",
     label: "基礎任務試煉",
     permissions: {

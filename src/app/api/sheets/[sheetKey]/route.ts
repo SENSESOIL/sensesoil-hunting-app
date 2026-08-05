@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 import { auth } from "@/lib/auth-options";
 import { readSheet, appendSheet, writeSheet, readSheetNotes, writeSheetNotes } from "@/lib/google-sheets";
 import { SHEET_REGISTRY, SheetKey } from "@/lib/sheet-config";
+import { checkPermissions } from "@/lib/permissions";
 
 interface RouteParams {
   params: Promise<{ sheetKey: string }>;
@@ -73,8 +74,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session?.user) {
-    const roles = (session.user as any).roles || {};
+  if (session?.user?.email) {
+    const perms = await checkPermissions(session.user.email);
+    const roles = perms?.roles || {};
     const permissionKey = sheetKey === "basic-mission" ? "basic" : sheetKey;
     const userRole = roles[permissionKey] || "viewer";
     if (userRole !== "editor" && userRole !== "admin") {
@@ -114,8 +116,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session?.user) {
-    const roles = (session.user as any).roles || {};
+  if (session?.user?.email) {
+    const perms = await checkPermissions(session.user.email);
+    const roles = perms?.roles || {};
     const permissionKey = sheetKey === "basic-mission" ? "basic" : sheetKey;
     const userRole = roles[permissionKey] || "viewer";
     if (userRole !== "editor" && userRole !== "admin") {

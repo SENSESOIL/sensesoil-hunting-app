@@ -14,7 +14,8 @@ let lastFetchTime = 0;
 const CACHE_TTL = 30000; // 30 seconds
 
 async function fetchPermissionsFromSheet(): Promise<string[][]> {
-  const spreadsheetId = process.env.SHEET_ID_PERMISSIONS?.trim();
+  // 強制指定回正確的「權限」Google Sheet ID，避免 Vercel 環境變數錯誤導致讀不到權限
+  const spreadsheetId = process.env.SHEET_ID_PERMISSIONS?.trim() || "14ldpC7mD1wYjouSiR9gizl--fPFcIowGGzkQdkxQNvQ";
   console.log(`[Permissions Debug] Using SHEET_ID_PERMISSIONS: '${spreadsheetId}'`);
   if (!spreadsheetId) {
     console.error("[Permissions] SHEET_ID_PERMISSIONS is not set");

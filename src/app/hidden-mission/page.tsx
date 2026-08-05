@@ -3,7 +3,8 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import useSWR from "swr";
 
@@ -179,9 +180,9 @@ export default function HiddenMissionPage() {
   }, [rawData]);
 
   // Check user role & hunter name
-  const loggedInHunterName = (session?.user as any)?.hunterName || session?.user?.name || "";
-  const roles = (session?.user as any)?.roles || {};
-  const userRole = roles["hidden"] || "viewer";
+  const { permissions } = useDynamicPermissions();
+  const loggedInHunterName = permissions?.hunterName || (session?.user as any)?.hunterName || session?.user?.name || "";
+  const userRole = permissions?.roles?.["hidden"] || "viewer";
   const isAdmin = userRole === "admin";
   const canEdit = userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development";
 

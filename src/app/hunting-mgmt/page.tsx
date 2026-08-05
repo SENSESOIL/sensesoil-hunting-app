@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { mutate } from "swr";
 import HuntingTasksView, { HuntingTasksViewRef } from "@/components/HuntingTasksView";
 
@@ -32,10 +33,11 @@ const HUNTING_MGMT_PERM_KEYS = ["專案情報", "工進排程", "任務追蹤", 
 export default function HuntingManagementPage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const userName = (session?.user as any)?.hunterName || session?.user?.name || "System Admin";
+  const { permissions } = useDynamicPermissions();
+  const userName = permissions?.hunterName || (session?.user as any)?.hunterName || session?.user?.name || "System Admin";
   const userEmail = session?.user?.email || "admin@sensesoil.tw";
   const userAvatar = session?.user?.image || "https://i.pravatar.cc/150?img=68";
-  const roles: Record<string, string> = (session?.user as any)?.roles || {};
+  const roles: Record<string, string> = permissions?.roles || (session?.user as any)?.roles || {};
 
   // Check if user is admin (any role is admin)
   const isAdmin = Object.values(roles).some(r => r === 'admin');

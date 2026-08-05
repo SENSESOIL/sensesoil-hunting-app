@@ -33,8 +33,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const perms = await checkPermissions(email);
       
+      const SHEET_ID_PERMS = process.env.SHEET_ID_PERMISSIONS || "14ldpC7mD1wYjouSiR9gizl--fPFcIowGGzkQdkxQNvQ";
+      
       // 如果設定了 Google Sheet，但信箱不在權限名單內，則無條件拒絕登入 (無論是否為開發環境)
-      if (!perms && process.env.SHEET_ID_PERMISSIONS) {
+      if (!perms && SHEET_ID_PERMS) {
         return false;
       }
       return true;
@@ -52,7 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (perms) {
           token.roles = perms.roles;
           token.hunterName = perms.hunterName;
-        } else if (process.env.NODE_ENV === "development" && !process.env.SHEET_ID_PERMISSIONS) {
+        } else if (process.env.NODE_ENV === "development" && !(process.env.SHEET_ID_PERMISSIONS || "14ldpC7mD1wYjouSiR9gizl--fPFcIowGGzkQdkxQNvQ")) {
           // 開發環境中，若完全沒設定權限表，才預設給予 editor 權限
           token.roles = {
             "basic": "editor",

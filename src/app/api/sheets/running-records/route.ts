@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readSheet, writeSheet } from "@/lib/google-sheets";
 import { auth } from "@/lib/auth-options";
+import { checkPermissions } from "@/lib/permissions";
 
 export const dynamic = 'force-dynamic';
 
@@ -53,8 +54,9 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session?.user) {
-      const roles = (session.user as any).roles || {};
+    if (session?.user?.email) {
+      const perms = await checkPermissions(session.user.email);
+      const roles = perms?.roles || {};
       const userRole = roles["running"] || "viewer";
       if (userRole !== "editor" && userRole !== "admin") {
         return NextResponse.json({ error: "Forbidden: You do not have edit permissions." }, { status: 403 });

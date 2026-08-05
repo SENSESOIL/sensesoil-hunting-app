@@ -4,11 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
+
 export default function DiversionPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { permissions } = useDynamicPermissions();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const roles: Record<string, string> = (session?.user as any)?.roles || {};
+  const roles: Record<string, string> = permissions?.roles || (session?.user as any)?.roles || {};
 
   const HUNTING_MGMT_PERM_KEYS = ["專案情報", "工進排程", "任務追蹤", "狩獵任務", "指揮中心"];
   const hasHuntingMgmtAccess = HUNTING_MGMT_PERM_KEYS.some(key => {

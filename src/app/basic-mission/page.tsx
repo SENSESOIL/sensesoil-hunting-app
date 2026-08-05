@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import useSWR from "swr";
 
@@ -296,10 +297,10 @@ export default function BasicMissionPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const { data: session, status } = useSession();
-  const userRole = (session?.user as any)?.roles?.["basic"] || "viewer";
+  const { permissions, session, status } = useDynamicPermissions();
+  const userRole = permissions?.roles?.["basic"] || "viewer";
   const isAdmin = userRole === "admin" || process.env.NODE_ENV === "development";
-  const userHunterName = (session?.user as any)?.hunterName || "";
+  const userHunterName = permissions?.hunterName || (session?.user as any)?.hunterName || "";
 
   useEffect(() => {
     if (status === "unauthenticated") {

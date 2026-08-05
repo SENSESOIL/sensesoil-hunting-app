@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readSheet, writeSheet, appendSheet, deleteSheetRow } from "@/lib/google-sheets";
 import { auth } from "@/lib/auth-options";
+import { checkPermissions } from "@/lib/permissions";
 
 export const dynamic = 'force-dynamic';
 
@@ -232,8 +233,9 @@ async function checkEditPermission() {
   if (!session?.user && process.env.NODE_ENV !== 'development') {
     return { allowed: false, status: 401, error: 'Unauthorized' };
   }
-  if (session?.user) {
-    const roles = (session.user as any).roles || {};
+  if (session?.user?.email) {
+    const perms = await checkPermissions(session.user.email);
+    const roles = perms?.roles || {};
     const userRole = roles['hidden'] || 'viewer';
     if (userRole !== 'editor' && userRole !== 'admin' && process.env.NODE_ENV !== 'development') {
       return { allowed: false, status: 403, error: 'Forbidden: You do not have edit permissions for hidden mission.' };
