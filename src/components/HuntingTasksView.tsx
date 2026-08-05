@@ -456,7 +456,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     );
   };
 
-  if (!isMounted) return null;
+  if (!isMounted) return <div className="flex flex-col h-full min-h-screen"></div>;
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
