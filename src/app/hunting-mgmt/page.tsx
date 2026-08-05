@@ -441,7 +441,7 @@ export default function HuntingManagementPage() {
                 const activeIdx = tabs.indexOf(activeSubTab);
                 return (
                   <div 
-                    className="relative flex items-center bg-[#F4F4F5] rounded-[10px] p-[3px] cursor-pointer select-none"
+                    className="relative flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                     onClick={() => setActiveSubTab(activeSubTab === "任務清單" ? "狩獵任務" : "任務清單")}
                   >
