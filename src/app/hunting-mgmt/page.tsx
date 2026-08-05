@@ -166,8 +166,8 @@ export default function HuntingManagementPage() {
       <aside className={`hidden md:flex flex-col bg-[#FAFAFA] border-r border-[#E4E4E7]/60 h-screen sticky top-0 shrink-0 z-50 transition-[width] duration-300 ease-in-out overflow-x-hidden ${isSidebarCollapsed ? 'w-[72px]' : 'w-[240px]'}`}>
         
         {/* Row 1: Logo & Toggle — aligned with title row */}
-        <div className="h-[70px] flex items-center pl-[17.5px] shrink-0 overflow-hidden relative w-full group">
-          <div className="flex items-center gap-3 cursor-pointer shrink-0 relative" onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : router.push('/diversion')}>
+        <div className="h-[70px] flex items-end pb-[14px] pl-[17.5px] shrink-0 overflow-hidden relative w-full group">
+          <div className="flex items-end gap-3 cursor-pointer shrink-0 relative" onClick={() => isSidebarCollapsed ? setIsSidebarCollapsed(false) : router.push('/diversion')}>
             <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative">
               <img 
                 src="/Logo｜Orange.svg" 
@@ -186,7 +186,7 @@ export default function HuntingManagementPage() {
           </div>
           <button 
             onClick={() => setIsSidebarCollapsed(true)} 
-            className={`text-[#A1A1AA] hover:text-[#18181B] transition-opacity duration-300 p-1 shrink-0 absolute right-4 top-1/2 -translate-y-1/2 ${isSidebarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+            className={`text-[#A1A1AA] hover:text-[#18181B] transition-opacity duration-300 p-1 shrink-0 absolute right-4 bottom-[13px] ${isSidebarCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="1" y="1" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.3" />
@@ -295,18 +295,18 @@ export default function HuntingManagementPage() {
         
         {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
         <header className="sticky top-0 z-40 bg-[#FAFAFA]">
-          <div className="h-[70px] px-6 lg:px-10 flex items-center justify-between">
+          <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">
             {/* Mobile Logo & Title */}
-            <div className="flex md:hidden items-center gap-3 cursor-pointer" onClick={() => router.push('/diversion')}>
+            <div className="flex md:hidden items-end gap-3 cursor-pointer" onClick={() => router.push('/diversion')}>
               <div className="w-[35px] h-[35px] flex items-center justify-center">
                 <img src="/Logo｜Orange.svg" alt="SENSESOIL" className="w-full h-full object-contain" />
               </div>
-              <h1 className="text-[20px] font-semibold text-[#18181B] tracking-tight leading-none">
+              <h1 className="text-[22px] font-semibold text-[#18181B] tracking-tight leading-none">
                 {navItems.find(item => item.id === activeNav)?.label}
               </h1>
             </div>
             {/* Page Title */}
-            <div className="hidden md:flex items-center">
+            <div className="hidden md:flex items-end">
               <h1 className="text-[22px] font-semibold text-[#18181B] tracking-tight leading-none">{navItems.find(item => item.id === activeNav)?.label}</h1>
             </div>
 
