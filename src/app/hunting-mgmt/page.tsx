@@ -296,11 +296,14 @@ export default function HuntingManagementPage() {
         {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
         <header className="sticky top-0 z-40 bg-[#FAFAFA]">
           <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">
-            {/* Mobile Logo */}
+            {/* Mobile Logo & Title */}
             <div className="flex md:hidden items-end gap-3 cursor-pointer" onClick={() => router.push('/diversion')}>
               <div className="w-[35px] h-[35px] flex items-center justify-center translate-y-1">
                 <img src="/Logo｜Orange.svg" alt="SENSESOIL" className="w-full h-full object-contain" />
               </div>
+              <h1 className="text-[20px] font-semibold text-[#18181B] tracking-tight leading-none mb-[5px]">
+                {navItems.find(item => item.id === activeNav)?.label}
+              </h1>
             </div>
             {/* Page Title */}
             <div className="hidden md:flex items-end">
