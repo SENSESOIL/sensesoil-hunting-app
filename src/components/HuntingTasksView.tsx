@@ -331,7 +331,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
                   {/* Actions Group (Hover) */}
                   {!isContentLocked && (
-                    <div className="opacity-0 group-hover:opacity-100 flex items-center absolute right-2 transition-opacity gap-1">
+                    <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center absolute right-2 transition-opacity gap-1">
                     <button 
                       onClick={() => handleAddSubtask(week.id, task.id)}
                       className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#E4E4E7] text-[#A1A1AA] transition-colors"
@@ -373,7 +373,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                               >
                                 <div 
                                   {...provided.dragHandleProps}
-                                  className="w-6 h-6 mr-1 opacity-0 group-hover/sub:opacity-100 cursor-grab active:cursor-grabbing text-[#A1A1AA] hover:text-[#F39C12] transition-colors flex items-center justify-center shrink-0"
+                                  className="w-6 h-6 mr-1 opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 cursor-grab active:cursor-grabbing text-[#A1A1AA] hover:text-[#F39C12] transition-colors flex items-center justify-center shrink-0"
                                 >
                                   <span className="material-symbols-outlined text-[16px]">drag_indicator</span>
                                 </div>
@@ -401,7 +401,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                 {!isContentLocked && (
                                   <button 
                                     onClick={() => deleteTask(sub.id)}
-                                  className="opacity-0 group-hover/sub:opacity-100 w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-[#A1A1AA] hover:text-red-500 transition-colors absolute right-2"
+                                  className="opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-[#A1A1AA] hover:text-red-500 transition-colors absolute right-2"
                                   title="刪除子任務"
                                 >
                                   <span className="material-symbols-outlined text-[14px]">remove</span>
