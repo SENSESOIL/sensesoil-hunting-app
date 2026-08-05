@@ -768,8 +768,8 @@ export default function BasicMissionPage() {
     return {
       items: [
         { label: "日誌完整度", percent: `${percentS}%`, width: `${percentS}%` },
-        { label: "紀錄穩定度", percent: `${percentT}%`, width: `${percentT}%` },
-        { label: isExempt ? "任務完成度 (職責無任務紀錄)" : "任務完成度", percent: isExempt ? "無" : `${percentP}%`, width: isExempt ? "0%" : `${percentP}%` },
+        { label: isExempt ? "紀錄穩定度 (職責無任務紀錄)" : "紀錄穩定度", percent: isExempt ? "無" : `${percentT}%`, width: isExempt ? "0%" : `${percentT}%` },
+        { label: "任務完成度", percent: `${percentP}%`, width: `${percentP}%` },
         { label: "體能強化度", percent: scoreToRank(avgQ), width: `${percentQNum}%` },
         { label: "格局進化度", percent: scoreToRank(avgR), width: `${percentRNum}%` }
       ],
