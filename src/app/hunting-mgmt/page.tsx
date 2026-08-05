@@ -60,29 +60,77 @@ export default function HuntingManagementPage() {
   const shareRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
   const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const swipeLocked = useRef(false); // locks to prevent vertical scroll from triggering swipe
 
   const [overscrollY, setOverscrollY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Swipe gesture handler for mobile sub-tab switching
+  // Swipe gesture handler for mobile sub-tab switching with real-time content sliding
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (activeNav !== 'hunting_tasks') return;
     touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    swipeLocked.current = false;
+    setIsSwiping(false);
   }, [activeNav]);
 
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (activeNav !== 'hunting_tasks' || touchStartX.current === null || touchStartY.current === null) return;
+    
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    
+    // On first significant move, decide if it's horizontal or vertical
+    if (!isSwiping && !swipeLocked.current) {
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
+        // Vertical scroll — lock out swipe
+        swipeLocked.current = true;
+        return;
+      }
+      if (Math.abs(dx) > 10) {
+        setIsSwiping(true);
+      }
+      return;
+    }
+    
+    if (swipeLocked.current) return;
+    
+    // Clamp offset: prevent over-swiping beyond the two panels
+    const tabs = ["任務清單", "狩獵任務"];
+    const activeIdx = tabs.indexOf(activeSubTab);
+    let clampedOffset = dx;
+    // If on first tab, can't swipe right further; if on last, can't swipe left further
+    if (activeIdx === 0 && dx > 0) clampedOffset = dx * 0.3; // rubber-band effect
+    if (activeIdx === tabs.length - 1 && dx < 0) clampedOffset = dx * 0.3;
+    
+    setSwipeOffset(clampedOffset);
+  }, [activeNav, activeSubTab, isSwiping]);
+
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (activeNav !== 'hunting_tasks' || touchStartX.current === null) return;
+    if (activeNav !== 'hunting_tasks' || touchStartX.current === null) {
+      setSwipeOffset(0);
+      setIsSwiping(false);
+      return;
+    }
+    
     const diff = e.changedTouches[0].clientX - touchStartX.current;
     touchStartX.current = null;
-    if (Math.abs(diff) < 60) return; // minimum swipe distance
-    if (diff > 0) {
-      // Swipe right → go to first tab
-      setActiveSubTab("任務清單");
-    } else {
-      // Swipe left → go to second tab
-      setActiveSubTab("狩獵任務");
+    touchStartY.current = null;
+    
+    if (Math.abs(diff) > 60 && isSwiping) {
+      if (diff > 0) {
+        setActiveSubTab("任務清單");
+      } else {
+        setActiveSubTab("狩獵任務");
+      }
     }
-  }, [activeNav]);
+    
+    setSwipeOffset(0);
+    setIsSwiping(false);
+  }, [activeNav, isSwiping]);
 
   // Set body background to #FAFAFA for this page only, revert to black on unmount
   useEffect(() => {
@@ -446,6 +494,7 @@ export default function HuntingManagementPage() {
       <div 
         className="flex-1 w-full flex flex-col gap-6 pt-6 pb-12"
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
 
@@ -458,15 +507,30 @@ export default function HuntingManagementPage() {
         </div>
 
         {activeNav === 'hunting_tasks' ? (
-          activeSubTab === "狩獵任務" ? (
-            /* ============ 狩獵任務 View ============ */
-            <HuntingTasksView ref={tasksViewRef} />
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
-              <span className="material-symbols-outlined text-[48px] text-[#E4E4E7] mb-4" style={{ fontVariationSettings: "'wght' 200" }}>construction</span>
-              <p className="text-[#A1A1AA] text-sm tracking-widest font-medium">設計施工中</p>
+          /* ============ Sliding Panel Container ============ */
+          <div className="flex-1 overflow-hidden relative">
+            <div 
+              className="flex w-[200%] h-full"
+              style={{ 
+                transform: activeSubTab === "狩獵任務" 
+                  ? `translateX(calc(-50% + ${swipeOffset}px))` 
+                  : `translateX(${swipeOffset}px)`,
+                transition: isSwiping ? 'none' : 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)',
+              }}
+            >
+              {/* Panel 1: 任務清單 */}
+              <div className="w-1/2 flex-shrink-0 h-full overflow-y-auto">
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
+                  <span className="material-symbols-outlined text-[48px] text-[#E4E4E7] mb-4" style={{ fontVariationSettings: "'wght' 200" }}>construction</span>
+                  <p className="text-[#A1A1AA] text-sm tracking-widest font-medium">設計施工中</p>
+                </div>
+              </div>
+              {/* Panel 2: 狩獵任務 */}
+              <div className="w-1/2 flex-shrink-0 h-full overflow-y-auto">
+                <HuntingTasksView ref={tasksViewRef} />
+              </div>
             </div>
-          )
+          </div>
         ) : (
           /* ============ Default Dashboard View ============ */
           <>
