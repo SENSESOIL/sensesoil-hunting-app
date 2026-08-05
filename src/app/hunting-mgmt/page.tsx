@@ -49,9 +49,9 @@ export default function HuntingManagementPage() {
         return role === 'admin' || role === 'editor' || role === 'viewer';
       });
 
-  // Default to first allowed nav item
   const defaultNav = navItems.length > 0 ? navItems[0].id : "hunting_tasks";
   const [activeNav, setActiveNav] = useState(defaultNav);
+  const [activeSubTab, setActiveSubTab] = useState("狩獵任務");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -355,10 +355,11 @@ export default function HuntingManagementPage() {
           {/* Row 2: Sub-tabs — aligned with sidebar search bar row */}
           <div className="h-[48px] px-6 lg:px-10 flex items-center justify-between border-b border-[#E4E4E7]/60">
             <div className="flex items-center gap-1">
-              {["每週任務", "年度完成"].map((tab, idx) => (
+              {activeNav === 'hunting_tasks' && ["任務清單", "狩獵任務"].map((tab) => (
                 <button 
-                  key={idx} 
-                  className={`px-4 h-8 flex items-center justify-center text-[12px] font-medium tracking-wide rounded-[12px] relative transition-all ${idx === 0 ? 'bg-white text-[#18181B] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E4E4E7]/40' : 'text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]'}`}
+                  key={tab} 
+                  onClick={() => setActiveSubTab(tab)}
+                  className={`px-4 h-8 flex items-center justify-center text-[12px] font-medium tracking-wide rounded-[12px] relative transition-all ${activeSubTab === tab ? 'bg-white text-[#18181B] shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-[#E4E4E7]/40' : 'text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]'}`}
                 >
                   {tab}
                 </button>
@@ -400,8 +401,15 @@ export default function HuntingManagementPage() {
         </div>
 
         {activeNav === 'hunting_tasks' ? (
-          /* ============ 狩獵任務 View ============ */
-          <HuntingTasksView ref={tasksViewRef} />
+          activeSubTab === "狩獵任務" ? (
+            /* ============ 狩獵任務 View ============ */
+            <HuntingTasksView ref={tasksViewRef} />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
+              <span className="material-symbols-outlined text-[48px] text-[#E4E4E7] mb-4" style={{ fontVariationSettings: "'wght' 200" }}>construction</span>
+              <p className="text-[#A1A1AA] text-sm tracking-widest font-medium">設計施工中</p>
+            </div>
+          )
         ) : (
           /* ============ Default Dashboard View ============ */
           <>
