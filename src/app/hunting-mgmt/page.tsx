@@ -61,6 +61,15 @@ export default function HuntingManagementPage() {
   const [overscrollY, setOverscrollY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Set body background to #FAFAFA for this page only, revert to black on unmount
+  useEffect(() => {
+    const originalBackground = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = '#FAFAFA';
+    return () => {
+      document.body.style.backgroundColor = originalBackground || 'black';
+    };
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       // In iOS Safari, window.scrollY becomes negative during top bounce (pull-to-refresh)
