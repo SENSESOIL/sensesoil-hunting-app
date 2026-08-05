@@ -296,39 +296,61 @@ export function useHuntingTasks() {
   const reorderSubtasks = async (sourceTaskId: string, destTaskId: string, sourceIndex: number, destIndex: number) => {
     if (!dbTasks || !hunterName) return;
     
-    // For simplicity in UI, we just map everything locally and update the single item's order, but Supabase handles floats perfectly.
-    const sourceSubs = dbTasks.filter(t => t.parent_id === sourceTaskId).sort((a,b) => a.order_index - b.order_index);
-    const destSubs = sourceTaskId === destTaskId ? sourceSubs : dbTasks.filter(t => t.parent_id === destTaskId).sort((a,b) => a.order_index - b.order_index);
+    // Build sorted source/dest lists from a snapshot of current data
+    const snapshot = [...dbTasks];
+    const sourceSubs = snapshot.filter(t => t.parent_id === sourceTaskId).sort((a,b) => a.order_index - b.order_index);
+    const destSubs = sourceTaskId === destTaskId 
+      ? sourceSubs 
+      : snapshot.filter(t => t.parent_id === destTaskId).sort((a,b) => a.order_index - b.order_index);
     
-    const [movedItem] = sourceSubs.splice(sourceIndex, 1);
-    movedItem.parent_id = destTaskId; // Move to new parent
+    if (!sourceSubs[sourceIndex]) return;
+    const movedItemId = sourceSubs[sourceIndex].id;
     
-    destSubs.splice(destIndex, 0, movedItem);
-
-    // Calculate new order_index
+    // Remove from source
+    sourceSubs.splice(sourceIndex, 1);
+    
+    // Calculate new order_index based on destination position
     let newOrder = 0;
-    if (destSubs.length === 1) {
-      newOrder = 1000;
-    } else if (destIndex === 0) {
-      newOrder = destSubs[1].order_index - 100;
-    } else if (destIndex === destSubs.length - 1) {
-      newOrder = destSubs[destSubs.length - 2].order_index + 1000;
+    if (sourceTaskId === destTaskId) {
+      // Same parent — destSubs is the same array after splice
+      destSubs.splice(destIndex, 0, { ...snapshot.find(t => t.id === movedItemId)! });
+      if (destSubs.length === 1) {
+        newOrder = 1000;
+      } else if (destIndex === 0) {
+        newOrder = destSubs[1].order_index - 100;
+      } else if (destIndex === destSubs.length - 1) {
+        newOrder = destSubs[destSubs.length - 2].order_index + 1000;
+      } else {
+        newOrder = (destSubs[destIndex - 1].order_index + destSubs[destIndex + 1].order_index) / 2;
+      }
     } else {
-      newOrder = (destSubs[destIndex - 1].order_index + destSubs[destIndex + 1].order_index) / 2;
+      // Different parent
+      destSubs.splice(destIndex, 0, { ...snapshot.find(t => t.id === movedItemId)! });
+      if (destSubs.length === 1) {
+        newOrder = 1000;
+      } else if (destIndex === 0) {
+        newOrder = destSubs[1].order_index - 100;
+      } else if (destIndex === destSubs.length - 1) {
+        newOrder = destSubs[destSubs.length - 2].order_index + 1000;
+      } else {
+        newOrder = (destSubs[destIndex - 1].order_index + destSubs[destIndex + 1].order_index) / 2;
+      }
     }
 
-    movedItem.order_index = newOrder;
+    // Build completely new data array with the moved item updated
+    const newData = snapshot.map(t => 
+      t.id === movedItemId 
+        ? { ...t, parent_id: destTaskId, order_index: newOrder } 
+        : t
+    );
 
-    // Optimistic update — immediately reflect in UI
-    mutate(current => {
-      if (!current) return current;
-      return current.map(t => t.id === movedItem.id ? { ...t, parent_id: destTaskId, order_index: newOrder } : t);
-    }, false);
+    // Synchronous optimistic update — force SWR to immediately use this data
+    mutate(newData, { revalidate: false });
 
-    // Save to DB without triggering revalidation immediately 
-    await supabase.from('hunting_tasks').update({ parent_id: destTaskId, order_index: newOrder }).eq('id', movedItem.id);
-    // Delay revalidation to avoid conflicting with DnD animation
-    setTimeout(() => mutate(), 500);
+    // Save to DB in background
+    await supabase.from('hunting_tasks').update({ parent_id: destTaskId, order_index: newOrder }).eq('id', movedItemId);
+    // Revalidate after a delay to sync with server
+    setTimeout(() => mutate(), 1000);
   };
 
   return {
