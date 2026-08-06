@@ -53,11 +53,12 @@ export default function HuntingManagementPage() {
   const [activeNav, setActiveNav] = useState(defaultNav);
   const [activeSubTab, setActiveSubTab] = useState("狩獵任務");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
-  
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const shareRefMobile = useRef<HTMLDivElement>(null);
+  const shareRefDesktop = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
-  const shareRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
@@ -164,12 +165,17 @@ export default function HuntingManagementPage() {
   }, [isRefreshing]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    const handleClickOutside = (event: MouseEvent) => {
+      const isOutsideMobileShare = shareRefMobile.current && !shareRefMobile.current.contains(event.target as Node);
+      const isOutsideDesktopShare = shareRefDesktop.current && !shareRefDesktop.current.contains(event.target as Node);
+      if (shareRefMobile.current || shareRefDesktop.current) {
+        if ((!shareRefMobile.current || isOutsideMobileShare) && (!shareRefDesktop.current || isOutsideDesktopShare)) {
+          setIsShareOpen(false);
+        }
+      }
+      
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
         setIsSettingsOpen(false);
-      }
-      if (shareRef.current && !shareRef.current.contains(event.target as Node)) {
-        setIsShareOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -394,6 +400,31 @@ export default function HuntingManagementPage() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1 md:gap-3 translate-y-[5px]">
+              
+              {/* Mobile Share Button (Hidden on Desktop) */}
+              <div className="relative md:hidden" ref={shareRefMobile}>
+                <button onClick={() => setIsShareOpen(!isShareOpen)} className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? 'bg-[#F4F4F5] text-[#18181B]' : 'hover:bg-[#F4F4F5] text-[#71717A]'}`} title="分享">
+                  <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>ios_share</span>
+                </button>
+                
+                {isShareOpen && (
+                  <div className="absolute right-0 top-10 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50">
+                    <button onClick={handleCopy} className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
+                      <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>content_copy</span>
+                      複製內容
+                    </button>
+                    <button onClick={handleShareLine} className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
+                      <div className="w-[18px] h-[18px] flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 24 24" fill="#06C755" className="w-full h-full">
+                          <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z"/>
+                        </svg>
+                      </div>
+                      Line 分享
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] transition-all text-[#71717A] hover:text-[#18181B] relative outline-none">
                 <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>notifications_none</span>
                 <span className="absolute top-2 right-2 w-2 h-2 bg-[#F39C12] rounded-full border-[1.5px] border-[#FAFAFA] box-content"></span>
@@ -467,7 +498,8 @@ export default function HuntingManagementPage() {
               })()}
             </div>
             
-            <div className="relative" ref={shareRef}>
+            {/* Desktop Share Button (Hidden on Mobile) */}
+            <div className="relative hidden md:block" ref={shareRefDesktop}>
               <button onClick={() => setIsShareOpen(!isShareOpen)} className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? 'bg-[#F4F4F5] text-[#18181B]' : 'hover:bg-[#F4F4F5] text-[#71717A]'}`} title="分享">
                 <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>ios_share</span>
               </button>
@@ -711,12 +743,14 @@ export default function HuntingManagementPage() {
               </button>
             )
           })}
+          
+          <div className="w-[1px] h-6 bg-[#E4E4E7]/60 mx-1"></div>
+          
+          {/* Integrated Floating Action Button */}
+          <button className="w-[42px] h-[42px] bg-[#18181B] text-white rounded-full flex items-center justify-center shadow-[0_4px_10px_rgba(24,24,27,0.3)] outline-none hover:bg-[#27272A] transition-transform active:scale-95 shrink-0">
+            <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'wght' 200" }}>add</span>
+          </button>
         </div>
-        
-        {/* Floating Action Button */}
-        <button className="w-14 h-14 bg-[#18181B] text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(24,24,27,0.3)] outline-none hover:bg-[#27272A] transition-transform active:scale-95 shrink-0 pointer-events-auto">
-          <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'wght' 200" }}>add</span>
-        </button>
       </div>
       
       {/* Mobile FAB padding spacer */}
