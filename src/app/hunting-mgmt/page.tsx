@@ -408,19 +408,39 @@ export default function HuntingManagementPage() {
                 </button>
                 
                 {isShareOpen && (
-                  <div className="absolute right-0 top-10 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50">
-                    <button onClick={handleCopy} className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
-                      <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>content_copy</span>
-                      複製內容
-                    </button>
-                    <button onClick={handleShareLine} className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
-                      <div className="w-[18px] h-[18px] flex items-center justify-center shrink-0">
-                        <svg viewBox="0 0 24 24" fill="#06C755" className="w-full h-full">
-                          <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z"/>
-                        </svg>
+                  <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+                    <div 
+                      className="absolute inset-0 bg-black/40" 
+                      onClick={(e) => { e.stopPropagation(); setIsShareOpen(false); }}
+                    ></div>
+                    <div 
+                      className="relative bg-white rounded-t-3xl shadow-xl flex flex-col p-6 pb-8 transform transition-transform"
+                      style={{ animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+                    >
+                      <style>{`
+                        @keyframes slideUp {
+                          from { transform: translateY(100%); }
+                          to { transform: translateY(0); }
+                        }
+                      `}</style>
+                      <div className="w-12 h-1.5 bg-[#E4E4E7] rounded-full mx-auto mb-6"></div>
+                      
+                      <div className="flex flex-col gap-3">
+                        <button onClick={handleCopy} className="w-full flex items-center justify-center gap-3 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-[#18181B] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
+                          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>content_copy</span>
+                          複製內容
+                        </button>
+                        
+                        <button onClick={handleShareLine} className="w-full flex items-center justify-center gap-3 bg-[#06C755]/10 hover:bg-[#06C755]/20 text-[#06C755] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
+                          <div className="w-[24px] h-[24px] flex items-center justify-center shrink-0">
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                              <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z"/>
+                            </svg>
+                          </div>
+                          Line 分享
+                        </button>
                       </div>
-                      Line 分享
-                    </button>
+                    </div>
                   </div>
                 )}
               </div>
