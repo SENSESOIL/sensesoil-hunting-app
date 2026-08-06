@@ -215,7 +215,7 @@ export default function HuntingManagementPage() {
     if (tasksViewRef.current) {
       try {
         const text = tasksViewRef.current.getShareText();
-        window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, "_blank");
+        window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
         setIsShareOpen(false);
       } catch (err: any) {
         alert(err.message);
@@ -753,6 +753,7 @@ export default function HuntingManagementPage() {
                   <div className="w-[24px] h-[24px] flex items-center justify-center shrink-0">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
                       <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z"/>
+                      <path fill="#FFFFFF" d="M7.75 12.83H6.18V8.45H5v5.44h2.75v-1.06zM9.46 13.89h-1.06V8.45h1.06v5.44zM14.54 13.89h-1.12l-1.92-3.18v3.18h-1.06V8.45h1.12l1.92 3.18V8.45h1.06v5.44zM18.89 9.51h-2.18v1.08h1.9v1.06h-1.9v1.18h2.18v1.06h-3.24V8.45h3.24v1.06z"/>
                     </svg>
                   </div>
                   Line 分享
