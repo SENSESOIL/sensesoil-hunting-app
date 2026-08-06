@@ -407,42 +407,7 @@ export default function HuntingManagementPage() {
                   <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>ios_share</span>
                 </button>
                 
-                {isShareOpen && (
-                  <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-                    <div 
-                      className="absolute inset-0 bg-black/40" 
-                      onClick={(e) => { e.stopPropagation(); setIsShareOpen(false); }}
-                    ></div>
-                    <div 
-                      className="relative bg-white rounded-t-3xl shadow-xl flex flex-col p-6 pb-8 transform transition-transform"
-                      style={{ animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
-                    >
-                      <style>{`
-                        @keyframes slideUp {
-                          from { transform: translateY(100%); }
-                          to { transform: translateY(0); }
-                        }
-                      `}</style>
-                      <div className="w-12 h-1.5 bg-[#E4E4E7] rounded-full mx-auto mb-6"></div>
-                      
-                      <div className="flex flex-col gap-3">
-                        <button onClick={handleCopy} className="w-full flex items-center justify-center gap-3 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-[#18181B] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
-                          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>content_copy</span>
-                          複製內容
-                        </button>
-                        
-                        <button onClick={handleShareLine} className="w-full flex items-center justify-center gap-3 bg-[#06C755]/10 hover:bg-[#06C755]/20 text-[#06C755] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
-                          <div className="w-[24px] h-[24px] flex items-center justify-center shrink-0">
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
-                              <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z"/>
-                            </svg>
-                          </div>
-                          Line 分享
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+
               </div>
 
               <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] transition-all text-[#71717A] hover:text-[#18181B] relative outline-none">
@@ -460,42 +425,7 @@ export default function HuntingManagementPage() {
                   <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
                 </div>
                 
-                {isSettingsOpen && (
-                  <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-                    <div 
-                      className="absolute inset-0 bg-black/40" 
-                      onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(false); }}
-                    ></div>
-                    <div 
-                      className="relative bg-white rounded-t-3xl shadow-xl flex flex-col p-6 pb-8 transform transition-transform"
-                      style={{ animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
-                    >
-                      <div className="w-12 h-1.5 bg-[#E4E4E7] rounded-full mx-auto mb-6"></div>
-                      <div className="flex flex-col items-center mb-6">
-                        <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border border-[#E4E4E7]">
-                          <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-[#18181B]">{userName}</h3>
-                        <p className="text-[13px] text-[#A1A1AA]">{userEmail}</p>
-                      </div>
-                      
-                      <div className="flex flex-col gap-3">
-                        <button className="w-full flex items-center justify-center gap-3 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-[#18181B] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
-                          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>person</span>
-                          個人設定
-                        </button>
-                        
-                        <button 
-                          onClick={() => signOut({ callbackUrl: '/' })}
-                          className="w-full flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl py-4 transition-colors font-medium text-base outline-none"
-                        >
-                          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>logout</span>
-                          登出
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
           </div>
@@ -791,6 +721,84 @@ export default function HuntingManagementPage() {
       
       {/* Mobile FAB padding spacer */}
       <div className="h-[84px] md:hidden shrink-0"></div>
+
+      {/* Mobile Bottom Sheets (Rendered at root to avoid transform containment issues) */}
+      <div className="md:hidden">
+        <style>{`
+          @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+          }
+        `}</style>
+        
+        {isShareOpen && (
+          <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+            <div 
+              className="absolute inset-0 bg-black/40 transition-opacity" 
+              onClick={(e) => { e.stopPropagation(); setIsShareOpen(false); }}
+            ></div>
+            <div 
+              className="relative bg-white rounded-t-3xl shadow-xl flex flex-col p-6 pb-8 transform transition-transform"
+              style={{ animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+            >
+              <div className="w-12 h-1.5 bg-[#E4E4E7] rounded-full mx-auto mb-6"></div>
+              
+              <div className="flex flex-col gap-3">
+                <button onClick={handleCopy} className="w-full flex items-center justify-center gap-3 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-[#18181B] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
+                  <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>content_copy</span>
+                  複製內容
+                </button>
+                
+                <button onClick={handleShareLine} className="w-full flex items-center justify-center gap-3 bg-[#06C755]/10 hover:bg-[#06C755]/20 text-[#06C755] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
+                  <div className="w-[24px] h-[24px] flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                      <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z"/>
+                    </svg>
+                  </div>
+                  Line 分享
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isSettingsOpen && (
+          <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+            <div 
+              className="absolute inset-0 bg-black/40 transition-opacity" 
+              onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(false); }}
+            ></div>
+            <div 
+              className="relative bg-white rounded-t-3xl shadow-xl flex flex-col p-6 pb-8 transform transition-transform"
+              style={{ animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+            >
+              <div className="w-12 h-1.5 bg-[#E4E4E7] rounded-full mx-auto mb-6"></div>
+              <div className="flex flex-col items-center mb-6">
+                <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border border-[#E4E4E7]">
+                  <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#18181B]">{userName}</h3>
+                <p className="text-[13px] text-[#A1A1AA]">{userEmail}</p>
+              </div>
+              
+              <div className="flex flex-col gap-3">
+                <button className="w-full flex items-center justify-center gap-3 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-[#18181B] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
+                  <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>person</span>
+                  個人設定
+                </button>
+                
+                <button 
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="w-full flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl py-4 transition-colors font-medium text-base outline-none"
+                >
+                  <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>logout</span>
+                  登出
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
     </div>
   );
