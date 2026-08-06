@@ -746,9 +746,9 @@ export default function HuntingManagementPage() {
           
           <div className="w-[1px] h-6 bg-[#E4E4E7]/60 mx-1"></div>
           
-          {/* Integrated Floating Action Button */}
-          <button className="w-[42px] h-[42px] bg-[#18181B] text-white rounded-full flex items-center justify-center shadow-[0_4px_10px_rgba(24,24,27,0.3)] outline-none hover:bg-[#27272A] transition-transform active:scale-95 shrink-0">
-            <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'wght' 200" }}>add</span>
+          {/* Integrated Add Button */}
+          <button className="w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5] focus:text-[#18181B] shrink-0">
+            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>add</span>
           </button>
         </div>
       </div>
