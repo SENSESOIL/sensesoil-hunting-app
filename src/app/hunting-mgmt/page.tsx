@@ -701,35 +701,35 @@ export default function HuntingManagementPage() {
       </div>
       </main>
 
-      {/* Mobile Bottom Navigation Bar */}
-      <nav className={`md:hidden fixed bottom-0 left-0 w-full z-[90] flex justify-around items-center h-20 px-2 bg-white/95 backdrop-blur-xl border-t border-[#E4E4E7] shadow-[0_-8px_30px_rgba(0,0,0,0.05)] transition-transform duration-300 ${showNav ? 'translate-y-0' : 'translate-y-full'}`}>
-        
-        {navItems.map(item => {
-          const isActive = activeNav === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveNav(item.id)}
-              className="flex flex-col items-center justify-center w-16 gap-1 group outline-none"
-            >
-              <span 
-                className={`material-symbols-outlined text-[24px] transition-colors ${isActive ? 'text-[#18181B]' : 'text-[#A1A1AA] group-hover:text-[#18181B]'}`}
-                style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}
+      {/* Mobile Floating Bottom Navigation */}
+      <div className={`md:hidden fixed bottom-6 left-0 right-0 z-50 flex items-center justify-center gap-4 pointer-events-none transition-transform duration-300 ${showNav ? 'translate-y-0' : 'translate-y-[150%]'}`}>
+        {/* Navigation Pill */}
+        <div className="bg-white/90 backdrop-blur-xl border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.12)] rounded-full p-1.5 flex items-center gap-1 pointer-events-auto">
+          {navItems.map(item => {
+            const isActive = activeNav === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveNav(item.id)}
+                className={`w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none ${
+                  isActive ? 'text-[#18181B]' : 'text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5]'
+                }`}
               >
-                {item.icon}
-              </span>
-              <span className={`text-[10px] font-medium transition-colors ${isActive ? 'text-[#18181B]' : 'text-[#A1A1AA] group-hover:text-[#18181B]'}`}>
-                {item.label}
-              </span>
-            </button>
-          )
-        })}
-
-        <button className="flex flex-col items-center justify-center w-16 gap-1 group outline-none focus:text-[#18181B] active:text-[#18181B] text-[#A1A1AA] hover:text-[#18181B]">
-          <span className="material-symbols-outlined text-[24px] transition-colors" style={{ fontVariationSettings: "'wght' 200" }}>add_circle</span>
-          <span className="text-[10px] font-medium transition-colors">新增</span>
-        </button>
-      </nav>
+                <span className={`material-symbols-outlined ${item.icon === 'home' ? 'text-[26px]' : 'text-[22px]'}`} style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
+                  {item.icon}
+                </span>
+              </button>
+            )
+          })}
+          
+          <div className="w-[1px] h-6 bg-[#E4E4E7]/60 mx-1"></div>
+          
+          {/* Integrated Add Button */}
+          <button className="w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5] focus:text-[#18181B] shrink-0">
+            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>add_circle</span>
+          </button>
+        </div>
+      </div>
       
       {/* Mobile FAB padding spacer */}
       <div className="h-[84px] md:hidden shrink-0"></div>
