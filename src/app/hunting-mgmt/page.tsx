@@ -35,7 +35,7 @@ export default function HuntingManagementPage() {
   const { permissions } = useDynamicPermissions();
   const userName = permissions?.hunterName || (session?.user as any)?.hunterName || session?.user?.name || "System Admin";
   const userEmail = session?.user?.email || "admin@sensesoil.tw";
-  const userAvatar = session?.user?.image || "https://i.pravatar.cc/150?img=68";
+  const userAvatar = session?.user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=F4F4F5&color=18181B`;
   const roles: Record<string, string> = permissions?.roles || (session?.user as any)?.roles || {};
 
   // Check if user is admin (any role is admin)
