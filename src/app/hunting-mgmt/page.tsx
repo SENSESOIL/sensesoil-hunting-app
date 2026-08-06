@@ -447,7 +447,6 @@ export default function HuntingManagementPage() {
 
               <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] transition-all text-[#71717A] hover:text-[#18181B] relative outline-none">
                 <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>notifications_none</span>
-                <span className="absolute top-2 right-2 w-2 h-2 bg-[#F39C12] rounded-full border-[1.5px] border-[#FAFAFA] box-content"></span>
               </button>
               
               {/* Mobile Avatar */}
@@ -462,22 +461,39 @@ export default function HuntingManagementPage() {
                 </div>
                 
                 {isSettingsOpen && (
-                  <div className="absolute right-0 top-12 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50">
-                    <div className="px-4 py-2 border-b border-[#E4E4E7]/60 mb-1">
-                      <p className="text-sm font-semibold text-[#18181B]">{userName}</p>
-                      <p className="text-[11px] text-[#A1A1AA]">{userEmail}</p>
-                    </div>
-                    <button className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
-                      <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>person</span>
-                      個人設定
-                    </button>
-                    <button 
-                      onClick={() => signOut({ callbackUrl: '/' })}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors outline-none focus-visible:bg-red-50"
+                  <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+                    <div 
+                      className="absolute inset-0 bg-black/40" 
+                      onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(false); }}
+                    ></div>
+                    <div 
+                      className="relative bg-white rounded-t-3xl shadow-xl flex flex-col p-6 pb-8 transform transition-transform"
+                      style={{ animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
                     >
-                      <span className="material-symbols-outlined text-[18px] text-red-500" style={{ fontVariationSettings: "'wght' 200" }}>logout</span>
-                      登出
-                    </button>
+                      <div className="w-12 h-1.5 bg-[#E4E4E7] rounded-full mx-auto mb-6"></div>
+                      <div className="flex flex-col items-center mb-6">
+                        <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border border-[#E4E4E7]">
+                          <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-[#18181B]">{userName}</h3>
+                        <p className="text-[13px] text-[#A1A1AA]">{userEmail}</p>
+                      </div>
+                      
+                      <div className="flex flex-col gap-3">
+                        <button className="w-full flex items-center justify-center gap-3 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-[#18181B] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
+                          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>person</span>
+                          個人設定
+                        </button>
+                        
+                        <button 
+                          onClick={() => signOut({ callbackUrl: '/' })}
+                          className="w-full flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl py-4 transition-colors font-medium text-base outline-none"
+                        >
+                          <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 300" }}>logout</span>
+                          登出
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
