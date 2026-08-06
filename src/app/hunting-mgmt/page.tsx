@@ -748,7 +748,7 @@ export default function HuntingManagementPage() {
           
           {/* Integrated Add Button */}
           <button className="w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5] focus:text-[#18181B] shrink-0">
-            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>add</span>
+            <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>add_circle</span>
           </button>
         </div>
       </div>
