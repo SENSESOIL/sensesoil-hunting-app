@@ -531,7 +531,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                               setShowDuplicateMenu(false);
                               copyFromPreviousWeek(previousWeekId, week.id, false);
                             }}
-                            className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 text-base font-semibold text-[#18181B] active:scale-[0.98] transition-transform outline-none"
+                            className="w-full bg-white rounded-2xl p-4 flex items-center justify-center gap-3 text-base font-semibold text-[#18181B] active:scale-[0.98] transition-transform outline-none"
                           >
                             <span className="material-symbols-outlined text-[24px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>format_list_bulleted</span>
                             複製主任務
@@ -541,7 +541,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                               setShowDuplicateMenu(false);
                               copyFromPreviousWeek(previousWeekId, week.id, true);
                             }}
-                            className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 text-base font-semibold text-[#18181B] active:scale-[0.98] transition-transform outline-none"
+                            className="w-full bg-white rounded-2xl p-4 flex items-center justify-center gap-3 text-base font-semibold text-[#18181B] active:scale-[0.98] transition-transform outline-none"
                           >
                             <span className="material-symbols-outlined text-[24px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>subject</span>
                             複製全任務
