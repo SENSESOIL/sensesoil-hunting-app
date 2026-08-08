@@ -474,32 +474,34 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
             <div className="ml-auto relative">
               <button
                 onClick={() => setShowDuplicateMenu(!showDuplicateMenu)}
-                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] text-[#A1A1AA] hover:text-[#18181B] transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] text-[#A1A1AA] hover:text-[#18181B] transition-all outline-none"
                 title="複製上週任務"
               >
-                <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}>content_copy</span>
               </button>
               {showDuplicateMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowDuplicateMenu(false)} />
-                  <div className="absolute bottom-[calc(100%+8px)] right-0 w-36 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-[#E4E4E7] py-2 z-50 overflow-hidden">
+                  <div className="absolute bottom-[calc(100%+8px)] right-0 w-40 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-[#E4E4E7] py-2 z-50 overflow-hidden">
                     <button
                       onClick={() => {
                         setShowDuplicateMenu(false);
                         copyFromPreviousWeek(thisWeekId, week.id, false);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#71717A] hover:bg-[#FAFAFA] hover:text-[#18181B] transition-colors"
+                      className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
                     >
-                      複製僅主任務
+                      <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>subject</span>
+                      複製主任務
                     </button>
                     <button
                       onClick={() => {
                         setShowDuplicateMenu(false);
                         copyFromPreviousWeek(thisWeekId, week.id, true);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#71717A] hover:bg-[#FAFAFA] hover:text-[#18181B] transition-colors"
+                      className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
                     >
-                      複製主子任務
+                      <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>format_list_bulleted</span>
+                      複製全任務
                     </button>
                   </div>
                 </>
