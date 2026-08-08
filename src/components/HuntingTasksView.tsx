@@ -289,11 +289,6 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
         )}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-full ${isGreyStyle ? 'bg-[#F4F4F5]' : 'bg-[#FFF8ED]'} border ${isGreyStyle ? 'border-[#E4E4E7]' : 'border-[#F39C12]/20'} flex items-center justify-center`}>
-              <span className={`material-symbols-outlined text-[16px] ${isGreyStyle ? 'text-[#71717A]' : 'text-[#F39C12]'}`} style={{ fontVariationSettings: "'wght' 200" }}>
-                adjust
-              </span>
-            </div>
             <h3 className="font-semibold text-[17px] text-[#18181B] flex items-center">
               <span>{titlePrefix}</span>
               <span className="hidden md:inline">【狩獵任務】</span>
