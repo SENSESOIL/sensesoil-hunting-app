@@ -481,28 +481,68 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
               </button>
               {showDuplicateMenu && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowDuplicateMenu(false)} />
-                  <div className="absolute bottom-[calc(100%+8px)] right-0 w-40 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-[#E4E4E7] py-2 z-50 overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setShowDuplicateMenu(false);
-                        copyFromPreviousWeek(thisWeekId, week.id, false);
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
+                  {/* Desktop Popover */}
+                  <div className="hidden md:block">
+                    <div className="fixed inset-0 z-40" onClick={() => setShowDuplicateMenu(false)} />
+                    <div className="absolute bottom-[calc(100%+8px)] right-0 w-40 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-[#E4E4E7] py-2 z-50 overflow-hidden">
+                      <button
+                        onClick={() => {
+                          setShowDuplicateMenu(false);
+                          copyFromPreviousWeek(thisWeekId, week.id, false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
+                      >
+                        <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>subject</span>
+                        複製主任務
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDuplicateMenu(false);
+                          copyFromPreviousWeek(thisWeekId, week.id, true);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
+                      >
+                        <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>format_list_bulleted</span>
+                        複製全任務
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Mobile Bottom Sheet */}
+                  <div className="fixed inset-0 z-[100] md:hidden flex flex-col justify-end">
+                    <div 
+                      className="absolute inset-0 bg-[#000000]/20 backdrop-blur-[2px] transition-opacity"
+                      onClick={(e) => { e.stopPropagation(); setShowDuplicateMenu(false); }}
+                    ></div>
+                    <div 
+                      className="relative bg-[#F4F4F5] rounded-t-3xl shadow-xl flex flex-col px-6 pt-6 pb-8 transform transition-transform"
+                      style={{ animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
                     >
-                      <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>subject</span>
-                      複製主任務
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowDuplicateMenu(false);
-                        copyFromPreviousWeek(thisWeekId, week.id, true);
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
-                    >
-                      <span className="material-symbols-outlined text-[18px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>format_list_bulleted</span>
-                      複製全任務
-                    </button>
+                      <div className="w-12 h-1.5 bg-[#E4E4E7] rounded-full mx-auto mb-6"></div>
+                      
+                      <div className="flex flex-col gap-3">
+                        <button 
+                          onClick={() => {
+                            setShowDuplicateMenu(false);
+                            copyFromPreviousWeek(thisWeekId, week.id, false);
+                          }}
+                          className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 text-base font-semibold text-[#18181B] active:scale-[0.98] transition-transform outline-none"
+                        >
+                          <span className="material-symbols-outlined text-[24px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>subject</span>
+                          複製主任務
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setShowDuplicateMenu(false);
+                            copyFromPreviousWeek(thisWeekId, week.id, true);
+                          }}
+                          className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 text-base font-semibold text-[#18181B] active:scale-[0.98] transition-transform outline-none"
+                        >
+                          <span className="material-symbols-outlined text-[24px] text-[#A1A1AA]" style={{ fontVariationSettings: "'wght' 200" }}>format_list_bulleted</span>
+                          複製全任務
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
