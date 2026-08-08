@@ -840,7 +840,7 @@ export default function HuntingManagementPage() {
             onClick={() => setShowManual(false)} 
             className="w-10 h-10 flex items-center justify-center rounded-full text-[#18181B] active:bg-[#F4F4F5] transition-colors"
           >
-            <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'wght' 300" }}>arrow_back_ios_new</span>
+            <span className="material-symbols-outlined text-[16px] translate-y-[1px]" style={{ fontVariationSettings: "'wght' 300" }}>arrow_back_ios_new</span>
           </button>
           <h1 className="text-[17px] font-bold text-[#18181B] absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
             每週任務操作說明
