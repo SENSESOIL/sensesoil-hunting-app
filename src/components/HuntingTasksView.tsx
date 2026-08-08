@@ -80,7 +80,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
   const nextWeekId = weeks[actualCurrentWeekIndex + 1]?.id || 'empty';
   const weekAfterNextId = weeks[actualCurrentWeekIndex + 2]?.id || 'empty2';
 
-  // Auto-populate default tasks for current and next week if they are completely empty
+  // Auto-populate default tasks for current, next week, and week after next if they are completely empty
   useEffect(() => {
     if (isLoading || !hunterName) return; // Wait until data and user identity are loaded
     
@@ -88,6 +88,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     const checkAndPopulate = async () => {
       const thisWeek = weeks.find(w => w.id === thisWeekId);
       const nextWeek = weeks.find(w => w.id === nextWeekId);
+      const weekAfterNext = weeks.find(w => w.id === weekAfterNextId);
       
       if (thisWeek && thisWeek.tasks.length === 0) {
         await populateDefaultTasks(thisWeekId);
@@ -95,9 +96,12 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
       if (nextWeek && nextWeek.tasks.length === 0 && nextWeekId !== 'empty') {
         await populateDefaultTasks(nextWeekId);
       }
+      if (weekAfterNext && weekAfterNext.tasks.length === 0 && weekAfterNextId !== 'empty2') {
+        await populateDefaultTasks(weekAfterNextId);
+      }
     };
     checkAndPopulate();
-  }, [weeks, thisWeekId, nextWeekId, isLoading, hunterName, populateDefaultTasks]);
+  }, [weeks, thisWeekId, nextWeekId, weekAfterNextId, isLoading, hunterName, populateDefaultTasks]);
 
   // Focus input automatically when editing starts
   useEffect(() => {
