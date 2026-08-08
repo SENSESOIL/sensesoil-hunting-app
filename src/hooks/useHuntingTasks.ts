@@ -63,7 +63,7 @@ function getISOWeekNumber(date: Date) {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
-const generateEmptyWeeks = (centerDate: Date, countPast = 6, countFuture = 4): WeekRecord[] => {
+const generateEmptyWeeks = (centerDate: Date, countPast = 5, countFuture = 2): WeekRecord[] => {
   const day = centerDate.getDay();
   const diff = centerDate.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(centerDate.setDate(diff));
@@ -115,7 +115,7 @@ export function useHuntingTasks() {
   const actualCurrentWeekIndex = useMemo(() => {
     const now = new Date();
     const isPastFriday17 = (now.getDay() === 5 && now.getHours() >= 17) || now.getDay() === 6 || now.getDay() === 0;
-    return isPastFriday17 ? 6 : 5; // 6 is the physical current week (countPast)
+    return isPastFriday17 ? 5 : 4; // 5 is the physical current week (countPast)
   }, []);
 
   // Transform flat DB rows into nested Weeks -> Tasks -> Subs structure
