@@ -211,8 +211,21 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
   const saveEdit = () => {
     if (!editingTarget) return;
-    const { taskId, subId } = editingTarget;
-    updateText(subId || taskId, editingText);
+    const { weekId, taskId, subId } = editingTarget;
+    
+    let finalText = editingText.trim();
+    if (finalText === "") {
+      if (!subId) {
+        const week = weeks.find(w => w.id === weekId);
+        const taskIndex = week?.tasks.findIndex(t => t.id === taskId);
+        const defaultTexts = ["新任務", "新任務", "新任務", "體能", "格局"];
+        finalText = (taskIndex !== undefined && taskIndex >= 0 && taskIndex < 5) ? defaultTexts[taskIndex] : "新任務";
+      } else {
+        finalText = "新子任務";
+      }
+    }
+    
+    updateText(subId || taskId, finalText);
     setEditingTarget(null);
   };
 
