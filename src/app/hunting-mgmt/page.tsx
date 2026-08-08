@@ -732,7 +732,7 @@ export default function HuntingManagementPage() {
                   isActive ? 'text-[#18181B]' : 'text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5]'
                 }`}
               >
-                <span className={`material-symbols-outlined ${item.icon === 'home' ? 'text-[26px]' : 'text-[22px]'}`} style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
+                <span className={`material-symbols-outlined ${item.icon === 'home' ? 'text-[28px]' : 'text-[22px]'}`} style={{ fontVariationSettings: isActive ? "'FILL' 1, 'wght' 200" : "'wght' 200" }}>
                   {item.icon}
                 </span>
               </button>
