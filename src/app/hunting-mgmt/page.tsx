@@ -23,7 +23,7 @@ const liveFeed = [
 const allNavItems = [
   { id: "project_info", label: "專案情報", icon: "home", permKey: "專案情報" },
   { id: "schedule", label: "工進排程", icon: "calendar_today", permKey: "工進排程" },
-  { id: "hunting_tasks", label: "任務追蹤", icon: "check_circle", permKey: "狩獵任務" },
+  { id: "hunting_tasks", label: "狩獵任務", icon: "check_circle", permKey: "狩獵任務" },
   { id: "command_center", label: "指揮中心", icon: "grid_view", permKey: "指揮中心" },
 ];
 
@@ -51,7 +51,7 @@ export default function HuntingManagementPage() {
 
   const defaultNav = navItems.length > 0 ? navItems[0].id : "hunting_tasks";
   const [activeNav, setActiveNav] = useState(defaultNav);
-  const [activeSubTab, setActiveSubTab] = useState("狩獵任務");
+  const [activeSubTab, setActiveSubTab] = useState("每周任務");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -103,7 +103,7 @@ export default function HuntingManagementPage() {
     if (swipeLocked.current) return;
     
     // Clamp offset: prevent over-swiping beyond the two panels
-    const tabs = ["任務清單", "狩獵任務"];
+    const tabs = ["專案任務", "每周任務"];
     const activeIdx = tabs.indexOf(activeSubTab);
     let clampedOffset = dx;
     // If on first tab, can't swipe right further; if on last, can't swipe left further
@@ -126,9 +126,9 @@ export default function HuntingManagementPage() {
     
     if (Math.abs(diff) > 60 && isSwiping) {
       if (diff > 0) {
-        setActiveSubTab("任務清單");
+        setActiveSubTab("專案任務");
       } else {
-        setActiveSubTab("狩獵任務");
+        setActiveSubTab("每周任務");
       }
     }
     
@@ -198,8 +198,8 @@ export default function HuntingManagementPage() {
   }, []);
 
   const handleCopy = () => {
-    if (activeSubTab === "任務清單") {
-      alert("任務清單功能開發中，目前尚未有資料可供分享！");
+    if (activeSubTab === "專案任務") {
+      alert("專案任務功能開發中，目前尚未有資料可供分享！");
       setIsShareOpen(false);
       return;
     }
@@ -221,8 +221,8 @@ export default function HuntingManagementPage() {
   };
 
   const handleShareLine = () => {
-    if (activeSubTab === "任務清單") {
-      alert("任務清單功能開發中，目前尚未有資料可供分享！");
+    if (activeSubTab === "專案任務") {
+      alert("專案任務功能開發中，目前尚未有資料可供分享！");
       setIsShareOpen(false);
       return;
     }
@@ -449,13 +449,13 @@ export default function HuntingManagementPage() {
           <div className="h-[48px] px-6 lg:px-10 flex items-center justify-between border-b border-[#E4E4E7]/60">
             <div className="flex items-center">
               {activeNav === 'hunting_tasks' && (() => {
-                const tabs = ["任務清單", "狩獵任務"];
+                const tabs = ["專案任務", "每周任務"];
                 const activeIdx = tabs.indexOf(activeSubTab);
                 return (
                   <div 
                     className="relative flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
-                    onClick={() => setActiveSubTab(activeSubTab === "任務清單" ? "狩獵任務" : "任務清單")}
+                    onClick={() => setActiveSubTab(activeSubTab === "專案任務" ? "每周任務" : "專案任務")}
                   >
                     {/* Sliding pill indicator */}
                     <div 
@@ -513,7 +513,7 @@ export default function HuntingManagementPage() {
       >
 
         {/* Mobile Search Bar */}
-        {!(activeNav === 'hunting_tasks' && activeSubTab === '狩獵任務') && (
+        {!(activeNav === 'hunting_tasks' && activeSubTab === '每周任務') && (
           <div className="px-6 md:hidden">
             <div className="relative group w-full">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors" style={{ fontVariationSettings: "'wght' 200" }}>search</span>
@@ -528,21 +528,21 @@ export default function HuntingManagementPage() {
             <div 
               className="flex w-[200%] md:w-full h-full md:!transform-none"
               style={{ 
-                transform: activeSubTab === "狩獵任務" 
+                transform: activeSubTab === "每周任務" 
                   ? `translateX(calc(-50% + ${swipeOffset}px))` 
                   : `translateX(${swipeOffset}px)`,
                 transition: isSwiping ? 'none' : 'transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)',
               }}
             >
-              {/* Panel 1: 任務清單 */}
-              <div className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== '任務清單' ? 'md:hidden' : ''}`}>
+              {/* Panel 1: 專案任務 */}
+              <div className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== '專案任務' ? 'md:hidden' : ''}`}>
                 <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
                   <span className="material-symbols-outlined text-[48px] text-[#E4E4E7] mb-4" style={{ fontVariationSettings: "'wght' 200" }}>construction</span>
                   <p className="text-[#A1A1AA] text-sm tracking-widest font-medium">設計施工中</p>
                 </div>
               </div>
-              {/* Panel 2: 狩獵任務 */}
-              <div className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== '狩獵任務' ? 'md:hidden' : ''}`}>
+              {/* Panel 2: 每周任務 */}
+              <div className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== '每周任務' ? 'md:hidden' : ''}`}>
                 <HuntingTasksView ref={tasksViewRef} />
               </div>
             </div>
