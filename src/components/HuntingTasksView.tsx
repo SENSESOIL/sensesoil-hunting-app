@@ -463,7 +463,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
             <span className="text-[13px] font-bold text-[#18181B]">{totalFail}</span>
             <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">未達</span>
           </div>
-           <div className="flex items-center gap-1.5 ml-auto">
+           <div className="flex items-center gap-1.5">
             <span className="text-[13px] font-bold text-[#A1A1AA]">{totalTodo}</span>
             <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">待辦</span>
           </div>
