@@ -147,6 +147,29 @@ export function useHuntingTasks() {
     return Array.from(weeksMap.values());
   }, [dbTasks, emptyWeeks]);
 
+  const hasPruned = useRef(false);
+
+  React.useEffect(() => {
+    if (dbTasks && dbTasks.length > 0 && hunterName && !hasPruned.current) {
+      hasPruned.current = true;
+      const validWeekIds = new Set(emptyWeeks.map(w => w.id));
+      const oldTasks = dbTasks.filter(t => !validWeekIds.has(t.week_id));
+      
+      if (oldTasks.length > 0) {
+        const oldTaskIds = oldTasks.map(t => t.id);
+        
+        // Optimistic UI update
+        mutate(current => current?.filter(t => !oldTaskIds.includes(t.id)), false);
+        
+        // Delete from database in chunks if there are many, but Supabase supports up to 1000 items in `.in`
+        supabase.from('hunting_tasks').delete().in('id', oldTaskIds).then(({ error }) => {
+          if (error) console.error("Failed to prune old tasks:", error);
+          else console.log(`Pruned ${oldTaskIds.length} old tasks.`);
+        });
+      }
+    }
+  }, [dbTasks, emptyWeeks, hunterName, mutate]);
+
   const toggleStatus = async (weekId: string, taskId: string, subId?: string) => {
     if (!hunterName) return;
     const mainTask = dbTasks?.find(t => t.id === taskId);
