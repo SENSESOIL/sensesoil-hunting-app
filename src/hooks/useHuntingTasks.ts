@@ -309,10 +309,30 @@ export function useHuntingTasks() {
     return data;
   };
 
+  const ensureMainStatus = async (currentData: DBTask[], mainTaskId: string) => {
+    const mainTask = currentData.find(t => t.id === mainTaskId);
+    if (!mainTask) return currentData;
+    const subs = currentData.filter(t => t.parent_id === mainTaskId) as SubTask[];
+    const newMainStatus = calculateMainStatus(subs, mainTask.status);
+    if (newMainStatus !== mainTask.status) {
+      await supabase.from('hunting_tasks').update({ status: newMainStatus }).eq('id', mainTaskId);
+      return currentData.map(t => t.id === mainTaskId ? { ...t, status: newMainStatus } : t);
+    }
+    return currentData;
+  };
+
   const deleteTask = async (id: string) => {
-    if (!hunterName) return;
-    mutate(current => current?.filter(t => t.id !== id && t.parent_id !== id), false);
+    if (!hunterName || !dbTasks) return;
+    const taskToDelete = dbTasks.find(t => t.id === id);
+    const parentId = taskToDelete?.parent_id;
+
+    let newData = dbTasks.filter(t => t.id !== id && t.parent_id !== id);
     await supabase.from('hunting_tasks').delete().eq('id', id);
+
+    if (parentId) {
+       newData = await ensureMainStatus(newData, parentId);
+    }
+    mutate(newData, false);
     mutate();
   };
 
@@ -361,17 +381,23 @@ export function useHuntingTasks() {
     }
 
     // Build completely new data array with the moved item updated
-    const newData = snapshot.map(t => 
+    let newData = snapshot.map(t => 
       t.id === movedItemId 
         ? { ...t, parent_id: destTaskId, order_index: newOrder } 
         : t
     );
 
+    // Save to DB in background
+    await supabase.from('hunting_tasks').update({ parent_id: destTaskId, order_index: newOrder }).eq('id', movedItemId);
+
+    if (sourceTaskId !== destTaskId) {
+      newData = await ensureMainStatus(newData, sourceTaskId);
+      newData = await ensureMainStatus(newData, destTaskId);
+    }
+
     // Synchronous optimistic update — force SWR to immediately use this data
     mutate(newData, { revalidate: false });
 
-    // Save to DB in background
-    await supabase.from('hunting_tasks').update({ parent_id: destTaskId, order_index: newOrder }).eq('id', movedItemId);
     // Revalidate after a delay to sync with server
     setTimeout(() => mutate(), 1000);
   };
