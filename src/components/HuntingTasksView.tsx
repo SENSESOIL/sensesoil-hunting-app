@@ -381,7 +381,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                               <div 
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                className={`flex items-center py-1 px-1 rounded-[10px] transition-colors group/sub ${snapshot.isDragging ? 'bg-[#FFFFFF] shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-[#E4E4E7] z-50' : highlightUnfinished && isThisWeek && sub.status === 'todo' ? 'bg-red-50 border border-red-200' : 'hover:bg-[#FAFAFA]'}`}
+                                className={`relative flex items-center py-1 px-1 rounded-[10px] transition-colors group/sub ${snapshot.isDragging ? 'bg-[#FFFFFF] shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-[#E4E4E7] z-50' : highlightUnfinished && isThisWeek && sub.status === 'todo' ? 'bg-red-50 border border-red-200' : 'hover:bg-[#FAFAFA]'}`}
                               >
                                 <div 
                                   {...provided.dragHandleProps}
