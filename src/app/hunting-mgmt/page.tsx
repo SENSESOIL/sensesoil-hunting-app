@@ -485,7 +485,7 @@ export default function HuntingManagementPage() {
                   className="w-8 h-8 flex items-center justify-center rounded-full text-[#A1A1AA] hover:bg-[#F4F4F5] hover:text-[#71717A] transition-colors"
                   title="如何操作"
                 >
-                  <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 300" }}>help</span>
+                  <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>help</span>
                 </button>
               )}
               
