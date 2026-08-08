@@ -187,7 +187,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
       const formatWeek = (w: WeekRecord | undefined, title: string) => {
         if (!w) return '';
-        let text = `${title}【狩獵任務】\n`;
+        let text = `${title} 【狩獵任務】\n`;
         w.tasks.forEach((t, i) => {
           text += `${formatTaskStatus(t.status)}${i + 1}. ${t.text}\n`;
           t.subs.forEach(s => {
