@@ -409,7 +409,6 @@ export function useHuntingTasks() {
     const targetTasks = dbTasks.filter(t => t.week_id === targetWeekId);
     const targetTaskIds = targetTasks.map(t => t.id);
     if (targetTaskIds.length > 0) {
-      mutate(current => current?.filter(t => t.week_id !== targetWeekId), false);
       // Supabase in() has a limit, but for a week it shouldn't exceed 1000
       await supabase.from('hunting_tasks').delete().in('id', targetTaskIds);
     }
