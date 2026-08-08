@@ -191,7 +191,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
         return text;
       };
 
-      return `${formatWeek(thisWeek, '本週任務')}\n${formatWeek(nextWeek, '下週任務')}`.trim();
+      return `${formatWeek(thisWeek, '本週')}\n${formatWeek(nextWeek, '下週')}`.trim();
     }
   }));
 
