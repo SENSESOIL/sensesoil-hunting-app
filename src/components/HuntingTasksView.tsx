@@ -52,7 +52,8 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     addSubtask, 
     deleteTask, 
     reorderSubtasks,
-    populateDefaultTasks
+    populateDefaultTasks,
+    copyFromPreviousWeek
   } = useHuntingTasks();
 
   const [currentWeekIndex, setCurrentWeekIndex] = useState(actualCurrentWeekIndex);
@@ -63,6 +64,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
   // State to track which item is being edited: { weekId, taskId, subId? }
   const [editingTarget, setEditingTarget] = useState<{ weekId: string; taskId: string; subId?: string } | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [showDuplicateMenu, setShowDuplicateMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -467,6 +469,43 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
             <span className="text-[13px] font-bold text-[#A1A1AA]">{totalTodo}</span>
             <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">待辦</span>
           </div>
+
+          {isNextWeek && !isContentLocked && (
+            <div className="ml-auto relative">
+              <button
+                onClick={() => setShowDuplicateMenu(!showDuplicateMenu)}
+                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] text-[#A1A1AA] hover:text-[#18181B] transition-colors"
+                title="複製上週任務"
+              >
+                <span className="material-symbols-outlined text-[16px]">content_copy</span>
+              </button>
+              {showDuplicateMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowDuplicateMenu(false)} />
+                  <div className="absolute bottom-[calc(100%+8px)] right-0 w-36 bg-white rounded-lg shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-[#E4E4E7] py-1 z-50 overflow-hidden">
+                    <button
+                      onClick={() => {
+                        setShowDuplicateMenu(false);
+                        copyFromPreviousWeek(thisWeekId, week.id, false);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#71717A] hover:bg-[#FAFAFA] hover:text-[#18181B] transition-colors"
+                    >
+                      複製僅主任務
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDuplicateMenu(false);
+                        copyFromPreviousWeek(thisWeekId, week.id, true);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#71717A] hover:bg-[#FAFAFA] hover:text-[#18181B] transition-colors"
+                    >
+                      複製主子任務
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );

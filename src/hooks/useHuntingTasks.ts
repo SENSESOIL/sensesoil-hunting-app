@@ -402,6 +402,73 @@ export function useHuntingTasks() {
     setTimeout(() => mutate(), 1000);
   };
 
+  const copyFromPreviousWeek = async (sourceWeekId: string, targetWeekId: string, withSubtasks: boolean) => {
+    if (!hunterName || !dbTasks) return;
+    
+    // 1. Clear target week tasks
+    const targetTasks = dbTasks.filter(t => t.week_id === targetWeekId);
+    const targetTaskIds = targetTasks.map(t => t.id);
+    if (targetTaskIds.length > 0) {
+      mutate(current => current?.filter(t => t.week_id !== targetWeekId), false);
+      // Supabase in() has a limit, but for a week it shouldn't exceed 1000
+      await supabase.from('hunting_tasks').delete().in('id', targetTaskIds);
+    }
+
+    // 2. Find source main tasks
+    const sourceMainTasks = dbTasks.filter(t => t.week_id === sourceWeekId && !t.parent_id).sort((a,b) => a.order_index - b.order_index);
+    if (sourceMainTasks.length === 0) {
+      mutate();
+      return;
+    }
+
+    const mainTasksToInsert = sourceMainTasks.map(t => ({
+      week_id: targetWeekId,
+      hunter_name: hunterName,
+      parent_id: null,
+      text: t.text,
+      status: "todo",
+      order_index: t.order_index
+    }));
+
+    const { data: insertedMainTasks, error } = await supabase.from('hunting_tasks').insert(mainTasksToInsert).select();
+    
+    if (error || !insertedMainTasks) {
+      console.error("Error copying tasks", error);
+      mutate();
+      return;
+    }
+
+    // 3. Copy subtasks if requested
+    if (withSubtasks) {
+      const sourceSubTasks = dbTasks.filter(t => t.week_id === sourceWeekId && t.parent_id);
+      const subTasksToInsert: any[] = [];
+
+      for (const srcSub of sourceSubTasks) {
+        const srcParent = sourceMainTasks.find(m => m.id === srcSub.parent_id);
+        if (srcParent) {
+          // Find matching newly inserted parent
+          const newParent = insertedMainTasks.find(m => m.text === srcParent.text && m.order_index === srcParent.order_index);
+          if (newParent) {
+            subTasksToInsert.push({
+              week_id: targetWeekId,
+              hunter_name: hunterName,
+              parent_id: newParent.id,
+              text: srcSub.text,
+              status: "todo",
+              order_index: srcSub.order_index
+            });
+          }
+        }
+      }
+
+      if (subTasksToInsert.length > 0) {
+        await supabase.from('hunting_tasks').insert(subTasksToInsert);
+      }
+    }
+    
+    mutate();
+  };
+
   return {
     hunterName,
     weeks,
@@ -414,5 +481,6 @@ export function useHuntingTasks() {
     deleteTask,
     reorderSubtasks,
     populateDefaultTasks,
+    copyFromPreviousWeek,
   };
 }
