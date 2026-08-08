@@ -284,6 +284,9 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     const isWeekAfterNext = titlePrefix === "下下週任務";
     const isGreyStyle = !isThisWeek;
     
+    const weekIndex = weeks.findIndex(w => w.id === week.id);
+    const previousWeekId = weekIndex > 0 ? weeks[weekIndex - 1]?.id : undefined;
+    
     const isContentLocked = !isThisWeek && !isNextWeek && !isWeekAfterNext;
 
     const totalDone = week.tasks.filter(t => t.status === "done").length;
@@ -471,7 +474,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
             <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">待辦</span>
           </div>
 
-          {isNextWeek && !isContentLocked && (
+          {(isNextWeek || isWeekAfterNext) && !isContentLocked && previousWeekId && (
             <div className="ml-auto relative">
               <button
                 onClick={() => setShowDuplicateMenu(!showDuplicateMenu)}
@@ -489,7 +492,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                       <button
                         onClick={() => {
                           setShowDuplicateMenu(false);
-                          copyFromPreviousWeek(thisWeekId, week.id, false);
+                          copyFromPreviousWeek(previousWeekId, week.id, false);
                         }}
                         className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
                       >
@@ -499,7 +502,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                       <button
                         onClick={() => {
                           setShowDuplicateMenu(false);
-                          copyFromPreviousWeek(thisWeekId, week.id, true);
+                          copyFromPreviousWeek(previousWeekId, week.id, true);
                         }}
                         className="w-full px-4 py-2.5 text-left text-[13px] font-medium text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
                       >
@@ -526,7 +529,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                           <button 
                             onClick={() => {
                               setShowDuplicateMenu(false);
-                              copyFromPreviousWeek(thisWeekId, week.id, false);
+                              copyFromPreviousWeek(previousWeekId, week.id, false);
                             }}
                             className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 text-base font-semibold text-[#18181B] active:scale-[0.98] transition-transform outline-none"
                           >
@@ -536,7 +539,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                           <button 
                             onClick={() => {
                               setShowDuplicateMenu(false);
-                              copyFromPreviousWeek(thisWeekId, week.id, true);
+                              copyFromPreviousWeek(previousWeekId, week.id, true);
                             }}
                             className="w-full bg-white rounded-2xl p-4 flex items-center gap-4 text-base font-semibold text-[#18181B] active:scale-[0.98] transition-transform outline-none"
                           >
