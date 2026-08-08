@@ -190,7 +190,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
         return text;
       };
 
-      return `${formatWeek(thisWeek, '本週')}\n${formatWeek(nextWeek, '下週')}`.trim();
+      return `${formatWeek(thisWeek, '本週任務')}\n${formatWeek(nextWeek, '下週任務')}`.trim();
     }
   }));
 
@@ -206,7 +206,8 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     if (weekId !== thisWeekId && weekId !== nextWeekId) return;
     setUnwrittenNextWeekTasks([]);
     setEditingTarget({ weekId, taskId, subId });
-    setEditingText(text);
+    const initialText = (text === "新任務" || text === "新子任務") ? "" : text;
+    setEditingText(initialText);
   };
 
   const saveEdit = () => {
@@ -244,10 +245,10 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
   };
 
   const getTitlePrefix = (weekId: string) => {
-    if (weekId === thisWeekId) return "本週";
-    if (weekId === nextWeekId) return "下週";
-    if (weekId === weeks[actualCurrentWeekIndex - 1]?.id) return "上週";
-    return "歷史";
+    if (weekId === thisWeekId) return "本週任務";
+    if (weekId === nextWeekId) return "下週任務";
+    if (weekId === weeks[actualCurrentWeekIndex - 1]?.id) return "上週任務";
+    return "歷史任務";
   };
 
   const handleAddSubtask = async (weekId: string, taskId: string) => {
@@ -269,8 +270,8 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
   const renderCard = (week: WeekRecord, isRightCard: boolean = false) => {
     const titlePrefix = getTitlePrefix(week.id);
-    const isThisWeek = titlePrefix === "本週";
-    const isNextWeek = titlePrefix === "下週";
+    const isThisWeek = titlePrefix === "本週任務";
+    const isNextWeek = titlePrefix === "下週任務";
     const isGreyStyle = !isThisWeek;
     
     const isContentLocked = !isThisWeek && !isNextWeek;
