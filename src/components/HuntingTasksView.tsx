@@ -78,6 +78,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
   const thisWeekId = weeks[actualCurrentWeekIndex]?.id;
   const nextWeekId = weeks[actualCurrentWeekIndex + 1]?.id || 'empty';
+  const weekAfterNextId = weeks[actualCurrentWeekIndex + 2]?.id || 'empty2';
 
   // Auto-populate default tasks for current and next week if they are completely empty
   useEffect(() => {
@@ -199,11 +200,11 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
   };
 
   const handleNextWeek = () => {
-    setCurrentWeekIndex((prev) => Math.min(actualCurrentWeekIndex, prev + 1));
+    setCurrentWeekIndex((prev) => Math.min(weeks.length - 2, prev + 1));
   };
 
   const startEditing = (weekId: string, taskId: string, subId?: string, text: string = "") => {
-    if (weekId !== thisWeekId && weekId !== nextWeekId) return;
+    if (weekId !== thisWeekId && weekId !== nextWeekId && weekId !== weekAfterNextId) return;
     setUnwrittenNextWeekTasks([]);
     setEditingTarget({ weekId, taskId, subId });
     const initialText = (text === "新任務" || text === "新子任務") ? "" : text;
@@ -238,8 +239,8 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     const [sourceWeekId, sourceTaskId] = source.droppableId.split("::");
     const [destWeekId, destTaskId] = destination.droppableId.split("::");
 
-    if (sourceWeekId !== thisWeekId && sourceWeekId !== nextWeekId) return;
-    if (destWeekId !== thisWeekId && destWeekId !== nextWeekId) return;
+    if (sourceWeekId !== thisWeekId && sourceWeekId !== nextWeekId && sourceWeekId !== weekAfterNextId) return;
+    if (destWeekId !== thisWeekId && destWeekId !== nextWeekId && destWeekId !== weekAfterNextId) return;
 
     reorderSubtasks(sourceTaskId, destTaskId, source.index, destination.index);
   };
@@ -247,6 +248,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
   const getTitlePrefix = (weekId: string) => {
     if (weekId === thisWeekId) return "本週任務";
     if (weekId === nextWeekId) return "下週任務";
+    if (weekId === weekAfterNextId) return "下下週任務";
     if (weekId === weeks[actualCurrentWeekIndex - 1]?.id) return "上週任務";
     return "歷史任務";
   };
@@ -272,9 +274,10 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     const titlePrefix = getTitlePrefix(week.id);
     const isThisWeek = titlePrefix === "本週任務";
     const isNextWeek = titlePrefix === "下週任務";
+    const isWeekAfterNext = titlePrefix === "下下週任務";
     const isGreyStyle = !isThisWeek;
     
-    const isContentLocked = !isThisWeek && !isNextWeek;
+    const isContentLocked = !isThisWeek && !isNextWeek && !isWeekAfterNext;
 
     const totalDone = week.tasks.filter(t => t.status === "done").length;
     const totalPartial = week.tasks.filter(t => t.status === "partial").length;
@@ -304,7 +307,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
             )}
             <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">{week.label}</span>
             {!isRightCard && (
-               <button onClick={handleNextWeek} disabled={currentWeekIndex >= actualCurrentWeekIndex} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] disabled:opacity-30 disabled:hover:bg-transparent text-[#71717A]">
+               <button onClick={handleNextWeek} disabled={currentWeekIndex >= weeks.length - 2} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] disabled:opacity-30 disabled:hover:bg-transparent text-[#71717A]">
                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                </button>
             )}
@@ -319,7 +322,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                 {/* Main Task Row */}
                 <div className={`flex items-center py-1.5 px-1 rounded-[14px] transition-colors relative ${(highlightUnfinished && isThisWeek && task.status === 'todo') || (isNextWeek && unwrittenNextWeekTasks.includes(task.id)) ? 'bg-red-50 border border-red-200' : isContentLocked ? '' : 'hover:bg-[#FAFAFA]'}`}>
                   <div className="mr-2">
-                    <StatusIcon status={task.status} onClick={(isThisWeek || isNextWeek) && task.subs.length === 0 ? () => toggleStatus(week.id, task.id) : undefined} />
+                    <StatusIcon status={task.status} onClick={(!isContentLocked) && task.subs.length === 0 ? () => toggleStatus(week.id, task.id) : undefined} />
                   </div>
                   <div className="text-[12px] font-bold text-[#A1A1AA] w-4 shrink-0 mt-0.5">{idx + 1}.</div>
                   
@@ -390,7 +393,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                   <span className="material-symbols-outlined text-[16px]">drag_indicator</span>
                                 </div>
                                 <div className="-ml-1 mr-1 scale-75 shrink-0 flex items-center justify-center">
-                                  <StatusIcon status={sub.status} onClick={isThisWeek || isNextWeek ? () => toggleStatus(week.id, task.id, sub.id) : undefined} />
+                                  <StatusIcon status={sub.status} onClick={!isContentLocked ? () => toggleStatus(week.id, task.id, sub.id) : undefined} />
                                 </div>
                                 {isEditingSub ? (
                                   <input
