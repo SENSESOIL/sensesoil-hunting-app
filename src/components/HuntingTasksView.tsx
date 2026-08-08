@@ -338,10 +338,10 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                     />
                   ) : (
                     <div 
-                      className={`flex-1 text-[14px] font-semibold text-[#18181B] leading-snug ml-1 ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
+                      className={`flex-1 text-[14px] font-semibold text-[#18181B] leading-snug ml-1 min-h-[20px] ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
                       onClick={() => !isContentLocked && startEditing(week.id, task.id, undefined, task.text)}
                     >
-                      {task.text}
+                      {task.text.trim() === "" ? (idx < 5 ? ["新任務", "新任務", "新任務", "體能", "格局"][idx] : "新任務") : task.text}
                     </div>
                   )}
 
@@ -407,10 +407,10 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                   />
                                 ) : (
                                   <div 
-                                    className={`flex-1 text-[13px] text-[#71717A] font-medium leading-snug ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
+                                    className={`flex-1 text-[13px] text-[#71717A] font-medium leading-snug min-h-[18px] ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
                                     onClick={() => !isContentLocked && startEditing(week.id, task.id, sub.id, sub.text)}
                                   >
-                                    {sub.text}
+                                    {sub.text.trim() === "" ? "新子任務" : sub.text}
                                   </div>
                                 )}
                                 {/* Delete Subtask Button (Hover) */}
