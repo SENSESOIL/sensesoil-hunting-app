@@ -482,7 +482,7 @@ export default function HuntingManagementPage() {
               {activeNav === 'hunting_tasks' && activeSubTab === '每周任務' && (
                 <button 
                   onClick={() => alert("如何操作：頁面製作中...")} 
-                  className="w-8 h-8 flex items-center justify-center rounded-full text-[#A1A1AA] hover:bg-[#F4F4F5] hover:text-[#71717A] transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-[#71717A] hover:bg-[#F4F4F5] transition-colors"
                   title="如何操作"
                 >
                   <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>help</span>
