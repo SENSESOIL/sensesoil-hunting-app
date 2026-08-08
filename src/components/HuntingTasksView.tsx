@@ -453,7 +453,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
         </div>
 
         {/* Minimalist Summary Bar */}
-        <div className="mt-6 pt-5 border-t border-[#E4E4E7]/60 flex items-center gap-5">
+        <div className="mt-6 pt-5 border-t border-[#E4E4E7]/60 flex items-center gap-5 pl-2">
           <div className="flex items-center gap-1.5">
             <span className="text-[13px] font-bold text-[#F39C12]">{totalDone}</span>
             <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">完成</span>
@@ -475,10 +475,10 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
             <div className="ml-auto relative">
               <button
                 onClick={() => setShowDuplicateMenu(!showDuplicateMenu)}
-                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] text-[#A1A1AA] hover:text-[#18181B] transition-all outline-none"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] text-[#A1A1AA] hover:text-[#18181B] transition-all outline-none"
                 title="複製上週任務"
               >
-                <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}>content_copy</span>
+                <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}>content_copy</span>
               </button>
               {showDuplicateMenu && (
                 <>
