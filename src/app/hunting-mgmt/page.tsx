@@ -478,9 +478,19 @@ export default function HuntingManagementPage() {
                 );
               })()}
             </div>
-            
-            {/* Desktop Share Button (Hidden on Mobile) */}
-            <div className="relative hidden md:block" ref={shareRefDesktop}>
+            <div className="flex items-center gap-1">
+              {activeNav === 'hunting_tasks' && activeSubTab === '每周任務' && (
+                <button 
+                  onClick={() => alert("如何操作：頁面製作中...")} 
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-[#A1A1AA] hover:bg-[#F4F4F5] hover:text-[#71717A] transition-colors"
+                  title="如何操作"
+                >
+                  <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 300" }}>help</span>
+                </button>
+              )}
+              
+              {/* Desktop Share Button (Hidden on Mobile) */}
+              <div className="relative hidden md:block" ref={shareRefDesktop}>
               <button onClick={() => setIsShareOpen(!isShareOpen)} className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? 'bg-[#F4F4F5] text-[#18181B]' : 'hover:bg-[#F4F4F5] text-[#71717A]'}`} title="分享">
                 <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>ios_share</span>
               </button>
@@ -502,7 +512,8 @@ export default function HuntingManagementPage() {
               )}
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
       {/* Content Container */}
       <div 
