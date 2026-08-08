@@ -513,12 +513,14 @@ export default function HuntingManagementPage() {
       >
 
         {/* Mobile Search Bar */}
-        <div className="px-6 md:hidden">
-          <div className="relative group w-full">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors" style={{ fontVariationSettings: "'wght' 200" }}>search</span>
-            <input type="text" placeholder="" className="w-full bg-[#FFFFFF] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] focus:border-[#F39C12] focus:ring-1 focus:ring-[#F39C12] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-all placeholder:text-[#A1A1AA]" />
+        {!(activeNav === 'hunting_tasks' && activeSubTab === '狩獵任務') && (
+          <div className="px-6 md:hidden">
+            <div className="relative group w-full">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors" style={{ fontVariationSettings: "'wght' 200" }}>search</span>
+              <input type="text" placeholder="" className="w-full bg-[#FFFFFF] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] focus:border-[#F39C12] focus:ring-1 focus:ring-[#F39C12] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-all placeholder:text-[#A1A1AA]" />
+            </div>
           </div>
-        </div>
+        )}
 
         {activeNav === 'hunting_tasks' ? (
           /* ============ Sliding Panel Container ============ */
