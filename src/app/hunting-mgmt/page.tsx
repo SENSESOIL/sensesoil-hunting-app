@@ -71,6 +71,7 @@ export default function HuntingManagementPage() {
   const [showNav, setShowNav] = useState(true);
   const lastScrollY = useRef(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showManual, setShowManual] = useState(false);
 
   // Swipe gesture handler for mobile sub-tab switching with real-time content sliding
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -481,7 +482,7 @@ export default function HuntingManagementPage() {
             <div className="flex items-center gap-1">
               {activeNav === 'hunting_tasks' && activeSubTab === '每周任務' && (
                 <button 
-                  onClick={() => alert("如何操作：頁面製作中...")} 
+                  onClick={() => setShowManual(true)} 
                   className="w-8 h-8 flex items-center justify-center rounded-full text-[#71717A] hover:bg-[#F4F4F5] transition-colors"
                   title="如何操作"
                 >
@@ -830,6 +831,29 @@ export default function HuntingManagementPage() {
         )}
       </div>
 
+      {/* Mobile Weekly Tasks Manual Overlay */}
+      <div 
+        className={`fixed inset-0 bg-[#FAFAFA] z-[100] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${showManual ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        <header className="fixed top-0 left-0 right-0 h-[60px] bg-[#FFFFFF]/90 backdrop-blur-md z-[110] border-b border-[#E4E4E7]/60 flex items-center justify-between px-4">
+          <button 
+            onClick={() => setShowManual(false)} 
+            className="w-10 h-10 flex items-center justify-center rounded-full text-[#18181B] active:bg-[#F4F4F5] transition-colors"
+          >
+            <span className="material-symbols-outlined text-[24px]">arrow_back_ios_new</span>
+          </button>
+          <h1 className="text-[17px] font-bold text-[#18181B] absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
+            每週任務操作說明
+          </h1>
+          <div className="w-10"></div> {/* Spacer for flex balance */}
+        </header>
+        <div className="pt-[60px] h-full overflow-y-auto">
+          {/* Content reserved for SOP images */}
+          <div className="p-6">
+            <p className="text-center text-[#A1A1AA] text-[15px] mt-10">（說明內容建置中，後續將加入SOP照片）</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
