@@ -178,6 +178,9 @@ export default function HuntingManagementPage() {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // On mobile, bottom sheets have their own full-screen backdrop to handle clicks outside
+      if (window.innerWidth < 768) return;
+
       const isOutsideMobileShare = shareRefMobile.current && !shareRefMobile.current.contains(event.target as Node);
       const isOutsideDesktopShare = shareRefDesktop.current && !shareRefDesktop.current.contains(event.target as Node);
       if (shareRefMobile.current || shareRefDesktop.current) {
