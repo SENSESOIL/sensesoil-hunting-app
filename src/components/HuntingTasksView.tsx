@@ -474,10 +474,10 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
             <div className="ml-auto relative">
               <button
                 onClick={() => setShowDuplicateMenu(!showDuplicateMenu)}
-                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] text-[#A1A1AA] hover:text-[#18181B] transition-all outline-none"
+                className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] text-[#A1A1AA] hover:text-[#18181B] transition-all outline-none"
                 title="複製上週任務"
               >
-                <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}>content_copy</span>
+                <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}>content_copy</span>
               </button>
               {showDuplicateMenu && (
                 <>
