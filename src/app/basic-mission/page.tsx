@@ -1029,7 +1029,9 @@ export default function BasicMissionPage() {
       let timePass = false;
       if (row && dayStr.trim() !== "") {
         const d = dayStr.trim();
-        if (d === "後" || d === "✕" || d === "×" || d === "X" || d === "x" || d === "-" || d === "--") {
+        if (d === "⊗") {
+          timePass = true;
+        } else if (d === "後" || d === "✕" || d === "×" || d === "X" || d === "x" || d === "-" || d === "--") {
           timePass = false;
         } else if (d === "五" || d === "六" || d === "一" || d === "二" || d === "三" || d === "四") {
           timePass = true;
@@ -1053,8 +1055,12 @@ export default function BasicMissionPage() {
       // 2. 判斷「誠」（完成度）：達 3.5 分或以上為單週及格基準
       let chengPass = false;
       if (row && chengStr.trim() !== "") {
-        const val = parseFloat(chengStr.trim());
-        chengPass = !isNaN(val) && val >= 3.5;
+        if (chengStr.trim() === "⊗") {
+          chengPass = true;
+        } else {
+          const val = parseFloat(chengStr.trim());
+          chengPass = !isNaN(val) && val >= 3.5;
+        }
       }
 
       const tiStr = row ? (row[16] || "") : "";
@@ -1071,7 +1077,10 @@ export default function BasicMissionPage() {
         const gePass = ge !== "" && ge !== "✕" && ge !== "×" && ge !== "X" && ge !== "x" && ge !== "-" && ge !== "--";
         const aPass = a !== "" && a !== "✕" && a !== "×" && a !== "X" && a !== "x" && a !== "-" && a !== "--";
 
-        if (aPass || (tiPass && gePass && a !== "✕" && a !== "×" && a !== "X" && a !== "x")) {
+        if (a === "⊗") {
+          awardPass = true;
+          displayAward = "⊗";
+        } else if (aPass || (tiPass && gePass && a !== "✕" && a !== "×" && a !== "X" && a !== "x")) {
           awardPass = true;
           if (a === "o" || a === "O" || a === "0" || a === "〇" || a === "○" || a === "") {
             displayAward = "○";
@@ -1109,9 +1118,10 @@ export default function BasicMissionPage() {
       };
     });
 
-    const avgCheng = weeks.length > 0
-      ? weeks.reduce((sum, w) => sum + (parseFloat(w.chengStr) || 0), 0) / weeks.length
-      : 0;
+    const validChengWeeks = weeks.filter(w => w.hasRow && w.chengStr.trim() !== "⊗");
+    const avgCheng = validChengWeeks.length > 0
+      ? validChengWeeks.reduce((sum, w) => sum + (parseFloat(w.chengStr) || 0), 0) / validChengWeeks.length
+      : 3.5;
 
     const isMet = isSufficientWeeks && weeks.every(w => w.hasRow && w.timePass) && (weeks.length > 0 && weeks[0].awardPass) && avgCheng >= 3.5;
 
@@ -1815,7 +1825,7 @@ export default function BasicMissionPage() {
                             defaultNote={editingRow.rawNotes?.[13] || ""}
                             symbolInputId={`edit-col-13`}
                             noteInputId={`edit-note-13`}
-                            options={["五", "六", "日", "後", "✕", ""]}
+                            options={["五", "六", "日", "後", "✕", "⊗", ""]}
                           />
                         </div>
                         <div className="space-y-1 relative z-50">
@@ -1829,7 +1839,7 @@ export default function BasicMissionPage() {
                             defaultNote={editingRow.rawNotes?.[15] || ""}
                             symbolInputId={`edit-col-15`}
                             noteInputId={`edit-note-15`}
-                            options={["5.0", "4.5", "4.0", "3.5", "3.0", "2.5", "2.0", "1.5", "1.0", "0.5", "0.0", ""]}
+                            options={["5.0", "4.5", "4.0", "3.5", "3.0", "2.5", "2.0", "1.5", "1.0", "0.5", "0.0", "⊗", ""]}
                           />
                         </div>
                         <div className="space-y-1">
@@ -1840,6 +1850,7 @@ export default function BasicMissionPage() {
                             symbolInputId={`edit-col-12`}
                             noteInputId={`edit-note-12`}
                             openUpwards={true}
+                            allowCrossCircle={true}
                           />
                         </div>
                         <div className="space-y-1">
@@ -1849,7 +1860,7 @@ export default function BasicMissionPage() {
                             defaultNote={editingRow.rawNotes?.[16] || ""}
                             symbolInputId={`edit-col-16`}
                             noteInputId={`edit-note-16`}
-                            options={["高", "中", "低", "✕", ""]}
+                            options={["高", "中", "低", "✕", "⊗", ""]}
                             openUpwards={true}
                           />
                         </div>
@@ -1860,7 +1871,7 @@ export default function BasicMissionPage() {
                             defaultNote={editingRow.rawNotes?.[17] || ""}
                             symbolInputId={`edit-col-17`}
                             noteInputId={`edit-note-17`}
-                            options={["高", "中", "低", "✕", ""]}
+                            options={["高", "中", "低", "✕", "⊗", ""]}
                             openUpwards={true}
                           />
                         </div>
