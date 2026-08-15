@@ -851,19 +851,91 @@ export default function HuntingManagementPage() {
           <div className="p-4">
             {/* 沿用卡片設計 */}
             <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col">
-              {/* 上層：截圖說明區域 */}
-              <div className="p-6 min-h-[250px] flex flex-col items-center justify-center bg-[#FAFAFA]/50">
-                <span className="material-symbols-outlined text-[#D4D4D8] text-[48px] mb-2" style={{ fontVariationSettings: "'wght' 200" }}>image</span>
-                <p className="text-center text-[#A1A1AA] text-[14px]">等待上傳截圖</p>
+              {/* 上層：截圖說明區域 (Mock UI) */}
+              <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
+                <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-[17px] font-bold text-[#18181B]">本週任務</h3>
+                    <div className="text-[11px] font-medium text-[#A1A1AA] tracking-wider uppercase flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">chevron_left</span>
+                      W33 · 8/10 - 8/15
+                      <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                    </div>
+                  </div>
+                  
+                  {/* Task 1 */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
+                      <span className="text-[14px] text-[#A1A1AA]">1.</span>
+                      <span className="text-[15px] text-[#18181B] font-medium">新任務</span>
+                    </div>
+                    {/* Add Subtask Button - Highlighted */}
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-[#F39C12] rounded-full animate-ping opacity-20"></div>
+                      <button className="w-8 h-8 rounded-full border-2 border-[#F39C12] text-[#F39C12] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+                        <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Subtask 1 */}
+                  <div className="flex items-center justify-between mb-6 pl-1">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-[16px] text-[#D4D4D8]">drag_indicator</span>
+                      <div className="w-[18px] h-[18px] rounded-full border-[1.5px] border-[#E4E4E7]"></div>
+                      <span className="text-[14px] text-[#A1A1AA]">新子任務</span>
+                    </div>
+                    {/* Delete Subtask Button - Highlighted */}
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-[#F39C12] rounded-full animate-ping opacity-20"></div>
+                      <button className="w-8 h-8 rounded-full border-2 border-[#F39C12] text-[#F39C12] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+                        <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>remove</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Task 2 */}
+                  <div className="flex items-center justify-between mb-2 opacity-50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
+                      <span className="text-[14px] text-[#A1A1AA]">2.</span>
+                      <span className="text-[15px] text-[#18181B] font-medium">新任務</span>
+                    </div>
+                    <button className="w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA]">
+                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+                    </button>
+                  </div>
+                </div>
               </div>
               
               {/* 以水平線為界 */}
               <hr className="border-[#E4E4E7] m-0" />
               
               {/* 下層：文字說明區域 */}
-              <div className="p-6 min-h-[200px] flex flex-col items-center justify-center">
-                <span className="material-symbols-outlined text-[#D4D4D8] text-[32px] mb-2" style={{ fontVariationSettings: "'wght' 200" }}>description</span>
-                <p className="text-center text-[#A1A1AA] text-[14px]">等待上傳文字說明</p>
+              <div className="p-6 bg-white">
+                <h3 className="text-[16px] font-bold text-[#18181B] mb-4 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[#F39C12] text-[20px]">lightbulb</span>
+                  子任務操作說明
+                </h3>
+                <div className="space-y-5 text-[14px] leading-relaxed text-[#52525B]">
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-full border border-[#F39C12] bg-[#F39C12]/10 text-[#F39C12] flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 400" }}>add</span>
+                    </div>
+                    <div>
+                      <p><strong className="text-[#18181B] font-semibold text-[15px]">新增子任務</strong><br/>點擊主任務右側的 <strong className="text-[#F39C12]">「+」</strong> 按鈕，即可在該主任務下方展開並新增一筆子任務。</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-full border border-[#F39C12] bg-[#F39C12]/10 text-[#F39C12] flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 400" }}>remove</span>
+                    </div>
+                    <div>
+                      <p><strong className="text-[#18181B] font-semibold text-[15px]">刪除子任務</strong><br/>點擊子任務右側的 <strong className="text-[#F39C12]">「-」</strong> 按鈕，即可將該筆不需要的子任務刪除。</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
