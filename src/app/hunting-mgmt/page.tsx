@@ -914,16 +914,12 @@ export default function HuntingManagementPage() {
               
               {/* 下層：文字說明區域 */}
               <div className="p-6 bg-white">
-                <h3 className="text-[16px] font-bold text-[#18181B] mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#F39C12] text-[20px]">lightbulb</span>
-                  子任務操作說明
-                </h3>
-                <div className="space-y-5 text-[14px] leading-relaxed text-[#52525B]">
+                <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
                   <div>
-                    <p><strong className="text-[#18181B] font-semibold text-[15px]">新增子任務</strong><br/>點擊主任務右側的 <strong className="text-[#F39C12]">「+」</strong> 即可新增。</p>
+                    <p><strong className="text-[#18181B] font-semibold text-[14px]">新增子任務</strong><br/>點擊主任務右側的 <strong className="text-[#F39C12]">「+」</strong> 即可新增。</p>
                   </div>
                   <div>
-                    <p><strong className="text-[#18181B] font-semibold text-[15px]">刪除子任務</strong><br/>點擊子任務右側的 <strong className="text-[#F39C12]">「-」</strong> 即可刪除。</p>
+                    <p><strong className="text-[#18181B] font-semibold text-[14px]">刪除子任務</strong><br/>點擊子任務右側的 <strong className="text-[#F39C12]">「-」</strong> 即可刪除。</p>
                   </div>
                 </div>
               </div>
