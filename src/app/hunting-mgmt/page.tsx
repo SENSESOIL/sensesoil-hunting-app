@@ -847,10 +847,25 @@ export default function HuntingManagementPage() {
           </h1>
           <div className="w-10"></div> {/* Spacer for flex balance */}
         </header>
-        <div className="pt-[60px] h-full overflow-y-auto">
-          {/* Content reserved for SOP images */}
-          <div className="p-6">
-            <p className="text-center text-[#A1A1AA] text-[15px] mt-10">（說明內容建置中，後續將加入SOP照片）</p>
+        <div className="pt-[60px] h-full overflow-y-auto pb-20 bg-[#FAFAFA]">
+          <div className="p-4">
+            {/* 沿用卡片設計 */}
+            <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col">
+              {/* 上層：截圖說明區域 */}
+              <div className="p-6 min-h-[250px] flex flex-col items-center justify-center bg-[#FAFAFA]/50">
+                <span className="material-symbols-outlined text-[#D4D4D8] text-[48px] mb-2" style={{ fontVariationSettings: "'wght' 200" }}>image</span>
+                <p className="text-center text-[#A1A1AA] text-[14px]">等待上傳截圖</p>
+              </div>
+              
+              {/* 以水平線為界 */}
+              <hr className="border-[#E4E4E7] m-0" />
+              
+              {/* 下層：文字說明區域 */}
+              <div className="p-6 min-h-[200px] flex flex-col items-center justify-center">
+                <span className="material-symbols-outlined text-[#D4D4D8] text-[32px] mb-2" style={{ fontVariationSettings: "'wght' 200" }}>description</span>
+                <p className="text-center text-[#A1A1AA] text-[14px]">等待上傳文字說明</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
