@@ -919,21 +919,11 @@ export default function HuntingManagementPage() {
                   子任務操作說明
                 </h3>
                 <div className="space-y-5 text-[14px] leading-relaxed text-[#52525B]">
-                  <div className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-full border border-[#F39C12] bg-[#F39C12]/10 text-[#F39C12] flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 400" }}>add</span>
-                    </div>
-                    <div>
-                      <p><strong className="text-[#18181B] font-semibold text-[15px]">新增子任務</strong><br/>點擊主任務右側的 <strong className="text-[#F39C12]">「+」</strong> 按鈕，即可在該主任務下方展開並新增一筆子任務。</p>
-                    </div>
+                  <div>
+                    <p><strong className="text-[#18181B] font-semibold text-[15px]">新增子任務</strong><br/>點擊主任務右側的 <strong className="text-[#F39C12]">「+」</strong> 即可新增。</p>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-full border border-[#F39C12] bg-[#F39C12]/10 text-[#F39C12] flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 400" }}>remove</span>
-                    </div>
-                    <div>
-                      <p><strong className="text-[#18181B] font-semibold text-[15px]">刪除子任務</strong><br/>點擊子任務右側的 <strong className="text-[#F39C12]">「-」</strong> 按鈕，即可將該筆不需要的子任務刪除。</p>
-                    </div>
+                  <div>
+                    <p><strong className="text-[#18181B] font-semibold text-[15px]">刪除子任務</strong><br/>點擊子任務右側的 <strong className="text-[#F39C12]">「-」</strong> 即可刪除。</p>
                   </div>
                 </div>
               </div>
