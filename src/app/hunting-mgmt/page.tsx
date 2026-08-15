@@ -1105,19 +1105,29 @@ export default function HuntingManagementPage() {
                       <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
                         <span className="material-symbols-outlined text-[15px] scale-[0.65]" style={{ fontVariationSettings: "'wght' 500, 'FILL' 0" }}>content_copy</span>
                       </span>
-                      即可複製上一週的任務內容。
+                      會跳出複製選單，您可依需求選擇複製模式。
                     </p>
                   </div>
                   <div>
                     <p>
                       <strong className="text-[#18181B] font-semibold text-[14px]">複製主任務</strong><br/>
-                      點選「複製主」：僅會複製上一週的各項主任務。
+                      點選選單中的
+                      <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-solid border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
+                        <span className="material-symbols-outlined" style={{ fontSize: '10px', fontVariationSettings: "'wght' 500" }}>format_list_bulleted</span>
+                        複製主任務
+                      </span>
+                      ：僅會複製上一週的各項主任務。
                     </p>
                   </div>
                   <div>
                     <p>
                       <strong className="text-[#18181B] font-semibold text-[14px]">複製全任務</strong><br/>
-                      點選「複製全」：將上一週的「主任務與子任務」完整複製過來。
+                      點選選單中的
+                      <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-solid border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
+                        <span className="material-symbols-outlined" style={{ fontSize: '10px', fontVariationSettings: "'wght' 500" }}>notes</span>
+                        複製全任務
+                      </span>
+                      ：將上一週的「主任務與子任務」完整複製過來。
                     </p>
                   </div>
                 </div>
