@@ -420,14 +420,14 @@ const ManualCards = () => (
             </div>
           </div>
 
-          {/* Tasks 1 to 5 */}
-          {[1, 2, 3, 4, 5].map((num) => (
-            <div key={num} className="flex items-center justify-between mb-4">
+          {/* Tasks 4 to 5 */}
+          {[4, 5].map((num) => (
+            <div key={num} className={`flex items-center justify-between mb-4 ${num === 4 ? "opacity-50" : ""}`}>
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
                 <span className="text-[14px] text-[#A1A1AA]">{num}.</span>
                 <span className="text-[15px] text-[#18181B] font-medium">
-                  {num >= 4 ? (num === 4 ? "體能" : "格局") : "新任務"}
+                  {num === 4 ? "體能" : "格局"}
                 </span>
               </div>
               <button className="w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA]">
