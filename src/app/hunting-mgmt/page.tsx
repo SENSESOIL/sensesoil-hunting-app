@@ -987,7 +987,16 @@ export default function HuntingManagementPage() {
                   
                   {/* Add Main Task Button - Highlighted */}
                   <div className="relative mt-2">
-                    <div className="absolute inset-0 bg-[#F39C12] rounded-2xl animate-ping opacity-20"></div>
+                    <style>{`
+                      @keyframes ping-shadow-orange {
+                        0% { box-shadow: 0 0 0 0 rgba(243,156,18,0.3); }
+                        75%, 100% { box-shadow: 0 0 0 16px rgba(243,156,18,0); }
+                      }
+                      .animate-ping-shadow {
+                        animation: ping-shadow-orange 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+                      }
+                    `}</style>
+                    <div className="absolute inset-0 rounded-2xl animate-ping-shadow"></div>
                     <button className="w-full py-3.5 border-2 border-[#F39C12] border-dashed rounded-2xl flex items-center justify-center gap-2 text-[#F39C12] transition-colors relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
                       <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
                       <span className="text-[13px] font-bold tracking-wider">新增主任務</span>
