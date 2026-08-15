@@ -113,24 +113,13 @@ const ManualCards = () => (
   <>
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
       <div className="p-4 px-6 bg-white text-center">
-        <h2 className="text-[15px] font-bold text-[#18181B]">子任務</h2>
+        <h2 className="text-[17px] font-bold text-[#18181B]">子任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
         <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[17px] font-bold text-[#18181B]">本週任務</h3>
-            <div className="text-[11px] font-medium text-[#A1A1AA] tracking-wider uppercase flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">
-                chevron_left
-              </span>
-              W33 · 8/10 - 8/15
-              <span className="material-symbols-outlined text-[14px]">
-                chevron_right
-              </span>
-            </div>
-          </div>
+          
 
           {/* Task 1 */}
           <div className="flex items-center justify-between mb-4">
@@ -254,24 +243,13 @@ const ManualCards = () => (
     {/* 第二張卡片：主任務操作說明 */}
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
       <div className="p-4 px-6 bg-white text-center">
-        <h2 className="text-[15px] font-bold text-[#18181B]">主任務</h2>
+        <h2 className="text-[17px] font-bold text-[#18181B]">主任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
         <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[17px] font-bold text-[#18181B]">本週任務</h3>
-            <div className="text-[11px] font-medium text-[#A1A1AA] tracking-wider uppercase flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">
-                chevron_left
-              </span>
-              W33 · 8/10 - 8/15
-              <span className="material-symbols-outlined text-[14px]">
-                chevron_right
-              </span>
-            </div>
-          </div>
+          
 
           {/* Task 5 (Dimmed) */}
           <div className="flex items-center justify-between mb-4 opacity-50">
@@ -407,18 +385,13 @@ const ManualCards = () => (
     {/* 第三張卡片：複製前週任務操作說明 */}
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
       <div className="p-4 px-6 bg-white text-center">
-        <h2 className="text-[15px] font-bold text-[#18181B]">複製任務</h2>
+        <h2 className="text-[17px] font-bold text-[#18181B]">複製任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
         <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[17px] font-bold text-[#18181B]">下週任務</h3>
-            <div className="text-[11px] font-medium text-[#A1A1AA] tracking-wider uppercase flex items-center">
-              W34 · 8/17 - 8/22
-            </div>
-          </div>
+          
 
           {/* Tasks 4 to 5 */}
           {[4, 5].map((num) => (
