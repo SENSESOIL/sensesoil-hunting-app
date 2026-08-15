@@ -1111,13 +1111,13 @@ export default function HuntingManagementPage() {
                   <div>
                     <p>
                       <strong className="text-[#18181B] font-semibold text-[14px]">複製主任務</strong><br/>
-                      點選「複製主」：僅會複製上一週的各項主任務，適合每週子任務都有較大變動時使用。
+                      點選「複製主」：僅會複製上一週的各項主任務。
                     </p>
                   </div>
                   <div>
                     <p>
                       <strong className="text-[#18181B] font-semibold text-[14px]">複製全任務</strong><br/>
-                      點選「複製全」：會將上一週的「主任務與子任務」完整複製過來，適合常規例行性的排程。
+                      點選「複製全」：將上一週的「主任務與子任務」完整複製過來。
                     </p>
                   </div>
                 </div>
