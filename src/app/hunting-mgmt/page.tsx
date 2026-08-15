@@ -1321,7 +1321,7 @@ export default function HuntingManagementPage() {
                       <HuntingTasksView ref={tasksViewRef} />
                     </div>
                     {showManual && (
-                      <div className="hidden md:grid grid-cols-3 gap-6 flex-1 w-full items-stretch pt-2 pb-6">
+                      <div className="hidden md:grid grid-cols-[2fr_2fr_3fr] gap-6 flex-1 w-full items-stretch pt-2 pb-6">
                         <ManualCards />
                       </div>
                     )}
