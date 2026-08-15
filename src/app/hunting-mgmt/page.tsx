@@ -1035,6 +1035,94 @@ export default function HuntingManagementPage() {
                 </div>
               </div>
             </div>
+
+            {/* 第三張卡片：複製前週任務操作說明 */}
+            <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col mt-4">
+              {/* 上層：截圖說明區域 (Mock UI) */}
+              <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
+                <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-[17px] font-bold text-[#18181B]">下週任務</h3>
+                    <div className="text-[11px] font-medium text-[#A1A1AA] tracking-wider uppercase flex items-center">
+                      W34 · 8/17 - 8/22
+                    </div>
+                  </div>
+                  
+                  {/* Tasks 1 to 5 */}
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <div key={num} className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
+                        <span className="text-[14px] text-[#A1A1AA]">{num}.</span>
+                        <span className="text-[15px] text-[#18181B] font-medium">{num >= 4 ? (num === 4 ? "體能" : "格局") : "新任務"}</span>
+                      </div>
+                      <button className="w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA]">
+                        <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {/* Add Main Task Button */}
+                  <div className="mt-2">
+                    <button className="w-full py-3.5 border-2 border-[#E4E4E7] border-dashed rounded-2xl flex items-center justify-center gap-2 text-[#A1A1AA] transition-colors bg-[#FAFAFA] opacity-50">
+                      <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+                      <span className="text-[13px] font-bold tracking-wider">新增主任務</span>
+                    </button>
+                  </div>
+                  
+                  {/* Divider */}
+                  <hr className="border-[#E4E4E7] my-5" />
+                  
+                  {/* Bottom Stats & Copy Icon */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-2 text-[11px] font-medium">
+                      <div className="flex items-center gap-1"><span className="text-[#F39C12] text-[13px] font-bold">0</span> <span className="text-[#A1A1AA]">完成</span></div>
+                      <div className="flex items-center gap-1"><span className="text-[#18181B] text-[13px] font-bold">0</span> <span className="text-[#A1A1AA]">部分</span></div>
+                      <div className="flex items-center gap-1"><span className="text-[#18181B] text-[13px] font-bold">0</span> <span className="text-[#A1A1AA]">未達</span></div>
+                      <div className="flex items-center gap-1"><span className="text-[#A1A1AA] text-[13px] font-bold">5</span> <span className="text-[#A1A1AA]">待辦</span></div>
+                    </div>
+                    {/* Copy Button - Highlighted */}
+                    <div className="relative shrink-0 ml-2">
+                      <div className="absolute inset-0 bg-[#F39C12] rounded-full animate-ping opacity-20"></div>
+                      <button className="w-8 h-8 rounded-full border-2 border-[#F39C12] text-[#F39C12] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+                        <span className="material-symbols-outlined text-[15px]" style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}>content_copy</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* 以水平線為界 */}
+              <hr className="border-[#E4E4E7] m-0" />
+              
+              {/* 下層：文字說明區域 */}
+              <div className="p-6 bg-white">
+                <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
+                  <div>
+                    <p>
+                      <strong className="text-[#18181B] font-semibold text-[14px]">複製前週任務</strong><br/>
+                      點擊卡片右下角的 
+                      <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+                        <span className="material-symbols-outlined text-[9px]" style={{ fontVariationSettings: "'wght' 600, 'FILL' 0" }}>content_copy</span>
+                      </span>
+                      即可複製上一週的任務內容。
+                    </p>
+                  </div>
+                  <div>
+                    <p>
+                      <strong className="text-[#18181B] font-semibold text-[14px]">複製主任務</strong><br/>
+                      點選「複製主」：僅會複製上一週的各項主任務，適合每週子任務都有較大變動時使用。
+                    </p>
+                  </div>
+                  <div>
+                    <p>
+                      <strong className="text-[#18181B] font-semibold text-[14px]">複製全任務</strong><br/>
+                      點選「複製全」：會將上一週的「主任務與子任務」完整複製過來，適合常規例行性的排程。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
