@@ -1116,7 +1116,7 @@ export default function HuntingManagementPage() {
                         <span className="material-symbols-outlined" style={{ fontSize: '10px', fontVariationSettings: "'wght' 500" }}>format_list_bulleted</span>
                         複製主任務
                       </span>
-                      ：僅會複製上一週的各項主任務。
+                      ：僅複製上一週的各項主任務。
                     </p>
                   </div>
                   <div>
@@ -1127,7 +1127,7 @@ export default function HuntingManagementPage() {
                         <span className="material-symbols-outlined" style={{ fontSize: '10px', fontVariationSettings: "'wght' 500" }}>notes</span>
                         複製全任務
                       </span>
-                      ：將上一週的「主任務與子任務」完整複製過來。
+                      ：將上一週的「主任務與子任務」完整複製。
                     </p>
                   </div>
                 </div>
