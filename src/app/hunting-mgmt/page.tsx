@@ -916,10 +916,24 @@ export default function HuntingManagementPage() {
               <div className="p-6 bg-white">
                 <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
                   <div>
-                    <p><strong className="text-[#18181B] font-semibold text-[14px]">新增子任務</strong><br/>點擊主任務右側的 <strong className="text-[#F39C12]">「+」</strong> 即可新增。</p>
+                    <p>
+                      <strong className="text-[#18181B] font-semibold text-[14px]">新增子任務</strong><br/>
+                      點擊主任務右側的 
+                      <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full border-[1.5px] border-[#F39C12] text-[#F39C12] align-middle mx-1.5 bg-white shadow-[0_0_8px_rgba(243,156,18,0.2)]">
+                        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+                      </span>
+                      即可新增。
+                    </p>
                   </div>
                   <div>
-                    <p><strong className="text-[#18181B] font-semibold text-[14px]">刪除子任務</strong><br/>點擊子任務右側的 <strong className="text-[#F39C12]">「-」</strong> 即可刪除。</p>
+                    <p>
+                      <strong className="text-[#18181B] font-semibold text-[14px]">刪除子任務</strong><br/>
+                      點擊子任務右側的 
+                      <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full border-[1.5px] border-[#F39C12] text-[#F39C12] align-middle mx-1.5 bg-white shadow-[0_0_8px_rgba(243,156,18,0.2)]">
+                        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'wght' 300" }}>remove</span>
+                      </span>
+                      即可刪除。
+                    </p>
                   </div>
                 </div>
               </div>
