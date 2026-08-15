@@ -112,6 +112,10 @@ const HUNTING_MGMT_PERM_KEYS = [
 const ManualCards = () => (
   <>
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+      <div className="p-4 px-6 bg-white">
+        <h2 className="text-[15px] font-bold text-[#18181B]">子任務</h2>
+      </div>
+      <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
         <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
@@ -249,6 +253,10 @@ const ManualCards = () => (
 
     {/* 第二張卡片：主任務操作說明 */}
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+      <div className="p-4 px-6 bg-white">
+        <h2 className="text-[15px] font-bold text-[#18181B]">主任務</h2>
+      </div>
+      <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
         <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
@@ -398,6 +406,10 @@ const ManualCards = () => (
 
     {/* 第三張卡片：複製前週任務操作說明 */}
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+      <div className="p-4 px-6 bg-white">
+        <h2 className="text-[15px] font-bold text-[#18181B]">複製任務</h2>
+      </div>
+      <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
         <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
