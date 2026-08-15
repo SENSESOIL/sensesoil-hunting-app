@@ -919,8 +919,8 @@ export default function HuntingManagementPage() {
                     <p>
                       <strong className="text-[#18181B] font-semibold text-[14px]">新增子任務</strong><br/>
                       點擊主任務右側的 
-                      <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full border-[1.5px] border-[#F39C12] text-[#F39C12] align-middle mx-1.5 bg-white shadow-[0_0_8px_rgba(243,156,18,0.2)]">
-                        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+                      <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+                        <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'wght' 400" }}>add</span>
                       </span>
                       即可新增。
                     </p>
@@ -929,8 +929,8 @@ export default function HuntingManagementPage() {
                     <p>
                       <strong className="text-[#18181B] font-semibold text-[14px]">刪除子任務</strong><br/>
                       點擊子任務右側的 
-                      <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full border-[1.5px] border-[#F39C12] text-[#F39C12] align-middle mx-1.5 bg-white shadow-[0_0_8px_rgba(243,156,18,0.2)]">
-                        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'wght' 300" }}>remove</span>
+                      <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+                        <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'wght' 400" }}>remove</span>
                       </span>
                       即可刪除。
                     </p>
@@ -1006,8 +1006,8 @@ export default function HuntingManagementPage() {
                     <p>
                       <strong className="text-[#18181B] font-semibold text-[14px]">新增主任務</strong><br/>
                       點擊清單最下方的 
-                      <span className="inline-flex items-center justify-center h-[22px] px-2 rounded border-[1.5px] border-dashed border-[#F39C12] text-[#F39C12] align-middle mx-1.5 bg-white shadow-[0_0_8px_rgba(243,156,18,0.2)] text-[11px] font-bold gap-1">
-                        <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+                      <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-dashed border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
+                        <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'wght' 400" }}>add</span>
                         新增主任務
                       </span>
                       即可新增一筆主任務。
@@ -1017,8 +1017,8 @@ export default function HuntingManagementPage() {
                     <p>
                       <strong className="text-[#18181B] font-semibold text-[14px]">刪除主任務</strong><br/>
                       點擊手動新增的主任務（第 6 項起）右側的 
-                      <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full border-[1.5px] border-[#F39C12] text-[#F39C12] align-middle mx-1.5 bg-white shadow-[0_0_8px_rgba(243,156,18,0.2)]">
-                        <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'wght' 300" }}>remove</span>
+                      <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+                        <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'wght' 400" }}>remove</span>
                       </span>
                       即可刪除該筆任務。（註：預設的 1~5 項任務無法刪除）
                     </p>
