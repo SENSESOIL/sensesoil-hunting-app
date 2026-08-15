@@ -1103,7 +1103,7 @@ export default function HuntingManagementPage() {
                       <strong className="text-[#18181B] font-semibold text-[14px]">複製前週任務</strong><br/>
                       點擊卡片右下角的 
                       <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
-                        <span className="material-symbols-outlined text-[15px] scale-[0.65]" style={{ fontVariationSettings: "'wght' 500, 'FILL' 0" }}>content_copy</span>
+                        <span className="material-symbols-outlined text-[15px] scale-50" style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}>content_copy</span>
                       </span>
                       會跳出複製選單，您可依需求選擇複製模式。
                     </p>
