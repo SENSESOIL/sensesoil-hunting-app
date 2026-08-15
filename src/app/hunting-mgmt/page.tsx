@@ -729,7 +729,7 @@ export default function HuntingManagementPage() {
                       {tabs.map((tab) => (
                         <div
                           key={tab}
-                          className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide transition-colors duration-300 ${activeSubTab === tab ? "text-[#18181B]" : "text-[#A1A1AA]"}`}
+                          className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide transition-colors duration-300 ${activeSubTab === tab && !showManual ? "text-[#18181B]" : "text-[#A1A1AA]"}`}
                         >
                           {tab}
                         </div>
@@ -868,7 +868,16 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "每周任務" ? "md:hidden" : ""}`}
                 >
-                  <HuntingTasksView ref={tasksViewRef} />
+                  <div className="px-6 pb-20 md:px-10 max-w-[1400px] mx-auto h-full flex flex-col">
+                    <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
+                      <HuntingTasksView ref={tasksViewRef} />
+                    </div>
+                    {showManual && (
+                      <div className="hidden md:grid grid-cols-3 gap-6 flex-1 w-full items-stretch pt-2 pb-6">
+                        <ManualCards />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
