@@ -240,7 +240,91 @@ const ManualCards = () => (
       </div>
     </div>
 
-    {/* 第二張卡片：主任務操作說明 */}
+    {/* 第二張卡片：移動子任務操作說明 */}
+    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+      <div className="p-4 px-6 bg-white text-center">
+        <h2 className="text-[17px] font-bold text-[#18181B]">移動子任務</h2>
+      </div>
+      <hr className="border-[#E4E4E7] m-0" />
+      {/* 上層：截圖說明區域 (Mock UI) */}
+      <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
+        <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+          {/* Task 1 */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
+              <span className="text-[14px] text-[#A1A1AA]">1.</span>
+              <span className="text-[15px] text-[#18181B] font-medium">新任務</span>
+            </div>
+            <button className="w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA]">
+              <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+            </button>
+          </div>
+
+          {/* Subtask 1 */}
+          <div className="flex items-center justify-between mb-6 pl-1">
+            <div className="flex items-center gap-3">
+              <div className="relative flex items-center justify-center w-7 h-7 rounded-[8px]">
+                <div className="absolute inset-0 bg-[#F39C12] rounded-[8px] animate-ping opacity-20"></div>
+                <div className="relative z-10 w-full h-full flex items-center justify-center border-2 border-[#F39C12] rounded-[8px] bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+                  <span className="material-symbols-outlined text-[18px] text-[#F39C12]">drag_indicator</span>
+                </div>
+              </div>
+              <div className="w-[18px] h-[18px] rounded-full border-[1.5px] border-[#E4E4E7]"></div>
+              <span className="text-[14px] text-[#A1A1AA]">新子任務</span>
+            </div>
+            <button className="w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA]">
+              <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>remove</span>
+            </button>
+          </div>
+
+          {/* Task 2 */}
+          <div className="flex items-center justify-between mb-4 opacity-50">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
+              <span className="text-[14px] text-[#A1A1AA]">2.</span>
+              <span className="text-[15px] text-[#18181B] font-medium">新任務</span>
+            </div>
+            <button className="w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA]">
+              <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+            </button>
+          </div>
+          
+          {/* Task 3 */}
+          <div className="flex items-center justify-between mb-2 opacity-50">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
+              <span className="text-[14px] text-[#A1A1AA]">3.</span>
+              <span className="text-[15px] text-[#18181B] font-medium">新任務</span>
+            </div>
+            <button className="w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA]">
+              <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: "'wght' 300" }}>add</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 以水平線為界 */}
+      <hr className="border-[#E4E4E7] m-0" />
+
+      {/* 下層：文字說明區域 */}
+      <div className="p-6 bg-white flex-1">
+        <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
+          <div>
+            <p>
+              <strong className="text-[#18181B] font-semibold text-[14px]">移動排序</strong><br />
+              按住子任務左側的
+              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-[4px] border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+                <span className="material-symbols-outlined" style={{ fontSize: "12px", fontVariationSettings: "'wght' 500" }}>drag_indicator</span>
+              </span>
+              圖示，即可上下拖曳調整順序。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* 第三張卡片：主任務操作說明 */}
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
       <div className="p-4 px-6 bg-white text-center">
         <h2 className="text-[17px] font-bold text-[#18181B]">主任務</h2>
@@ -1306,7 +1390,7 @@ export default function HuntingManagementPage() {
                       <HuntingTasksView ref={tasksViewRef} />
                     </div>
                     {showManual && (
-                      <div className="hidden md:grid grid-cols-[2fr_2fr_3fr] gap-6 flex-1 w-full items-stretch pt-2 pb-6">
+                      <div className="hidden md:grid grid-cols-2 xl:grid-cols-4 gap-6 flex-1 w-full items-stretch pt-2 pb-6">
                         <ManualCards />
                       </div>
                     )}
