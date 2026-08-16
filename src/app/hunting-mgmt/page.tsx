@@ -543,7 +543,7 @@ const ManualCards = () => (
     <div className="flex flex-col gap-4 h-full">
 
     {/* 第二張卡片：移動子任務操作說明 */}
-    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col">
       <div className="p-4 px-6 bg-white text-center">
         <h2 className="text-[17px] font-bold text-[#18181B]">移動子任務</h2>
       </div>
@@ -626,7 +626,7 @@ const ManualCards = () => (
       </div>
     </div>
     {/* 第五張卡片：發送操作說明 */}
-    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col">
       <div className="p-4 px-6 bg-white text-center">
         <h2 className="text-[17px] font-bold text-[#18181B]">匯出狩獵任務</h2>
       </div>
@@ -1433,7 +1433,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "每周任務" ? "md:hidden" : ""}`}
                 >
-                  <div className="px-6 pb-20 md:px-10 max-w-[1400px] mx-auto h-full flex flex-col">
+                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
                       <HuntingTasksView ref={tasksViewRef} />
                     </div>
