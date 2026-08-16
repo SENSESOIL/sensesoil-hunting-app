@@ -295,7 +295,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
     const totalTodo = week.tasks.filter(t => t.status === "todo").length;
 
     return (
-      <div className="bg-[#FFFFFF] p-6 rounded-[24px] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col h-full relative">
+      <div className="bg-[#FFFFFF] p-4 md:p-6 rounded-[24px] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col h-full relative">
         {isLoading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 rounded-[24px] flex items-center justify-center">
              <div className="w-6 h-6 border-2 border-[#F39C12] border-t-transparent rounded-full animate-spin"></div>
@@ -565,7 +565,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 lg:px-10 pb-10 custom-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto px-2 md:px-0 pb-10 custom-scrollbar">
           <div className="w-full h-full">
             <div className="flex flex-col md:flex-row gap-6 md:h-[calc(100vh-220px)]">
               {/* Left Card */}
