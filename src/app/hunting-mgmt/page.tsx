@@ -1301,7 +1301,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "每周任務" ? "md:hidden" : ""}`}
                 >
-                  <div className="px-0 pb-20 md:px-10 max-w-[1400px] mx-auto h-full flex flex-col">
+                  <div className="px-6 pb-20 md:px-10 max-w-[1400px] mx-auto h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
                       <HuntingTasksView ref={tasksViewRef} />
                     </div>
