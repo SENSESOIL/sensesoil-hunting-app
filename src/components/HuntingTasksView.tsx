@@ -457,21 +457,21 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
         {/* Minimalist Summary Bar */}
         <div className="mt-6 pt-5 border-t border-[#E4E4E7]/60 flex items-center gap-5 pl-2">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[13px] font-bold text-[#F39C12]">{totalDone}</span>
-            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">完成</span>
+            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase whitespace-nowrap">完成</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[13px] font-bold text-[#18181B]">{totalPartial}</span>
-            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">部分</span>
+            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase whitespace-nowrap">部分</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[13px] font-bold text-[#18181B]">{totalFail}</span>
-            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">未達</span>
+            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase whitespace-nowrap">未達</span>
           </div>
-           <div className="flex items-center gap-1.5">
+           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-[13px] font-bold text-[#A1A1AA]">{totalTodo}</span>
-            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">待辦</span>
+            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase whitespace-nowrap">待辦</span>
           </div>
 
           {(isNextWeek || isWeekAfterNext) && !isContentLocked && previousWeekId && (
