@@ -628,7 +628,7 @@ const ManualCards = () => (
     {/* 第五張卡片：發送操作說明 */}
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col">
       <div className="p-4 px-6 bg-white text-center">
-        <h2 className="text-[17px] font-bold text-[#18181B]">匯出狩獵任務</h2>
+        <h2 className="text-[17px] font-bold text-[#18181B]">匯出任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
