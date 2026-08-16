@@ -628,7 +628,7 @@ const ManualCards = () => (
     {/* 第五張卡片：發送操作說明 */}
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
       <div className="p-4 px-6 bg-white text-center">
-        <h2 className="text-[17px] font-bold text-[#18181B]">發送</h2>
+        <h2 className="text-[17px] font-bold text-[#18181B]">匯出狩獵任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
@@ -660,12 +660,12 @@ const ManualCards = () => (
         <div className="space-y-3 text-[13px] leading-relaxed text-[#52525B]">
           <div>
             <p>
-              <strong className="text-[#18181B] font-semibold text-[14px]">發送與分享</strong><br />
-              點擊右上角的
+              <strong className="text-[#18181B] font-semibold text-[14px]">複製與分享</strong><br />
+              點擊視窗右上角的分享
               <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
                 <span className="material-symbols-outlined" style={{ fontSize: "14px", fontVariationSettings: "'wght' 200" }}>ios_share</span>
               </span>
-              圖示，即可展開分享選單。您可以選擇直接複製純文字內容，或是透過 LINE 將任務列表分享給其他人。
+              圖示會跳出匯出選單，可選擇複製內容或直接LINE分享到群組。
             </p>
           </div>
         </div>
