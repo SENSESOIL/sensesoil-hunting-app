@@ -302,20 +302,20 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
           </div>
         )}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2.5">
-            <h3 className="font-semibold text-[17px] text-[#18181B] flex items-center">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <h3 className="font-semibold text-[17px] text-[#18181B] flex items-center whitespace-nowrap">
               <span>{titlePrefix}</span>
               <span className="hidden md:inline">【狩獵任務】</span>
             </h3>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {!isRightCard && (
                <button onClick={handlePrevWeek} disabled={currentWeekIndex === 0} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] disabled:opacity-30 disabled:hover:bg-transparent text-[#71717A]">
                  <span className="material-symbols-outlined text-[16px]">chevron_left</span>
                </button>
             )}
-            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">{week.label}</span>
+            <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase whitespace-nowrap">{week.label}</span>
             {!isRightCard && (
                <button onClick={handleNextWeek} disabled={currentWeekIndex >= weeks.length - 2} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] disabled:opacity-30 disabled:hover:bg-transparent text-[#71717A]">
                  <span className="material-symbols-outlined text-[16px]">chevron_right</span>
