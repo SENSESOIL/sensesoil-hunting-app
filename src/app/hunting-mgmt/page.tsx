@@ -117,12 +117,12 @@ const ManualCards = () => (
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
-      <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
           
 
           {/* Task 1 */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
               <span className="text-[14px] text-[#A1A1AA]">1.</span>
@@ -145,7 +145,7 @@ const ManualCards = () => (
           </div>
 
           {/* Subtask 1 */}
-          <div className="flex items-center justify-between mb-6 pl-1">
+          <div className="flex items-center justify-between mb-3 pl-1">
             <div className="flex items-center gap-3">
               <span className="material-symbols-outlined text-[16px] text-[#D4D4D8]">
                 drag_indicator
@@ -168,7 +168,7 @@ const ManualCards = () => (
           </div>
 
           {/* Task 2 */}
-          <div className="flex items-center justify-between mb-2 opacity-50">
+          <div className="flex items-center justify-between mb-1 opacity-50">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
               <span className="text-[14px] text-[#A1A1AA]">2.</span>
@@ -192,8 +192,8 @@ const ManualCards = () => (
       <hr className="border-[#E4E4E7] m-0" />
 
       {/* 下層：文字說明區域 */}
-      <div className="p-6 bg-white flex-1">
-        <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
+      <div className="p-4 bg-white flex-1">
+        <div className="space-y-3 text-[13px] leading-relaxed text-[#52525B]">
           <div>
             <p>
               <strong className="text-[#18181B] font-semibold text-[14px]">
@@ -247,12 +247,12 @@ const ManualCards = () => (
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
-      <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
           
 
           {/* Task 5 (Dimmed) */}
-          <div className="flex items-center justify-between mb-4 opacity-50">
+          <div className="flex items-center justify-between mb-1 opacity-50">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
               <span className="text-[14px] text-[#A1A1AA]">5.</span>
@@ -271,7 +271,7 @@ const ManualCards = () => (
           </div>
 
           {/* Task 6 - Highlighted */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
               <span className="text-[14px] text-[#A1A1AA]">6.</span>
@@ -333,8 +333,8 @@ const ManualCards = () => (
       <hr className="border-[#E4E4E7] m-0" />
 
       {/* 下層：文字說明區域 */}
-      <div className="p-6 bg-white flex-1">
-        <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
+      <div className="p-4 bg-white flex-1">
+        <div className="space-y-3 text-[13px] leading-relaxed text-[#52525B]">
           <div>
             <p>
               <strong className="text-[#18181B] font-semibold text-[14px]">
@@ -389,13 +389,13 @@ const ManualCards = () => (
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
-      <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
           
 
           {/* Tasks 4 to 5 */}
           {[4, 5].map((num) => (
-            <div key={num} className={`flex items-center justify-between mb-4 ${num === 4 ? "opacity-50" : ""}`}>
+            <div key={num} className={`flex items-center justify-between mb-1 ${num === 4 ? "opacity-50" : ""}`}>
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
                 <span className="text-[14px] text-[#A1A1AA]">{num}.</span>
@@ -472,8 +472,8 @@ const ManualCards = () => (
       <hr className="border-[#E4E4E7] m-0" />
 
       {/* 下層：文字說明區域 */}
-      <div className="p-6 bg-white flex-1">
-        <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
+      <div className="p-4 bg-white flex-1">
+        <div className="space-y-3 text-[13px] leading-relaxed text-[#52525B]">
           <div>
             <p>
               <strong className="text-[#18181B] font-semibold text-[14px]">
@@ -540,7 +540,7 @@ const ManualCards = () => (
       </div>
     </div>
     {/* 第四欄：移動與發送 (垂直堆疊) */}
-    <div className="flex flex-col gap-4 md:gap-6 h-full">
+    <div className="flex flex-col gap-4 h-full">
 
     {/* 第二張卡片：移動子任務操作說明 */}
     <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
@@ -549,10 +549,10 @@ const ManualCards = () => (
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
-      <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
           {/* Task 1 */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
               <span className="text-[14px] text-[#A1A1AA]">1.</span>
@@ -564,7 +564,7 @@ const ManualCards = () => (
           </div>
 
           {/* Subtask 1 */}
-          <div className="flex items-center justify-between mb-6 pl-1">
+          <div className="flex items-center justify-between mb-3 pl-1">
             <div className="flex items-center gap-3">
               <div className="relative flex items-center justify-center w-7 h-7 rounded-[8px]">
                 <div className="absolute inset-0 bg-[#F39C12] rounded-[8px] animate-ping opacity-20"></div>
@@ -581,7 +581,7 @@ const ManualCards = () => (
           </div>
 
           {/* Task 2 */}
-          <div className="flex items-center justify-between mb-4 opacity-50">
+          <div className="flex items-center justify-between mb-1 opacity-50">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
               <span className="text-[14px] text-[#A1A1AA]">2.</span>
@@ -593,7 +593,7 @@ const ManualCards = () => (
           </div>
           
           {/* Task 3 */}
-          <div className="flex items-center justify-between mb-2 opacity-50">
+          <div className="flex items-center justify-between mb-1 opacity-50">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full border-[1.5px] border-[#E4E4E7]"></div>
               <span className="text-[14px] text-[#A1A1AA]">3.</span>
@@ -610,8 +610,8 @@ const ManualCards = () => (
       <hr className="border-[#E4E4E7] m-0" />
 
       {/* 下層：文字說明區域 */}
-      <div className="p-6 bg-white flex-1">
-        <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
+      <div className="p-4 bg-white flex-1">
+        <div className="space-y-3 text-[13px] leading-relaxed text-[#52525B]">
           <div>
             <p>
               <strong className="text-[#18181B] font-semibold text-[14px]">移動排序</strong><br />
@@ -632,14 +632,14 @@ const ManualCards = () => (
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
-      <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
           <div className="flex flex-col gap-3">
-            <div className="w-full flex items-center justify-center gap-3 bg-[#FAFAFA] text-[#18181B] rounded-2xl py-3 border border-[#E4E4E7]">
+            <div className="w-full flex items-center justify-center gap-3 bg-[#FAFAFA] text-[#18181B] rounded-2xl py-2.5 border border-[#E4E4E7]">
               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 300" }}>content_copy</span>
               <span className="text-[15px] font-medium">複製內容</span>
             </div>
-            <div className="w-full flex items-center justify-center gap-3 bg-[#06C755]/10 text-[#06C755] rounded-2xl py-3 font-medium text-[15px]">
+            <div className="w-full flex items-center justify-center gap-3 bg-[#06C755]/10 text-[#06C755] rounded-2xl py-2.5 font-medium text-[15px]">
               <div className="w-[20px] h-[20px] flex items-center justify-center shrink-0">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
                   <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z" />
@@ -656,8 +656,8 @@ const ManualCards = () => (
       <hr className="border-[#E4E4E7] m-0" />
 
       {/* 下層：文字說明區域 */}
-      <div className="p-6 bg-white flex-1">
-        <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
+      <div className="p-4 bg-white flex-1">
+        <div className="space-y-3 text-[13px] leading-relaxed text-[#52525B]">
           <div>
             <p>
               <strong className="text-[#18181B] font-semibold text-[14px]">發送與分享</strong><br />
