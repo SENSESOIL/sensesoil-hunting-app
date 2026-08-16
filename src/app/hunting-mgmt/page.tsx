@@ -1249,7 +1249,7 @@ export default function HuntingManagementPage() {
         >
           {/* Mobile Search Bar */}
           {!(activeNav === "hunting_tasks" && activeSubTab === "每周任務") && (
-            <div className="px-4 md:hidden">
+            <div className="px-6 md:hidden">
               <div className="relative group w-full">
                 <span
                   className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors"
