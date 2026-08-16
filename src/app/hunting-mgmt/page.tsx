@@ -623,9 +623,54 @@ const ManualCards = () => (
         </div>
       </div>
     </div>
+    {/* 第五張卡片：發送操作說明 */}
+    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+      <div className="p-4 px-6 bg-white text-center">
+        <h2 className="text-[17px] font-bold text-[#18181B]">發送</h2>
+      </div>
+      <hr className="border-[#E4E4E7] m-0" />
+      {/* 上層：截圖說明區域 (Mock UI) */}
+      <div className="p-6 bg-[#FAFAFA]/50 flex flex-col items-center">
+        <div className="w-full max-w-[340px] bg-white rounded-2xl border border-[#E4E4E7] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+          <div className="flex flex-col gap-3">
+            <div className="w-full flex items-center justify-center gap-3 bg-[#FAFAFA] text-[#18181B] rounded-2xl py-3 border border-[#E4E4E7]">
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 300" }}>content_copy</span>
+              <span className="text-[15px] font-medium">複製內容</span>
+            </div>
+            <div className="w-full flex items-center justify-center gap-3 bg-[#06C755]/10 text-[#06C755] rounded-2xl py-3 font-medium text-[15px]">
+              <div className="w-[20px] h-[20px] flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+                  <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z" />
+                  <path fill="#FFFFFF" d="M7.75 12.83H6.18V8.45H5v5.44h2.75v-1.06zM9.46 13.89h-1.06V8.45h1.06v5.44zM14.54 13.89h-1.12l-1.92-3.18v3.18h-1.06V8.45h1.12l1.92 3.18V8.45h1.06v5.44zM18.89 9.51h-2.18v1.08h1.9v1.06h-1.9v1.18h2.18v1.06h-3.24V8.45h3.24v1.06z" />
+                </svg>
+              </div>
+              LINE分享
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 以水平線為界 */}
+      <hr className="border-[#E4E4E7] m-0" />
+
+      {/* 下層：文字說明區域 */}
+      <div className="p-6 bg-white flex-1">
+        <div className="space-y-5 text-[13px] leading-relaxed text-[#52525B]">
+          <div>
+            <p>
+              <strong className="text-[#18181B] font-semibold text-[14px]">發送與分享</strong><br />
+              點擊右上角的
+              <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+                <span className="material-symbols-outlined" style={{ fontSize: "14px", fontVariationSettings: "'wght' 200" }}>ios_share</span>
+              </span>
+              圖示，即可展開分享選單。您可以選擇直接複製純文字內容，或是透過 LINE 將任務列表分享給其他人。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   </>
 );
-
 export default function HuntingManagementPage() {
   const router = useRouter();
   const { data: session } = useSession();
@@ -1736,7 +1781,7 @@ export default function HuntingManagementPage() {
                       />
                     </svg>
                   </div>
-                  Line 分享
+                  LINE分享
                 </button>
               </div>
             </div>
