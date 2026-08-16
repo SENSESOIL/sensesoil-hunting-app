@@ -1741,7 +1741,7 @@ export default function HuntingManagementPage() {
           <div className="w-10"></div> {/* Spacer for flex balance */}
         </header>
         <div className="pt-[60px] h-full overflow-y-auto pb-20 bg-[#FAFAFA]">
-          <div className="p-4 flex flex-col gap-4">
+          <div className="px-6 py-4 flex flex-col gap-4">
             <ManualCards />
           </div>
         </div>
