@@ -343,11 +343,11 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                       onChange={(e) => setEditingText(e.target.value)}
                       onBlur={saveEdit}
                       onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                      className="flex-1 bg-transparent text-[16px] md:text-[14px] font-semibold text-[#18181B] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] ml-1 p-0"
+                      className="flex-1 bg-transparent text-[14px] font-semibold text-[#18181B] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] ml-1 p-0 pr-12 select-text"
                     />
                   ) : (
                     <div 
-                      className={`flex-1 text-[14px] font-semibold text-[#18181B] leading-snug ml-1 min-h-[20px] ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
+                      className={`flex-1 text-[14px] font-semibold text-[#18181B] leading-snug ml-1 min-h-[20px] pr-12 select-text ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
                       onClick={() => !isContentLocked && startEditing(week.id, task.id, undefined, task.text)}
                     >
                       {task.text.trim() === "" ? (idx < 5 ? ["新任務", "新任務", "新任務", "體能", "格局"][idx] : "新任務") : task.text}
@@ -412,11 +412,11 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                     onChange={(e) => setEditingText(e.target.value)}
                                     onBlur={saveEdit}
                                     onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                                    className="flex-1 bg-transparent text-[16px] md:text-[13px] font-normal text-[#71717A] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] p-0"
+                                    className="flex-1 bg-transparent text-[13px] font-normal text-[#71717A] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] p-0 pr-8 select-text"
                                   />
                                 ) : (
                                   <div 
-                                    className={`flex-1 text-[13px] text-[#71717A] font-medium leading-snug min-h-[18px] ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
+                                    className={`flex-1 text-[13px] text-[#71717A] font-medium leading-snug min-h-[18px] pr-8 select-text ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
                                     onClick={() => !isContentLocked && startEditing(week.id, task.id, sub.id, sub.text)}
                                   >
                                     {sub.text.trim() === "" ? "新子任務" : sub.text}
