@@ -729,6 +729,14 @@ export default function HuntingManagementPage() {
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       if (activeNav !== "hunting_tasks") return;
+      
+      const target = e.target as HTMLElement;
+      if (target.tagName.toLowerCase() === 'input' || target.tagName.toLowerCase() === 'textarea') {
+        swipeLocked.current = true;
+        setIsSwiping(false);
+        return;
+      }
+      
       touchStartX.current = e.touches[0].clientX;
       touchStartY.current = e.touches[0].clientY;
       swipeLocked.current = false;
