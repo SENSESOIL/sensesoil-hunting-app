@@ -34,12 +34,15 @@ export async function GET() {
     const leadgeCRows = leadgeCRes.status === 'fulfilled' ? leadgeCRes.value : [];
     const marketDataRows = marketDataRes.status === 'fulfilled' ? marketDataRes.value : [];
 
+    const { getResignedHunters } = await import("@/lib/permissions");
+    const resignedHunters = await getResignedHunters();
+
     // Parse Scoreboard (Rows 3+, index 2+)
     const scoreboard = [];
     for (let i = 2; i < scoreboardRows.length; i++) {
       const row = scoreboardRows[i];
       const hunter = row[0]?.trim();
-      if (hunter && hunter !== 'Total' && hunter !== '加總') {
+      if (hunter && hunter !== 'Total' && hunter !== '加總' && !resignedHunters.includes(hunter)) {
         scoreboard.push({
           hunter,
           challengeA: {
@@ -63,15 +66,17 @@ export async function GET() {
     }
     scoreboard.sort((a, b) => (b.totalReward || 0) - (a.totalReward || 0));
 
-    // Parse Tracker (Rows 2+, index 1+)
+    // Parse Tracker (Rows 3+, index 2+)
     const tracker = [];
-    for (let i = 1; i < trackerRows.length; i++) {
+    for (let i = 2; i < trackerRows.length; i++) {
       const row = trackerRows[i];
+      const hunter = row[1]?.trim();
+      if (!hunter || resignedHunters.includes(hunter)) continue;
       if (row.length > 0 && row.some(c => c && String(c).trim() !== '')) {
         tracker.push({
           rowIndex: i + 1,
           date: row[0]?.trim() || '',
-          hunter: row[1]?.trim() || '',
+          hunter,
           target: row[2]?.trim() || '',
           shares: row[3]?.trim() || '',
           amount: row[4]?.trim() || '',
@@ -84,11 +89,13 @@ export async function GET() {
     const reward = [];
     for (let i = 1; i < rewardRows.length; i++) {
       const row = rewardRows[i];
+      const hunter = row[1]?.trim();
+      if (!hunter || resignedHunters.includes(hunter)) continue;
       if (row.length > 0 && row.some(c => c && String(c).trim() !== '')) {
         reward.push({
           rowIndex: i + 1,
           date: row[0]?.trim() || '',
-          hunter: row[1]?.trim() || '',
+          hunter,
           category: row[2]?.trim() || '',
           amount: row[3]?.trim() || '',
         });
@@ -100,7 +107,7 @@ export async function GET() {
     for (let i = 2; i < leadgeARows.length; i++) {
       const row = leadgeARows[i];
       const hunter = row[0]?.trim();
-      if (hunter) {
+      if (hunter && !resignedHunters.includes(hunter)) {
         leadgeA.push({
           hunter,
           buyDate: row[1]?.trim() || '',
@@ -131,7 +138,7 @@ export async function GET() {
     for (let i = 4; i < leadgeBRows.length; i++) {
       const row = leadgeBRows[i];
       const hunter = row[0]?.trim();
-      if (hunter) {
+      if (hunter && !resignedHunters.includes(hunter)) {
         leadgeB.push({
           hunter,
           consecutiveMonths: cleanNum(row[1]),
@@ -150,7 +157,7 @@ export async function GET() {
         currentLeadgeCDate = row[0].trim();
       }
       const hunter = row[1]?.trim();
-      if (hunter) {
+      if (hunter && !resignedHunters.includes(hunter)) {
         leadgeC.push({
           date: currentLeadgeCDate,
           hunter,

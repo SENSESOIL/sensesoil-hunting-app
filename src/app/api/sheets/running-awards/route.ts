@@ -14,6 +14,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, data: [] });
     }
 
+    const { getResignedHunters } = await import("@/lib/permissions");
+    const resignedHunters = await getResignedHunters();
+
     const records = [];
     
     for (let i = 0; i < rows.length; i++) {
@@ -21,6 +24,7 @@ export async function GET(request: Request) {
       if (!row[0]) continue; // Skip if no name
 
       const name = row[0].trim();
+      if (resignedHunters.includes(name)) continue;
       
       const record = {
         name,

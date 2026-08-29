@@ -18,16 +18,22 @@ export async function GET() {
       return NextResponse.json({ success: true, data: [] });
     }
 
+    const { getResignedHunters } = await import("@/lib/permissions");
+    const resignedHunters = await getResignedHunters();
+
     const records = [];
     // Skip header row
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       // Expected: [0]跑步日期, [1]跑者名稱, [2]活動名稱, [3]距離 (Km), [4]海拔高度 (m), [5]時間 (min)
+      const name = row[1]?.trim() || "";
+      if (name && resignedHunters.includes(name)) continue;
+
       if (row.length >= 1 && row.some(cell => cell && cell.toString().trim() !== '')) {
         records.push({
           rowIndex: i + 1, // Store the exact 1-based index in the tracker sheet. Wait, range is B:G. So rows[0] is row 1. rows[i] is row i+1.
           date: row[0]?.trim() || "",
-          name: row[1]?.trim() || "",
+          name,
           activity: row[2]?.trim() || '',
           distance: parseFloat(row[3]) || 0,
           elevation: parseFloat(row[4]) || 0,
