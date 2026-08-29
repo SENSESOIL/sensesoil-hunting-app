@@ -297,17 +297,17 @@ export default function BasicMissionPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const { permissions, session, status } = useDynamicPermissions();
+  const { permissions, session, status, error: permError } = useDynamicPermissions();
   const userRole = permissions?.roles?.["basic"] || "viewer";
   const isAdmin = userRole === "admin" || process.env.NODE_ENV === "development";
   const userHunterName = permissions?.hunterName || (session?.user as any)?.hunterName || "";
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      alert("權限不足，請以狩獵者身分登入");
+    if (status === "unauthenticated" || permError) {
+      alert("權限不足或已離職，請重新登入或聯絡管理員");
       router.replace("/diversion");
     }
-  }, [status, router]);
+  }, [status, permError, router]);
 
   const { data, error, mutate } = useSWR("/api/sheets/basic-mission", fetcher);
 

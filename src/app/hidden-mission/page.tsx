@@ -179,10 +179,20 @@ export default function HiddenMissionPage() {
     };
   }, [rawData]);
 
-  // Check user role & hunter name
-  const { permissions } = useDynamicPermissions();
+  // Check user role & 
+  const { permissions, session: authSession, status, error: permError } = useDynamicPermissions();
+  const userRole = permissions?.roles?.["hidden-mission"] || "viewer";
+  const isEditor = userRole === "editor" || userRole === "admin" || process.env.NODE_ENV === "development";
+  const userHunterName = permissions?.hunterName || (authSession?.user as any)?.hunterName || "";
+
+  useEffect(() => {
+    if (status === "unauthenticated" || permError) {
+      alert("權限不足或已離職，請重新登入");
+      router.replace("/diversion");
+    }
+  }, [status, permError, router]);
+
   const loggedInHunterName = permissions?.hunterName || (session?.user as any)?.hunterName || session?.user?.name || "";
-  const userRole = permissions?.roles?.["hidden"] || "viewer";
   const isAdmin = userRole === "admin";
   const canEdit = userRole === "admin" || userRole === "editor" || process.env.NODE_ENV === "development";
 

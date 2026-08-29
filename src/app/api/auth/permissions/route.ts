@@ -29,7 +29,7 @@ export async function GET() {
           hunterName: ""
         });
       }
-      return NextResponse.json({ roles: {}, hunterName: "" });
+      return NextResponse.json({ error: "Access Denied. User not found or resigned." }, { status: 403 });
     }
 
     return NextResponse.json({
