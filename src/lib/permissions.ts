@@ -76,10 +76,11 @@ export async function checkPermissions(email: string): Promise<UserPermissions |
   }
   console.log(`[Permissions Debug] Found userRow:`, userRow);
 
-  const leaveDateIdx = headers.indexOf("離線登出日");
-  if (leaveDateIdx !== -1 && userRow[leaveDateIdx]?.trim()) {
-    console.log(`[Permissions Debug] User ${email} has a leave date (${userRow[leaveDateIdx]}), access denied.`);
-    return null;
+  // Check if they have resigned by reading the 員工CRM tab
+  const resignedHunters = await getResignedHunters();
+  const hunterName = userRow[hunterIdx]?.trim() || "";
+  if (hunterName && resignedHunters.includes(hunterName)) {
+    return null; // Force revoke access for resigned users
   }
 
   const roles: { [key: string]: "admin" | "editor" | "viewer" | "none" } = {};
@@ -101,23 +102,32 @@ export async function checkPermissions(email: string): Promise<UserPermissions |
 
   return {
     email,
-    hunterName: userRow[hunterIdx]?.trim() || "",
+    hunterName,
     roles
   };
 }
 
-export async function getResignedHunters(): Promise<string[]> {
-  const rows = await fetchPermissionsFromSheet();
-  if (rows.length < 3) return [];
+let cachedResignedHunters: { data: string[], timestamp: number } | null = null;
 
-  const headers = rows[1].map(h => h.trim().toLowerCase());
+export async function getResignedHunters(): Promise<string[]> {
+  const now = Date.now();
+  if (cachedResignedHunters && (now - cachedResignedHunters.timestamp < CACHE_TTL)) {
+    return cachedResignedHunters.data;
+  }
+
+  const spreadsheetId = process.env.SHEET_ID_PERMISSIONS || "14ldpC7mD1wYjouSiR9gizl--fPFcIowGGzkQdkxQNvQ";
+  const rows = await readSheet(spreadsheetId, "員工CRM!A:M").catch(() => null);
+  
+  if (!rows || rows.length < 3) return [];
+
+  const headers = rows[1].map((h: string) => h.trim().toLowerCase());
   const hunterIdx = headers.indexOf("狩獵者") !== -1 ? headers.indexOf("狩獵者") : headers.indexOf("姓名");
   const leaveDateIdx = headers.indexOf("離線登出日");
 
   if (hunterIdx === -1 || leaveDateIdx === -1) return [];
 
   const resignedHunters: string[] = [];
-  rows.slice(2).forEach(row => {
+  rows.slice(2).forEach((row: any[]) => {
     const leaveDate = row[leaveDateIdx]?.trim();
     const hunterName = row[hunterIdx]?.trim();
     if (leaveDate && hunterName) {
@@ -125,5 +135,6 @@ export async function getResignedHunters(): Promise<string[]> {
     }
   });
 
+  cachedResignedHunters = { data: resignedHunters, timestamp: now };
   return resignedHunters;
 }
