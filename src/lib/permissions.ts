@@ -59,7 +59,7 @@ export async function checkPermissions(email: string): Promise<UserPermissions |
   const headers = rows[1].map(h => h.trim().toLowerCase());
   console.log(`[Permissions Debug] Headers:`, headers);
   const emailIdx = headers.indexOf("gmail");
-  const hunterIdx = headers.indexOf("狩獵者") !== -1 ? headers.indexOf("狩獵者") : 0;
+  const hunterIdx = headers.indexOf("狩獵者") !== -1 ? headers.indexOf("狩獵者") : headers.indexOf("姓名");
   if (emailIdx === -1) {
     console.error("[Permissions] No 'Gmail' column found in Permissions sheet headers:", headers);
     return null;
@@ -75,6 +75,12 @@ export async function checkPermissions(email: string): Promise<UserPermissions |
     return null; // User not registered in the Permissions sheet
   }
   console.log(`[Permissions Debug] Found userRow:`, userRow);
+
+  const leaveDateIdx = headers.indexOf("離線登出日");
+  if (leaveDateIdx !== -1 && userRow[leaveDateIdx]?.trim()) {
+    console.log(`[Permissions Debug] User ${email} has a leave date (${userRow[leaveDateIdx]}), access denied.`);
+    return null;
+  }
 
   const roles: { [key: string]: "admin" | "editor" | "viewer" | "none" } = {};
   headers.forEach((header, idx) => {
@@ -98,4 +104,26 @@ export async function checkPermissions(email: string): Promise<UserPermissions |
     hunterName: userRow[hunterIdx]?.trim() || "",
     roles
   };
+}
+
+export async function getResignedHunters(): Promise<string[]> {
+  const rows = await fetchPermissionsFromSheet();
+  if (rows.length < 3) return [];
+
+  const headers = rows[1].map(h => h.trim().toLowerCase());
+  const hunterIdx = headers.indexOf("狩獵者") !== -1 ? headers.indexOf("狩獵者") : headers.indexOf("姓名");
+  const leaveDateIdx = headers.indexOf("離線登出日");
+
+  if (hunterIdx === -1 || leaveDateIdx === -1) return [];
+
+  const resignedHunters: string[] = [];
+  rows.slice(2).forEach(row => {
+    const leaveDate = row[leaveDateIdx]?.trim();
+    const hunterName = row[hunterIdx]?.trim();
+    if (leaveDate && hunterName) {
+      resignedHunters.push(hunterName);
+    }
+  });
+
+  return resignedHunters;
 }

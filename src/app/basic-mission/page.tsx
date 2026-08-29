@@ -817,10 +817,11 @@ export default function BasicMissionPage() {
     }
 
     // Ensure all 11 hunters are present for the selected start date
+    const resignedHunters = data?.resignedHunters || [];
     const MASTER_HUNTERS = [
       "陳政剛", "陳政威", "魏文軍", "戴翠婷", "盧政恒", 
       "彭慶忠", "陳德霖", "劉璋櫻", "盧德洋", "謝建宏", "彭詩渝"
-    ];
+    ].filter(h => !resignedHunters.includes(h));
     
     const presentHunters = new Set(validRecords.map(r => r.data[1]));
     

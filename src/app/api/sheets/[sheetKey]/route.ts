@@ -46,8 +46,22 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       console.warn("Could not read settings sheet", e);
     }
     
+    let resignedHunters: string[] = [];
+    if (sheetKey === 'basic-mission') {
+      const { getResignedHunters } = await import("@/lib/permissions");
+      resignedHunters = await getResignedHunters();
+      if (resignedHunters.length > 0) {
+        for (let i = 2; i < rows.length; i++) {
+          const hunterName = rows[i][1]?.trim();
+          if (hunterName && resignedHunters.includes(hunterName)) {
+            // Blank out the row to remove their data while preserving indices
+            rows[i] = Array(rows[i].length).fill("");
+          }
+        }
+      }
+    }
 
-    return NextResponse.json({ rows, settings, label: config.label, sheetId, notes }, { status: 200 });
+    return NextResponse.json({ rows, settings, label: config.label, sheetId, notes, resignedHunters }, { status: 200 });
   } catch (err) {
     console.error(`[Sheets GET] ${sheetKey}:`, err);
     return NextResponse.json({ error: "Failed to read sheet" }, { status: 500 });
