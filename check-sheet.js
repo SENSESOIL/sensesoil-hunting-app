@@ -20,16 +20,10 @@ const auth = new google.auth.GoogleAuth({
 });
 const sheets = google.sheets({ version: 'v4', auth });
 sheets.spreadsheets.values.get({
-  spreadsheetId: '14ldpC7mD1wYjouSiR9gizl--fPFcIowGGzkQdkxQNvQ',
-  range: 'Permission!A:M'
-}).then(res => console.log('Permission:', res.data.values?.slice(0, 4))).catch(e => console.log('Permission error:', e.message));
-sheets.spreadsheets.values.get({
-  spreadsheetId: '14ldpC7mD1wYjouSiR9gizl--fPFcIowGGzkQdkxQNvQ',
-  range: '員工CRM!A:M'
+  spreadsheetId: '1aPrtF590zZu7fQYrCZSzZZSDs8zRkqfr7Oqzn-9PyzY',
+  range: 'Scoreboard!A:A'
 }).then(res => {
-  if (res.data.values) {
-    console.log('員工CRM row 0:', res.data.values[0]);
-    console.log('員工CRM row 1:', res.data.values[1]);
-    console.log('員工CRM row 12:', res.data.values[12]);
-  }
-}).catch(e => console.log('員工CRM error:', e.message));
+  const names = new Set();
+  res.data.values.forEach(row => names.add(row[0]));
+  console.log('Names in hidden scoreboard:', Array.from(names));
+}).catch(e => console.log('hidden error:', e.message));

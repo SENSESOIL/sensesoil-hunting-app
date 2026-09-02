@@ -17,17 +17,26 @@ export async function GET(request: Request) {
     const { getResignedHunters } = await import("@/lib/permissions");
     const resignedHunters = await getResignedHunters();
 
+    const normalizeName = (n: string) => {
+      if (!n) return '';
+      let res = n.replace(/[\.\s]/g, '').toUpperCase();
+      if (res === 'WWENJUN' || res === 'WEIWENJUN') return '魏文軍';
+      if (res === '盧政恆') return '盧政恒';
+      return res;
+    };
+
     const records = [];
     
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       if (!row[0]) continue; // Skip if no name
 
-      const name = row[0].trim();
-      if (resignedHunters.includes(name)) continue;
+      const rawName = row[0].trim();
+      const normalizedName = normalizeName(rawName);
+      if (resignedHunters.includes(normalizedName)) continue;
       
       const record = {
-        name,
+        name: rawName,
         L1: {
           runs: row[1] || '0',
           reward: row[2] || '',

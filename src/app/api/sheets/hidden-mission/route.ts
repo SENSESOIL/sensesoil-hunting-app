@@ -37,12 +37,21 @@ export async function GET() {
     const { getResignedHunters } = await import("@/lib/permissions");
     const resignedHunters = await getResignedHunters();
 
+    const normalizeName = (n: string) => {
+      if (!n) return '';
+      let res = n.replace(/[\.\s]/g, '').toUpperCase();
+      if (res === 'WWENJUN' || res === 'WEIWENJUN') return '魏文軍';
+      if (res === '盧政恆') return '盧政恒';
+      return res;
+    };
+
     // Parse Scoreboard (Rows 3+, index 2+)
     const scoreboard = [];
     for (let i = 2; i < scoreboardRows.length; i++) {
       const row = scoreboardRows[i];
       const hunter = row[0]?.trim();
-      if (hunter && hunter !== 'Total' && hunter !== '加總' && !resignedHunters.includes(hunter)) {
+      const normalizedHunter = normalizeName(hunter);
+      if (hunter && hunter !== 'Total' && hunter !== '加總' && !resignedHunters.includes(normalizedHunter)) {
         scoreboard.push({
           hunter,
           challengeA: {
@@ -71,7 +80,8 @@ export async function GET() {
     for (let i = 2; i < trackerRows.length; i++) {
       const row = trackerRows[i];
       const hunter = row[1]?.trim();
-      if (!hunter || resignedHunters.includes(hunter)) continue;
+      const normalizedHunter = normalizeName(hunter);
+      if (!hunter || resignedHunters.includes(normalizedHunter)) continue;
       if (row.length > 0 && row.some(c => c && String(c).trim() !== '')) {
         tracker.push({
           rowIndex: i + 1,
@@ -90,7 +100,8 @@ export async function GET() {
     for (let i = 1; i < rewardRows.length; i++) {
       const row = rewardRows[i];
       const hunter = row[1]?.trim();
-      if (!hunter || resignedHunters.includes(hunter)) continue;
+      const normalizedHunter = normalizeName(hunter);
+      if (!hunter || resignedHunters.includes(normalizedHunter)) continue;
       if (row.length > 0 && row.some(c => c && String(c).trim() !== '')) {
         reward.push({
           rowIndex: i + 1,
@@ -107,7 +118,8 @@ export async function GET() {
     for (let i = 2; i < leadgeARows.length; i++) {
       const row = leadgeARows[i];
       const hunter = row[0]?.trim();
-      if (hunter && !resignedHunters.includes(hunter)) {
+      const normalizedHunter = normalizeName(hunter);
+      if (hunter && !resignedHunters.includes(normalizedHunter)) {
         leadgeA.push({
           hunter,
           buyDate: row[1]?.trim() || '',
@@ -138,7 +150,8 @@ export async function GET() {
     for (let i = 4; i < leadgeBRows.length; i++) {
       const row = leadgeBRows[i];
       const hunter = row[0]?.trim();
-      if (hunter && !resignedHunters.includes(hunter)) {
+      const normalizedHunter = normalizeName(hunter);
+      if (hunter && !resignedHunters.includes(normalizedHunter)) {
         leadgeB.push({
           hunter,
           consecutiveMonths: cleanNum(row[1]),
@@ -157,7 +170,8 @@ export async function GET() {
         currentLeadgeCDate = row[0].trim();
       }
       const hunter = row[1]?.trim();
-      if (hunter && !resignedHunters.includes(hunter)) {
+      const normalizedHunter = normalizeName(hunter);
+      if (hunter && !resignedHunters.includes(normalizedHunter)) {
         leadgeC.push({
           date: currentLeadgeCDate,
           hunter,

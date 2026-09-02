@@ -21,12 +21,21 @@ export async function GET() {
     const { getResignedHunters } = await import("@/lib/permissions");
     const resignedHunters = await getResignedHunters();
 
+    const normalizeName = (n: string) => {
+      if (!n) return '';
+      let res = n.replace(/[\.\s]/g, '').toUpperCase();
+      if (res === 'WWENJUN' || res === 'WEIWENJUN') return '魏文軍';
+      if (res === '盧政恆') return '盧政恒';
+      return res;
+    };
+
     const records = [];
     // Skip header row
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       // Expected: [0]跑步日期, [1]跑者名稱, [2]活動名稱, [3]距離 (Km), [4]海拔高度 (m), [5]時間 (min)
-      const name = row[1]?.trim() || "";
+      const rawName = row[1]?.trim() || "";
+      const name = normalizeName(rawName);
       if (name && resignedHunters.includes(name)) continue;
 
       if (row.length >= 1 && row.some(cell => cell && cell.toString().trim() !== '')) {
