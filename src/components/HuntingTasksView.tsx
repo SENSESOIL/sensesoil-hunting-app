@@ -330,11 +330,11 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
             return (
               <div key={task.id} className="group flex flex-col mb-0.5">
                 {/* Main Task Row */}
-                <div className={`flex items-center py-1.5 px-1 rounded-[14px] transition-colors relative ${(highlightUnfinished && isThisWeek && task.status === 'todo') || (isNextWeek && unwrittenNextWeekTasks.includes(task.id)) ? 'bg-red-50 border border-red-200' : isContentLocked ? '' : 'hover:bg-[#FAFAFA]'}`}>
-                  <div className="mr-2">
+                <div className={`flex items-start py-1.5 px-1 rounded-[14px] transition-colors relative ${(highlightUnfinished && isThisWeek && task.status === 'todo') || (isNextWeek && unwrittenNextWeekTasks.includes(task.id)) ? 'bg-red-50 border border-red-200' : isContentLocked ? '' : 'hover:bg-[#FAFAFA]'}`}>
+                  <div className="mr-2 shrink-0 h-6 flex items-center">
                     <StatusIcon status={task.status} onClick={(!isContentLocked) && task.subs.length === 0 ? () => toggleStatus(week.id, task.id) : undefined} />
                   </div>
-                  <div className="text-[12px] font-bold text-[#A1A1AA] w-4 shrink-0 mt-0.5">{idx + 1}.</div>
+                  <div className="text-[12px] font-bold text-[#A1A1AA] w-4 shrink-0 mt-[4px]">{idx + 1}.</div>
                   
                   {isEditingMain ? (
                     <input
@@ -343,11 +343,11 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                       onChange={(e) => setEditingText(e.target.value)}
                       onBlur={saveEdit}
                       onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                      className="flex-1 bg-transparent text-[14px] font-semibold text-[#18181B] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] ml-1 p-0 pr-12 select-text"
+                      className="flex-1 bg-transparent text-[14px] font-semibold text-[#18181B] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] ml-1 pt-[2px] pb-[2px] pr-16 select-text"
                     />
                   ) : (
                     <div 
-                      className={`flex-1 text-[14px] font-semibold text-[#18181B] leading-snug ml-1 min-h-[20px] pr-12 select-text ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
+                      className={`flex-1 text-[14px] font-semibold text-[#18181B] leading-snug ml-1 min-h-[24px] pt-[2px] pr-16 select-text ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
                       onClick={() => !isContentLocked && startEditing(week.id, task.id, undefined, task.text)}
                     >
                       {task.text.trim() === "" ? (idx < 5 ? ["新任務", "新任務", "新任務", "體能", "格局"][idx] : "新任務") : task.text}
@@ -356,7 +356,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
                   {/* Actions Group (Hover) */}
                   {!isContentLocked && (
-                    <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center absolute right-2 top-1/2 -translate-y-1/2 transition-opacity gap-1">
+                    <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center absolute right-2 top-[6px] transition-opacity gap-1">
                     <button 
                       onClick={() => handleAddSubtask(week.id, task.id)}
                       className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#E4E4E7] text-[#A1A1AA] transition-colors"
@@ -394,15 +394,15 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                               <div 
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
-                                className={`relative flex items-center py-1 px-1 rounded-[10px] transition-colors group/sub ${snapshot.isDragging ? 'bg-[#FFFFFF] shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-[#E4E4E7] z-50' : highlightUnfinished && isThisWeek && sub.status === 'todo' ? 'bg-red-50 border border-red-200' : 'hover:bg-[#FAFAFA]'}`}
+                                className={`relative flex items-start py-1 px-1 rounded-[10px] transition-colors group/sub ${snapshot.isDragging ? 'bg-[#FFFFFF] shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-[#E4E4E7] z-50' : highlightUnfinished && isThisWeek && sub.status === 'todo' ? 'bg-red-50 border border-red-200' : 'hover:bg-[#FAFAFA]'}`}
                               >
                                 <div 
                                   {...provided.dragHandleProps}
-                                  className="w-6 h-6 mr-1 opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 cursor-grab active:cursor-grabbing text-[#A1A1AA] hover:text-[#F39C12] transition-colors flex items-center justify-center shrink-0"
+                                  className="w-6 h-6 mr-1 opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 cursor-grab active:cursor-grabbing text-[#A1A1AA] hover:text-[#F39C12] transition-colors flex items-center justify-center shrink-0 mt-[1px]"
                                 >
                                   <span className="material-symbols-outlined text-[16px]">drag_indicator</span>
                                 </div>
-                                <div className="-ml-1 mr-1 scale-75 shrink-0 flex items-center justify-center">
+                                <div className="-ml-1 mr-1 scale-75 shrink-0 h-6 flex items-center justify-center mt-[1px]">
                                   <StatusIcon status={sub.status} onClick={!isContentLocked ? () => toggleStatus(week.id, task.id, sub.id) : undefined} />
                                 </div>
                                 {isEditingSub ? (
@@ -412,11 +412,11 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                     onChange={(e) => setEditingText(e.target.value)}
                                     onBlur={saveEdit}
                                     onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                                    className="flex-1 bg-transparent text-[13px] font-normal text-[#71717A] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] p-0 pr-8 select-text"
+                                    className="flex-1 bg-transparent text-[13px] font-normal text-[#71717A] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] p-0 pt-[4px] pb-[4px] pr-10 select-text"
                                   />
                                 ) : (
                                   <div 
-                                    className={`flex-1 text-[13px] text-[#71717A] font-medium leading-snug min-h-[18px] pr-8 select-text ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
+                                    className={`flex-1 text-[13px] text-[#71717A] font-medium leading-snug min-h-[26px] pt-[4px] pr-10 select-text ${isContentLocked ? 'cursor-default' : 'cursor-text'}`}
                                     onClick={() => !isContentLocked && startEditing(week.id, task.id, sub.id, sub.text)}
                                   >
                                     {sub.text.trim() === "" ? "新子任務" : sub.text}
@@ -426,7 +426,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                 {!isContentLocked && (
                                   <button 
                                     onClick={() => deleteTask(sub.id)}
-                                  className="opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-[#A1A1AA] hover:text-red-500 transition-colors absolute right-2 top-1/2 -translate-y-1/2"
+                                  className="opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-[#A1A1AA] hover:text-red-500 transition-colors absolute right-2 top-[5px]"
                                   title="刪除子任務"
                                 >
                                   <span className="material-symbols-outlined translate-y-[-1px]" style={{ fontSize: '11px' }}>remove</span>
