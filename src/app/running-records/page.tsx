@@ -88,7 +88,7 @@ const SmoothLineChart = ({ data, selectedIndex, onSelect }: { data: any[], selec
 
   const handlePointerLeave = () => {
     setIsInteracting(false);
-    onSelect(11); // Reset to latest week when pointer leaves
+    onSelect(data.length - 1); // Reset to latest week when pointer leaves
   };
 
   const selectedPoint = points[selectedIndex] || points[points.length - 1];
@@ -575,13 +575,34 @@ export default function RunningRecordsPage() {
     return months;
   }, [personalRecords]);
 
-  const past12WeeksData = useMemo(() => {
+  const yearlyChartData = useMemo(() => {
+    const year = parseInt(awardYear, 10) || new Date().getFullYear();
     const now = new Date();
-    const past12 = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(now.getDate() - i * 7);
-      const { start, end } = getWeekRange(d);
+    const isCurrentYear = year === now.getFullYear();
+    
+    let currentD = new Date(year, 0, 1);
+    const endD = isCurrentYear ? now : new Date(year, 11, 31);
+    
+    const weeksList: {start: number, end: number, labelDay: Date}[] = [];
+    const seenStarts = new Set<number>();
+    
+    while (currentD <= endD) {
+      const { start, end } = getWeekRange(currentD);
+      if (!seenStarts.has(start)) {
+        seenStarts.add(start);
+        weeksList.push({ start, end, labelDay: new Date(end) });
+      }
+      currentD.setDate(currentD.getDate() + 7);
+    }
+    
+    const { start: lastStart, end: lastEnd } = getWeekRange(endD);
+    if (!seenStarts.has(lastStart)) {
+        seenStarts.add(lastStart);
+        weeksList.push({ start: lastStart, end: lastEnd, labelDay: new Date(lastEnd) });
+    }
+
+    return weeksList.map((w) => {
+      const { start, end, labelDay } = w;
       
       const weekRecords = personalRecords.filter((r: any) => {
         const t = new Date(r.date).getTime();
@@ -592,23 +613,19 @@ export default function RunningRecordsPage() {
       const time = weekRecords.reduce((sum: number, r: any) => sum + parseFloat(r.timeStr || "0"), 0);
       const elev = weekRecords.reduce((sum: number, r: any) => sum + r.elevation, 0);
 
-      const startD = new Date(start);
-      const endD = new Date(end);
-      const endLabel = `${endD.getFullYear()}/${(endD.getMonth()+1).toString().padStart(2, '0')}/${endD.getDate().toString().padStart(2, '0')}`;
+      const endLabel = `${labelDay.getFullYear()}/${(labelDay.getMonth()+1).toString().padStart(2, '0')}/${labelDay.getDate().toString().padStart(2, '0')}`;
       
-      past12.push({
-        label: `${d.getMonth()+1}/${d.getDate()}`,
+      return {
+        label: `${labelDay.getMonth()+1}/${labelDay.getDate()}`,
         value: dist,
         distance: dist.toFixed(2),
         timeFormatted: formatTime(time),
         pace: calculatePace(time, dist),
         elevation: elev.toFixed(0),
         endLabel: endLabel
-      });
-    }
-
-    return past12;
-  }, [personalRecords]);
+      };
+    });
+  }, [personalRecords, awardYear]);
 
   const past12MonthsData = useMemo(() => {
     const now = new Date();
@@ -818,13 +835,13 @@ export default function RunningRecordsPage() {
     };
   }, [personalRecords, selectedCalendarDate]);
 
-  const [selectedChartIndex, setSelectedChartIndex] = useState<number>(11);
+  const [selectedChartIndex, setSelectedChartIndex] = useState<number>(0);
 
   useEffect(() => {
-    setSelectedChartIndex(11);
-  }, [selectedPersonalHunter]);
+    setSelectedChartIndex(yearlyChartData.length - 1);
+  }, [yearlyChartData.length]);
 
-  const selectedWeek = past12WeeksData[selectedChartIndex] || past12WeeksData[11];
+  const selectedWeek = yearlyChartData[selectedChartIndex] || yearlyChartData[yearlyChartData.length - 1] || null;
 
   const [leaderboardMetric, setLeaderboardMetric] = useState<"distance" | "pace" | "elevation">("distance");
 
@@ -1595,15 +1612,15 @@ export default function RunningRecordsPage() {
           
           <div className="font-display mt-[40px] pb-5">
             <SmoothLineChart 
-              key={selectedPersonalHunter}
-              data={past12WeeksData} 
+              key={`${selectedPersonalHunter}-${awardYear}`}
+              data={yearlyChartData} 
               selectedIndex={selectedChartIndex} 
               onSelect={setSelectedChartIndex} 
             />
             <div className="flex justify-between mt-3 px-2">
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[0]?.label}</span>
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[5]?.label}</span>
-               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{past12WeeksData[11]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{yearlyChartData[0]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{yearlyChartData[Math.floor(yearlyChartData.length / 2)]?.label}</span>
+               <span className="text-[12px] text-[#efe0d2]/70 font-data-mono font-normal tracking-[0.1em]">{yearlyChartData[yearlyChartData.length - 1]?.label}</span>
             </div>
           </div>
         </section>
