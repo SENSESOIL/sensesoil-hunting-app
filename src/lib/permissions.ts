@@ -130,7 +130,11 @@ export async function getResignedHunters(): Promise<string[]> {
   rows.slice(2).forEach((row: any[]) => {
     const leaveDate = row[leaveDateIdx]?.trim();
     const hunterName = row[hunterIdx]?.trim();
-    if (leaveDate && hunterName) {
+    
+    // Ignore placeholder values like "-" or "N/A"
+    const isValidLeaveDate = leaveDate && leaveDate !== '-' && leaveDate.toUpperCase() !== 'N/A' && leaveDate !== '無';
+    
+    if (isValidLeaveDate && hunterName) {
       resignedHunters.push(hunterName);
     }
   });
