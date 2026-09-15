@@ -724,6 +724,7 @@ export default function HuntingManagementPage() {
   const lastScrollY = useRef(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [showOrgChart, setShowOrgChart] = useState(false);
 
   // Swipe gesture handler for mobile sub-tab switching with real-time content sliding
   const handleTouchStart = useCallback(
@@ -1454,6 +1455,55 @@ export default function HuntingManagementPage() {
                 </div>
               </div>
             </div>
+          ) : activeNav === "command_center" ? (
+             <div className="px-6 lg:px-10 flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-[20px] font-bold text-[#18181B]">指揮中心</h2>
+                </div>
+                <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col min-h-[50vh]">
+                  
+                  {!showOrgChart ? (
+                    <div className="flex flex-col items-center justify-center m-auto gap-4 py-10">
+                      <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center text-[#F39C12] mb-2">
+                        <span className="material-symbols-outlined text-[32px]">account_tree</span>
+                      </div>
+                      <h3 className="text-[18px] font-semibold text-[#18181B]">組織架構圖</h3>
+                      <p className="text-[14px] text-[#A1A1AA] text-center max-w-[280px]">
+                        點擊下方按鈕以載入並查看公司最新的組織架構圖。
+                      </p>
+                      <button 
+                        onClick={() => setShowOrgChart(true)}
+                        className="mt-4 px-6 py-2.5 bg-[#18181B] hover:bg-[#27272A] text-white rounded-full text-[14px] font-medium transition-colors flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">visibility</span>
+                        開啟組織架構圖
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-full flex flex-col h-[calc(100vh-200px)]">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-[16px] font-semibold text-[#18181B] flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[#F39C12] text-[20px]">account_tree</span>
+                          組織架構圖
+                        </h3>
+                        <button 
+                          onClick={() => setShowOrgChart(false)}
+                          className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[#71717A] transition-colors"
+                          title="關閉"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">close</span>
+                        </button>
+                      </div>
+                      <iframe
+                        src="https://你的組織圖.vercel.app/?view=1"
+                        className="w-full flex-1 border border-[#E4E4E7] rounded-[16px] bg-[#FAFAFA]"
+                        title="組織架構"
+                        allowFullScreen
+                      />
+                    </div>
+                  )}
+                </div>
+             </div>
           ) : (
             /* ============ Default Dashboard View ============ */
             <>
