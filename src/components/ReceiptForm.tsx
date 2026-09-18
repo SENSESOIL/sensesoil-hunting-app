@@ -229,8 +229,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
             <span className="w-24 text-gray-500 shrink-0 font-normal text-[15px] pt-1">領款金額：</span>
             <span className="text-[#F39C12] mr-2">NT$</span>
             <input 
-              type="text" 
-              inputMode="numeric"
+              type="tel"
+              pattern="[0-9]*"
               value={amount}
               onChange={(e) => {
                 const numericValue = e.target.value.replace(/\D/g, "");
