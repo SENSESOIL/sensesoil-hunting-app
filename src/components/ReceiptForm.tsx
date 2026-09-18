@@ -113,6 +113,13 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
         ref={formRef}
         className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col relative"
       >
+        <img 
+          src="/Logo｜Orange.svg" 
+          alt="Logo" 
+          className="absolute top-6 right-6 w-10 h-10 object-contain"
+          crossOrigin="anonymous"
+        />
+
         <div className="text-center mb-6 border-b border-gray-100 pb-4">
           <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">領款簽收單</h2>
           <div className="text-[12px] text-gray-500 mt-1">拾壤室內裝修股份有限公司</div>
