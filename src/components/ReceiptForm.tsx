@@ -29,7 +29,6 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
   const [signature, setSignature] = useState<string | null>(null);
 
   const [isSigning, setIsSigning] = useState(false);
-  const [isCapturing, setIsCapturing] = useState(false);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
 
@@ -52,7 +51,6 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
   const handleShare = async () => {
     if (!formRef.current) return;
     
-    setIsCapturing(true);
     try {
       // Small delay to ensure any UI states (like focus rings) are cleared
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -64,19 +62,18 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
       });
 
       if (!blob) {
-        alert("無法產生圖片！");
+        alert("產生圖片失敗");
         return;
       }
 
       const fileName = `請款簽收單_${date.replace(/\//g, '')}_${vendor || '未命名'}.jpg`;
       const file = new File([blob], fileName, { type: "image/jpeg" });
 
-      if (navigator.share && navigator.canShare({ files: [file] })) {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
             files: [file],
-            title: "請款簽收單",
-            text: `請款簽收單 - ${vendor}`,
+            title: "領款簽收單",
           });
         } catch (error: any) {
           if (error.name !== 'AbortError') {
@@ -89,9 +86,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
       }
     } catch (error) {
       console.error("Error capturing receipt:", error);
-      alert("截圖失敗，請稍後再試。");
-    } finally {
-      setIsCapturing(false);
+      alert("產生圖片失敗，請稍後再試。");
     }
   };
 
@@ -117,16 +112,9 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
         ref={formRef}
         className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col relative"
       >
-        <div className="relative flex items-center justify-center mb-6 border-b border-gray-100 pb-4 pt-2">
-          <h2 className="text-[24px] font-bold tracking-widest text-[#18181B]">領款簽收單</h2>
-          {isCapturing && (
-            <img 
-              src="/Logo｜Orange.svg" 
-              alt="Logo" 
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 object-contain"
-              crossOrigin="anonymous"
-            />
-          )}
+        <div className="text-center mb-6 border-b border-gray-100 pb-4">
+          <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">領款簽收單</h2>
+          <div className="text-[12px] text-gray-500 mt-1">拾壤室內裝修股份有限公司</div>
         </div>
 
         <div className="flex flex-col gap-5 text-[15px]">
