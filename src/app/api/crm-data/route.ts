@@ -10,14 +10,26 @@ export async function GET() {
     const activeHunters: string[] = [];
 
     if (huntersRows && huntersRows.length > 1) {
-      // Find header row (usually row 2, index 1)
-      const headerRow = huntersRows.length >= 3 ? huntersRows[1] : huntersRows[0];
-      const headers = headerRow.map(h => h ? String(h).trim() : "");
-      const hunterIdx = headers.indexOf("狩獵者") !== -1 ? headers.indexOf("狩獵者") : headers.indexOf("姓名");
-      const leaveDateIdx = headers.indexOf("離線登出日");
+      // Find header row dynamically
+      let headerRowIndex = 0;
+      let headers: string[] = [];
+      let hunterIdx = -1;
+      let leaveDateIdx = -1;
+
+      for (let i = 0; i < Math.min(5, huntersRows.length); i++) {
+        const row = huntersRows[i].map(h => h ? String(h).trim() : "");
+        const hIdx = row.indexOf("狩獵者") !== -1 ? row.indexOf("狩獵者") : row.indexOf("姓名");
+        if (hIdx !== -1) {
+          headerRowIndex = i;
+          headers = row;
+          hunterIdx = hIdx;
+          leaveDateIdx = row.indexOf("離線登出日");
+          break;
+        }
+      }
 
       if (hunterIdx !== -1) {
-        const startIdx = huntersRows.length >= 3 ? 2 : 1;
+        const startIdx = headerRowIndex + 1;
         huntersRows.slice(startIdx).forEach(row => {
           const name = row[hunterIdx] ? String(row[hunterIdx]).trim() : "";
           const leaveDate = (leaveDateIdx !== -1 && row[leaveDateIdx]) ? String(row[leaveDateIdx]).trim() : "";
@@ -45,7 +57,11 @@ export async function GET() {
     // Deduplicate projects
     const uniqueProjects = Array.from(new Set(projects));
 
-    return NextResponse.json({ success: true, activeHunters, projects: uniqueProjects });
+    return NextResponse.json({ 
+      success: true, 
+      activeHunters, 
+      projects: uniqueProjects
+    });
   } catch (error) {
     console.error('API Error /api/crm-data:', error);
     return NextResponse.json(
