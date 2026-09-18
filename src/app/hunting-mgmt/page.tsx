@@ -8,6 +8,7 @@ import { mutate } from "swr";
 import HuntingTasksView, {
   HuntingTasksViewRef,
 } from "@/components/HuntingTasksView";
+import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 
 // Mock Data
 const projects = [
@@ -712,6 +713,7 @@ export default function HuntingManagementPage() {
   const shareRefDesktop = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
+  const receiptFormRef = useRef<ReceiptFormRef>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -774,7 +776,7 @@ export default function HuntingManagementPage() {
       if (swipeLocked.current) return;
 
       // Clamp offset: prevent over-swiping beyond the two panels
-      const tabs = ["專案任務", "每周任務"];
+      const tabs = ["專案任務", "每周任務", "簽收表單"];
       const activeIdx = tabs.indexOf(activeSubTab);
       let clampedOffset = dx;
       // If on first tab, can't swipe right further; if on last, can't swipe left further
@@ -799,10 +801,12 @@ export default function HuntingManagementPage() {
       touchStartY.current = null;
 
       if (Math.abs(diff) > 60 && isSwiping) {
-        if (diff > 0) {
-          setActiveSubTab("專案任務");
-        } else {
-          setActiveSubTab("每周任務");
+        const tabs = ["專案任務", "每周任務", "簽收表單"];
+        const activeIdx = tabs.indexOf(activeSubTab);
+        if (diff > 0 && activeIdx > 0) {
+          setActiveSubTab(tabs[activeIdx - 1]);
+        } else if (diff < 0 && activeIdx < tabs.length - 1) {
+          setActiveSubTab(tabs[activeIdx + 1]);
         }
       }
 
@@ -1227,7 +1231,13 @@ export default function HuntingManagementPage() {
               {/* Mobile Share Button (Hidden on Desktop) */}
               <div className="relative md:hidden" ref={shareRefMobile}>
                 <button
-                  onClick={() => setIsShareOpen(!isShareOpen)}
+                  onClick={() => {
+                    if (activeSubTab === "簽收表單") {
+                      receiptFormRef.current?.shareReceipt();
+                    } else {
+                      setIsShareOpen(!isShareOpen);
+                    }
+                  }}
                   className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
                   title="分享"
                 >
@@ -1272,37 +1282,29 @@ export default function HuntingManagementPage() {
             <div className="flex items-center">
               {activeNav === "hunting_tasks" &&
                 (() => {
-                  const tabs = ["專案任務", "每周任務"];
+                  const tabs = ["專案任務", "每周任務", "簽收表單"];
                   const activeIdx = tabs.indexOf(activeSubTab);
                   return (
                     <div
                       className="relative flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
                       style={{ WebkitTapHighlightColor: "transparent" }}
-                      onClick={() => {
-                        if (showManual) {
-                          setShowManual(false);
-                          setActiveSubTab("每周任務");
-                        } else {
-                          setActiveSubTab(
-                            activeSubTab === "專案任務"
-                              ? "每周任務"
-                              : "專案任務",
-                          );
-                        }
-                      }}
                     >
                       {/* Sliding pill indicator */}
                       <div
                         className={`absolute top-[3px] bottom-[3px] rounded-[8px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${showManual ? "opacity-0" : "opacity-100"}`}
                         style={{
-                          width: "calc(50% - 3px)",
-                          left: activeIdx === 0 ? "3px" : "calc(50%)",
+                          width: `calc(100% / ${tabs.length} - 2px)`,
+                          left: `calc((100% / ${tabs.length}) * ${activeIdx} + 3px)`,
                         }}
                       />
                       {/* Tab labels */}
                       {tabs.map((tab) => (
                         <div
                           key={tab}
+                          onClick={() => {
+                            setShowManual(false);
+                            setActiveSubTab(tab);
+                          }}
                           className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide transition-colors duration-300 ${activeSubTab === tab && !showManual ? "text-[#18181B]" : "text-[#A1A1AA]"}`}
                         >
                           {tab}
@@ -1331,7 +1333,13 @@ export default function HuntingManagementPage() {
               {/* Desktop Share Button (Hidden on Mobile) */}
               <div className="relative hidden md:block" ref={shareRefDesktop}>
                 <button
-                  onClick={() => setIsShareOpen(!isShareOpen)}
+                  onClick={() => {
+                    if (activeSubTab === "簽收表單") {
+                      receiptFormRef.current?.shareReceipt();
+                    } else {
+                      setIsShareOpen(!isShareOpen);
+                    }
+                  }}
                   className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
                   title="分享"
                 >
@@ -1411,11 +1419,13 @@ export default function HuntingManagementPage() {
             /* ============ Sliding Panel Container ============ */
             <div className="flex-1 overflow-hidden relative">
               <div
-                className="flex w-[200%] md:w-full h-full md:!transform-none"
+                className="flex w-[300%] md:w-full h-full md:!transform-none"
                 style={{
                   transform:
-                    activeSubTab === "每周任務"
-                      ? `translateX(calc(-50% + ${swipeOffset}px))`
+                    activeSubTab === "簽收表單"
+                      ? `translateX(calc(-66.666% + ${swipeOffset}px))`
+                      : activeSubTab === "每周任務"
+                      ? `translateX(calc(-33.333% + ${swipeOffset}px))`
                       : `translateX(${swipeOffset}px)`,
                   transition: isSwiping
                     ? "none"
@@ -1424,7 +1434,7 @@ export default function HuntingManagementPage() {
               >
                 {/* Panel 1: 專案任務 */}
                 <div
-                  className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "專案任務" ? "md:hidden" : ""}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "專案任務" ? "md:hidden" : ""}`}
                 >
                   <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
                     <span
@@ -1440,7 +1450,7 @@ export default function HuntingManagementPage() {
                 </div>
                 {/* Panel 2: 每周任務 */}
                 <div
-                  className={`w-1/2 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "每周任務" ? "md:hidden" : ""}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "每周任務" ? "md:hidden" : ""}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
@@ -1452,6 +1462,12 @@ export default function HuntingManagementPage() {
                       </div>
                     )}
                   </div>
+                </div>
+                {/* Panel 3: 簽收表單 */}
+                <div
+                  className={`w-1/3 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "簽收表單" ? "md:hidden" : ""}`}
+                >
+                  <ReceiptForm ref={receiptFormRef} />
                 </div>
               </div>
             </div>
