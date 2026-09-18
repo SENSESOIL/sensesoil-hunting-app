@@ -65,6 +65,12 @@ export default function SignaturePad({ onConfirm, onCancel }: SignaturePadProps)
     <div
       className="fixed inset-0 z-[99999] bg-white flex items-center justify-center overflow-hidden"
       style={{ touchAction: "none" }}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerMove={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
     >
       <div
         className="relative bg-white"
