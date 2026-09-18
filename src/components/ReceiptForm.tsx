@@ -120,8 +120,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
 
         <div className="flex flex-col gap-5 text-[15px]">
           {/* 日期 */}
-          <div className="flex border-b border-gray-100 pb-2">
-            <span className="w-24 text-gray-500 shrink-0">領款日期：</span>
+          <div className="flex items-center border-b border-gray-100 pb-2">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">領款日期：</span>
             <input 
               type="text" 
               value={date}
@@ -132,8 +132,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
           </div>
 
           {/* 廠商 */}
-          <div className="flex border-b border-gray-100 pb-2">
-            <span className="w-24 text-gray-500 shrink-0">廠商/領款人：</span>
+          <div className="flex items-center border-b border-gray-100 pb-2">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">廠商/領款人：</span>
             <input 
               type="text" 
               value={vendor}
@@ -143,8 +143,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
           </div>
 
           {/* 電話 */}
-          <div className="flex border-b border-gray-100 pb-2">
-            <span className="w-24 text-gray-500 shrink-0">連絡電話：</span>
+          <div className="flex items-center border-b border-gray-100 pb-2">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">連絡電話：</span>
             <input 
               type="tel" 
               value={phone}
@@ -154,8 +154,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
           </div>
 
           {/* 請款項目 */}
-          <div className="flex border-b border-gray-100 pb-2">
-            <span className="w-24 text-gray-500 shrink-0">請款項目：</span>
+          <div className="flex items-center border-b border-gray-100 pb-2">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">請款項目：</span>
             <input 
               type="text" 
               value={item}
@@ -165,8 +165,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
           </div>
 
           {/* 專案 */}
-          <div className="flex border-b border-gray-100 pb-2 relative">
-            <span className="w-24 text-gray-500 shrink-0">專案：</span>
+          <div className="flex items-center border-b border-gray-100 pb-2 relative">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">專案：</span>
             <div className="flex-1 relative">
               <input 
                 type="text" 
@@ -209,8 +209,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
           </div>
 
           {/* 經手人 */}
-          <div className="flex border-b border-gray-100 pb-2">
-            <span className="w-24 text-gray-500 shrink-0">經手人：</span>
+          <div className="flex items-center border-b border-gray-100 pb-2">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">經手人：</span>
             <select 
               value={handler}
               onChange={(e) => setHandler(e.target.value)}
@@ -225,8 +225,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
             </select>
           </div>
 
-          <div className="flex border-b border-gray-100 pb-2">
-            <span className="w-24 text-gray-500 shrink-0">領款金額：</span>
+          <div className="flex items-center border-b border-gray-100 pb-2">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">領款金額：</span>
             <span className="text-[#18181B] mr-2">NT$</span>
             <input 
               type="tel"
