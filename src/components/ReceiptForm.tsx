@@ -117,17 +117,16 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
         ref={formRef}
         className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col relative"
       >
-        {isCapturing && (
-        <img 
-          src="/Logo｜Orange.svg" 
-          alt="Logo" 
-          className="absolute top-8 right-6 w-10 h-10 object-contain"
-          crossOrigin="anonymous"
-        />
-      )}
-
-        <div className="text-center mb-6 border-b border-gray-100 pb-6 pt-2">
-          <h2 className="text-[32px] leading-[40px] font-bold tracking-[0.2em] text-[#18181B]">領款簽收單</h2>
+        <div className="relative flex items-center justify-center mb-6 border-b border-gray-100 pb-4 pt-2">
+          <h2 className="text-[24px] font-bold tracking-widest text-[#18181B]">領款簽收單</h2>
+          {isCapturing && (
+            <img 
+              src="/Logo｜Orange.svg" 
+              alt="Logo" 
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 object-contain"
+              crossOrigin="anonymous"
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-5 text-[15px]">
