@@ -223,7 +223,6 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
                 <option key={h} value={h}>{h}</option>
               ))}
             </select>
-            <span className="material-symbols-outlined text-gray-400 pointer-events-none text-sm absolute right-6 mt-1">expand_more</span>
           </div>
 
           {/* 金額 */}
