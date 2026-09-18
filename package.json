@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.112.0",
     "@types/gapi.client.sheets": "^4.0.20201031",
     "googleapis": "latest",
+    "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "jimp": "^1.6.1",
     "next": "latest",

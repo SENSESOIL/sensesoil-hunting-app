@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import useSWR from "swr";
-import html2canvas from "html2canvas";
+import * as htmlToImage from 'html-to-image';
 import SignaturePad from "./SignaturePad";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
@@ -55,38 +55,36 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
       // Small delay to ensure any UI states (like focus rings) are cleared
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      const canvas = await html2canvas(formRef.current, {
-        scale: 2, // High resolution
-        useCORS: true,
-        backgroundColor: "#ffffff",
+      const blob = await htmlToImage.toBlob(formRef.current, {
+        quality: 0.95,
+        backgroundColor: '#ffffff',
+        pixelRatio: 2,
       });
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          alert("無法產生圖片！");
-          return;
-        }
+      if (!blob) {
+        alert("無法產生圖片！");
+        return;
+      }
 
-        const fileName = `請款簽收單_${date.replace(/\//g, '')}_${vendor || '未命名'}.jpg`;
-        const file = new File([blob], fileName, { type: "image/jpeg" });
+      const fileName = `請款簽收單_${date.replace(/\//g, '')}_${vendor || '未命名'}.jpg`;
+      const file = new File([blob], fileName, { type: "image/jpeg" });
 
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: "請款簽收單",
-              text: `請款簽收單 - ${vendor}`,
-            });
-          } catch (error: any) {
-            if (error.name !== 'AbortError') {
-              console.error("Share failed", error);
-              downloadFallback(blob, fileName);
-            }
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "請款簽收單",
+            text: `請款簽收單 - ${vendor}`,
+          });
+        } catch (error: any) {
+          if (error.name !== 'AbortError') {
+            console.error("Share failed", error);
+            downloadFallback(blob, fileName);
           }
-        } else {
-          downloadFallback(blob, fileName);
         }
-      }, "image/jpeg", 0.9);
+      } else {
+        downloadFallback(blob, fileName);
+      }
     } catch (error) {
       console.error("Error capturing receipt:", error);
       alert("截圖失敗，請稍後再試。");
