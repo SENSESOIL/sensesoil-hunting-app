@@ -154,7 +154,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
 
           {/* 專案 */}
           <div className="flex items-center border-b border-gray-100 pb-2 relative">
-            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">專案：</span>
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">認列專案：</span>
             <div className="flex-1 relative">
               <input 
                 type="text" 
@@ -196,23 +196,6 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
             </div>
           </div>
 
-          {/* 經手人 */}
-          <div className="flex items-center border-b border-gray-100 pb-2">
-            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">經手人：</span>
-            <select 
-              value={handler}
-              onChange={(e) => setHandler(e.target.value)}
-              className="flex-1 outline-none text-[#18181B] bg-transparent appearance-none cursor-pointer"
-            >
-              {handler && !activeHunters.includes(handler) && (
-                <option value={handler}>{handler}</option>
-              )}
-              {activeHunters.map((h: string) => (
-                <option key={h} value={h}>{h}</option>
-              ))}
-            </select>
-          </div>
-
           <div className="flex items-center border-b border-gray-100 pb-2">
             <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">領款金額：</span>
             <span className="text-[#18181B] mr-2">NT$</span>
@@ -243,6 +226,23 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
               className="flex-1 outline-none text-[#18181B] bg-transparent"
               placeholder="YYYY/MM/DD"
             />
+          </div>
+
+          {/* 經手人 */}
+          <div className="flex items-center border-b border-gray-100 pb-2">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">經手人：</span>
+            <select 
+              value={handler}
+              onChange={(e) => setHandler(e.target.value)}
+              className="flex-1 outline-none text-[#18181B] bg-transparent appearance-none cursor-pointer"
+            >
+              {handler && !activeHunters.includes(handler) && (
+                <option value={handler}>{handler}</option>
+              )}
+              {activeHunters.map((h: string) => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
           </div>
 
           {/* 簽收 */}
