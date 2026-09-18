@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import SignatureCanvas from "react-signature-canvas";
 
 interface SignaturePadProps {
@@ -11,8 +12,10 @@ interface SignaturePadProps {
 export default function SignaturePad({ onConfirm, onCancel }: SignaturePadProps) {
   const sigCanvas = useRef<SignatureCanvas>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // When mounted, match screen dimensions
     const handleResize = () => {
       setDimensions({
@@ -56,9 +59,9 @@ export default function SignaturePad({ onConfirm, onCancel }: SignaturePadProps)
     }
   };
 
-  if (dimensions.width === 0) return null;
+  if (dimensions.width === 0 || !mounted) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[99999] bg-white flex items-center justify-center overflow-hidden"
       style={{ touchAction: "none" }}
@@ -112,6 +115,7 @@ export default function SignaturePad({ onConfirm, onCancel }: SignaturePadProps)
         {/* Signature Line */}
         <div className="absolute bottom-1/4 left-10 right-10 border-b-2 border-gray-300 pointer-events-none border-dashed" />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
