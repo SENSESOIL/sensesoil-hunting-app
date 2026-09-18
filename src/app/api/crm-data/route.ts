@@ -9,15 +9,18 @@ export async function GET() {
     const huntersRows = await readSheet(SPREADSHEET_ID, "員工CRM!A:M").catch(() => null);
     const activeHunters: string[] = [];
 
-    if (huntersRows && huntersRows.length >= 3) {
-      const headers = huntersRows[1].map(h => h.trim().toLowerCase());
+    if (huntersRows && huntersRows.length > 1) {
+      // Find header row (usually row 2, index 1)
+      const headerRow = huntersRows.length >= 3 ? huntersRows[1] : huntersRows[0];
+      const headers = headerRow.map(h => h ? String(h).trim() : "");
       const hunterIdx = headers.indexOf("狩獵者") !== -1 ? headers.indexOf("狩獵者") : headers.indexOf("姓名");
       const leaveDateIdx = headers.indexOf("離線登出日");
 
       if (hunterIdx !== -1) {
-        huntersRows.slice(2).forEach(row => {
-          const name = row[hunterIdx]?.trim();
-          const leaveDate = leaveDateIdx !== -1 ? row[leaveDateIdx]?.trim() : "";
+        const startIdx = huntersRows.length >= 3 ? 2 : 1;
+        huntersRows.slice(startIdx).forEach(row => {
+          const name = row[hunterIdx] ? String(row[hunterIdx]).trim() : "";
+          const leaveDate = (leaveDateIdx !== -1 && row[leaveDateIdx]) ? String(row[leaveDateIdx]).trim() : "";
           
           if (name && !leaveDate) {
             activeHunters.push(name);
@@ -32,7 +35,7 @@ export async function GET() {
     
     if (projectRows) {
       projectRows.forEach(row => {
-        const pCode = row[0]?.trim();
+        const pCode = row[0] ? String(row[0]).trim() : "";
         if (pCode) {
           projects.push(pCode);
         }

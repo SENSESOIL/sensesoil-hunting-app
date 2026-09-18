@@ -117,8 +117,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
         className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col relative"
       >
         <div className="text-center mb-6 border-b border-gray-100 pb-4">
-          <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">請款簽收單</h2>
-          <div className="text-[12px] text-gray-400 mt-1">SENSESOIL HUNTING</div>
+          <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">領款簽收單</h2>
+          <div className="text-[12px] text-gray-500 mt-1">拾壤室內裝修股份有限公司</div>
         </div>
 
         <div className="flex flex-col gap-5 text-[15px]">
@@ -250,7 +250,18 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
             
             <div 
               className="w-full h-[120px] bg-gray-50 rounded-lg flex items-center justify-center cursor-pointer border border-gray-200 overflow-hidden relative group"
-              onClick={() => setIsSigning(true)}
+              onClick={() => {
+                setIsSigning(true);
+                // Attempt to go fullscreen (works on Android, partially on iOS if PWA)
+                try {
+                  const elem = document.documentElement;
+                  if (elem.requestFullscreen) {
+                    elem.requestFullscreen().catch(() => {});
+                  } else if ((elem as any).webkitRequestFullscreen) {
+                    (elem as any).webkitRequestFullscreen();
+                  }
+                } catch (e) {}
+              }}
             >
               {signature ? (
                 <div className="w-full h-full relative">
@@ -268,7 +279,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
               ) : (
                 <span className="text-gray-400 text-sm flex items-center gap-2">
                   <span className="material-symbols-outlined text-xl">draw</span>
-                  點擊此處全螢幕簽名
+                  點擊此處全螢幕手機打橫
                 </span>
               )}
             </div>
@@ -287,8 +298,18 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
           onConfirm={(dataUrl) => {
             setSignature(dataUrl);
             setIsSigning(false);
+            try {
+              if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+              else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+            } catch (e) {}
           }}
-          onCancel={() => setIsSigning(false)}
+          onCancel={() => {
+            setIsSigning(false);
+            try {
+              if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+              else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+            } catch (e) {}
+          }}
         />
       )}
     </div>

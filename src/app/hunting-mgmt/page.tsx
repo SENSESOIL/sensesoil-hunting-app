@@ -1397,7 +1397,7 @@ export default function HuntingManagementPage() {
           onTouchEnd={handleTouchEnd}
         >
           {/* Mobile Search Bar */}
-          {!(activeNav === "hunting_tasks" && activeSubTab === "每周任務") && (
+          {!(activeNav === "hunting_tasks" && (activeSubTab === "每周任務" || activeSubTab === "簽收表單")) && (
             <div className="px-6 md:hidden">
               <div className="relative group w-full">
                 <span

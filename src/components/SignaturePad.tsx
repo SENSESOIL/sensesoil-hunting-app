@@ -13,23 +13,28 @@ export default function SignaturePad({ onConfirm, onCancel }: SignaturePadProps)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    // When mounted, measure the screen dimensions to set canvas size.
-    // Because it is rotated, width of canvas = screen height, height of canvas = screen width.
+    // When mounted, match screen dimensions
     const handleResize = () => {
       setDimensions({
-        width: window.innerHeight,
-        height: window.innerWidth,
+        width: window.innerWidth,
+        height: window.innerHeight,
       });
     };
     handleResize();
     window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
     
-    // Prevent background scrolling
+    // Prevent background scrolling and body scrolling
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
     
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
       document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
     };
   }, []);
 
@@ -55,18 +60,14 @@ export default function SignaturePad({ onConfirm, onCancel }: SignaturePadProps)
 
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-white flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[99999] bg-white flex items-center justify-center overflow-hidden"
       style={{ touchAction: "none" }}
     >
-      {/* The rotating container */}
       <div
         className="relative bg-white"
         style={{
           width: dimensions.width,
           height: dimensions.height,
-          transform: "rotate(90deg)",
-          transformOrigin: "center center",
-          position: "absolute",
         }}
       >
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
