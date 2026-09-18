@@ -225,9 +225,9 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
             </select>
           </div>
 
-          <div className="flex border-b border-gray-100 pb-2 mt-4 text-[18px] font-bold">
-            <span className="w-24 text-gray-500 shrink-0 font-normal text-[15px] pt-1">領款金額：</span>
-            <span className="text-[#F39C12] mr-2">NT$</span>
+          <div className="flex border-b border-gray-100 pb-2">
+            <span className="w-24 text-gray-500 shrink-0">領款金額：</span>
+            <span className="text-[#18181B] mr-2">NT$</span>
             <input 
               type="tel"
               pattern="[0-9]*"
@@ -240,7 +240,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
                   setAmount(Number(numericValue).toLocaleString("en-US"));
                 }
               }}
-              className="flex-1 outline-none text-[#18181B] bg-transparent font-data-mono tracking-wider"
+              className="flex-1 outline-none text-[#18181B] bg-transparent"
               placeholder="0"
             />
           </div>
