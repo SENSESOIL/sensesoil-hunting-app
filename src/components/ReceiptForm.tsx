@@ -111,13 +111,6 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
   }));
 
   return (
-    <>
-      {isCapturing && (
-        <div className="fixed inset-0 z-[9999] bg-[#FAFAFA] flex flex-col items-center justify-center">
-          <div className="w-10 h-10 border-4 border-[#F39C12] border-t-transparent rounded-full animate-spin mb-4"></div>
-          <div className="text-[#18181B] font-medium">正在產生圖片...</div>
-        </div>
-      )}
     <div className="w-full flex flex-col px-4 pt-4 pb-4 max-w-[500px] mx-auto">
       {/* Receipt View that will be captured */}
       <div 
@@ -334,7 +327,6 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
         />
       )}
     </div>
-    </>
   );
 });
 
