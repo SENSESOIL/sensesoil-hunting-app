@@ -281,7 +281,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
               ) : (
                 <span className="text-gray-400 text-sm flex items-center gap-2">
                   <span className="material-symbols-outlined text-xl">draw</span>
-                  點擊此處全螢幕手機打橫
+                  點擊此處簽名
                 </span>
               )}
             </div>
