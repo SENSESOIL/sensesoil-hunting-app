@@ -225,14 +225,21 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
             </select>
           </div>
 
-          {/* 金額 */}
           <div className="flex border-b border-gray-100 pb-2 mt-4 text-[18px] font-bold">
             <span className="w-24 text-gray-500 shrink-0 font-normal text-[15px] pt-1">領款金額：</span>
             <span className="text-[#F39C12] mr-2">NT$</span>
             <input 
-              type="number" 
+              type="text" 
+              inputMode="numeric"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                const numericValue = e.target.value.replace(/\D/g, "");
+                if (!numericValue) {
+                  setAmount("");
+                } else {
+                  setAmount(Number(numericValue).toLocaleString("en-US"));
+                }
+              }}
               className="flex-1 outline-none text-[#18181B] bg-transparent font-data-mono tracking-wider"
               placeholder="0"
             />
