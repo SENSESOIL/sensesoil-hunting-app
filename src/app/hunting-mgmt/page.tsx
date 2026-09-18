@@ -933,7 +933,7 @@ export default function HuntingManagementPage() {
   };
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex pb-20 md:pb-0 relative">
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col pb-20 md:pb-0 relative">
       {/* iOS Pull to Refresh Indicator */}
       <div
         className="fixed left-0 right-0 z-[100] flex items-center justify-center pointer-events-none md:hidden transition-transform duration-200"
@@ -1434,7 +1434,7 @@ export default function HuntingManagementPage() {
               >
                 {/* Panel 1: 專案任務 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "專案任務" ? "md:hidden" : ""}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "專案任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto"}`}
                 >
                   <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
                     <span
@@ -1450,7 +1450,7 @@ export default function HuntingManagementPage() {
                 </div>
                 {/* Panel 2: 每周任務 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "每周任務" ? "md:hidden" : ""}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每周任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
@@ -1465,7 +1465,7 @@ export default function HuntingManagementPage() {
                 </div>
                 {/* Panel 3: 簽收表單 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 h-full overflow-y-auto ${activeSubTab !== "簽收表單" ? "md:hidden" : ""}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "簽收表單" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto"}`}
                 >
                   <ReceiptForm ref={receiptFormRef} />
                 </div>
