@@ -29,6 +29,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
   const [signature, setSignature] = useState<string | null>(null);
 
   const [isSigning, setIsSigning] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
   const [projectSearch, setProjectSearch] = useState("");
 
@@ -51,9 +52,10 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
   const handleShare = async () => {
     if (!formRef.current) return;
     
+    setIsCapturing(true);
     try {
       // Small delay to ensure any UI states (like focus rings) are cleared
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       const blob = await htmlToImage.toBlob(formRef.current, {
         quality: 0.95,
@@ -88,6 +90,8 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
     } catch (error) {
       console.error("Error capturing receipt:", error);
       alert("截圖失敗，請稍後再試。");
+    } finally {
+      setIsCapturing(false);
     }
   };
 
@@ -113,12 +117,14 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
         ref={formRef}
         className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col relative"
       >
+        {isCapturing && (
         <img 
           src="/Logo｜Orange.svg" 
           alt="Logo" 
           className="absolute top-6 right-6 w-10 h-10 object-contain"
           crossOrigin="anonymous"
         />
+      )}
 
         <div className="text-center mb-6 border-b border-gray-100 pb-4">
           <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">領款簽收單</h2>
