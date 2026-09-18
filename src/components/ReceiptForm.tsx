@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import useSWR from "swr";
 import html2canvas from "html2canvas";
-import Image from "next/image";
 import SignaturePad from "./SignaturePad";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
@@ -265,11 +264,10 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
             >
               {signature ? (
                 <div className="w-full h-full relative">
-                  <Image 
+                  <img 
                     src={signature} 
                     alt="Signature" 
-                    fill 
-                    className="object-contain p-2"
+                    className="object-contain w-full h-full p-2"
                   />
                   {/* Click to re-sign overlay (only visible when actively interacting) */}
                   <div className="absolute inset-0 bg-white/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
