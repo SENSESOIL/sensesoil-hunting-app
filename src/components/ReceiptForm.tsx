@@ -119,9 +119,21 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
         </div>
 
         <div className="flex flex-col gap-5 text-[15px]">
+          {/* 日期 */}
+          <div className="flex items-center border-b border-gray-100 pb-2">
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">領款日期：</span>
+            <input 
+              type="text" 
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="flex-1 outline-none text-[#18181B] bg-transparent"
+              placeholder="YYYY/MM/DD"
+            />
+          </div>
+
           {/* 廠商 */}
           <div className="flex items-center border-b border-gray-100 pb-2">
-            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">廠商/領款人：</span>
+            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">領款姓名：</span>
             <input 
               type="text" 
               value={vendor}
@@ -213,18 +225,6 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
               }}
               className="flex-1 outline-none text-[#18181B] bg-transparent"
               placeholder="0"
-            />
-          </div>
-
-          {/* 日期 */}
-          <div className="flex items-center border-b border-gray-100 pb-2">
-            <span className="w-[100px] text-gray-500 shrink-0 whitespace-nowrap">領款日期：</span>
-            <input 
-              type="text" 
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="flex-1 outline-none text-[#18181B] bg-transparent"
-              placeholder="YYYY/MM/DD"
             />
           </div>
 
