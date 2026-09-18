@@ -119,7 +119,10 @@ export default function SignaturePad({ onConfirm, onCancel }: SignaturePadProps)
         />
         
         {/* Signature Line */}
-        <div className="absolute bottom-1/4 left-10 right-10 border-b-2 border-gray-300 pointer-events-none border-dashed" />
+        <div className="absolute bottom-1/4 left-10 right-10 flex flex-col items-center pointer-events-none">
+          <div className="w-full border-b-2 border-gray-300 border-dashed" />
+          <span className="text-gray-400 text-sm mt-4 tracking-widest">手機打橫全屏簽名</span>
+        </div>
       </div>
     </div>,
     document.body
