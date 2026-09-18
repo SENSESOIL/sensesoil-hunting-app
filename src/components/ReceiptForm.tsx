@@ -246,7 +246,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
           </div>
 
           {/* 簽收 */}
-          <div className="mt-8 relative border-t border-gray-300 border-dashed pt-8">
+          <div className="mt-6 relative border-t border-gray-300 border-dashed pt-8">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-3 bg-white px-4 text-gray-500 text-sm font-medium">
               領款簽收
             </div>
