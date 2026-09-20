@@ -741,6 +741,8 @@ export default function HuntingManagementPage() {
   // 也確保它的「適應螢幕」是在正確尺寸下算出來的（先滑入、尺寸穩定後才載入）。
   const [orgFrameMounted, setOrgFrameMounted] = useState(false);
   const [orgFrameLoaded, setOrgFrameLoaded] = useState(false);
+  // 滑入動畫結束後才把被蓋住的主內容移出渲染樹，省下版面與合成層記憶體
+  const [orgContentHidden, setOrgContentHidden] = useState(false);
   // 鎖死 iframe 高度：手機網址列收合會讓 fixed inset-0 的高度變動，
   // 架構圖頁收到 resize 就會重新定位／重新適應，縮放到一半就會「跳針」。
   const [orgViewportH, setOrgViewportH] = useState<number | null>(null);
@@ -840,6 +842,8 @@ export default function HuntingManagementPage() {
   // 組織圖覆蓋層開關：鎖住底層捲動、鎖定 iframe 高度、延後掛載 iframe。
   useEffect(() => {
     if (!showOrgChart) {
+      // 主內容要立刻回來，滑出動畫期間才不會露出空白
+      setOrgContentHidden(false);
       // 滑出動畫跑完再卸載，避免收合時畫面閃一下空白
       const t = window.setTimeout(() => {
         setOrgFrameMounted(false);
@@ -892,7 +896,10 @@ export default function HuntingManagementPage() {
 
     // 3) 滑入動畫結束後才掛載 iframe：動畫期間不必合成 6MB 的頁面，
     //    而且架構圖首次「適應」時容器尺寸已經是最終值
-    const mountT = window.setTimeout(() => setOrgFrameMounted(true), 300);
+    const mountT = window.setTimeout(() => {
+      setOrgFrameMounted(true);
+      setOrgContentHidden(true);
+    }, 300);
 
     // 4) iOS Safari 會忽略 user-scalable=no，雙指放大架構圖時，外層整個 APP 頁面
     //    也會跟著被瀏覽器縮放、放開又彈回 —— 這就是「版面晃動跳針」。
@@ -1326,7 +1333,13 @@ export default function HuntingManagementPage() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0">
+      {/* 組織圖開啟時把主內容移出渲染樹：它整個被覆蓋層蓋住，留著只是白白佔用
+          版面與合成層記憶體。組織圖的 iframe 本身就很吃記憶體，iOS 在接近上限時
+          會直接把 WebView 殺掉，能省一點是一點。
+          等滑入動畫跑完才隱藏，否則動畫期間旁邊會出現空白。 */}
+      <main
+        className={`flex-1 flex flex-col min-w-0 ${orgContentHidden ? "hidden" : ""}`}
+      >
         {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
         <header className="sticky top-0 z-40 bg-[#FAFAFA]">
           <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">

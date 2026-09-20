@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Orbitron } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import VersionGuard from "@/components/VersionGuard";
 
 const orbitron = Orbitron({ 
   subsets: ["latin"],
@@ -43,6 +44,9 @@ export default function RootLayout({
         `}</style>
       </head>
       <body className={`${orbitron.variable} ${orbitron.className} bg-black text-on-background overflow-x-hidden overscroll-y-none min-h-[100dvh]`}>
+        {/* iOS PWA 被記憶體壓力殺掉重啟時可能載入快取裡的舊版文件，
+            這個守衛會比對建置版本，不一致就自動重載到新版 */}
+        <VersionGuard />
         <Providers>
           {children}
         </Providers>
