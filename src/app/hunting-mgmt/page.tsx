@@ -871,12 +871,14 @@ export default function HuntingManagementPage() {
       width: body.style.width,
       overflow: body.style.overflow,
       overscrollBehavior: body.style.overscrollBehavior,
+      backgroundColor: body.style.backgroundColor,
     };
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.width = "100%";
     body.style.overflow = "hidden";
     body.style.overscrollBehavior = "none";
+    body.style.backgroundColor = "#18181B";
 
     // 3) 滑入動畫結束後才掛載 iframe：動畫期間不必合成 6MB 的頁面，
     //    而且架構圖首次「適應」時容器尺寸已經是最終值
@@ -920,6 +922,7 @@ export default function HuntingManagementPage() {
       body.style.width = prev.width;
       body.style.overflow = prev.overflow;
       body.style.overscrollBehavior = prev.overscrollBehavior;
+      body.style.backgroundColor = prev.backgroundColor;
       window.scrollTo(0, scrollY);
       
       // 還原 theme-color
