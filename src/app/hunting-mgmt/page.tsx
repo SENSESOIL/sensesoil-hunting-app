@@ -8,7 +8,7 @@ import { mutate } from "swr";
 import HuntingTasksView, {
   HuntingTasksViewRef,
 } from "@/components/HuntingTasksView";
-import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
+import CommandCenter from "@/components/CommandCenter";
 
 // Mock Data
 const projects = [
@@ -694,6 +694,17 @@ export default function HuntingManagementPage() {
   // Check if user is admin (any role is admin)
   const isAdmin = Object.values(roles).some((r) => r === "admin");
 
+  const hunterName =
+    permissions?.hunterName || (session?.user as any)?.hunterName || "";
+
+  // 財務只給管理層。權限表若加了「財務」欄就以該欄為準，
+  // 還沒加欄位時退回 admin-only（保守，不會不小心外洩）。
+  const canSeeFinance = (() => {
+    const r = roles["財務"];
+    if (r) return r === "admin" || r === "editor" || r === "viewer";
+    return isAdmin;
+  })();
+
   // Filter nav items based on permissions
   const navItems = isAdmin
     ? allNavItems
@@ -713,7 +724,6 @@ export default function HuntingManagementPage() {
   const shareRefDesktop = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
-  const receiptFormRef = useRef<ReceiptFormRef>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -787,7 +797,7 @@ export default function HuntingManagementPage() {
       if (swipeLocked.current) return;
 
       // Clamp offset: prevent over-swiping beyond the two panels
-      const tabs = ["專案任務", "每周任務", "簽收表單"];
+      const tabs = ["專案任務", "每周任務"];
       const activeIdx = tabs.indexOf(activeSubTab);
       let clampedOffset = dx;
       // If on first tab, can't swipe right further; if on last, can't swipe left further
@@ -812,7 +822,7 @@ export default function HuntingManagementPage() {
       touchStartY.current = null;
 
       if (Math.abs(diff) > 60 && isSwiping) {
-        const tabs = ["專案任務", "每周任務", "簽收表單"];
+        const tabs = ["專案任務", "每周任務"];
         const activeIdx = tabs.indexOf(activeSubTab);
         if (diff > 0 && activeIdx > 0) {
           setActiveSubTab(tabs[activeIdx - 1]);
@@ -1356,11 +1366,7 @@ export default function HuntingManagementPage() {
               <div className="relative md:hidden" ref={shareRefMobile}>
                 <button
                   onClick={() => {
-                    if (activeSubTab === "簽收表單") {
-                      receiptFormRef.current?.shareReceipt();
-                    } else {
-                      setIsShareOpen(!isShareOpen);
-                    }
+                    setIsShareOpen(!isShareOpen);
                   }}
                   className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
                   title="分享"
@@ -1406,7 +1412,7 @@ export default function HuntingManagementPage() {
             <div className="flex items-center">
               {activeNav === "hunting_tasks" &&
                 (() => {
-                  const tabs = ["專案任務", "每周任務", "簽收表單"];
+                  const tabs = ["專案任務", "每周任務"];
                   const activeIdx = tabs.indexOf(activeSubTab);
                   return (
                     <div
@@ -1458,11 +1464,7 @@ export default function HuntingManagementPage() {
               <div className="relative hidden md:block" ref={shareRefDesktop}>
                 <button
                   onClick={() => {
-                    if (activeSubTab === "簽收表單") {
-                      receiptFormRef.current?.shareReceipt();
-                    } else {
-                      setIsShareOpen(!isShareOpen);
-                    }
+                    setIsShareOpen(!isShareOpen);
                   }}
                   className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
                   title="分享"
@@ -1521,7 +1523,10 @@ export default function HuntingManagementPage() {
           onTouchEnd={handleTouchEnd}
         >
           {/* Mobile Search Bar */}
-          {!(activeNav === "hunting_tasks" && (activeSubTab === "每周任務" || activeSubTab === "簽收表單")) && (
+          {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
+              真正需要搜尋的制度／SOP 清單各自內建 */}
+          {!(activeNav === "hunting_tasks" && activeSubTab === "每周任務") &&
+            activeNav !== "command_center" && (
             <div className="px-6 md:hidden">
               <div className="relative group w-full">
                 <span
@@ -1543,13 +1548,11 @@ export default function HuntingManagementPage() {
             /* ============ Sliding Panel Container ============ */
             <div className="flex-1 overflow-hidden relative">
               <div
-                className="flex w-[300%] md:w-full h-full md:!transform-none"
+                className="flex w-[200%] md:w-full h-full md:!transform-none"
                 style={{
                   transform:
-                    activeSubTab === "簽收表單"
-                      ? `translateX(calc(-66.666% + ${swipeOffset}px))`
-                      : activeSubTab === "每周任務"
-                      ? `translateX(calc(-33.333% + ${swipeOffset}px))`
+                    activeSubTab === "每周任務"
+                      ? `translateX(calc(-50% + ${swipeOffset}px))`
                       : `translateX(${swipeOffset}px)`,
                   transition: isSwiping
                     ? "none"
@@ -1558,7 +1561,7 @@ export default function HuntingManagementPage() {
               >
                 {/* Panel 1: 專案任務 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "專案任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/2 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "專案任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
                     <span
@@ -1574,7 +1577,7 @@ export default function HuntingManagementPage() {
                 </div>
                 {/* Panel 2: 每周任務 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每周任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/2 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每周任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
@@ -1587,65 +1590,15 @@ export default function HuntingManagementPage() {
                     )}
                   </div>
                 </div>
-                {/* Panel 3: 簽收表單 */}
-                <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "簽收表單" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
-                >
-                  <ReceiptForm ref={receiptFormRef} />
-                </div>
+                {/* 簽收表單已移至「指揮中心 → 制度與流程 → 表單」 */}
               </div>
             </div>
           ) : activeNav === "command_center" ? (
-             <div className="px-6 lg:px-10 py-6 flex flex-col gap-8 w-full max-w-4xl mx-auto">
-                {/* 模組按鈕區塊 (Bento Grid) */}
-                <div>
-                  <h2 className="text-[17px] font-bold text-[#18181B] mb-3">系統模組</h2>
-                  <div className="grid grid-cols-4 gap-3 md:gap-4">
-                    {/* 組織架構圖 Button (如同熱力圖) */}
-                    <button
-                      onClick={() => setShowOrgChart(true)}
-                      className="aspect-square bg-white rounded-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 flex flex-col items-center justify-center gap-2 hover:bg-[#FAFAFA] active:scale-95 transition-all outline-none"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-[#18181B] flex items-center justify-center text-[#F39C12]">
-                        <span className="material-symbols-outlined text-[20px]">account_tree</span>
-                      </div>
-                      <span className="text-[12px] md:text-[13px] font-medium text-[#18181B]">組織圖</span>
-                    </button>
-
-                    {/* Placeholder Button 1 */}
-                    <button className="aspect-square bg-white rounded-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 flex flex-col items-center justify-center gap-2 opacity-50 cursor-not-allowed outline-none">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                        <span className="material-symbols-outlined text-[20px]">business</span>
-                      </div>
-                      <span className="text-[12px] md:text-[13px] font-medium text-gray-500">產業</span>
-                    </button>
-
-                    {/* Placeholder Button 2 */}
-                    <button className="aspect-square bg-white rounded-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 flex flex-col items-center justify-center gap-2 opacity-50 cursor-not-allowed outline-none">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                        <span className="material-symbols-outlined text-[20px]">troubleshoot</span>
-                      </div>
-                      <span className="text-[12px] md:text-[13px] font-medium text-gray-500">盤點</span>
-                    </button>
-
-                    {/* Placeholder Button 3 */}
-                    <button className="aspect-square bg-white rounded-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 flex flex-col items-center justify-center gap-2 opacity-50 cursor-not-allowed outline-none">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                        <span className="material-symbols-outlined text-[20px]">public</span>
-                      </div>
-                      <span className="text-[12px] md:text-[13px] font-medium text-gray-500">雷達</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 其他數據區塊 (示意) */}
-                <div>
-                  <h2 className="text-[17px] font-bold text-[#18181B] mb-3">即時戰情</h2>
-                  <div className="bg-white rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 p-6 min-h-[300px] flex items-center justify-center">
-                    <p className="text-[#A1A1AA] text-sm">數據載入中...</p>
-                  </div>
-                </div>
-             </div>
+            <CommandCenter
+              onOpenOrgChart={() => setShowOrgChart(true)}
+              hunterName={hunterName}
+              canSeeFinance={canSeeFinance}
+            />
           ) : (
             /* ============ Default Dashboard View ============ */
             <>
