@@ -841,7 +841,9 @@ export default function HuntingManagementPage() {
       return () => window.clearTimeout(t);
     }
 
-    // 0) 動態切換 iOS 狀態列顏色 (theme-color) 為深色，與滿版 Modal 融合
+    // 0) Android 的狀態列吃 theme-color，切成深色與滿版 Modal 融合。
+    //    （iOS 不吃這個；iOS 是靠 viewport-fit=cover + black-translucent，
+    //      讓覆蓋層自己的 #18181B 直接畫到狀態列底下，見 layout.tsx）
     let metaTheme = document.querySelector('meta[name="theme-color"]');
     let originalTheme: string | null = null;
     let createdMeta = false;
@@ -1323,7 +1325,7 @@ export default function HuntingManagementPage() {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
-        <header className="sticky top-0 z-40 bg-[#FAFAFA]">
+        <header className="sticky top-[var(--sat)] z-40 bg-[#FAFAFA]">
           <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">
             {/* Mobile Logo & Title */}
             <div
@@ -2053,7 +2055,7 @@ export default function HuntingManagementPage() {
       <div
         className={`fixed inset-0 bg-[#FAFAFA] z-[100] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${showManual ? "translate-x-0" : "translate-x-full"}`}
       >
-        <header className="fixed top-0 left-0 right-0 h-[60px] bg-[#FFFFFF]/90 backdrop-blur-md z-[110] border-b border-[#E4E4E7]/60 flex items-center justify-between px-4">
+        <header className="fixed top-[var(--sat)] left-0 right-0 h-[60px] bg-[#FFFFFF]/90 backdrop-blur-md z-[110] border-b border-[#E4E4E7]/60 flex items-center justify-between px-4">
           <button
             onClick={() => setShowManual(false)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-[#18181B] active:bg-[#F4F4F5] transition-colors"
@@ -2070,7 +2072,7 @@ export default function HuntingManagementPage() {
           </h1>
           <div className="w-10"></div> {/* Spacer for flex balance */}
         </header>
-        <div className="pt-[60px] h-full overflow-y-auto pb-20 bg-[#FAFAFA]">
+        <div className="pt-[calc(60px_+_var(--sat))] h-full overflow-y-auto pb-20 bg-[#FAFAFA]">
           <div className="px-6 py-4 flex flex-col gap-4">
             <ManualCards />
           </div>
@@ -2089,7 +2091,7 @@ export default function HuntingManagementPage() {
           className="flex flex-col w-full"
           style={{ height: orgViewportH ? `${orgViewportH}px` : "100%" }}
         >
-        <div className="relative z-10 h-[60px] md:h-[70px] flex items-center justify-between px-4 border-b border-[#27272A] bg-[#18181B] shrink-0 pt-safe">
+        <div className="relative z-10 h-[60px] md:h-[70px] mt-[var(--sat)] flex items-center justify-between px-4 border-b border-[#27272A] bg-[#18181B] shrink-0">
           <button
             onClick={() => setShowOrgChart(false)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-white active:bg-[#27272A] transition-colors"
