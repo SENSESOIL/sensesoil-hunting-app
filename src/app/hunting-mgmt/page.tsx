@@ -933,7 +933,7 @@ export default function HuntingManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col pb-20 md:pb-0 relative">
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
       {/* iOS Pull to Refresh Indicator */}
       <div
         className="fixed left-0 right-0 z-[100] flex items-center justify-center pointer-events-none md:hidden transition-transform duration-200"
