@@ -36,6 +36,10 @@ export default function RootLayout({
   return (
     <html lang="zh-TW" className="dark">
       <head>
+        {/* 狀態列底色。iOS 對「動態新建的 meta」反應很慢（實機要 2～4 秒或轉一次螢幕
+            才變色），但對既有 meta 的 content 變更會立刻重畫 —— 所以這裡固定輸出一個，
+            需要切換的頁面只改它的值。預設值對齊淺色頁面的底色。 */}
+        <meta name="theme-color" content="#FAFAFA" />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet" />
         <style>{`
           .material-symbols-outlined {

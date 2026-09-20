@@ -855,22 +855,24 @@ export default function HuntingManagementPage() {
       return () => window.clearTimeout(t);
     }
 
-    // 0) Android 的狀態列吃 theme-color，切成深色與滿版 Modal 融合。
-    //    iOS 不吃這個，而且 PWA 的狀態列樣式是啟動時讀一次的全域設定，
-    //    無法逐頁切換 —— 所以 iOS 上組織圖的狀態列會維持系統預設的白色。
-    let metaTheme = document.querySelector('meta[name="theme-color"]');
-    let originalTheme: string | null = null;
-    let createdMeta = false;
-    
+    // 0) 狀態列底色跟著 theme-color 走（iOS 16+ 的 PWA 與 Android 都吃這個）。
+    //
+    //    先前的寫法是「開啟時才 document.createElement 一個 theme-color meta」，
+    //    結果實機上要等 2～4 秒、甚至要轉一次螢幕才會變色。
+    //    原因是 iOS 對新插入的 meta 反應很遲鈍，但對「既有 meta 的 content 變更」
+    //    會立刻重畫。所以 layout.tsx 現在會固定輸出一個 theme-color，
+    //    這裡只改它的值，不再建立元素。
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const originalTheme = metaTheme?.getAttribute("content") ?? null;
     if (metaTheme) {
-      originalTheme = metaTheme.getAttribute("content");
       metaTheme.setAttribute("content", "#18181B");
-    } else {
-      metaTheme = document.createElement("meta");
-      metaTheme.setAttribute("name", "theme-color");
-      metaTheme.setAttribute("content", "#18181B");
-      document.head.appendChild(metaTheme);
-      createdMeta = true;
+      // 保險：部分 iOS 版本要等下一個繪製影格才會去讀，
+      // 這裡在下一影格再寫一次，把它推醒。
+      requestAnimationFrame(() => {
+        if (metaTheme.getAttribute("content") === "#18181B") {
+          metaTheme.setAttribute("content", "#18181b");
+        }
+      });
     }
 
     // 1) 先量一次可視高度並固定下來，之後不隨網址列收合而變
@@ -941,10 +943,8 @@ export default function HuntingManagementPage() {
       body.style.overscrollBehavior = prev.overscrollBehavior;
       window.scrollTo(0, scrollY);
       
-      // 還原 theme-color
-      if (createdMeta && metaTheme) {
-        metaTheme.remove();
-      } else if (metaTheme && originalTheme) {
+      // 還原 theme-color（元素是 layout.tsx 固定輸出的，只還原值、不刪元素）
+      if (metaTheme && originalTheme) {
         metaTheme.setAttribute("content", originalTheme);
       }
     };
