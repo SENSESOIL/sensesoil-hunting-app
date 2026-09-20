@@ -2037,19 +2037,6 @@ export default function HuntingManagementPage() {
           className="flex flex-col w-full"
           style={{ height: orgViewportH ? `${orgViewportH}px` : "100%" }}
         >
-        <div className="relative z-10 h-[60px] md:h-[70px] flex items-center justify-between px-4 border-b border-[#27272A] bg-[#18181B] shrink-0">
-          <button
-            onClick={() => setShowOrgChart(false)}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-white active:bg-[#27272A] transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">arrow_back_ios_new</span>
-          </button>
-          <h2 className="text-[17px] font-semibold text-white absolute left-1/2 -translate-x-1/2">
-            組織架構圖
-          </h2>
-          <div className="w-10 h-10"></div> {/* Spacer for centering */}
-        </div>
-
         {/* 架構圖頁在掛載後 300／1000／2000ms 還會各做一次自我重新適應，
             onLoad 後再多撐一下遮罩，讓使用者看到的是已經定位好的畫面 */}
         {orgFrameMounted && (
@@ -2064,6 +2051,18 @@ export default function HuntingManagementPage() {
         )}
         </div>
 
+        {/* 懸浮返回鍵：取代原本的標題列，把整個高度讓給架構圖。
+            架構圖自己的工具列靠右上、縮放列在左下，左上是空的。 */}
+        <button
+          onClick={() => setShowOrgChart(false)}
+          aria-label="返回指揮中心"
+          className="absolute z-30 top-3 left-3 w-11 h-11 flex items-center justify-center rounded-full bg-[#18181B]/80 border border-white/15 backdrop-blur-md text-white shadow-[0_4px_16px_rgba(0,0,0,0.45)] active:scale-95 active:bg-[#27272A] transition-all outline-none"
+        >
+          <span className="material-symbols-outlined text-[20px] -ml-0.5">
+            arrow_back_ios_new
+          </span>
+        </button>
+
         {/* 載入中遮罩，蓋掉架構圖開場那幾次自我重新適應的跳動 */}
         <div
           className={`absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#18181B] transition-opacity duration-500 ${
@@ -2075,9 +2074,10 @@ export default function HuntingManagementPage() {
         </div>
 
         {/* 首次載入完成後提示操作方式。
-            放在標題列下方：架構圖自己的縮放列在左下、漢堡鈕在右下，底部已經很擠 */}
+            標題列拿掉後，架構圖自己的工具列會上移到頂部，所以提示改放底部：
+            夾在縮放列（左下，約佔 14–58px）與漢堡鈕（右下）之上。 */}
         <div
-          className={`absolute z-20 left-1/2 -translate-x-1/2 top-[72px] md:top-[82px] px-3.5 py-2 rounded-full bg-[#18181B]/85 border border-[#F39C12]/35 text-[12px] text-[#F2E9DC] whitespace-nowrap backdrop-blur-sm pointer-events-none transition-opacity duration-500 ${
+          className={`absolute z-20 left-1/2 -translate-x-1/2 bottom-[76px] px-3.5 py-2 rounded-full bg-[#18181B]/85 border border-[#F39C12]/35 text-[12px] text-[#F2E9DC] whitespace-nowrap backdrop-blur-sm pointer-events-none transition-opacity duration-500 ${
             orgFrameLoaded ? "opacity-100" : "opacity-0"
           }`}
           style={{ animation: orgFrameLoaded ? "orgHintFade 1s ease 4s forwards" : undefined }}

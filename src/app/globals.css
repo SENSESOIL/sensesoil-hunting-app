@@ -5,29 +5,11 @@
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 0, 0, 0;
   --background-end-rgb: 0, 0, 0;
-  /* 狀態列／瀏海高度。viewport-fit=cover 之後才會是非 0。
-     統一走這個變數，版面各處用 var(--sat)，方便除錯時覆寫模擬。 */
-  --sat: env(safe-area-inset-top, 0px);
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: black;
-  /* viewport-fit=cover 讓版面從螢幕最頂端開始，把正常流的內容推回狀態列下方。
-     position:fixed 的元素不受這個 padding 影響，要各自處理。 */
-  padding-top: var(--sat);
-}
-
-/* 狀態列底色（見 layout.tsx）。inset 為 0 的裝置上高度是 0，等於不存在。 */
-.status-bar-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--sat);
-  background: #18181b;
-  z-index: 9998;
-  pointer-events: none;
 }
 
 /* 組織架構圖的操作提示：顯示幾秒後自動淡出 */
