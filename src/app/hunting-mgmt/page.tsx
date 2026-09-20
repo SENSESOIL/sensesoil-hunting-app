@@ -2052,13 +2052,21 @@ export default function HuntingManagementPage() {
         </div>
 
         {/* 懸浮返回鍵：取代原本的標題列，把整個高度讓給架構圖。
-            架構圖自己的工具列靠右上、縮放列在左下，左上是空的。 */}
+            架構圖自己的工具列靠右上、縮放列在左下，左上是空的。
+            尺寸與配色直接對齊架構圖右上角那排按鈕（量測自線上版）：
+            54×54、1px rgba(243,156,18,0.4) 橘邊、底 rgba(22,24,29,0.95)、
+            圖示 #B9BEC9、無陰影，距邊 16px 與它們同一條基準線。 */}
         <button
           onClick={() => setShowOrgChart(false)}
           aria-label="返回指揮中心"
-          className="absolute z-30 top-3 left-3 w-11 h-11 flex items-center justify-center rounded-full bg-[#18181B]/80 border border-white/15 backdrop-blur-md text-white shadow-[0_4px_16px_rgba(0,0,0,0.45)] active:scale-95 active:bg-[#27272A] transition-all outline-none"
+          className="absolute z-30 top-4 left-4 w-[54px] h-[54px] flex items-center justify-center rounded-full border border-[rgba(243,156,18,0.4)] bg-[rgba(22,24,29,0.95)] text-[#B9BEC9] active:bg-[#27272A] active:text-[#F39C12] transition-colors outline-none"
         >
-          <span className="material-symbols-outlined text-[20px] -ml-0.5">
+          {/* Google 字型的樣式表會把 .material-symbols-outlined 壓成 24px，
+              要對齊架構圖的 21px 圖示只能用 inline style 蓋過去 */}
+          <span
+            className="material-symbols-outlined -ml-1"
+            style={{ fontSize: 21, fontVariationSettings: "'wght' 400" }}
+          >
             arrow_back_ios_new
           </span>
         </button>
