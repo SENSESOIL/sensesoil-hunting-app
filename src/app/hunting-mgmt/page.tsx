@@ -2053,22 +2053,27 @@ export default function HuntingManagementPage() {
 
         {/* 懸浮返回鍵：取代原本的標題列，把整個高度讓給架構圖。
             架構圖自己的工具列靠右上、縮放列在左下，左上是空的。
-            尺寸與配色直接對齊架構圖右上角那排按鈕（量測自線上版）：
-            54×54、1px rgba(243,156,18,0.4) 橘邊、底 rgba(22,24,29,0.95)、
-            圖示 #B9BEC9、無陰影，距邊 16px 與它們同一條基準線。 */}
+            尺寸依「APP返回鍵尺寸規格.md」：架構圖在手機上會對工具列套用 scale(0.66)，
+            所以右上那排按鈕的實際視覺直徑是 54 × 0.66 ≈ 36px，不是 54px。
+            觸控區維持 44px（無障礙最小範圍），但可見圓形只畫 36px；
+            按鈕放在 12px，讓 36px 的圓剛好落在距邊 16px，與右上那排同一條基準線。 */}
         <button
           onClick={() => setShowOrgChart(false)}
           aria-label="返回指揮中心"
-          className="absolute z-30 top-4 left-4 w-[54px] h-[54px] flex items-center justify-center rounded-full border border-[rgba(243,156,18,0.4)] bg-[rgba(22,24,29,0.95)] text-[#B9BEC9] active:bg-[#27272A] active:text-[#F39C12] transition-colors outline-none"
+          className="group absolute z-30 top-3 left-3 w-11 h-11 flex items-center justify-center bg-transparent border-none p-0 outline-none"
         >
-          {/* Google 字型的樣式表會把 .material-symbols-outlined 壓成 24px，
-              要對齊架構圖的 21px 圖示只能用 inline style 蓋過去 */}
-          <span
-            className="material-symbols-outlined -ml-1"
-            style={{ fontSize: 21, fontVariationSettings: "'wght' 400" }}
+          <span className="absolute w-9 h-9 rounded-full bg-[rgba(22,24,29,0.95)] border border-[rgba(243,156,18,0.4)] transition-colors group-active:bg-[#27272A]" />
+          <svg
+            viewBox="0 0 24 24"
+            className="relative w-3.5 h-3.5"
+            fill="none"
+            stroke="#B9BEC9"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            arrow_back_ios_new
-          </span>
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
         </button>
 
         {/* 載入中遮罩，蓋掉架構圖開場那幾次自我重新適應的跳動 */}
