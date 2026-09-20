@@ -865,6 +865,7 @@ export default function HuntingManagementPage() {
     //    iframe 的高度也就不會被動變化
     const scrollY = window.scrollY;
     const body = document.body;
+    const html = document.documentElement;
     const prev = {
       position: body.style.position,
       top: body.style.top,
@@ -872,6 +873,7 @@ export default function HuntingManagementPage() {
       overflow: body.style.overflow,
       overscrollBehavior: body.style.overscrollBehavior,
       backgroundColor: body.style.backgroundColor,
+      htmlBackgroundColor: html.style.backgroundColor,
     };
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
@@ -879,6 +881,7 @@ export default function HuntingManagementPage() {
     body.style.overflow = "hidden";
     body.style.overscrollBehavior = "none";
     body.style.backgroundColor = "#18181B";
+    html.style.backgroundColor = "#18181B";
 
     // 3) 滑入動畫結束後才掛載 iframe：動畫期間不必合成 6MB 的頁面，
     //    而且架構圖首次「適應」時容器尺寸已經是最終值
@@ -923,6 +926,7 @@ export default function HuntingManagementPage() {
       body.style.overflow = prev.overflow;
       body.style.overscrollBehavior = prev.overscrollBehavior;
       body.style.backgroundColor = prev.backgroundColor;
+      html.style.backgroundColor = prev.htmlBackgroundColor;
       window.scrollTo(0, scrollY);
       
       // 還原 theme-color
