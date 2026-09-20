@@ -734,6 +734,10 @@ export default function HuntingManagementPage() {
   // 鎖死 iframe 高度：手機網址列收合會讓 fixed inset-0 的高度變動，
   // 架構圖頁收到 resize 就會重新定位／重新適應，縮放到一半就會「跳針」。
   const [orgViewportH, setOrgViewportH] = useState<number | null>(null);
+  // 視窗變矮時把 iframe 往上位移（而不是改它的高度），底部控制列才不會被切掉，
+  // 同時完全不會有 resize 傳進架構圖裡觸發重新定位。
+  const [orgShiftY, setOrgShiftY] = useState(0);
+  const orgLockedHRef = useRef<number | null>(null);
 
   // Swipe gesture handler for mobile sub-tab switching with real-time content sliding
   const handleTouchStart = useCallback(
@@ -831,11 +835,14 @@ export default function HuntingManagementPage() {
         setOrgFrameMounted(false);
         setOrgFrameLoaded(false);
         setOrgViewportH(null);
+        setOrgShiftY(0);
+        orgLockedHRef.current = null;
       }, 320);
       return () => window.clearTimeout(t);
     }
 
     // 1) 先量一次可視高度並固定下來，之後不隨網址列收合而變
+    orgLockedHRef.current = window.innerHeight;
     setOrgViewportH(window.innerHeight);
 
     // 2) 鎖住底層頁面捲動：底層不動，手機網址列就不會在拖曳時收合，
@@ -859,23 +866,39 @@ export default function HuntingManagementPage() {
     //    而且架構圖首次「適應」時容器尺寸已經是最終值
     const mountT = window.setTimeout(() => setOrgFrameMounted(true), 300);
 
-    // 4) 高度變動的處理原則：
-    //    - 轉向（寬度改變）→ 重新鎖
-    //    - 變矮 → 跟著縮，否則架構圖左下的縮放列會被切到畫面外
-    //    - 變高（網址列收合，最常在拖曳途中發生）→ 維持不動，底部留一條同色留白
-    //      就好；這一條是「放大到一半整個版面跳掉」的主因
-    const lastW = { current: window.innerWidth };
+    // 4) iOS Safari 會忽略 user-scalable=no，雙指放大架構圖時，外層整個 APP 頁面
+    //    也會跟著被瀏覽器縮放、放開又彈回 —— 這就是「版面晃動跳針」。
+    //    覆蓋層開啟期間把這幾個手勢事件擋掉，縮放就只會發生在架構圖自己身上。
+    const blockGesture = (e: Event) => e.preventDefault();
+    document.addEventListener("gesturestart", blockGesture, { passive: false });
+    document.addEventListener("gesturechange", blockGesture, { passive: false });
+    document.addEventListener("gestureend", blockGesture, { passive: false });
+
+    // 5) 視窗高度變動的處理原則：iframe 的高度「永遠不動」。
+    //    任何尺寸變化傳進去，架構圖都會重新定位整張圖（它自己的 _onResize 行為），
+    //    那就是跳針。變矮時改用位移把 iframe 往上推，讓底部的縮放列留在畫面內，
+    //    被推到上面的部分會滑進標題列底下；轉向才真的重新量一次。
+    let lastW = window.innerWidth;
     const onResize = () => {
-      const h = window.innerHeight;
-      const rotated = window.innerWidth !== lastW.current;
-      lastW.current = window.innerWidth;
-      setOrgViewportH((prev) => (prev == null || rotated || h < prev ? h : prev));
+      if (window.innerWidth !== lastW) {
+        // 轉向：寬度本來就變了，重新量高度無可避免
+        lastW = window.innerWidth;
+        orgLockedHRef.current = window.innerHeight;
+        setOrgShiftY(0);
+        setOrgViewportH(window.innerHeight);
+        return;
+      }
+      const locked = orgLockedHRef.current;
+      if (locked != null) setOrgShiftY(Math.max(0, locked - window.innerHeight));
     };
     window.addEventListener("resize", onResize);
 
     return () => {
       window.clearTimeout(mountT);
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("gesturestart", blockGesture);
+      document.removeEventListener("gesturechange", blockGesture);
+      document.removeEventListener("gestureend", blockGesture);
       body.style.position = prev.position;
       body.style.top = prev.top;
       body.style.width = prev.width;
@@ -2056,6 +2079,7 @@ export default function HuntingManagementPage() {
             src="https://sensesoil-org-structure.vercel.app/?view=1"
             className="flex-1 w-full border-none bg-[#18181B]"
             title="組織架構"
+            style={orgShiftY ? { transform: `translateY(-${orgShiftY}px)` } : undefined}
             onLoad={() => window.setTimeout(() => setOrgFrameLoaded(true), 900)}
             allowFullScreen
           />
