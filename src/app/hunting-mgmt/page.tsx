@@ -727,6 +727,13 @@ export default function HuntingManagementPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [showOrgChart, setShowOrgChart] = useState(false);
+  // 組織圖 iframe 只在開啟時掛載：避免 6MB 的架構圖頁在指揮中心背景持續輪詢拖慢畫面，
+  // 也確保它的「適應螢幕」是在正確尺寸下算出來的（先滑入、尺寸穩定後才載入）。
+  const [orgFrameMounted, setOrgFrameMounted] = useState(false);
+  const [orgFrameLoaded, setOrgFrameLoaded] = useState(false);
+  // 鎖死 iframe 高度：手機網址列收合會讓 fixed inset-0 的高度變動，
+  // 架構圖頁收到 resize 就會重新定位／重新適應，縮放到一半就會「跳針」。
+  const [orgViewportH, setOrgViewportH] = useState<number | null>(null);
 
   // Swipe gesture handler for mobile sub-tab switching with real-time content sliding
   const handleTouchStart = useCallback(
@@ -815,6 +822,68 @@ export default function HuntingManagementPage() {
     },
     [activeNav, isSwiping],
   );
+
+  // 組織圖覆蓋層開關：鎖住底層捲動、鎖定 iframe 高度、延後掛載 iframe。
+  useEffect(() => {
+    if (!showOrgChart) {
+      // 滑出動畫跑完再卸載，避免收合時畫面閃一下空白
+      const t = window.setTimeout(() => {
+        setOrgFrameMounted(false);
+        setOrgFrameLoaded(false);
+        setOrgViewportH(null);
+      }, 320);
+      return () => window.clearTimeout(t);
+    }
+
+    // 1) 先量一次可視高度並固定下來，之後不隨網址列收合而變
+    setOrgViewportH(window.innerHeight);
+
+    // 2) 鎖住底層頁面捲動：底層不動，手機網址列就不會在拖曳時收合，
+    //    iframe 的高度也就不會被動變化
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prev = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      overscrollBehavior: body.style.overscrollBehavior,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+
+    // 3) 滑入動畫結束後才掛載 iframe：動畫期間不必合成 6MB 的頁面，
+    //    而且架構圖首次「適應」時容器尺寸已經是最終值
+    const mountT = window.setTimeout(() => setOrgFrameMounted(true), 300);
+
+    // 4) 高度變動的處理原則：
+    //    - 轉向（寬度改變）→ 重新鎖
+    //    - 變矮 → 跟著縮，否則架構圖左下的縮放列會被切到畫面外
+    //    - 變高（網址列收合，最常在拖曳途中發生）→ 維持不動，底部留一條同色留白
+    //      就好；這一條是「放大到一半整個版面跳掉」的主因
+    const lastW = { current: window.innerWidth };
+    const onResize = () => {
+      const h = window.innerHeight;
+      const rotated = window.innerWidth !== lastW.current;
+      lastW.current = window.innerWidth;
+      setOrgViewportH((prev) => (prev == null || rotated || h < prev ? h : prev));
+    };
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      window.clearTimeout(mountT);
+      window.removeEventListener("resize", onResize);
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.width = prev.width;
+      body.style.overflow = prev.overflow;
+      body.style.overscrollBehavior = prev.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    };
+  }, [showOrgChart]);
 
   // Set body background to #FAFAFA for this page only, revert to black on unmount
   useEffect(() => {
@@ -1957,11 +2026,17 @@ export default function HuntingManagementPage() {
 
       {/* Full Screen Org Chart Overlay Modal */}
       <div
-        className={`fixed inset-0 z-[9999] bg-[#18181B] flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          showOrgChart ? "translate-x-0" : "translate-x-full"
+        className={`fixed inset-0 z-[9999] bg-[#18181B] overflow-hidden overscroll-none transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          showOrgChart ? "translate-x-0" : "translate-x-full pointer-events-none"
         }`}
+        aria-hidden={!showOrgChart}
       >
-        <div className="h-[60px] md:h-[70px] flex items-center justify-between px-4 border-b border-[#27272A] bg-[#18181B] shrink-0 pt-safe">
+        {/* 內層才是實際內容，高度鎖定；外層滿版純深色，高度有落差時留白也是同色 */}
+        <div
+          className="flex flex-col w-full"
+          style={{ height: orgViewportH ? `${orgViewportH}px` : "100%" }}
+        >
+        <div className="relative z-10 h-[60px] md:h-[70px] flex items-center justify-between px-4 border-b border-[#27272A] bg-[#18181B] shrink-0 pt-safe">
           <button
             onClick={() => setShowOrgChart(false)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-white active:bg-[#27272A] transition-colors"
@@ -1973,12 +2048,40 @@ export default function HuntingManagementPage() {
           </h2>
           <div className="w-10 h-10"></div> {/* Spacer for centering */}
         </div>
-        <iframe
-          src="https://sensesoil-org-structure.vercel.app/?view=1"
-          className="flex-1 w-full border-none bg-[#18181B]"
-          title="組織架構"
-          allowFullScreen
-        />
+
+        {/* 架構圖頁在掛載後 300／1000／2000ms 還會各做一次自我重新適應，
+            onLoad 後再多撐一下遮罩，讓使用者看到的是已經定位好的畫面 */}
+        {orgFrameMounted && (
+          <iframe
+            src="https://sensesoil-org-structure.vercel.app/?view=1"
+            className="flex-1 w-full border-none bg-[#18181B]"
+            title="組織架構"
+            onLoad={() => window.setTimeout(() => setOrgFrameLoaded(true), 900)}
+            allowFullScreen
+          />
+        )}
+        </div>
+
+        {/* 載入中遮罩，蓋掉架構圖開場那幾次自我重新適應的跳動 */}
+        <div
+          className={`absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#18181B] transition-opacity duration-500 ${
+            orgFrameLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[28px] text-[#F39C12] animate-spin">progress_activity</span>
+          <span className="text-[13px] text-[#A1A1AA]">組織架構圖載入中…</span>
+        </div>
+
+        {/* 首次載入完成後提示操作方式。
+            放在標題列下方：架構圖自己的縮放列在左下、漢堡鈕在右下，底部已經很擠 */}
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 top-[72px] md:top-[82px] px-3.5 py-2 rounded-full bg-[#18181B]/85 border border-[#F39C12]/35 text-[12px] text-[#F2E9DC] whitespace-nowrap backdrop-blur-sm pointer-events-none transition-opacity duration-500 ${
+            orgFrameLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ animation: orgFrameLoaded ? "orgHintFade 1s ease 4s forwards" : undefined }}
+        >
+          雙指縮放 · 單指拖曳 · 左下可切換倍率
+        </div>
       </div>
     </div>
   );

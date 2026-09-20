@@ -12,6 +12,13 @@ body {
   background: black;
 }
 
+/* 組織架構圖的操作提示：顯示幾秒後自動淡出 */
+@keyframes orgHintFade {
+  to {
+    opacity: 0;
+  }
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
