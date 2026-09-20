@@ -2084,7 +2084,7 @@ export default function HuntingManagementPage() {
         {/* 首次載入完成後提示操作方式。
             放在標題列下方：架構圖自己的縮放列在左下、漢堡鈕在右下，底部已經很擠 */}
         <div
-          className={`absolute left-1/2 -translate-x-1/2 top-[72px] md:top-[82px] px-3.5 py-2 rounded-full bg-[#18181B]/85 border border-[#F39C12]/35 text-[12px] text-[#F2E9DC] whitespace-nowrap backdrop-blur-sm pointer-events-none transition-opacity duration-500 ${
+          className={`absolute z-20 left-1/2 -translate-x-1/2 top-[calc(var(--sat)_+_72px)] md:top-[calc(var(--sat)_+_82px)] px-3.5 py-2 rounded-full bg-[#18181B]/85 border border-[#F39C12]/35 text-[12px] text-[#F2E9DC] whitespace-nowrap backdrop-blur-sm pointer-events-none transition-opacity duration-500 ${
             orgFrameLoaded ? "opacity-100" : "opacity-0"
           }`}
           style={{ animation: orgFrameLoaded ? "orgHintFade 1s ease 4s forwards" : undefined }}
