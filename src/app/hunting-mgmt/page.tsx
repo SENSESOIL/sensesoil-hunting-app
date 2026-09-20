@@ -1472,52 +1472,54 @@ export default function HuntingManagementPage() {
               </div>
             </div>
           ) : activeNav === "command_center" ? (
-             <div className="px-6 lg:px-10 flex flex-col gap-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-[20px] font-bold text-[#18181B]">指揮中心</h2>
+             <div className="px-6 lg:px-10 py-6 flex flex-col gap-8 w-full max-w-4xl mx-auto">
+                {/* 模組按鈕區塊 (Bento Grid) */}
+                <div>
+                  <h2 className="text-[17px] font-bold text-[#18181B] mb-3">系統模組</h2>
+                  <div className="grid grid-cols-4 gap-3 md:gap-4">
+                    {/* 組織架構圖 Button (如同熱力圖) */}
+                    <button
+                      onClick={() => setShowOrgChart(true)}
+                      className="aspect-square bg-white rounded-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 flex flex-col items-center justify-center gap-2 hover:bg-[#FAFAFA] active:scale-95 transition-all outline-none"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-[#18181B] flex items-center justify-center text-[#F39C12]">
+                        <span className="material-symbols-outlined text-[20px]">account_tree</span>
+                      </div>
+                      <span className="text-[12px] md:text-[13px] font-medium text-[#18181B]">組織圖</span>
+                    </button>
+
+                    {/* Placeholder Button 1 */}
+                    <button className="aspect-square bg-white rounded-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 flex flex-col items-center justify-center gap-2 opacity-50 cursor-not-allowed outline-none">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                        <span className="material-symbols-outlined text-[20px]">business</span>
+                      </div>
+                      <span className="text-[12px] md:text-[13px] font-medium text-gray-500">產業</span>
+                    </button>
+
+                    {/* Placeholder Button 2 */}
+                    <button className="aspect-square bg-white rounded-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 flex flex-col items-center justify-center gap-2 opacity-50 cursor-not-allowed outline-none">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                        <span className="material-symbols-outlined text-[20px]">troubleshoot</span>
+                      </div>
+                      <span className="text-[12px] md:text-[13px] font-medium text-gray-500">盤點</span>
+                    </button>
+
+                    {/* Placeholder Button 3 */}
+                    <button className="aspect-square bg-white rounded-[16px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 flex flex-col items-center justify-center gap-2 opacity-50 cursor-not-allowed outline-none">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                        <span className="material-symbols-outlined text-[20px]">public</span>
+                      </div>
+                      <span className="text-[12px] md:text-[13px] font-medium text-gray-500">雷達</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col min-h-[50vh]">
-                  
-                  {!showOrgChart ? (
-                    <div className="flex flex-col items-center justify-center m-auto gap-4 py-10">
-                      <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center text-[#F39C12] mb-2">
-                        <span className="material-symbols-outlined text-[32px]">account_tree</span>
-                      </div>
-                      <h3 className="text-[18px] font-semibold text-[#18181B]">組織架構圖</h3>
-                      <p className="text-[14px] text-[#A1A1AA] text-center max-w-[280px]">
-                        點擊下方按鈕以載入並查看公司最新的組織架構圖。
-                      </p>
-                      <button 
-                        onClick={() => setShowOrgChart(true)}
-                        className="mt-4 px-6 py-2.5 bg-[#18181B] hover:bg-[#27272A] text-white rounded-full text-[14px] font-medium transition-colors flex items-center gap-2"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">visibility</span>
-                        開啟組織架構圖
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-full flex flex-col h-[calc(100vh-200px)]">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-[16px] font-semibold text-[#18181B] flex items-center gap-2">
-                          <span className="material-symbols-outlined text-[#F39C12] text-[20px]">account_tree</span>
-                          組織架構圖
-                        </h3>
-                        <button 
-                          onClick={() => setShowOrgChart(false)}
-                          className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-[#71717A] transition-colors"
-                          title="關閉"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">close</span>
-                        </button>
-                      </div>
-                      <iframe
-                        src="https://sensesoil-org-structure.vercel.app/?view=1"
-                        className="w-full flex-1 border border-[#E4E4E7] rounded-[16px] bg-[#FAFAFA]"
-                        title="組織架構"
-                        allowFullScreen
-                      />
-                    </div>
-                  )}
+
+                {/* 其他數據區塊 (示意) */}
+                <div>
+                  <h2 className="text-[17px] font-bold text-[#18181B] mb-3">即時戰情</h2>
+                  <div className="bg-white rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-[#E4E4E7]/50 p-6 min-h-[300px] flex items-center justify-center">
+                    <p className="text-[#A1A1AA] text-sm">數據載入中...</p>
+                  </div>
                 </div>
              </div>
           ) : (
@@ -1951,6 +1953,32 @@ export default function HuntingManagementPage() {
             <ManualCards />
           </div>
         </div>
+      </div>
+
+      {/* Full Screen Org Chart Overlay Modal */}
+      <div
+        className={`fixed inset-0 z-[9999] bg-[#18181B] flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          showOrgChart ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="h-[60px] md:h-[70px] flex items-center justify-between px-4 border-b border-[#27272A] bg-[#18181B] shrink-0 pt-safe">
+          <button
+            onClick={() => setShowOrgChart(false)}
+            className="w-10 h-10 flex items-center justify-center rounded-full text-white active:bg-[#27272A] transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">arrow_back_ios_new</span>
+          </button>
+          <h2 className="text-[17px] font-semibold text-white absolute left-1/2 -translate-x-1/2">
+            組織架構圖
+          </h2>
+          <div className="w-10 h-10"></div> {/* Spacer for centering */}
+        </div>
+        <iframe
+          src="https://sensesoil-org-structure.vercel.app/?view=1"
+          className="flex-1 w-full border-none bg-[#18181B]"
+          title="組織架構"
+          allowFullScreen
+        />
       </div>
     </div>
   );
