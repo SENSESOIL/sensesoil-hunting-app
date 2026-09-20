@@ -841,6 +841,22 @@ export default function HuntingManagementPage() {
       return () => window.clearTimeout(t);
     }
 
+    // 0) 動態切換 iOS 狀態列顏色 (theme-color) 為深色，與滿版 Modal 融合
+    let metaTheme = document.querySelector('meta[name="theme-color"]');
+    let originalTheme: string | null = null;
+    let createdMeta = false;
+    
+    if (metaTheme) {
+      originalTheme = metaTheme.getAttribute("content");
+      metaTheme.setAttribute("content", "#18181B");
+    } else {
+      metaTheme = document.createElement("meta");
+      metaTheme.setAttribute("name", "theme-color");
+      metaTheme.setAttribute("content", "#18181B");
+      document.head.appendChild(metaTheme);
+      createdMeta = true;
+    }
+
     // 1) 先量一次可視高度並固定下來，之後不隨網址列收合而變
     orgLockedHRef.current = window.innerHeight;
     setOrgViewportH(window.innerHeight);
@@ -905,6 +921,13 @@ export default function HuntingManagementPage() {
       body.style.overflow = prev.overflow;
       body.style.overscrollBehavior = prev.overscrollBehavior;
       window.scrollTo(0, scrollY);
+      
+      // 還原 theme-color
+      if (createdMeta && metaTheme) {
+        metaTheme.remove();
+      } else if (metaTheme && originalTheme) {
+        metaTheme.setAttribute("content", originalTheme);
+      }
     };
   }, [showOrgChart]);
 
