@@ -1073,8 +1073,8 @@ export default function RunningRecordsPage() {
   const raceCurrentDate = raceFrames[raceFrameIndex]?.dateLabel || '';
 
   return (
-    <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-[calc(100dvh_-_var(--sat))] pb-20">
-      <header className="fixed top-[var(--sat)] w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
+    <div className="bg-background text-on-background font-body-lg overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container font-display min-h-screen pb-20">
+      <header className="fixed top-0 w-full z-50 flex justify-between items-center h-16 bg-surface/90 backdrop-blur-md border-b border-primary/30 shadow-[0_8px_20px_rgba(243,156,18,0.3)] px-4">
         <div className="flex items-center gap-3 flex-nowrap cursor-pointer" onClick={() => router.push("/diversion")}>
           <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0">
             <Image priority alt="SenseSoil Logo" width={35} height={35} className="w-full h-full object-contain" src="/Logo｜Orange.svg" />
