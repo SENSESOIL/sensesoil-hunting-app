@@ -1511,7 +1511,7 @@ export default function HuntingManagementPage() {
                         </button>
                       </div>
                       <iframe
-                        src="https://你的組織圖.vercel.app/?view=1"
+                        src="https://sensesoil-org-structure.vercel.app/?view=1"
                         className="w-full flex-1 border border-[#E4E4E7] rounded-[16px] bg-[#FAFAFA]"
                         title="組織架構"
                         allowFullScreen
