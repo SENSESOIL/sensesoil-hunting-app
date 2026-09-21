@@ -117,8 +117,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 /* 清單列：項目多的內容用列表，比方格 icon 好掃讀 */
 function ListRow({
   icon,
-  iconBg,
-  iconColor,
   title,
   desc,
   meta,
@@ -126,8 +124,6 @@ function ListRow({
   last,
 }: {
   icon: string;
-  iconBg: string;
-  iconColor: string;
   title: string;
   desc?: string;
   meta?: string;
@@ -137,22 +133,27 @@ function ListRow({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3.5 px-4 py-3.5 text-left transition-colors outline-none active:bg-[#F4F4F5] ${
+      className={`group w-full flex items-center gap-3.5 px-4 py-3.5 text-left transition-colors outline-none active:bg-[#F4F4F5] ${
         last ? "" : "border-b border-[#F4F4F5]"
       }`}
     >
-      <div
-        className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
-        style={{ background: iconBg, color: iconColor }}
-      >
-        <span className="material-symbols-outlined text-[19px]">{icon}</span>
+      <div className="w-8 flex items-center justify-center shrink-0 text-[#A1A1AA]">
+        <span
+          className="material-symbols-outlined text-[24px] group-active:text-[#F39C12] transition-colors"
+          style={{ fontVariationSettings: "'wght' 200" }}
+        >
+          {icon}
+        </span>
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[15px] font-medium text-[#18181B]">{title}</p>
         {desc && <p className="text-[12px] text-[#A1A1AA] mt-0.5 truncate">{desc}</p>}
       </div>
       {meta && <span className="text-[12px] text-[#A1A1AA] tabular-nums shrink-0">{meta}</span>}
-      <span className="material-symbols-outlined text-[16px] text-[#D4D4D8] shrink-0">
+      <span
+        className="material-symbols-outlined text-[20px] text-[#D4D4D8] shrink-0"
+        style={{ fontVariationSettings: "'wght' 200" }}
+      >
         chevron_right
       </span>
     </button>
@@ -311,10 +312,15 @@ export default function CommandCenter({
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={onOpenOrgChart}
-                className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
+                className="group bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
               >
-                <div className="w-10 h-10 rounded-full bg-[#18181B] flex items-center justify-center text-[#F39C12]">
-                  <span className="material-symbols-outlined text-[20px]">account_tree</span>
+                <div className="text-[#A1A1AA]">
+                  <span
+                    className="material-symbols-outlined text-[28px] group-active:text-[#F39C12] transition-colors"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
+                    account_tree
+                  </span>
                 </div>
                 <div>
                   <p className="text-[15px] font-bold text-[#18181B]">組織圖</p>
@@ -324,10 +330,15 @@ export default function CommandCenter({
 
               <button
                 onClick={() => setScreen("profile")}
-                className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
+                className="group bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
               >
-                <div className="w-10 h-10 rounded-full bg-[#FEF3E2] flex items-center justify-center text-[#F39C12]">
-                  <span className="material-symbols-outlined text-[20px]">badge</span>
+                <div className="text-[#A1A1AA]">
+                  <span
+                    className="material-symbols-outlined text-[28px] group-active:text-[#F39C12] transition-colors"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
+                    badge
+                  </span>
                 </div>
                 <div>
                   <p className="text-[15px] font-bold text-[#18181B]">職務說明</p>
@@ -346,8 +357,6 @@ export default function CommandCenter({
             <Card>
               <ListRow
                 icon="gavel"
-                iconBg="#EEF2FF"
-                iconColor="#4F46E5"
                 title="公司制度"
                 desc="薪酬福利、績效考核等規章"
                 meta={policies.length ? `${policies.length} 項` : "待建立"}
@@ -355,8 +364,6 @@ export default function CommandCenter({
               />
               <ListRow
                 icon="lan"
-                iconBg="#ECFDF5"
-                iconColor="#059669"
                 title="SOP"
                 desc="各項作業標準流程"
                 meta={sops.length ? `${sops.length} 項` : "待建立"}
@@ -364,8 +371,6 @@ export default function CommandCenter({
               />
               <ListRow
                 icon="description"
-                iconBg="#FEF3E2"
-                iconColor="#F39C12"
                 title="表單"
                 desc="領款簽收單等可填寫表單"
                 meta={`${FORMS.length} 項`}
@@ -385,8 +390,6 @@ export default function CommandCenter({
               <Card>
                 <ListRow
                   icon="receipt_long"
-                  iconBg="#F4F4F5"
-                  iconColor="#18181B"
                   title="收支記錄"
                   desc="記錄每一筆收入與支出"
                   meta="記帳"
@@ -394,8 +397,6 @@ export default function CommandCenter({
                 />
                 <ListRow
                   icon="folder_open"
-                  iconBg="#F4F4F5"
-                  iconColor="#18181B"
                   title="專案財務"
                   desc="各專案的收支與結餘"
                   meta={projects.length ? `${projects.length} 案` : "—"}
@@ -403,8 +404,6 @@ export default function CommandCenter({
                 />
                 <ListRow
                   icon="monitoring"
-                  iconBg="#F4F4F5"
-                  iconColor="#18181B"
                   title="公司財務狀態"
                   desc="現金水位與整體趨勢"
                   onClick={() => setScreen("finance-company")}
@@ -487,12 +486,17 @@ export default function CommandCenter({
               <button
                 key={f.id}
                 onClick={() => setOpenForm(f.component)}
-                className={`w-full flex items-center gap-3.5 px-4 py-4 text-left active:bg-[#F4F4F5] transition-colors outline-none ${
+                className={`group w-full flex items-center gap-3.5 px-4 py-4 text-left active:bg-[#F4F4F5] transition-colors outline-none ${
                   i === FORMS.length - 1 ? "" : "border-b border-[#F4F4F5]"
                 }`}
               >
-                <div className="w-9 h-9 rounded-[10px] bg-[#FEF3E2] text-[#F39C12] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[19px]">edit_document</span>
+                <div className="w-8 flex items-center justify-center shrink-0 text-[#A1A1AA]">
+                  <span
+                    className="material-symbols-outlined text-[24px] group-active:text-[#F39C12] transition-colors"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
+                    edit_document
+                  </span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[15px] font-medium text-[#18181B]">{f.title}</p>
@@ -500,7 +504,10 @@ export default function CommandCenter({
                     <p className="text-[12px] text-[#A1A1AA] mt-0.5 truncate">{f.summary}</p>
                   )}
                 </div>
-                <span className="material-symbols-outlined text-[16px] text-[#D4D4D8]">
+                <span
+                  className="material-symbols-outlined text-[20px] text-[#D4D4D8]"
+                  style={{ fontVariationSettings: "'wght' 200" }}
+                >
                   chevron_right
                 </span>
               </button>
@@ -676,7 +683,10 @@ function DocList({
                   {!d.body && !d.url && (
                     <span className="text-[11px] text-[#D4D4D8] shrink-0">待建立</span>
                   )}
-                  <span className="material-symbols-outlined text-[16px] text-[#D4D4D8]">
+                  <span
+                    className="material-symbols-outlined text-[20px] text-[#D4D4D8]"
+                    style={{ fontVariationSettings: "'wght' 200" }}
+                  >
                     {d.url ? "open_in_new" : "chevron_right"}
                   </span>
                 </button>
