@@ -719,7 +719,7 @@ export default function HuntingManagementPage() {
 
   const defaultNav = navItems.length > 0 ? navItems[0].id : "hunting_tasks";
   const [activeNav, setActiveNav] = useState(defaultNav);
-  const [activeSubTab, setActiveSubTab] = useState("每周任務");
+  const [activeSubTab, setActiveSubTab] = useState("每週任務");
   const [commandTab, setCommandTab] = useState("定位定崗");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -804,7 +804,7 @@ export default function HuntingManagementPage() {
 
       if (swipeLocked.current) return;
 
-      const tabs = ["專案任務", "每周任務", "領款單"];
+      const tabs = ["專案任務", "每週任務", "領款單"];
       const activeIdx = tabs.indexOf(activeSubTab);
       let clampedOffset = dx;
       // If on first tab, can't swipe right further; if on last, can't swipe left further
@@ -829,7 +829,7 @@ export default function HuntingManagementPage() {
       touchStartY.current = null;
 
       if (Math.abs(diff) > 60 && isSwiping) {
-        const tabs = ["專案任務", "每周任務", "領款單"];
+        const tabs = ["專案任務", "每週任務", "領款單"];
         const activeIdx = tabs.indexOf(activeSubTab);
         if (diff > 0 && activeIdx > 0) {
           setActiveSubTab(tabs[activeIdx - 1]);
@@ -1460,7 +1460,7 @@ export default function HuntingManagementPage() {
 
               {activeNav === "hunting_tasks" &&
                 (() => {
-                  const tabs = ["專案任務", "每周任務", "領款單"];
+                  const tabs = ["專案任務", "每週任務", "領款單"];
                   const activeIdx = tabs.indexOf(activeSubTab);
                   return (
                     <div
@@ -1496,7 +1496,7 @@ export default function HuntingManagementPage() {
                 })()}
             </div>
             <div className="flex items-center gap-1">
-              {activeNav === "hunting_tasks" && activeSubTab === "每周任務" && (
+              {activeNav === "hunting_tasks" && activeSubTab === "每週任務" && (
                 <button
                   onClick={() => setShowManual(!showManual)}
                   className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${showManual ? "text-[#F39C12] bg-[#F39C12]/10" : "text-[#71717A] hover:bg-[#F4F4F5]"}`}
@@ -1584,7 +1584,7 @@ export default function HuntingManagementPage() {
           {/* Mobile Search Bar */}
           {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
               真正需要搜尋的制度／SOP 清單各自內建 */}
-          {!(activeNav === "hunting_tasks" && (activeSubTab === "每周任務" || activeSubTab === "領款單")) &&
+          {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款單")) &&
             activeNav !== "command_center" && (
             <div className="px-6 md:hidden">
               <div className="relative group w-full">
@@ -1612,7 +1612,7 @@ export default function HuntingManagementPage() {
                   transform:
                     activeSubTab === "領款單"
                       ? `translateX(calc(-66.666% + ${swipeOffset}px))`
-                      : activeSubTab === "每周任務"
+                      : activeSubTab === "每週任務"
                       ? `translateX(calc(-33.333% + ${swipeOffset}px))`
                       : `translateX(${swipeOffset}px)`,
                   transition: isSwiping
@@ -1636,9 +1636,9 @@ export default function HuntingManagementPage() {
                     </p>
                   </div>
                 </div>
-                {/* Panel 2: 每周任務 */}
+                {/* Panel 2: 每週任務 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每周任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每週任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
