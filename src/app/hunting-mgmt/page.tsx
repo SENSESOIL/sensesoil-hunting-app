@@ -1441,7 +1441,7 @@ export default function HuntingManagementPage() {
                     <div
                       key={tab}
                       onClick={() => setCommandTab(tab)}
-                      className={`relative z-10 flex-1 px-2 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${
+                      className={`relative z-10 flex-1 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${
                         commandTab === tab ? "text-[#18181B]" : "text-[#A1A1AA]"
                       }`}
                     >

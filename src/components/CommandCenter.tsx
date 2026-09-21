@@ -218,28 +218,15 @@ export default function CommandCenter({
   /* ── 左右滑動切換分頁 ──────────────────────────────────── */
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
-  const axisLocked = useRef<"x" | "y" | null>(null);
+  const swipeLocked = useRef<boolean>(false);
   const [offset, setOffset] = useState(0);
   const [swiping, setSwiping] = useState(false);
-
-  // 位移一律用 px。用 translateX(calc(-50% + 0px)) 這種混合單位的寫法時，
-  // 瀏覽器無法在過場動畫中插值，transform 會整個不生效（實測 computed 是單位矩陣）。
   const viewportRef = useRef<HTMLDivElement>(null);
-  const [panelW, setPanelW] = useState(0);
-  React.useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const measure = () => setPanelW(el.clientWidth);
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
-    axisLocked.current = null;
+    swipeLocked.current = false;
   }, []);
 
   const onTouchMove = useCallback(
@@ -248,37 +235,49 @@ export default function CommandCenter({
       const dx = e.touches[0].clientX - startX.current;
       const dy = e.touches[0].clientY - startY.current;
 
-      // 先判定方向：直向捲動就完全不介入，避免和頁面捲動打架
-      if (!axisLocked.current) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        axisLocked.current = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-        if (axisLocked.current === "x") setSwiping(true);
+      if (!swiping && !swipeLocked.current) {
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
+          swipeLocked.current = true;
+          return;
+        }
+        if (Math.abs(dx) > 10) {
+          setSwiping(true);
+        }
+        return;
       }
-      if (axisLocked.current !== "x") return;
 
-      // 第一頁／最後一頁再往外拖時加阻尼，給出「到底了」的手感
-      const atStart = activeIdx === 0 && dx > 0;
-      const atEnd = activeIdx === tabs.length - 1 && dx < 0;
-      setOffset(atStart || atEnd ? dx * 0.25 : dx);
+      if (swipeLocked.current) return;
+
+      let clampedOffset = dx;
+      if (activeIdx === 0 && dx > 0) clampedOffset = dx * 0.3;
+      if (activeIdx === tabs.length - 1 && dx < 0) clampedOffset = dx * 0.3;
+      setOffset(clampedOffset);
     },
-    [activeIdx, tabs.length]
+    [activeIdx, tabs.length, swiping]
   );
 
-  const onTouchEnd = useCallback(() => {
-    if (axisLocked.current === "x") {
-      const threshold = 60;
-      if (offset < -threshold && activeIdx < tabs.length - 1) {
-        onTabChange(tabs[activeIdx + 1]);
-      } else if (offset > threshold && activeIdx > 0) {
-        onTabChange(tabs[activeIdx - 1]);
-      }
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (startX.current === null) {
+      setOffset(0);
+      setSwiping(false);
+      return;
     }
+
+    const diff = e.changedTouches[0].clientX - startX.current;
     startX.current = null;
     startY.current = null;
-    axisLocked.current = null;
+
+    if (Math.abs(diff) > 60 && swiping) {
+      if (diff > 0 && activeIdx > 0) {
+        onTabChange(tabs[activeIdx - 1]);
+      } else if (diff < 0 && activeIdx < tabs.length - 1) {
+        onTabChange(tabs[activeIdx + 1]);
+      }
+    }
+    
     setOffset(0);
     setSwiping(false);
-  }, [offset, activeIdx, tabs, onTabChange]);
+  }, [swiping, activeIdx, tabs, onTabChange]);
 
   return (
     <>
@@ -292,12 +291,14 @@ export default function CommandCenter({
         onTouchCancel={onTouchEnd}
       >
         <div
-          className="flex items-start"
+          className="flex items-start h-full md:!transform-none"
           style={{
-            // 量到寬度後一律用 px：百分比在 3 分頁時是 33.333%，
-            // 累積捨入會讓邊緣露出隔壁面板的髮絲線
-            width: panelW ? panelW * tabs.length : `${tabs.length * 100}%`,
-            transform: `translateX(${-activeIdx * panelW + offset}px)`,
+            width: `${tabs.length * 100}%`,
+            transform: activeTab === "財務"
+              ? `translateX(calc(-66.666% + ${offset}px))`
+              : activeTab === "營運"
+              ? `translateX(calc(-33.333% + ${offset}px))`
+              : `translateX(${offset}px)`,
             transition: swiping
               ? "none"
               : "transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)",
@@ -305,8 +306,7 @@ export default function CommandCenter({
         >
           {/* ── 分頁 1：定位定崗 ───────────────────────────── */}
           <section
-            className="shrink-0 px-5 lg:px-10 pt-4 pb-28"
-            style={{ width: panelW || `${100 / tabs.length}%` }}
+            className={`shrink-0 px-6 lg:px-10 pt-4 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "定位定崗" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
           >
             <SectionTitle>組織與職務</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
@@ -350,8 +350,7 @@ export default function CommandCenter({
 
           {/* ── 分頁 2：營運 ───────────────────────────────── */}
           <section
-            className="shrink-0 px-5 lg:px-10 pt-4 pb-28"
-            style={{ width: panelW || `${100 / tabs.length}%` }}
+            className={`shrink-0 px-6 lg:px-10 pt-4 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "營運" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
           >
             <SectionTitle>制度與流程</SectionTitle>
             <Card>
@@ -383,8 +382,7 @@ export default function CommandCenter({
           {/* ── 分頁 3：財務（管理層）───────────────────────── */}
           {canSeeFinance && (
             <section
-              className="shrink-0 px-5 lg:px-10 pt-4 pb-28"
-              style={{ width: panelW || `${100 / tabs.length}%` }}
+              className={`shrink-0 px-6 lg:px-10 pt-4 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "財務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
             >
               <SectionTitle>財務管理</SectionTitle>
               <Card>
