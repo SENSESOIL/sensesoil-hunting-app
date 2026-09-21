@@ -1429,18 +1429,18 @@ export default function HuntingManagementPage() {
                   <div
                     className="absolute top-[3px] bottom-[3px] rounded-[8px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
                     style={{
-                      width: `calc(100% / ${commandTabs.length} - 2px)`,
-                      left: `calc((100% / ${commandTabs.length}) * ${Math.max(
+                      width: `calc((100% - 6px) / ${commandTabs.length})`,
+                      left: `calc(3px + (100% - 6px) / ${commandTabs.length} * ${Math.max(
                         0,
                         commandTabs.indexOf(commandTab)
-                      )} + 3px)`,
+                      )})`,
                     }}
                   />
                   {commandTabs.map((tab) => (
                     <div
                       key={tab}
                       onClick={() => setCommandTab(tab)}
-                      className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${
+                      className={`relative z-10 flex-1 px-2 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${
                         commandTab === tab ? "text-[#18181B]" : "text-[#A1A1AA]"
                       }`}
                     >
@@ -1463,8 +1463,8 @@ export default function HuntingManagementPage() {
                       <div
                         className={`absolute top-[3px] bottom-[3px] rounded-[8px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${showManual ? "opacity-0" : "opacity-100"}`}
                         style={{
-                          width: `calc(100% / ${tabs.length} - 2px)`,
-                          left: `calc((100% / ${tabs.length}) * ${activeIdx} + 3px)`,
+                          width: `calc((100% - 6px) / ${tabs.length})`,
+                          left: `calc(3px + (100% - 6px) / ${tabs.length} * ${activeIdx})`,
                         }}
                       />
                       {/* Tab labels */}
@@ -1475,7 +1475,7 @@ export default function HuntingManagementPage() {
                             setShowManual(false);
                             setActiveSubTab(tab);
                           }}
-                          className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide transition-colors duration-300 ${activeSubTab === tab && !showManual ? "text-[#18181B]" : "text-[#A1A1AA]"}`}
+                          className={`relative z-10 flex-1 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide transition-colors duration-300 ${activeSubTab === tab && !showManual ? "text-[#18181B]" : "text-[#A1A1AA]"}`}
                         >
                           {tab}
                         </div>
