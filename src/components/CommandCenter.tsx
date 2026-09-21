@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useCallback } from "react";
 import useSWR from "swr";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 import {
@@ -12,6 +12,16 @@ import {
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+export const COMMAND_TABS_BASE = ["定位定崗", "營運"] as const;
+export const COMMAND_TAB_FINANCE = "財務";
+
+/** 依權限算出實際的分頁清單。page.tsx 的分頁列與這裡的面板都用同一份。 */
+export function getCommandTabs(canSeeFinance: boolean): string[] {
+  return canSeeFinance
+    ? [...COMMAND_TABS_BASE, COMMAND_TAB_FINANCE]
+    : [...COMMAND_TABS_BASE];
+}
+
 interface MyProfile {
   hunterName: string;
   fields: { label: string; value: string }[];
@@ -22,8 +32,10 @@ interface CommandCenterProps {
   /** 開啟組織架構圖滿版覆蓋層（覆蓋層本身仍由頁面持有） */
   onOpenOrgChart: () => void;
   hunterName: string;
-  /** 是否看得到財務區（管理層） */
+  /** 是否看得到財務分頁（管理層） */
   canSeeFinance: boolean;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -34,13 +46,11 @@ function SubScreen({
   title,
   onClose,
   children,
-  footer,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: React.ReactNode;
-  footer?: React.ReactNode;
 }) {
   return (
     <div
@@ -49,7 +59,7 @@ function SubScreen({
       }`}
       aria-hidden={!open}
     >
-      <div className="shrink-0 h-[60px] flex items-center justify-between px-2 bg-[#FFFFFF]/90 backdrop-blur-md border-b border-[#E4E4E7]/60">
+      <div className="relative shrink-0 h-[60px] flex items-center justify-between px-2 bg-[#FFFFFF]/90 backdrop-blur-md border-b border-[#E4E4E7]/60">
         <button
           onClick={onClose}
           className="w-10 h-10 flex items-center justify-center rounded-full text-[#18181B] active:bg-[#F4F4F5] transition-colors"
@@ -68,11 +78,6 @@ function SubScreen({
         <div className="w-10 h-10" />
       </div>
       <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
-      {footer && (
-        <div className="shrink-0 border-t border-[#E4E4E7]/60 bg-[#FFFFFF] px-5 py-3 pb-[calc(12px_+_env(safe-area-inset-bottom))]">
-          {footer}
-        </div>
-      )}
     </div>
   );
 }
@@ -101,13 +106,11 @@ function EmptyState({
   );
 }
 
-/* 區塊標題 */
-function SectionTitle({ children, note }: { children: React.ReactNode; note?: string }) {
+function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between mb-2.5">
-      <h2 className="text-[13px] font-bold text-[#71717A] tracking-[0.08em]">{children}</h2>
-      {note && <span className="text-[11px] text-[#A1A1AA]">{note}</span>}
-    </div>
+    <h2 className="text-[13px] font-bold text-[#71717A] tracking-[0.08em] mb-2.5">
+      {children}
+    </h2>
   );
 }
 
@@ -117,27 +120,26 @@ function ListRow({
   iconBg,
   iconColor,
   title,
+  desc,
   meta,
   onClick,
-  disabled,
   last,
 }: {
   icon: string;
   iconBg: string;
   iconColor: string;
   title: string;
+  desc?: string;
   meta?: string;
   onClick?: () => void;
-  disabled?: boolean;
   last?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      disabled={disabled}
-      className={`w-full flex items-center gap-3.5 px-4 py-3.5 text-left transition-colors outline-none ${
-        disabled ? "opacity-45 cursor-not-allowed" : "active:bg-[#F4F4F5]"
-      } ${last ? "" : "border-b border-[#F4F4F5]"}`}
+      className={`w-full flex items-center gap-3.5 px-4 py-3.5 text-left transition-colors outline-none active:bg-[#F4F4F5] ${
+        last ? "" : "border-b border-[#F4F4F5]"
+      }`}
     >
       <div
         className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
@@ -145,14 +147,23 @@ function ListRow({
       >
         <span className="material-symbols-outlined text-[19px]">{icon}</span>
       </div>
-      <span className="flex-1 text-[15px] font-medium text-[#18181B]">{title}</span>
-      {meta && <span className="text-[12px] text-[#A1A1AA] tabular-nums">{meta}</span>}
-      {!disabled && (
-        <span className="material-symbols-outlined text-[16px] text-[#D4D4D8]">
-          chevron_right
-        </span>
-      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-[15px] font-medium text-[#18181B]">{title}</p>
+        {desc && <p className="text-[12px] text-[#A1A1AA] mt-0.5 truncate">{desc}</p>}
+      </div>
+      {meta && <span className="text-[12px] text-[#A1A1AA] tabular-nums shrink-0">{meta}</span>}
+      <span className="material-symbols-outlined text-[16px] text-[#D4D4D8] shrink-0">
+        chevron_right
+      </span>
     </button>
+  );
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
+      {children}
+    </div>
   );
 }
 
@@ -162,6 +173,8 @@ export default function CommandCenter({
   onOpenOrgChart,
   hunterName,
   canSeeFinance,
+  activeTab,
+  onTabChange,
 }: CommandCenterProps) {
   type ScreenId =
     | null
@@ -175,7 +188,7 @@ export default function CommandCenter({
   const [screen, setScreen] = useState<ScreenId>(null);
   const [openDoc, setOpenDoc] = useState<HandbookDoc | null>(null);
   const [openForm, setOpenForm] = useState<string | null>(null);
-  const receiptFormRef = React.useRef<ReceiptFormRef>(null);
+  const receiptFormRef = useRef<ReceiptFormRef>(null);
 
   const { data: profile } = useSWR<MyProfile>("/api/me", fetcher, {
     revalidateOnFocus: false,
@@ -188,8 +201,10 @@ export default function CommandCenter({
   const sops = useMemo(() => getSops(), []);
   const projects = crm?.projects ?? [];
 
+  const tabs = useMemo(() => getCommandTabs(canSeeFinance), [canSeeFinance]);
+  const activeIdx = Math.max(0, tabs.indexOf(activeTab));
+
   const displayName = profile?.hunterName || hunterName || "";
-  // 從員工CRM 的欄位裡挑出最能代表身分的兩個來當副標
   const roleLine = useMemo(() => {
     const f = profile?.fields ?? [];
     const pick = (...keys: string[]) =>
@@ -199,131 +214,231 @@ export default function CommandCenter({
       .join(" · ");
   }, [profile]);
 
+  /* ── 左右滑動切換分頁 ──────────────────────────────────── */
+  const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
+  const axisLocked = useRef<"x" | "y" | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+
+  // 位移一律用 px。用 translateX(calc(-50% + 0px)) 這種混合單位的寫法時，
+  // 瀏覽器無法在過場動畫中插值，transform 會整個不生效（實測 computed 是單位矩陣）。
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [panelW, setPanelW] = useState(0);
+  React.useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const measure = () => setPanelW(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    axisLocked.current = null;
+  }, []);
+
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (startX.current == null || startY.current == null) return;
+      const dx = e.touches[0].clientX - startX.current;
+      const dy = e.touches[0].clientY - startY.current;
+
+      // 先判定方向：直向捲動就完全不介入，避免和頁面捲動打架
+      if (!axisLocked.current) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        axisLocked.current = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (axisLocked.current === "x") setSwiping(true);
+      }
+      if (axisLocked.current !== "x") return;
+
+      // 第一頁／最後一頁再往外拖時加阻尼，給出「到底了」的手感
+      const atStart = activeIdx === 0 && dx > 0;
+      const atEnd = activeIdx === tabs.length - 1 && dx < 0;
+      setOffset(atStart || atEnd ? dx * 0.25 : dx);
+    },
+    [activeIdx, tabs.length]
+  );
+
+  const onTouchEnd = useCallback(() => {
+    if (axisLocked.current === "x") {
+      const threshold = 60;
+      if (offset < -threshold && activeIdx < tabs.length - 1) {
+        onTabChange(tabs[activeIdx + 1]);
+      } else if (offset > threshold && activeIdx > 0) {
+        onTabChange(tabs[activeIdx - 1]);
+      }
+    }
+    startX.current = null;
+    startY.current = null;
+    axisLocked.current = null;
+    setOffset(0);
+    setSwiping(false);
+  }, [offset, activeIdx, tabs, onTabChange]);
+
   return (
-    <div className="px-5 lg:px-10 pt-2 pb-28 flex flex-col gap-7 w-full max-w-3xl mx-auto">
-      {/* ── 我的 ───────────────────────────────────────── */}
-      <button
-        onClick={() => setScreen("profile")}
-        className="w-full text-left bg-[#18181B] rounded-[20px] p-5 flex items-center gap-4 active:scale-[0.99] transition-transform outline-none shadow-[0_6px_24px_rgba(24,24,27,0.14)]"
+    <>
+      <div
+        ref={viewportRef}
+        className="w-full overflow-hidden"
+        style={{ touchAction: "pan-y" }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
       >
-        <div className="w-12 h-12 rounded-full bg-[#F39C12] flex items-center justify-center shrink-0">
-          <span className="text-[18px] font-bold text-[#18181B]">
-            {displayName ? displayName.slice(0, 1) : "—"}
-          </span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[17px] font-bold text-white truncate">
-            {displayName || "載入中…"}
-          </p>
-          <p className="text-[12px] text-[#A1A1AA] truncate mt-0.5">
-            {roleLine || "查看我的職務說明"}
-          </p>
-        </div>
-        <span className="material-symbols-outlined text-[18px] text-[#71717A]">
-          chevron_right
-        </span>
-      </button>
-
-      {/* ── 組織與職務 ──────────────────────────────────── */}
-      <div>
-        <SectionTitle>組織與職務</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={onOpenOrgChart}
-            className="relative overflow-hidden bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
+        <div
+          className="flex items-start"
+          style={{
+            // 量到寬度後一律用 px：百分比在 3 分頁時是 33.333%，
+            // 累積捨入會讓邊緣露出隔壁面板的髮絲線
+            width: panelW ? panelW * tabs.length : `${tabs.length * 100}%`,
+            transform: `translateX(${-activeIdx * panelW + offset}px)`,
+            transition: swiping
+              ? "none"
+              : "transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)",
+          }}
+        >
+          {/* ── 分頁 1：定位定崗 ───────────────────────────── */}
+          <section
+            className="shrink-0 px-5 lg:px-10 pt-4 pb-28 flex flex-col gap-7"
+            style={{ width: panelW || `${100 / tabs.length}%` }}
           >
-            <div className="w-10 h-10 rounded-full bg-[#18181B] flex items-center justify-center text-[#F39C12]">
-              <span className="material-symbols-outlined text-[20px]">account_tree</span>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-[#18181B]">組織圖</p>
-              <p className="text-[11px] text-[#A1A1AA] mt-0.5">全公司架構</p>
-            </div>
-          </button>
+            <button
+              onClick={() => setScreen("profile")}
+              className="w-full text-left bg-[#18181B] rounded-[20px] p-5 flex items-center gap-4 active:scale-[0.99] transition-transform outline-none shadow-[0_6px_24px_rgba(24,24,27,0.14)]"
+            >
+              <div className="w-12 h-12 rounded-full bg-[#F39C12] flex items-center justify-center shrink-0">
+                <span className="text-[18px] font-bold text-[#18181B]">
+                  {displayName ? displayName.slice(0, 1) : "—"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[17px] font-bold text-white truncate">
+                  {displayName || "載入中…"}
+                </p>
+                <p className="text-[12px] text-[#A1A1AA] truncate mt-0.5">
+                  {roleLine || "查看我的職務說明"}
+                </p>
+              </div>
+              <span className="material-symbols-outlined text-[18px] text-[#71717A]">
+                chevron_right
+              </span>
+            </button>
 
-          <button
-            onClick={() => setScreen("profile")}
-            className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={onOpenOrgChart}
+                className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#18181B] flex items-center justify-center text-[#F39C12]">
+                  <span className="material-symbols-outlined text-[20px]">account_tree</span>
+                </div>
+                <div>
+                  <p className="text-[15px] font-bold text-[#18181B]">組織圖</p>
+                  <p className="text-[11px] text-[#A1A1AA] mt-0.5">全公司架構</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setScreen("profile")}
+                className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#FEF3E2] flex items-center justify-center text-[#F39C12]">
+                  <span className="material-symbols-outlined text-[20px]">badge</span>
+                </div>
+                <div>
+                  <p className="text-[15px] font-bold text-[#18181B]">職務說明</p>
+                  <p className="text-[11px] text-[#A1A1AA] mt-0.5">我的職責與資料</p>
+                </div>
+              </button>
+            </div>
+          </section>
+
+          {/* ── 分頁 2：營運 ───────────────────────────────── */}
+          <section
+            className="shrink-0 px-5 lg:px-10 pt-4 pb-28"
+            style={{ width: panelW || `${100 / tabs.length}%` }}
           >
-            <div className="w-10 h-10 rounded-full bg-[#FEF3E2] flex items-center justify-center text-[#F39C12]">
-              <span className="material-symbols-outlined text-[20px]">badge</span>
-            </div>
-            <div>
-              <p className="text-[15px] font-bold text-[#18181B]">職務說明</p>
-              <p className="text-[11px] text-[#A1A1AA] mt-0.5">我的職責與資料</p>
-            </div>
-          </button>
+            <SectionTitle>制度與流程</SectionTitle>
+            <Card>
+              <ListRow
+                icon="gavel"
+                iconBg="#EEF2FF"
+                iconColor="#4F46E5"
+                title="公司制度"
+                desc="薪酬福利、績效考核等規章"
+                meta={policies.length ? `${policies.length} 項` : "待建立"}
+                onClick={() => setScreen("policies")}
+              />
+              <ListRow
+                icon="lan"
+                iconBg="#ECFDF5"
+                iconColor="#059669"
+                title="SOP"
+                desc="各項作業標準流程"
+                meta={sops.length ? `${sops.length} 項` : "待建立"}
+                onClick={() => setScreen("sops")}
+              />
+              <ListRow
+                icon="description"
+                iconBg="#FEF3E2"
+                iconColor="#F39C12"
+                title="表單"
+                desc="領款簽收單等可填寫表單"
+                meta={`${FORMS.length} 項`}
+                onClick={() => setScreen("forms")}
+                last
+              />
+            </Card>
+          </section>
+
+          {/* ── 分頁 3：財務（管理層）───────────────────────── */}
+          {canSeeFinance && (
+            <section
+              className="shrink-0 px-5 lg:px-10 pt-4 pb-28"
+              style={{ width: panelW || `${100 / tabs.length}%` }}
+            >
+              <SectionTitle>財務管理</SectionTitle>
+              <Card>
+                <ListRow
+                  icon="receipt_long"
+                  iconBg="#F4F4F5"
+                  iconColor="#18181B"
+                  title="收支記錄"
+                  desc="記錄每一筆收入與支出"
+                  meta="記帳"
+                  onClick={() => setScreen("finance-ledger")}
+                />
+                <ListRow
+                  icon="folder_open"
+                  iconBg="#F4F4F5"
+                  iconColor="#18181B"
+                  title="專案財務"
+                  desc="各專案的收支與結餘"
+                  meta={projects.length ? `${projects.length} 案` : "—"}
+                  onClick={() => setScreen("finance-projects")}
+                />
+                <ListRow
+                  icon="monitoring"
+                  iconBg="#F4F4F5"
+                  iconColor="#18181B"
+                  title="公司財務狀態"
+                  desc="現金水位與整體趨勢"
+                  onClick={() => setScreen("finance-company")}
+                  last
+                />
+              </Card>
+            </section>
+          )}
         </div>
       </div>
-
-      {/* ── 制度與流程 ──────────────────────────────────── */}
-      <div>
-        <SectionTitle>制度與流程</SectionTitle>
-        <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
-          <ListRow
-            icon="gavel"
-            iconBg="#EEF2FF"
-            iconColor="#4F46E5"
-            title="公司制度"
-            meta={policies.length ? `${policies.length} 項` : "待建立"}
-            onClick={() => setScreen("policies")}
-          />
-          <ListRow
-            icon="lan"
-            iconBg="#ECFDF5"
-            iconColor="#059669"
-            title="SOP"
-            meta={sops.length ? `${sops.length} 項` : "待建立"}
-            onClick={() => setScreen("sops")}
-          />
-          <ListRow
-            icon="description"
-            iconBg="#FEF3E2"
-            iconColor="#F39C12"
-            title="表單"
-            meta={`${FORMS.length} 項`}
-            onClick={() => setScreen("forms")}
-            last
-          />
-        </div>
-      </div>
-
-      {/* ── 財務（管理層）────────────────────────────────── */}
-      {canSeeFinance && (
-        <div>
-          <SectionTitle note="管理層">財務</SectionTitle>
-          <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
-            <ListRow
-              icon="receipt_long"
-              iconBg="#F4F4F5"
-              iconColor="#18181B"
-              title="收支記錄"
-              meta="記帳"
-              onClick={() => setScreen("finance-ledger")}
-            />
-            <ListRow
-              icon="folder_open"
-              iconBg="#F4F4F5"
-              iconColor="#18181B"
-              title="專案財務"
-              meta={projects.length ? `${projects.length} 案` : "—"}
-              onClick={() => setScreen("finance-projects")}
-            />
-            <ListRow
-              icon="monitoring"
-              iconBg="#F4F4F5"
-              iconColor="#18181B"
-              title="公司財務狀態"
-              onClick={() => setScreen("finance-company")}
-              last
-            />
-          </div>
-        </div>
-      )}
 
       {/* ══ 子頁 ═══════════════════════════════════════════ */}
 
-      {/* 職務說明 */}
       <SubScreen
         open={screen === "profile"}
         title="職務說明"
@@ -347,7 +462,7 @@ export default function CommandCenter({
           </div>
 
           {profile?.fields?.length ? (
-            <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 overflow-hidden">
+            <Card>
               {profile.fields.map((f, i) => (
                 <div
                   key={f.label}
@@ -363,7 +478,7 @@ export default function CommandCenter({
                   </span>
                 </div>
               ))}
-            </div>
+            </Card>
           ) : (
             <EmptyState
               icon="badge"
@@ -374,7 +489,6 @@ export default function CommandCenter({
         </div>
       </SubScreen>
 
-      {/* 公司制度 */}
       <SubScreen
         open={screen === "policies"}
         title="公司制度"
@@ -383,15 +497,13 @@ export default function CommandCenter({
         <DocList docs={policies} onOpen={setOpenDoc} emptyIcon="gavel" />
       </SubScreen>
 
-      {/* SOP */}
       <SubScreen open={screen === "sops"} title="SOP" onClose={() => setScreen(null)}>
         <DocList docs={sops} onOpen={setOpenDoc} emptyIcon="lan" />
       </SubScreen>
 
-      {/* 表單 */}
       <SubScreen open={screen === "forms"} title="表單" onClose={() => setScreen(null)}>
         <div className="px-5 py-5 max-w-3xl mx-auto">
-          <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 overflow-hidden">
+          <Card>
             {FORMS.map((f, i) => (
               <button
                 key={f.id}
@@ -414,11 +526,10 @@ export default function CommandCenter({
                 </span>
               </button>
             ))}
-          </div>
+          </Card>
         </div>
       </SubScreen>
 
-      {/* 表單內容：領款簽收單 */}
       <SubScreen
         open={openForm === "receipt"}
         title="領款簽收單"
@@ -427,7 +538,6 @@ export default function CommandCenter({
         <ReceiptForm ref={receiptFormRef} />
       </SubScreen>
 
-      {/* 文件內文 */}
       <SubScreen
         open={!!openDoc}
         title={openDoc?.title ?? ""}
@@ -448,7 +558,6 @@ export default function CommandCenter({
         </div>
       </SubScreen>
 
-      {/* 收支記錄 */}
       <SubScreen
         open={screen === "finance-ledger"}
         title="收支記錄"
@@ -461,7 +570,6 @@ export default function CommandCenter({
         />
       </SubScreen>
 
-      {/* 專案財務 */}
       <SubScreen
         open={screen === "finance-projects"}
         title="專案財務"
@@ -473,7 +581,7 @@ export default function CommandCenter({
               <p className="text-[12px] text-[#A1A1AA] mb-3 px-1 leading-relaxed">
                 專案清單來自專案CRM。金額欄位尚未串接，接上收支資料後會顯示各案的收入、支出與結餘。
               </p>
-              <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 overflow-hidden">
+              <Card>
                 {projects.map((p, i) => (
                   <div
                     key={p}
@@ -487,7 +595,7 @@ export default function CommandCenter({
                     <span className="text-[12px] text-[#D4D4D8] shrink-0">—</span>
                   </div>
                 ))}
-              </div>
+              </Card>
             </>
           ) : (
             <EmptyState icon="folder_open" title="讀不到專案清單" />
@@ -495,7 +603,6 @@ export default function CommandCenter({
         </div>
       </SubScreen>
 
-      {/* 公司財務狀態 */}
       <SubScreen
         open={screen === "finance-company"}
         title="公司財務狀態"
@@ -507,7 +614,7 @@ export default function CommandCenter({
           hint="收支資料接上之後，這裡會顯示現金水位、當月收支與趨勢。"
         />
       </SubScreen>
-    </div>
+    </>
   );
 }
 
@@ -570,7 +677,7 @@ function DocList({
         grouped.map(([category, items]) => (
           <div key={category} className="mb-5">
             <SectionTitle>{category}</SectionTitle>
-            <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 overflow-hidden">
+            <Card>
               {items.map((d, i) => (
                 <button
                   key={d.id}
@@ -595,7 +702,7 @@ function DocList({
                   </span>
                 </button>
               ))}
-            </div>
+            </Card>
           </div>
         ))
       )}
