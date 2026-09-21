@@ -304,31 +304,10 @@ export default function CommandCenter({
         >
           {/* ── 分頁 1：定位定崗 ───────────────────────────── */}
           <section
-            className="shrink-0 px-5 lg:px-10 pt-4 pb-28 flex flex-col gap-7"
+            className="shrink-0 px-5 lg:px-10 pt-4 pb-28"
             style={{ width: panelW || `${100 / tabs.length}%` }}
           >
-            <button
-              onClick={() => setScreen("profile")}
-              className="w-full text-left bg-[#18181B] rounded-[20px] p-5 flex items-center gap-4 active:scale-[0.99] transition-transform outline-none shadow-[0_6px_24px_rgba(24,24,27,0.14)]"
-            >
-              <div className="w-12 h-12 rounded-full bg-[#F39C12] flex items-center justify-center shrink-0">
-                <span className="text-[18px] font-bold text-[#18181B]">
-                  {displayName ? displayName.slice(0, 1) : "—"}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[17px] font-bold text-white truncate">
-                  {displayName || "載入中…"}
-                </p>
-                <p className="text-[12px] text-[#A1A1AA] truncate mt-0.5">
-                  {roleLine || "查看我的職務說明"}
-                </p>
-              </div>
-              <span className="material-symbols-outlined text-[18px] text-[#71717A]">
-                chevron_right
-              </span>
-            </button>
-
+            <SectionTitle>組織與職務</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={onOpenOrgChart}

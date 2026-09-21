@@ -8,7 +8,7 @@ import { mutate } from "swr";
 import HuntingTasksView, {
   HuntingTasksViewRef,
 } from "@/components/HuntingTasksView";
-import CommandCenter from "@/components/CommandCenter";
+import CommandCenter, { getCommandTabs } from "@/components/CommandCenter";
 
 // Mock Data
 const projects = [
@@ -705,6 +705,9 @@ export default function HuntingManagementPage() {
     return isAdmin;
   })();
 
+  // 指揮中心的分頁：沒有財務權限就只有兩頁。分頁列與內容面板共用同一份清單。
+  const commandTabs = getCommandTabs(canSeeFinance);
+
   // Filter nav items based on permissions
   const navItems = isAdmin
     ? allNavItems
@@ -716,6 +719,7 @@ export default function HuntingManagementPage() {
   const defaultNav = navItems.length > 0 ? navItems[0].id : "hunting_tasks";
   const [activeNav, setActiveNav] = useState(defaultNav);
   const [activeSubTab, setActiveSubTab] = useState("每周任務");
+  const [commandTab, setCommandTab] = useState("定位定崗");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -1416,6 +1420,36 @@ export default function HuntingManagementPage() {
           {/* Row 2: Sub-tabs — aligned with sidebar search bar row */}
           <div className="h-[48px] px-6 lg:px-10 flex items-center justify-between border-b border-[#E4E4E7]/60">
             <div className="flex items-center">
+              {/* 指揮中心的分頁列：與狩獵任務用同一組樣式與位置 */}
+              {activeNav === "command_center" && (
+                <div
+                  className="relative flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
+                  style={{ WebkitTapHighlightColor: "transparent" }}
+                >
+                  <div
+                    className="absolute top-[3px] bottom-[3px] rounded-[8px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+                    style={{
+                      width: `calc(100% / ${commandTabs.length} - 2px)`,
+                      left: `calc((100% / ${commandTabs.length}) * ${Math.max(
+                        0,
+                        commandTabs.indexOf(commandTab)
+                      )} + 3px)`,
+                    }}
+                  />
+                  {commandTabs.map((tab) => (
+                    <div
+                      key={tab}
+                      onClick={() => setCommandTab(tab)}
+                      className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${
+                        commandTab === tab ? "text-[#18181B]" : "text-[#A1A1AA]"
+                      }`}
+                    >
+                      {tab}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {activeNav === "hunting_tasks" &&
                 (() => {
                   const tabs = ["專案任務", "每周任務"];
@@ -1604,6 +1638,8 @@ export default function HuntingManagementPage() {
               onOpenOrgChart={() => setShowOrgChart(true)}
               hunterName={hunterName}
               canSeeFinance={canSeeFinance}
+              activeTab={commandTab}
+              onTabChange={setCommandTab}
             />
           ) : (
             /* ============ Default Dashboard View ============ */
