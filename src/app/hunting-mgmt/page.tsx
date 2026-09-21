@@ -1377,7 +1377,11 @@ export default function HuntingManagementPage() {
               <div className="relative md:hidden" ref={shareRefMobile}>
                 <button
                   onClick={() => {
-                    setIsShareOpen(!isShareOpen);
+                    if (activeNav === "hunting_tasks" && activeSubTab === "領款簽收單") {
+                      receiptFormRef.current?.shareReceipt();
+                    } else {
+                      setIsShareOpen(!isShareOpen);
+                    }
                   }}
                   className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
                   title="分享"
@@ -1505,7 +1509,11 @@ export default function HuntingManagementPage() {
               <div className="relative hidden md:block" ref={shareRefDesktop}>
                 <button
                   onClick={() => {
-                    setIsShareOpen(!isShareOpen);
+                    if (activeNav === "hunting_tasks" && activeSubTab === "領款簽收單") {
+                      receiptFormRef.current?.shareReceipt();
+                    } else {
+                      setIsShareOpen(!isShareOpen);
+                    }
                   }}
                   className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
                   title="分享"
@@ -1566,7 +1574,7 @@ export default function HuntingManagementPage() {
           {/* Mobile Search Bar */}
           {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
               真正需要搜尋的制度／SOP 清單各自內建 */}
-          {!(activeNav === "hunting_tasks" && activeSubTab === "每周任務") &&
+          {!(activeNav === "hunting_tasks" && (activeSubTab === "每周任務" || activeSubTab === "領款簽收單")) &&
             activeNav !== "command_center" && (
             <div className="px-6 md:hidden">
               <div className="relative group w-full">

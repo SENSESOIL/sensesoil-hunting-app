@@ -106,7 +106,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
   }));
 
   return (
-    <div className="w-full flex flex-col px-4 pt-4 pb-4 max-w-[500px] mx-auto">
+    <div className="w-full flex flex-col pt-4 pb-4">
       {/* Receipt View that will be captured */}
       <div 
         ref={formRef}
