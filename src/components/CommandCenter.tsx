@@ -306,7 +306,7 @@ export default function CommandCenter({
         >
           {/* ── 分頁 1：定位定崗 ───────────────────────────── */}
           <section
-            className={`shrink-0 px-6 lg:px-10 pt-4 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "定位定崗" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+            className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "定位定崗" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
           >
             <SectionTitle>組織與職務</SectionTitle>
             <div className="grid grid-cols-2 gap-3">
@@ -350,7 +350,7 @@ export default function CommandCenter({
 
           {/* ── 分頁 2：營運 ───────────────────────────────── */}
           <section
-            className={`shrink-0 px-6 lg:px-10 pt-4 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "營運" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+            className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "營運" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
           >
             <SectionTitle>制度與流程</SectionTitle>
             <Card>
@@ -382,7 +382,7 @@ export default function CommandCenter({
           {/* ── 分頁 3：財務（管理層）───────────────────────── */}
           {canSeeFinance && (
             <section
-              className={`shrink-0 px-6 lg:px-10 pt-4 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "財務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+              className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "財務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
             >
               <SectionTitle>財務管理</SectionTitle>
               <Card>

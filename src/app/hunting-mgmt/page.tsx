@@ -1429,7 +1429,10 @@ export default function HuntingManagementPage() {
               {activeNav === "command_center" && (
                 <div
                   className="relative flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
-                  style={{ WebkitTapHighlightColor: "transparent" }}
+                  style={{ 
+                    WebkitTapHighlightColor: "transparent",
+                    width: commandTabs.length === 3 ? "280px" : "200px"
+                  }}
                 >
                   <div
                     className="absolute top-[3px] bottom-[3px] rounded-[8px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
@@ -1445,7 +1448,7 @@ export default function HuntingManagementPage() {
                     <div
                       key={tab}
                       onClick={() => setCommandTab(tab)}
-                      className={`relative z-10 flex-1 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${
+                      className={`relative z-10 flex-1 min-w-[0] px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${
                         commandTab === tab ? "text-[#18181B]" : "text-[#A1A1AA]"
                       }`}
                     >
@@ -1462,7 +1465,10 @@ export default function HuntingManagementPage() {
                   return (
                     <div
                       className="relative flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
-                      style={{ WebkitTapHighlightColor: "transparent" }}
+                      style={{ 
+                        WebkitTapHighlightColor: "transparent",
+                        width: tabs.length === 3 ? "280px" : "200px"
+                      }}
                     >
                       {/* Sliding pill indicator */}
                       <div
@@ -1480,7 +1486,7 @@ export default function HuntingManagementPage() {
                             setShowManual(false);
                             setActiveSubTab(tab);
                           }}
-                          className={`relative z-10 flex-1 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${activeSubTab === tab && !showManual ? "text-[#18181B]" : "text-[#A1A1AA]"}`}
+                          className={`relative z-10 flex-1 min-w-[0] px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${activeSubTab === tab && !showManual ? "text-[#18181B]" : "text-[#A1A1AA]"}`}
                         >
                           {tab}
                         </div>
@@ -1566,7 +1572,11 @@ export default function HuntingManagementPage() {
 
         {/* Content Container */}
         <div
-          className="flex-1 w-full flex flex-col gap-6 pt-6 pb-4"
+          className={`flex-1 w-full flex flex-col gap-6 pb-4 ${
+            activeNav === "command_center" || (activeNav === "hunting_tasks" && activeSubTab === "領款單")
+              ? "pt-2 md:pt-6"
+              : "pt-6"
+          }`}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
