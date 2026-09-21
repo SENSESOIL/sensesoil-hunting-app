@@ -1646,7 +1646,7 @@ export default function HuntingManagementPage() {
                   className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款單" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto">
-                    <div className="flex-1 max-w-3xl mx-auto w-full pt-[20px]">
+                    <div className="flex-1 max-w-3xl mx-auto w-full">
                       <ReceiptForm ref={receiptFormRef} />
                     </div>
                   </div>
