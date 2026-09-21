@@ -106,13 +106,7 @@ function EmptyState({
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="text-[13px] font-bold text-[#71717A] tracking-[0.08em] mb-2.5">
-      {children}
-    </h2>
-  );
-}
+
 
 /* 清單列：項目多的內容用列表，比方格 icon 好掃讀 */
 function ListRow({
@@ -308,7 +302,7 @@ export default function CommandCenter({
           <section
             className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "定位定崗" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
           >
-            <SectionTitle>組織與職務</SectionTitle>
+            
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={onOpenOrgChart}
@@ -352,7 +346,7 @@ export default function CommandCenter({
           <section
             className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "營運" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
           >
-            <SectionTitle>制度與流程</SectionTitle>
+            
             <Card>
               <ListRow
                 icon="gavel"
@@ -384,7 +378,7 @@ export default function CommandCenter({
             <section
               className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "財務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
             >
-              <SectionTitle>財務管理</SectionTitle>
+              
               <Card>
                 <ListRow
                   icon="receipt_long"
@@ -660,7 +654,7 @@ function DocList({
       ) : (
         grouped.map(([category, items]) => (
           <div key={category} className="mb-5">
-            <SectionTitle>{category}</SectionTitle>
+            
             <Card>
               {items.map((d, i) => (
                 <button
