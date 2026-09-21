@@ -9,6 +9,7 @@ import HuntingTasksView, {
   HuntingTasksViewRef,
 } from "@/components/HuntingTasksView";
 import CommandCenter, { getCommandTabs } from "@/components/CommandCenter";
+import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 
 // Mock Data
 const projects = [
@@ -741,6 +742,8 @@ export default function HuntingManagementPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [showOrgChart, setShowOrgChart] = useState(false);
+  const [showReceiptForm, setShowReceiptForm] = useState(false);
+  const receiptFormRef = useRef<ReceiptFormRef>(null);
   // 組織圖 iframe 只在開啟時掛載：避免 6MB 的架構圖頁在指揮中心背景持續輪詢拖慢畫面，
   // 也確保它的「適應螢幕」是在正確尺寸下算出來的（先滑入、尺寸穩定後才載入）。
   const [orgFrameMounted, setOrgFrameMounted] = useState(false);
@@ -1483,6 +1486,14 @@ export default function HuntingManagementPage() {
                     </div>
                   );
                 })()}
+              {activeNav === "hunting_tasks" && (
+                <button
+                  onClick={() => setShowReceiptForm(true)}
+                  className="ml-3 px-3 h-[26px] flex items-center justify-center text-[12px] font-bold text-[#F39C12] border border-[#F39C12]/20 bg-[#F39C12]/5 rounded-[8px] active:scale-[0.96] transition-transform"
+                >
+                  領款簽收單
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-1">
               {activeNav === "hunting_tasks" && activeSubTab === "每周任務" && (
@@ -2070,6 +2081,38 @@ export default function HuntingManagementPage() {
         <div className="pt-[60px] h-full overflow-y-auto pb-20 bg-[#FAFAFA]">
           <div className="px-6 py-4 flex flex-col gap-4">
             <ManualCards />
+          </div>
+        </div>
+      </div>
+
+      {/* Receipt Form Modal */}
+      <div
+        className={`fixed inset-0 z-50 flex items-center justify-center pointer-events-none`}
+      >
+        <div
+          className={`absolute inset-0 bg-[#18181B]/40 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto ${
+            showReceiptForm ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={() => setShowReceiptForm(false)}
+        />
+        <div
+          className={`absolute bottom-0 w-full md:w-[600px] md:relative md:bottom-auto md:rounded-[24px] h-[85vh] md:h-[80vh] bg-[#FFFFFF] rounded-t-[24px] shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-auto overflow-hidden flex flex-col ${
+            showReceiptForm ? "translate-y-0" : "translate-y-full"
+          }`}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[#E4E4E7]/60 shrink-0">
+            <h2 className="text-[17px] font-bold text-[#18181B]">領款簽收單</h2>
+            <button
+              onClick={() => setShowReceiptForm(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F4F4F5] text-[#71717A] active:scale-95 transition-transform"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
+          {/* Form Content */}
+          <div className="flex-1 overflow-y-auto">
+            <ReceiptForm ref={receiptFormRef} />
           </div>
         </div>
       </div>
