@@ -742,7 +742,6 @@ export default function HuntingManagementPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [showOrgChart, setShowOrgChart] = useState(false);
-  const [showReceiptForm, setShowReceiptForm] = useState(false);
   const receiptFormRef = useRef<ReceiptFormRef>(null);
   // 組織圖 iframe 只在開啟時掛載：避免 6MB 的架構圖頁在指揮中心背景持續輪詢拖慢畫面，
   // 也確保它的「適應螢幕」是在正確尺寸下算出來的（先滑入、尺寸穩定後才載入）。
@@ -805,8 +804,7 @@ export default function HuntingManagementPage() {
 
       if (swipeLocked.current) return;
 
-      // Clamp offset: prevent over-swiping beyond the two panels
-      const tabs = ["專案任務", "每周任務"];
+      const tabs = ["專案任務", "每周任務", "領款簽收單"];
       const activeIdx = tabs.indexOf(activeSubTab);
       let clampedOffset = dx;
       // If on first tab, can't swipe right further; if on last, can't swipe left further
@@ -831,7 +829,7 @@ export default function HuntingManagementPage() {
       touchStartY.current = null;
 
       if (Math.abs(diff) > 60 && isSwiping) {
-        const tabs = ["專案任務", "每周任務"];
+        const tabs = ["專案任務", "每周任務", "領款簽收單"];
         const activeIdx = tabs.indexOf(activeSubTab);
         if (diff > 0 && activeIdx > 0) {
           setActiveSubTab(tabs[activeIdx - 1]);
@@ -1455,7 +1453,7 @@ export default function HuntingManagementPage() {
 
               {activeNav === "hunting_tasks" &&
                 (() => {
-                  const tabs = ["專案任務", "每周任務"];
+                  const tabs = ["專案任務", "每周任務", "領款簽收單"];
                   const activeIdx = tabs.indexOf(activeSubTab);
                   return (
                     <div
@@ -1486,14 +1484,6 @@ export default function HuntingManagementPage() {
                     </div>
                   );
                 })()}
-              {activeNav === "hunting_tasks" && (
-                <button
-                  onClick={() => setShowReceiptForm(true)}
-                  className="ml-3 px-3 h-[26px] flex items-center justify-center text-[12px] font-bold text-[#F39C12] border border-[#F39C12]/20 bg-[#F39C12]/5 rounded-[8px] active:scale-[0.96] transition-transform"
-                >
-                  領款簽收單
-                </button>
-              )}
             </div>
             <div className="flex items-center gap-1">
               {activeNav === "hunting_tasks" && activeSubTab === "每周任務" && (
@@ -1599,11 +1589,13 @@ export default function HuntingManagementPage() {
             /* ============ Sliding Panel Container ============ */
             <div className="flex-1 overflow-hidden relative">
               <div
-                className="flex w-[200%] md:w-full h-full md:!transform-none"
+                className="flex w-[300%] md:w-full h-full md:!transform-none"
                 style={{
                   transform:
-                    activeSubTab === "每周任務"
-                      ? `translateX(calc(-50% + ${swipeOffset}px))`
+                    activeSubTab === "領款簽收單"
+                      ? `translateX(calc(-66.666% + ${swipeOffset}px))`
+                      : activeSubTab === "每周任務"
+                      ? `translateX(calc(-33.333% + ${swipeOffset}px))`
                       : `translateX(${swipeOffset}px)`,
                   transition: isSwiping
                     ? "none"
@@ -1612,7 +1604,7 @@ export default function HuntingManagementPage() {
               >
                 {/* Panel 1: 專案任務 */}
                 <div
-                  className={`w-1/2 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "專案任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "專案任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
                     <span
@@ -1628,7 +1620,7 @@ export default function HuntingManagementPage() {
                 </div>
                 {/* Panel 2: 每周任務 */}
                 <div
-                  className={`w-1/2 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每周任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每周任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
@@ -1641,7 +1633,17 @@ export default function HuntingManagementPage() {
                     )}
                   </div>
                 </div>
-                {/* 簽收表單已移至「指揮中心 → 制度與流程 → 表單」 */}
+                {/* Panel 3: 領款簽收單 */}
+                <div
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款簽收單" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                >
+                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto">
+                    <div className="flex-1 max-w-3xl mx-auto w-full pt-[20px]">
+                      <ReceiptForm ref={receiptFormRef} />
+                    </div>
+                  </div>
+                </div>
+                {/* 簽收表單臨時入口 */}
               </div>
             </div>
           ) : activeNav === "command_center" ? (
@@ -2085,37 +2087,6 @@ export default function HuntingManagementPage() {
         </div>
       </div>
 
-      {/* Receipt Form Modal */}
-      <div
-        className={`fixed inset-0 z-50 flex items-center justify-center pointer-events-none`}
-      >
-        <div
-          className={`absolute inset-0 bg-[#18181B]/40 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto ${
-            showReceiptForm ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-          onClick={() => setShowReceiptForm(false)}
-        />
-        <div
-          className={`absolute bottom-0 w-full md:w-[600px] md:relative md:bottom-auto md:rounded-[24px] h-[85vh] md:h-[80vh] bg-[#FFFFFF] rounded-t-[24px] shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] pointer-events-auto overflow-hidden flex flex-col ${
-            showReceiptForm ? "translate-y-0" : "translate-y-full"
-          }`}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-[#E4E4E7]/60 shrink-0">
-            <h2 className="text-[17px] font-bold text-[#18181B]">領款簽收單</h2>
-            <button
-              onClick={() => setShowReceiptForm(false)}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F4F4F5] text-[#71717A] active:scale-95 transition-transform"
-            >
-              <span className="material-symbols-outlined text-[18px]">close</span>
-            </button>
-          </div>
-          {/* Form Content */}
-          <div className="flex-1 overflow-y-auto">
-            <ReceiptForm ref={receiptFormRef} />
-          </div>
-        </div>
-      </div>
 
       {/* Full Screen Org Chart Overlay Modal */}
       <div
