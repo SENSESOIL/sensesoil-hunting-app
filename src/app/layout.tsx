@@ -34,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-TW" className="dark">
+    <html lang="zh-TW" className="dark scrollbar-hide">
       <head>
         {/* 狀態列底色。iOS 對「動態新建的 meta」反應很慢（實機要 2～4 秒或轉一次螢幕
             才變色），但對既有 meta 的 content 變更會立刻重畫 —— 所以這裡固定輸出一個，
@@ -47,7 +47,7 @@ export default function RootLayout({
           }
         `}</style>
       </head>
-      <body className={`${orbitron.variable} ${orbitron.className} bg-black text-on-background overflow-x-hidden overscroll-y-none min-h-[100dvh]`}>
+      <body className={`scrollbar-hide ${orbitron.variable} ${orbitron.className} bg-black text-on-background overflow-x-hidden overscroll-y-none min-h-[100dvh]`}>
         {/* iOS PWA 被記憶體壓力殺掉重啟時可能載入快取裡的舊版文件，
             這個守衛會比對建置版本，不一致就自動重載到新版 */}
         <VersionGuard />
