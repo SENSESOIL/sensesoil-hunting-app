@@ -564,8 +564,8 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto px-0 pb-10 scrollbar-hide">
+      <div className="flex flex-col">
+        <div className="flex-1 px-0 pb-10">
           <div className="w-full h-full">
             <div className="flex flex-col md:flex-row gap-6 md:h-[calc(100vh-220px)]">
               {/* Left Card */}

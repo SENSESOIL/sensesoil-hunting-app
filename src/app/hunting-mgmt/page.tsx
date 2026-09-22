@@ -749,6 +749,8 @@ export default function HuntingManagementPage() {
   // 也確保它的「適應螢幕」是在正確尺寸下算出來的（先滑入、尺寸穩定後才載入）。
   const [orgFrameMounted, setOrgFrameMounted] = useState(false);
   const [orgFrameLoaded, setOrgFrameLoaded] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const savedScroll = useRef(0);
   // 滑入動畫結束後才把被蓋住的主內容移出渲染樹，省下版面與合成層記憶體
   const [orgContentHidden, setOrgContentHidden] = useState(false);
   // 鎖死 iframe 高度：手機網址列收合會讓 fixed inset-0 的高度變動，
@@ -889,6 +891,7 @@ export default function HuntingManagementPage() {
     // 2) 鎖住底層頁面捲動：底層不動，手機網址列就不會在拖曳時收合，
     //    iframe 的高度也就不會被動變化
     const scrollY = window.scrollY;
+    savedScroll.current = contentRef.current ? contentRef.current.scrollTop : 0;
     const body = document.body;
     const prev = {
       position: body.style.position,
@@ -949,6 +952,7 @@ export default function HuntingManagementPage() {
       body.style.overflow = prev.overflow;
       body.style.overscrollBehavior = prev.overscrollBehavior;
       window.scrollTo(0, scrollY);
+      if (contentRef.current) contentRef.current.scrollTop = savedScroll.current;
       
       // 還原 theme-color（元素是 layout.tsx 固定輸出的，只還原值、不刪元素）
       if (metaTheme && originalTheme) {
@@ -966,36 +970,33 @@ export default function HuntingManagementPage() {
     };
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (orgContentHidden) return; // ignore background scroll
 
-      // Auto-hide navigation logic
-      if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-        setShowNav(false);
-      } else {
-        setShowNav(true);
-      }
-      lastScrollY.current = currentScrollY;
+    const currentScrollY = e.currentTarget.scrollTop;
 
-      // In iOS Safari, window.scrollY becomes negative during top bounce (pull-to-refresh)
-      if (currentScrollY < 0) {
-        setOverscrollY(-currentScrollY);
-        // Trigger refresh if pulled down past a threshold
-        if (currentScrollY < -80 && !isRefreshing) {
-          setIsRefreshing(true);
-          setTimeout(() => {
-            mutate(() => true, undefined, { revalidate: true });
-            setTimeout(() => setIsRefreshing(false), 500); // Reset spinner after half a second
-          }, 800);
-        }
-      } else {
-        setOverscrollY(0);
+    if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+      setShowNav(false);
+    } else {
+      setShowNav(true);
+    }
+    lastScrollY.current = currentScrollY;
+
+    // In iOS Safari, scrollTop becomes negative during top bounce (pull-to-refresh)
+    if (currentScrollY < 0) {
+      setOverscrollY(-currentScrollY);
+      // Trigger refresh if pulled down past a threshold
+      if (currentScrollY < -80 && !isRefreshing) {
+        setIsRefreshing(true);
+        setTimeout(() => {
+          mutate(() => true, undefined, { revalidate: true });
+          setTimeout(() => setIsRefreshing(false), 500); // Reset spinner after half a second
+        }, 800);
       }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isRefreshing]);
+    } else {
+      setOverscrollY(0);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1074,32 +1075,7 @@ export default function HuntingManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
-      {/* iOS Pull to Refresh Indicator */}
-      <div
-        className="fixed left-0 right-0 z-[100] flex items-center justify-center pointer-events-none md:hidden transition-transform duration-200"
-        style={{
-          top: -40,
-          transform: `translateY(${isRefreshing ? 100 : overscrollY > 0 ? overscrollY * 0.8 : 0}px)`,
-          opacity: overscrollY > 10 || isRefreshing ? 1 : 0,
-        }}
-      >
-        <div
-          className={`w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center ${isRefreshing ? "animate-spin" : ""}`}
-        >
-          <span
-            className="material-symbols-outlined text-[#F39C12] text-[20px]"
-            style={{
-              fontVariationSettings: "'wght' 400",
-              transform: isRefreshing
-                ? "none"
-                : `rotate(${overscrollY * 4}deg)`,
-            }}
-          >
-            sync
-          </span>
-        </div>
-      </div>
+    <div className="h-[100dvh] overflow-hidden bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
 
       {/* Left Sidebar (Desktop Only) */}
       <aside
@@ -1527,11 +1503,38 @@ export default function HuntingManagementPage() {
 
         {/* Content Container */}
         <div
-          className="flex-1 w-full flex flex-col gap-6 pt-6 pb-4"
+          ref={contentRef}
+          className="flex-1 w-full flex flex-col gap-6 pt-6 pb-4 overflow-y-auto scrollbar-hide relative"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onScroll={handleScroll}
         >
+          {/* iOS Pull to Refresh Indicator (inside scrolling container) */}
+          <div
+            className="absolute left-0 right-0 z-[1] flex items-center justify-center pointer-events-none md:hidden transition-transform duration-200"
+            style={{
+              top: -40,
+              transform: `translateY(${isRefreshing ? 100 : overscrollY > 0 ? overscrollY * 0.8 : 0}px)`,
+              opacity: overscrollY > 10 || isRefreshing ? 1 : 0,
+            }}
+          >
+            <div
+              className={`w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center ${isRefreshing ? "animate-spin" : ""}`}
+            >
+              <span
+                className="material-symbols-outlined text-[#F39C12] text-[20px]"
+                style={{
+                  fontVariationSettings: "'wght' 400",
+                  transform: isRefreshing
+                    ? "none"
+                    : `rotate(${overscrollY * 4}deg)`,
+                }}
+              >
+                sync
+              </span>
+            </div>
+          </div>
           {/* Mobile Search Bar */}
           {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
               真正需要搜尋的制度／SOP 清單各自內建 */}
