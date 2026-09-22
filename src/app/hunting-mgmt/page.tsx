@@ -731,7 +731,6 @@ export default function HuntingManagementPage() {
   const shareRefDesktop = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
-  // --- 手勢處理 (Swipe between tabs) ---
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -744,34 +743,12 @@ export default function HuntingManagementPage() {
   const lastScrollY = useRef(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showManual, setShowManual] = useState(false);
-  
-  // 動態切換 theme-color 給子頁
-  useEffect(() => {
-    if (!showManual) return;
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    const originalTheme = metaTheme?.getAttribute("content") ?? null;
-    if (metaTheme) {
-      metaTheme.setAttribute("content", "#FFFFFF");
-      requestAnimationFrame(() => {
-        if (metaTheme.getAttribute("content") === "#FFFFFF") {
-          metaTheme.setAttribute("content", "#ffffff");
-        }
-      });
-    }
-    return () => {
-      if (metaTheme && originalTheme) {
-        metaTheme.setAttribute("content", originalTheme);
-      }
-    };
-  }, [showManual]);
   const [showOrgChart, setShowOrgChart] = useState(false);
   const receiptFormRef = useRef<ReceiptFormRef>(null);
   // 組織圖 iframe 只在開啟時掛載：避免 6MB 的架構圖頁在指揮中心背景持續輪詢拖慢畫面，
   // 也確保它的「適應螢幕」是在正確尺寸下算出來的（先滑入、尺寸穩定後才載入）。
   const [orgFrameMounted, setOrgFrameMounted] = useState(false);
   const [orgFrameLoaded, setOrgFrameLoaded] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const savedScroll = useRef(0);
   // 滑入動畫結束後才把被蓋住的主內容移出渲染樹，省下版面與合成層記憶體
   const [orgContentHidden, setOrgContentHidden] = useState(false);
   // 鎖死 iframe 高度：手機網址列收合會讓 fixed inset-0 的高度變動，
@@ -912,7 +889,6 @@ export default function HuntingManagementPage() {
     // 2) 鎖住底層頁面捲動：底層不動，手機網址列就不會在拖曳時收合，
     //    iframe 的高度也就不會被動變化
     const scrollY = window.scrollY;
-    savedScroll.current = contentRef.current ? contentRef.current.scrollTop : 0;
     const body = document.body;
     const prev = {
       position: body.style.position,
@@ -973,7 +949,6 @@ export default function HuntingManagementPage() {
       body.style.overflow = prev.overflow;
       body.style.overscrollBehavior = prev.overscrollBehavior;
       window.scrollTo(0, scrollY);
-      if (contentRef.current) contentRef.current.scrollTop = savedScroll.current;
       
       // 還原 theme-color（元素是 layout.tsx 固定輸出的，只還原值、不刪元素）
       if (metaTheme && originalTheme) {
@@ -991,33 +966,36 @@ export default function HuntingManagementPage() {
     };
   }, []);
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (orgContentHidden) return; // ignore background scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
 
-    const currentScrollY = e.currentTarget.scrollTop;
-
-    if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-      setShowNav(false);
-    } else {
-      setShowNav(true);
-    }
-    lastScrollY.current = currentScrollY;
-
-    // In iOS Safari, scrollTop becomes negative during top bounce (pull-to-refresh)
-    if (currentScrollY < 0) {
-      setOverscrollY(-currentScrollY);
-      // Trigger refresh if pulled down past a threshold
-      if (currentScrollY < -80 && !isRefreshing) {
-        setIsRefreshing(true);
-        setTimeout(() => {
-          mutate(() => true, undefined, { revalidate: true });
-          setTimeout(() => setIsRefreshing(false), 500); // Reset spinner after half a second
-        }, 800);
+      // Auto-hide navigation logic
+      if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+        setShowNav(false);
+      } else {
+        setShowNav(true);
       }
-    } else {
-      setOverscrollY(0);
-    }
-  };
+      lastScrollY.current = currentScrollY;
+
+      // In iOS Safari, window.scrollY becomes negative during top bounce (pull-to-refresh)
+      if (currentScrollY < 0) {
+        setOverscrollY(-currentScrollY);
+        // Trigger refresh if pulled down past a threshold
+        if (currentScrollY < -80 && !isRefreshing) {
+          setIsRefreshing(true);
+          setTimeout(() => {
+            mutate(() => true, undefined, { revalidate: true });
+            setTimeout(() => setIsRefreshing(false), 500); // Reset spinner after half a second
+          }, 800);
+        }
+      } else {
+        setOverscrollY(0);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isRefreshing]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1096,7 +1074,32 @@ export default function HuntingManagementPage() {
   };
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row md:pb-0 relative">
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
+      {/* iOS Pull to Refresh Indicator */}
+      <div
+        className="fixed left-0 right-0 z-[30] flex items-center justify-center pointer-events-none md:hidden transition-transform duration-200"
+        style={{
+          top: 78,
+          transform: `translateY(${isRefreshing ? 70 : overscrollY > 0 ? overscrollY * 0.8 : 0}px)`,
+          opacity: overscrollY > 10 || isRefreshing ? 1 : 0,
+        }}
+      >
+        <div
+          className={`w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center ${isRefreshing ? "animate-spin" : ""}`}
+        >
+          <span
+            className="material-symbols-outlined text-[#F39C12] text-[20px]"
+            style={{
+              fontVariationSettings: "'wght' 400",
+              transform: isRefreshing
+                ? "none"
+                : `rotate(${overscrollY * 4}deg)`,
+            }}
+          >
+            sync
+          </span>
+        </div>
+      </div>
 
       {/* Left Sidebar (Desktop Only) */}
       <aside
@@ -1345,7 +1348,7 @@ export default function HuntingManagementPage() {
         className={`flex-1 flex flex-col min-w-0 ${orgContentHidden ? "hidden" : ""}`}
       >
         {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
-        <header className="sticky top-0 z-40 bg-[#FAFAFA]">
+        <header className="fixed md:sticky top-0 left-0 right-0 md:left-auto md:right-auto w-full z-40 bg-[#FAFAFA]">
           <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">
             {/* Mobile Logo & Title */}
             <div
@@ -1522,40 +1525,16 @@ export default function HuntingManagementPage() {
           </div>
         </header>
 
+        {/* Mobile Spacer to offset the fixed header */}
+        <div className="md:hidden h-[118px] shrink-0 w-full" />
+
         {/* Content Container */}
         <div
-          ref={contentRef}
-          className="flex-1 w-full flex flex-col gap-6 pt-6 pb-4 overflow-y-auto scrollbar-hide relative"
+          className="flex-1 w-full flex flex-col gap-6 pt-6 pb-4"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          onScroll={handleScroll}
         >
-          {/* iOS Pull to Refresh Indicator (inside scrolling container) */}
-          <div
-            className="absolute left-0 right-0 z-[1] flex items-center justify-center pointer-events-none md:hidden transition-transform duration-200"
-            style={{
-              top: -40,
-              transform: `translateY(${isRefreshing ? 100 : overscrollY > 0 ? overscrollY * 0.8 : 0}px)`,
-              opacity: overscrollY > 10 || isRefreshing ? 1 : 0,
-            }}
-          >
-            <div
-              className={`w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center ${isRefreshing ? "animate-spin" : ""}`}
-            >
-              <span
-                className="material-symbols-outlined text-[#F39C12] text-[20px]"
-                style={{
-                  fontVariationSettings: "'wght' 400",
-                  transform: isRefreshing
-                    ? "none"
-                    : `rotate(${overscrollY * 4}deg)`,
-                }}
-              >
-                sync
-              </span>
-            </div>
-          </div>
           {/* Mobile Search Bar */}
           {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
               真正需要搜尋的制度／SOP 清單各自內建 */}
@@ -1580,9 +1559,9 @@ export default function HuntingManagementPage() {
 
           {activeNav === "hunting_tasks" ? (
             /* ============ Sliding Panel Container ============ */
-            <div className="shrink-0 overflow-x-hidden relative">
+            <div className="flex-1 overflow-hidden relative">
               <div
-                className="flex w-[300%] md:w-full md:!transform-none"
+                className="flex w-[300%] md:w-full h-full md:!transform-none"
                 style={{
                   transform:
                     activeSubTab === "領款簽收"
@@ -1615,7 +1594,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每週任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
-                  <div className="px-6 lg:px-10 pb-20 w-full flex flex-col">
+                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
                       <HuntingTasksView ref={tasksViewRef} />
                     </div>
@@ -1630,7 +1609,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款簽收" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
-                  <div className="px-6 lg:px-10 pb-20 w-full flex flex-col">
+                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
                     <div className="flex-1 max-w-3xl mx-auto w-full">
                       <ReceiptForm ref={receiptFormRef} />
                     </div>
@@ -1640,15 +1619,13 @@ export default function HuntingManagementPage() {
               </div>
             </div>
           ) : activeNav === "command_center" ? (
-            <div className="shrink-0 w-full">
-              <CommandCenter
-                onOpenOrgChart={() => setShowOrgChart(true)}
-                hunterName={hunterName}
-                canSeeFinance={canSeeFinance}
-                activeTab={commandTab}
-                onTabChange={setCommandTab}
-              />
-            </div>
+            <CommandCenter
+              onOpenOrgChart={() => setShowOrgChart(true)}
+              hunterName={hunterName}
+              canSeeFinance={canSeeFinance}
+              activeTab={commandTab}
+              onTabChange={setCommandTab}
+            />
           ) : (
             /* ============ Default Dashboard View ============ */
             <>
@@ -2056,7 +2033,7 @@ export default function HuntingManagementPage() {
 
       {/* Mobile Weekly Tasks Manual Overlay */}
       <div
-        className={`fixed inset-0 bg-[#FAFAFA] z-[100] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${showManual ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-0 bg-[#FFFFFF] z-[100] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${showManual ? "translate-x-0" : "translate-x-full"}`}
       >
         <header className="fixed top-0 left-0 right-0 h-[60px] bg-[#FFFFFF] z-[110] border-b border-[#E4E4E7]/60 flex items-center justify-between px-4">
           <button
@@ -2075,7 +2052,7 @@ export default function HuntingManagementPage() {
           </h1>
           <div className="w-10"></div> {/* Spacer for flex balance */}
         </header>
-        <div className="pt-[60px] h-full overflow-y-auto scrollbar-hide pb-20 bg-[#FAFAFA]">
+        <div className="pt-[60px] h-full overflow-y-auto scrollbar-hide pb-20 bg-[#FFFFFF]">
           <div className="px-6 py-4 flex flex-col gap-4">
             <ManualCards />
           </div>
