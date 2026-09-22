@@ -52,35 +52,17 @@ function SubScreen({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  // 子頁標題列是純白，狀態列要跟著白，否則會出現灰白斷層。
-  // 主頁維持 #FAFAFA（與它自己的標題列同色），所以這裡要動態切換。
-  //
-  // iOS 讀取 theme-color 變更有延遲，實測「同一個值寫兩次」比只寫一次容易被它注意到，
-  // 所以連續兩個影格各推一次（大小寫互換，屬性值有變才會觸發變更通知）。
-  React.useEffect(() => {
-    if (!open) return;
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (!meta) return;
-    const original = meta.getAttribute("content");
-    meta.setAttribute("content", "#FFFFFF");
-    const r1 = requestAnimationFrame(() => {
-      meta.setAttribute("content", "#ffffff");
-      requestAnimationFrame(() => meta.setAttribute("content", "#FFFFFF"));
-    });
-    return () => {
-      cancelAnimationFrame(r1);
-      if (original) meta.setAttribute("content", original);
-    };
-  }, [open]);
-
+  // 狀態列顏色不在這裡處理 —— SubScreen 有 9 個實例，9 份 effect 互相搶同一個
+  // meta 標籤，iOS 實測不會套用。改由 CommandCenter 統一用一份 effect 控制，
+  // 與「每週任務操作說明」那個能正常運作的覆蓋層結構一致。
   return (
     <div
-      className={`fixed inset-0 z-[120] bg-[#FFFFFF] flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      className={`fixed inset-0 z-[120] bg-[#FFFFFF] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
         open ? "translate-x-0" : "translate-x-full pointer-events-none"
       }`}
       aria-hidden={!open}
     >
-      <header className="relative shrink-0 h-[60px] bg-[#FFFFFF] z-10 flex items-center justify-between px-2 border-b border-[#E4E4E7]/60">
+      <header className="fixed top-0 left-0 right-0 h-[60px] bg-[#FFFFFF] z-[130] border-b border-[#E4E4E7]/60 flex items-center justify-between px-2">
         <button
           onClick={onClose}
           className="w-10 h-10 flex items-center justify-center rounded-full text-[#18181B] active:bg-[#F4F4F5] transition-colors"
@@ -100,7 +82,7 @@ function SubScreen({
       </header>
       {/* 標題列維持純白（與狀態列無色差），內容區回到淺灰 ——
           否則白底配白卡片就完全沒有層次了 */}
-      <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide bg-[#FAFAFA]">
+      <div className="pt-[60px] h-full overflow-y-auto overscroll-contain scrollbar-hide bg-[#FAFAFA]">
         {children}
       </div>
     </div>
@@ -223,6 +205,28 @@ export default function CommandCenter({
 
   const tabs = useMemo(() => getCommandTabs(canSeeFinance), [canSeeFinance]);
   const activeIdx = Math.max(0, tabs.indexOf(activeTab));
+
+  // 只要有任何子頁開著，狀態列就跟著子頁標題列一起變白。
+  // 寫法刻意與 page.tsx 裡「每週任務操作說明」那個能正常運作的覆蓋層一致：
+  // 單一元件、單一 effect、單一布林值 —— 而不是讓 9 個 SubScreen 實例各自搶同一個 meta。
+  const anySubScreenOpen =
+    screen !== null || openDoc !== null || openForm !== null;
+  React.useEffect(() => {
+    if (!anySubScreenOpen) return;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    const original = meta.getAttribute("content");
+    meta.setAttribute("content", "#FFFFFF");
+    // iOS 讀取 theme-color 變更有延遲，連續兩個影格各推一次比較容易被它注意到
+    const r1 = requestAnimationFrame(() => {
+      meta.setAttribute("content", "#ffffff");
+      requestAnimationFrame(() => meta.setAttribute("content", "#FFFFFF"));
+    });
+    return () => {
+      cancelAnimationFrame(r1);
+      if (original) meta.setAttribute("content", original);
+    };
+  }, [anySubScreenOpen]);
 
   const displayName = profile?.hunterName || hunterName || "";
   const roleLine = useMemo(() => {
