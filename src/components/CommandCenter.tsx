@@ -240,6 +240,22 @@ export default function CommandCenter({
   const [swiping, setSwiping] = useState(false);
   const viewportRef = useRef<HTMLDivElement>(null);
 
+  // 位移一律用實際量到的 px。用百分比會有兩個問題：
+  // (1) translateX(calc(-33.333% + Npx)) 這種混合單位無法在過場動畫中插值，
+  //     transform 會整個不生效；
+  // (2) 寫死 -33.333%／-66.666% 只在「剛好三個分頁」時正確，
+  //     沒有財務權限的人只有兩個分頁，位移量就錯了。
+  const [panelW, setPanelW] = useState(0);
+  React.useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const measure = () => setPanelW(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
     startY.current = e.touches[0].clientY;
@@ -310,12 +326,8 @@ export default function CommandCenter({
         <div
           className="flex items-start h-full md:!transform-none"
           style={{
-            width: `${tabs.length * 100}%`,
-            transform: activeTab === "財務"
-              ? `translateX(calc(-66.666% + ${offset}px))`
-              : activeTab === "營運"
-              ? `translateX(calc(-33.333% + ${offset}px))`
-              : `translateX(${offset}px)`,
+            width: panelW ? panelW * tabs.length : `${tabs.length * 100}%`,
+            transform: `translateX(${-activeIdx * panelW + offset}px)`,
             transition: swiping
               ? "none"
               : "transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)",
@@ -323,7 +335,8 @@ export default function CommandCenter({
         >
           {/* ── 分頁 1：定位定崗 ───────────────────────────── */}
           <section
-            className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "定位定崗" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+            className="shrink-0 px-6 lg:px-10 pt-0 pb-28 md:w-full"
+            style={{ width: panelW || `${100 / tabs.length}%` }}
           >
             
             <div className="grid grid-cols-2 gap-3">
@@ -367,7 +380,8 @@ export default function CommandCenter({
 
           {/* ── 分頁 2：營運 ───────────────────────────────── */}
           <section
-            className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "營運" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+            className="shrink-0 px-6 lg:px-10 pt-0 pb-28 md:w-full"
+            style={{ width: panelW || `${100 / tabs.length}%` }}
           >
             
             <Card>
@@ -399,7 +413,8 @@ export default function CommandCenter({
           {/* ── 分頁 3：財務（管理層）───────────────────────── */}
           {canSeeFinance && (
             <section
-              className={`shrink-0 px-6 lg:px-10 pt-0 pb-28 ${tabs.length === 3 ? "w-1/3" : "w-1/2"} md:w-full transition-[height] duration-300 ${activeTab !== "財務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+              className="shrink-0 px-6 lg:px-10 pt-0 pb-28 md:w-full"
+            style={{ width: panelW || `${100 / tabs.length}%` }}
             >
               
               <Card>
