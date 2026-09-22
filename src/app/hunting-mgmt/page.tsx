@@ -731,6 +731,20 @@ export default function HuntingManagementPage() {
   const shareRefDesktop = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
+  // --- 手勢處理 (Swipe between tabs) ---
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const swipeLocked = useRef(false); // locks to prevent vertical scroll from triggering swipe
+
+  const [overscrollY, setOverscrollY] = useState(0);
+
+  const [showNav, setShowNav] = useState(true);
+  const lastScrollY = useRef(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+  
   // 動態切換 theme-color 給子頁
   useEffect(() => {
     if (!showManual) return;
@@ -750,20 +764,6 @@ export default function HuntingManagementPage() {
       }
     };
   }, [showManual]);
-
-  // --- 手勢處理 (Swipe between tabs) ---
-  const touchStartX = useRef<number | null>(null);
-  const touchStartY = useRef<number | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
-  const swipeLocked = useRef(false); // locks to prevent vertical scroll from triggering swipe
-
-  const [overscrollY, setOverscrollY] = useState(0);
-
-  const [showNav, setShowNav] = useState(true);
-  const lastScrollY = useRef(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showManual, setShowManual] = useState(false);
   const [showOrgChart, setShowOrgChart] = useState(false);
   const receiptFormRef = useRef<ReceiptFormRef>(null);
   // 組織圖 iframe 只在開啟時掛載：避免 6MB 的架構圖頁在指揮中心背景持續輪詢拖慢畫面，
@@ -1580,9 +1580,9 @@ export default function HuntingManagementPage() {
 
           {activeNav === "hunting_tasks" ? (
             /* ============ Sliding Panel Container ============ */
-            <div className="flex-1 overflow-hidden relative">
+            <div className="shrink-0 overflow-x-hidden relative">
               <div
-                className="flex w-[300%] md:w-full h-full md:!transform-none"
+                className="flex w-[300%] md:w-full md:!transform-none"
                 style={{
                   transform:
                     activeSubTab === "領款簽收"
@@ -1615,7 +1615,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每週任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
-                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
+                  <div className="px-6 lg:px-10 pb-20 w-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
                       <HuntingTasksView ref={tasksViewRef} />
                     </div>
@@ -1630,7 +1630,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款簽收" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
-                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
+                  <div className="px-6 lg:px-10 pb-20 w-full flex flex-col">
                     <div className="flex-1 max-w-3xl mx-auto w-full">
                       <ReceiptForm ref={receiptFormRef} />
                     </div>
@@ -1640,13 +1640,15 @@ export default function HuntingManagementPage() {
               </div>
             </div>
           ) : activeNav === "command_center" ? (
-            <CommandCenter
-              onOpenOrgChart={() => setShowOrgChart(true)}
-              hunterName={hunterName}
-              canSeeFinance={canSeeFinance}
-              activeTab={commandTab}
-              onTabChange={setCommandTab}
-            />
+            <div className="shrink-0 w-full">
+              <CommandCenter
+                onOpenOrgChart={() => setShowOrgChart(true)}
+                hunterName={hunterName}
+                canSeeFinance={canSeeFinance}
+                activeTab={commandTab}
+                onTabChange={setCommandTab}
+              />
+            </div>
           ) : (
             /* ============ Default Dashboard View ============ */
             <>
@@ -2056,7 +2058,7 @@ export default function HuntingManagementPage() {
       <div
         className={`fixed inset-0 bg-[#FAFAFA] z-[100] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden ${showManual ? "translate-x-0" : "translate-x-full"}`}
       >
-        <header className="fixed top-0 left-0 right-0 h-[60px] bg-[#FFFFFF]/90 backdrop-blur-md z-[110] border-b border-[#E4E4E7]/60 flex items-center justify-between px-4">
+        <header className="fixed top-0 left-0 right-0 h-[60px] bg-[#FFFFFF] z-[110] border-b border-[#E4E4E7]/60 flex items-center justify-between px-4">
           <button
             onClick={() => setShowManual(false)}
             className="w-10 h-10 flex items-center justify-center rounded-full text-[#18181B] active:bg-[#F4F4F5] transition-colors"

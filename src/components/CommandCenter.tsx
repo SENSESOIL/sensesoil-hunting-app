@@ -78,7 +78,7 @@ function SubScreen({
       }`}
       aria-hidden={!open}
     >
-      <div className="relative shrink-0 h-[60px] flex items-center justify-between px-2 bg-[#FFFFFF]/90 backdrop-blur-md border-b border-[#E4E4E7]/60">
+      <div className="relative shrink-0 h-[60px] flex items-center justify-between px-2 bg-[#FFFFFF] border-b border-[#E4E4E7]/60">
         <button
           onClick={onClose}
           className="w-10 h-10 flex items-center justify-center rounded-full text-[#18181B] active:bg-[#F4F4F5] transition-colors"
@@ -304,7 +304,7 @@ export default function CommandCenter({
         onTouchCancel={onTouchEnd}
       >
         <div
-          className="flex items-start h-full md:!transform-none"
+          className="flex items-start md:!transform-none"
           style={{
             width: `${tabs.length * 100}%`,
             transform: activeTab === "財務"
