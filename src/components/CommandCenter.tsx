@@ -52,25 +52,9 @@ function SubScreen({
   onClose: () => void;
   children: React.ReactNode;
 }) {
-  React.useEffect(() => {
-    if (!open) return;
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    const originalTheme = metaTheme?.getAttribute("content") ?? null;
-    if (metaTheme) {
-      metaTheme.setAttribute("content", "#FFFFFF");
-      requestAnimationFrame(() => {
-        if (metaTheme.getAttribute("content") === "#FFFFFF") {
-          metaTheme.setAttribute("content", "#ffffff");
-        }
-      });
-    }
-    return () => {
-      if (metaTheme && originalTheme) {
-        metaTheme.setAttribute("content", originalTheme);
-      }
-    };
-  }, [open]);
-
+  // 這裡原本會在開啟時把 theme-color 切成白色，但 iOS 套用 theme-color 有明顯延遲，
+  // 子頁開開關關的節奏根本等不到，使用者看到的一直是切換前的灰色。
+  // 現在預設 theme-color 就是白色（見 layout.tsx），標題列也是白色，不需要切換。
   return (
     <div
       className={`fixed inset-0 z-[120] bg-[#FFFFFF] flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${

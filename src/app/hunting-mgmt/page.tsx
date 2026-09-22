@@ -1359,7 +1359,7 @@ export default function HuntingManagementPage() {
         }`}
       >
         {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
-        <header className="fixed md:sticky top-0 left-0 right-0 md:left-auto md:right-auto w-full z-40 bg-[#FAFAFA]">
+        <header className="fixed md:sticky top-0 left-0 right-0 md:left-auto md:right-auto w-full z-40 bg-[#FFFFFF]">
           <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">
             {/* Mobile Logo & Title */}
             <div
