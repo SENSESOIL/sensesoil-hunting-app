@@ -804,7 +804,7 @@ export default function HuntingManagementPage() {
 
       if (swipeLocked.current) return;
 
-      const tabs = ["專案任務", "每週任務", "領款單"];
+      const tabs = ["專案任務", "每週任務", "領款簽收"];
       const activeIdx = tabs.indexOf(activeSubTab);
       let clampedOffset = dx;
       // If on first tab, can't swipe right further; if on last, can't swipe left further
@@ -829,7 +829,7 @@ export default function HuntingManagementPage() {
       touchStartY.current = null;
 
       if (Math.abs(diff) > 60 && isSwiping) {
-        const tabs = ["專案任務", "每週任務", "領款單"];
+        const tabs = ["專案任務", "每週任務", "領款簽收"];
         const activeIdx = tabs.indexOf(activeSubTab);
         if (diff > 0 && activeIdx > 0) {
           setActiveSubTab(tabs[activeIdx - 1]);
@@ -1377,7 +1377,7 @@ export default function HuntingManagementPage() {
               <div className="relative md:hidden" ref={shareRefMobile}>
                 <button
                   onClick={() => {
-                    if (activeNav === "hunting_tasks" && activeSubTab === "領款單") {
+                    if (activeNav === "hunting_tasks" && activeSubTab === "領款簽收") {
                       receiptFormRef.current?.shareReceipt();
                     } else {
                       setIsShareOpen(!isShareOpen);
@@ -1460,7 +1460,7 @@ export default function HuntingManagementPage() {
 
               {activeNav === "hunting_tasks" &&
                 (() => {
-                  const tabs = ["專案任務", "每週任務", "領款單"];
+                  const tabs = ["專案任務", "每週任務", "領款簽收"];
                   const activeIdx = tabs.indexOf(activeSubTab);
                   return (
                     <div
@@ -1515,7 +1515,7 @@ export default function HuntingManagementPage() {
               <div className="relative hidden md:block" ref={shareRefDesktop}>
                 <button
                   onClick={() => {
-                    if (activeNav === "hunting_tasks" && activeSubTab === "領款單") {
+                    if (activeNav === "hunting_tasks" && activeSubTab === "領款簽收") {
                       receiptFormRef.current?.shareReceipt();
                     } else {
                       setIsShareOpen(!isShareOpen);
@@ -1573,7 +1573,7 @@ export default function HuntingManagementPage() {
         {/* Content Container */}
         <div
           className={`flex-1 w-full flex flex-col gap-6 pb-4 ${
-            activeNav === "command_center" || (activeNav === "hunting_tasks" && activeSubTab === "領款單")
+            activeNav === "command_center" || (activeNav === "hunting_tasks" && activeSubTab === "領款簽收")
               ? "pt-2 md:pt-6"
               : "pt-6"
           }`}
@@ -1584,7 +1584,7 @@ export default function HuntingManagementPage() {
           {/* Mobile Search Bar */}
           {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
               真正需要搜尋的制度／SOP 清單各自內建 */}
-          {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款單")) &&
+          {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款簽收")) &&
             activeNav !== "command_center" && (
             <div className="px-6 md:hidden">
               <div className="relative group w-full">
@@ -1610,7 +1610,7 @@ export default function HuntingManagementPage() {
                 className="flex w-[300%] md:w-full h-full md:!transform-none"
                 style={{
                   transform:
-                    activeSubTab === "領款單"
+                    activeSubTab === "領款簽收"
                       ? `translateX(calc(-66.666% + ${swipeOffset}px))`
                       : activeSubTab === "每週任務"
                       ? `translateX(calc(-33.333% + ${swipeOffset}px))`
@@ -1651,9 +1651,9 @@ export default function HuntingManagementPage() {
                     )}
                   </div>
                 </div>
-                {/* Panel 3: 領款單 */}
+                {/* Panel 3: 領款簽收 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款單" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款簽收" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto">
                     <div className="flex-1 max-w-3xl mx-auto w-full">
