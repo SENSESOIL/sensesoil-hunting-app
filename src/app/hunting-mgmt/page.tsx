@@ -1075,30 +1075,35 @@ export default function HuntingManagementPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
-      {/* iOS Pull to Refresh Indicator */}
+      {/* 下拉更新指示器。
+          基準點放在 header 分割線（118px）上，靜止時用負位移把自己藏到 header 底下
+          （z-30 < header 的 z-40，所以被不透明的 header 蓋住），
+          下拉時才從分割線下方滑出來。
+          樣式是極簡細環：淡橘色軌道 + 稍深的弧，無底色無陰影。 */}
       <div
-        className="fixed left-0 right-0 z-[30] flex items-center justify-center pointer-events-none md:hidden transition-transform duration-200"
+        className="fixed left-0 right-0 z-[30] flex items-center justify-center pointer-events-none md:hidden"
         style={{
-          top: 78,
-          transform: `translateY(${isRefreshing ? 70 : overscrollY > 0 ? overscrollY * 0.8 : 0}px)`,
-          opacity: overscrollY > 10 || isRefreshing ? 1 : 0,
+          top: 118,
+          transform: `translateY(${
+            isRefreshing ? 18 : Math.min(overscrollY * 0.7, 56) - 30
+          }px)`,
+          opacity: overscrollY > 6 || isRefreshing ? 1 : 0,
+          transition: isRefreshing
+            ? "transform 0.25s ease, opacity 0.2s ease"
+            : "opacity 0.2s ease",
         }}
       >
         <div
-          className={`w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center ${isRefreshing ? "animate-spin" : ""}`}
-        >
-          <span
-            className="material-symbols-outlined text-[#F39C12] text-[20px]"
-            style={{
-              fontVariationSettings: "'wght' 400",
-              transform: isRefreshing
-                ? "none"
-                : `rotate(${overscrollY * 4}deg)`,
-            }}
-          >
-            sync
-          </span>
-        </div>
+          className={`w-[22px] h-[22px] rounded-full border-2 ${
+            isRefreshing ? "animate-spin" : ""
+          }`}
+          style={{
+            borderColor: "rgba(243,156,18,0.18)",
+            borderTopColor: "rgba(243,156,18,0.7)",
+            // 轉圈動畫本身就吃 transform，所以更新中不要再自己設
+            transform: isRefreshing ? undefined : `rotate(${overscrollY * 4}deg)`,
+          }}
+        />
       </div>
 
       {/* Left Sidebar (Desktop Only) */}
@@ -1344,8 +1349,14 @@ export default function HuntingManagementPage() {
           版面與合成層記憶體。組織圖的 iframe 本身就很吃記憶體，iOS 在接近上限時
           會直接把 WebView 殺掉，能省一點是一點。
           等滑入動畫跑完才隱藏，否則動畫期間旁邊會出現空白。 */}
+      {/* 手機版 header 是 fixed（才能在下拉時固定不動、讓內容從它底下滑出），
+          fixed 會脫離文件流，必須補回它佔掉的 118px（Row1 70 + Row2 48），
+          否則內容會被壓在 header 底下、文件高度也會少一截而幾乎捲不動。
+          桌機版 header 是 sticky、仍在流程內，所以 md 以上不需要補。 */}
       <main
-        className={`flex-1 flex flex-col min-w-0 ${orgContentHidden ? "hidden" : ""}`}
+        className={`flex-1 flex flex-col min-w-0 pt-[118px] md:pt-0 ${
+          orgContentHidden ? "hidden" : ""
+        }`}
       >
         {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
         <header className="fixed md:sticky top-0 left-0 right-0 md:left-auto md:right-auto w-full z-40 bg-[#FAFAFA]">
@@ -1525,8 +1536,6 @@ export default function HuntingManagementPage() {
           </div>
         </header>
 
-        {/* Mobile Spacer to offset the fixed header */}
-        <div className="md:hidden h-[118px] shrink-0 w-full" />
 
         {/* Content Container */}
         <div
@@ -2052,7 +2061,7 @@ export default function HuntingManagementPage() {
           </h1>
           <div className="w-10"></div> {/* Spacer for flex balance */}
         </header>
-        <div className="pt-[60px] h-full overflow-y-auto scrollbar-hide pb-20 bg-[#FFFFFF]">
+        <div className="pt-[60px] h-full overflow-y-auto scrollbar-hide pb-20 bg-[#FAFAFA]">
           <div className="px-6 py-4 flex flex-col gap-4">
             <ManualCards />
           </div>

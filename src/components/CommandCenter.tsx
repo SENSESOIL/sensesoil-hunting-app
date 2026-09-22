@@ -95,8 +95,12 @@ function SubScreen({
           {title}
         </h2>
         <div className="w-10 h-10" />
+      </header>
+      {/* 標題列維持純白（與狀態列無色差），內容區回到淺灰 ——
+          否則白底配白卡片就完全沒有層次了 */}
+      <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide bg-[#FAFAFA]">
+        {children}
       </div>
-      <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide">{children}</div>
     </div>
   );
 }
