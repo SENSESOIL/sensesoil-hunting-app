@@ -1075,7 +1075,7 @@ export default function HuntingManagementPage() {
   };
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
+    <div className="h-[100dvh] overflow-hidden bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row md:pb-0 relative">
 
       {/* Left Sidebar (Desktop Only) */}
       <aside
