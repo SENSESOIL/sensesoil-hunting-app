@@ -10,6 +10,8 @@ import HuntingTasksView, {
 } from "@/components/HuntingTasksView";
 import CommandCenter, { getCommandTabs } from "@/components/CommandCenter";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
+import VersionGuard from "@/components/VersionGuard";
+import AnimatedTabs from "@/components/AnimatedTabs";
 
 // Mock Data
 const projects = [
@@ -1427,71 +1429,24 @@ export default function HuntingManagementPage() {
             <div className="flex items-center">
               {/* 指揮中心的分頁列：與狩獵任務用同一組樣式與位置 */}
               {activeNav === "command_center" && (
-                <div
-                  className="relative flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
-                  style={{ 
-                    WebkitTapHighlightColor: "transparent",
-                    width: commandTabs.length === 3 ? "280px" : "200px"
-                  }}
-                >
-                  <div
-                    className="absolute top-[3px] bottom-[3px] rounded-[8px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
-                    style={{
-                      width: `calc((100% - 6px) / ${commandTabs.length})`,
-                      left: `calc(3px + (100% - 6px) / ${commandTabs.length} * ${Math.max(
-                        0,
-                        commandTabs.indexOf(commandTab)
-                      )})`,
-                    }}
-                  />
-                  {commandTabs.map((tab) => (
-                    <div
-                      key={tab}
-                      onClick={() => setCommandTab(tab)}
-                      className={`relative z-10 flex-1 min-w-[0] px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${
-                        commandTab === tab ? "text-[#18181B]" : "text-[#A1A1AA]"
-                      }`}
-                    >
-                      {tab}
-                    </div>
-                  ))}
-                </div>
+                <AnimatedTabs
+                  tabs={commandTabs}
+                  activeTab={commandTab}
+                  onTabChange={setCommandTab}
+                />
               )}
 
               {activeNav === "hunting_tasks" &&
                 (() => {
                   const tabs = ["專案任務", "每週任務", "領款簽收"];
-                  const activeIdx = tabs.indexOf(activeSubTab);
                   return (
-                    <div
-                      className="relative flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
-                      style={{ 
-                        WebkitTapHighlightColor: "transparent",
-                        width: tabs.length === 3 ? "280px" : "200px"
-                      }}
-                    >
-                      {/* Sliding pill indicator */}
-                      <div
-                        className={`absolute top-[3px] bottom-[3px] rounded-[8px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] ${showManual ? "opacity-0" : "opacity-100"}`}
-                        style={{
-                          width: `calc((100% - 6px) / ${tabs.length})`,
-                          left: `calc(3px + (100% - 6px) / ${tabs.length} * ${activeIdx})`,
-                        }}
-                      />
-                      {/* Tab labels */}
-                      {tabs.map((tab) => (
-                        <div
-                          key={tab}
-                          onClick={() => {
-                            setShowManual(false);
-                            setActiveSubTab(tab);
-                          }}
-                          className={`relative z-10 flex-1 min-w-[0] px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap transition-colors duration-300 ${activeSubTab === tab && !showManual ? "text-[#18181B]" : "text-[#A1A1AA]"}`}
-                        >
-                          {tab}
-                        </div>
-                      ))}
-                    </div>
+                    <AnimatedTabs
+                      tabs={tabs}
+                      activeTab={activeSubTab}
+                      onTabChange={setActiveSubTab}
+                      showManual={showManual}
+                      onManualChange={setShowManual}
+                    />
                   );
                 })()}
             </div>
