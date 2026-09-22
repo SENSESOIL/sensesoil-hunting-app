@@ -1229,7 +1229,7 @@ export default function HuntingManagementPage() {
         </div>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
+        <div className="flex-1 overflow-y-auto scrollbar-hide overflow-x-hidden flex flex-col">
           {/* Navigation */}
           <nav className="pt-4 flex flex-col gap-0.5 px-4 pb-4 relative w-full">
             {navItems.map((item) => {
@@ -1606,7 +1606,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款簽收" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
-                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto">
+                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
                     <div className="flex-1 max-w-3xl mx-auto w-full">
                       <ReceiptForm ref={receiptFormRef} />
                     </div>
@@ -2049,7 +2049,7 @@ export default function HuntingManagementPage() {
           </h1>
           <div className="w-10"></div> {/* Spacer for flex balance */}
         </header>
-        <div className="pt-[60px] h-full overflow-y-auto pb-20 bg-[#FAFAFA]">
+        <div className="pt-[60px] h-full overflow-y-auto scrollbar-hide pb-20 bg-[#FAFAFA]">
           <div className="px-6 py-4 flex flex-col gap-4">
             <ManualCards />
           </div>

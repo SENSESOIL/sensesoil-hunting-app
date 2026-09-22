@@ -184,7 +184,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
               {isProjectDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsProjectDropdownOpen(false)} />
-                  <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded shadow-lg z-50">
+                  <div className="absolute top-full left-0 right-0 mt-1 max-h-48 overflow-y-auto scrollbar-hide bg-white border border-gray-200 rounded shadow-lg z-50">
                     {filteredProjects.length > 0 ? (
                       filteredProjects.map((p: string, i: number) => (
                         <div 

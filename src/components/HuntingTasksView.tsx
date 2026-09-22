@@ -565,17 +565,17 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto px-0 pb-10 custom-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto px-0 pb-10 scrollbar-hide">
           <div className="w-full h-full">
             <div className="flex flex-col md:flex-row gap-6 md:h-[calc(100vh-220px)]">
               {/* Left Card */}
-              <div className="w-full md:w-1/2 flex-1 md:overflow-y-auto hide-scrollbar flex flex-col">
+              <div className="w-full md:w-1/2 flex-1 md:overflow-y-auto scrollbar-hide flex flex-col">
                 {renderCard(currentWeek, false)}
                 <div className="h-10 shrink-0 md:block hidden"></div>
               </div>
               
               {/* Right Card */}
-              <div className="w-full md:w-1/2 flex-1 md:overflow-y-auto hide-scrollbar flex flex-col">
+              <div className="w-full md:w-1/2 flex-1 md:overflow-y-auto scrollbar-hide flex flex-col">
                 {renderCard(nextWeek, true)}
                 <div className="h-10 shrink-0 md:block hidden"></div>
               </div>

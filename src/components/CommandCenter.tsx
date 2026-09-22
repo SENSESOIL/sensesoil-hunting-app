@@ -77,7 +77,7 @@ function SubScreen({
         </h2>
         <div className="w-10 h-10" />
       </div>
-      <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
+      <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide">{children}</div>
     </div>
   );
 }
