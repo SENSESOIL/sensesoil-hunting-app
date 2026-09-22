@@ -731,6 +731,27 @@ export default function HuntingManagementPage() {
   const shareRefDesktop = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
+  // 動態切換 theme-color 給子頁
+  useEffect(() => {
+    if (!showManual) return;
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const originalTheme = metaTheme?.getAttribute("content") ?? null;
+    if (metaTheme) {
+      metaTheme.setAttribute("content", "#FFFFFF");
+      requestAnimationFrame(() => {
+        if (metaTheme.getAttribute("content") === "#FFFFFF") {
+          metaTheme.setAttribute("content", "#ffffff");
+        }
+      });
+    }
+    return () => {
+      if (metaTheme && originalTheme) {
+        metaTheme.setAttribute("content", originalTheme);
+      }
+    };
+  }, [showManual]);
+
+  // --- 手勢處理 (Swipe between tabs) ---
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);

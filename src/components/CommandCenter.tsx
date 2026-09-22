@@ -52,6 +52,25 @@ function SubScreen({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  React.useEffect(() => {
+    if (!open) return;
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const originalTheme = metaTheme?.getAttribute("content") ?? null;
+    if (metaTheme) {
+      metaTheme.setAttribute("content", "#FFFFFF");
+      requestAnimationFrame(() => {
+        if (metaTheme.getAttribute("content") === "#FFFFFF") {
+          metaTheme.setAttribute("content", "#ffffff");
+        }
+      });
+    }
+    return () => {
+      if (metaTheme && originalTheme) {
+        metaTheme.setAttribute("content", originalTheme);
+      }
+    };
+  }, [open]);
+
   return (
     <div
       className={`fixed inset-0 z-[120] bg-[#FAFAFA] flex flex-col transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
