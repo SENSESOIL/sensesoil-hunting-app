@@ -743,6 +743,27 @@ export default function HuntingManagementPage() {
   const lastScrollY = useRef(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showManual, setShowManual] = useState(false);
+
+  // 子頁標題列是純白，狀態列要跟著白，否則會出現灰白斷層。
+  // 主頁維持 #FAFAFA（與它自己的標題列同色），所以這裡要動態切換。
+  //
+  // iOS 讀取 theme-color 變更有延遲，實測「同一個值寫兩次」比只寫一次容易被它注意到，
+  // 所以連續兩個影格各推一次（大小寫互換，屬性值有變才會觸發變更通知）。
+  useEffect(() => {
+    if (!showManual) return;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    const original = meta.getAttribute("content");
+    meta.setAttribute("content", "#FFFFFF");
+    const r1 = requestAnimationFrame(() => {
+      meta.setAttribute("content", "#ffffff");
+      requestAnimationFrame(() => meta.setAttribute("content", "#FFFFFF"));
+    });
+    return () => {
+      cancelAnimationFrame(r1);
+      if (original) meta.setAttribute("content", original);
+    };
+  }, [showManual]);
   const [showOrgChart, setShowOrgChart] = useState(false);
   const receiptFormRef = useRef<ReceiptFormRef>(null);
   // 組織圖 iframe 只在開啟時掛載：避免 6MB 的架構圖頁在指揮中心背景持續輪詢拖慢畫面，
@@ -1359,7 +1380,7 @@ export default function HuntingManagementPage() {
         }`}
       >
         {/* Row 1: Title + Avatar — aligned with sidebar logo row */}
-        <header className="fixed md:sticky top-0 left-0 right-0 md:left-auto md:right-auto w-full z-40 bg-[#FFFFFF]">
+        <header className="fixed md:sticky top-0 left-0 right-0 md:left-auto md:right-auto w-full z-40 bg-[#FAFAFA]">
           <div className="h-[70px] px-6 lg:px-10 flex items-end pb-[14px] justify-between">
             {/* Mobile Logo & Title */}
             <div

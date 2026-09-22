@@ -36,9 +36,7 @@ export default function AnimatedTabs({
 
   return (
     <div
-      // 標題列改成純白後（與狀態列同色、消除斷層），白色的作用中膠囊就沒有對比了，
-      // 所以底座補上淺灰，做成標準的分段控制外觀
-      className="relative inline-flex items-center bg-[#F4F4F5] rounded-[10px] p-[3px] cursor-pointer select-none"
+      className="relative inline-flex items-center bg-transparent rounded-[10px] p-[3px] cursor-pointer select-none"
       style={{ WebkitTapHighlightColor: "transparent" }}
     >
       <div
