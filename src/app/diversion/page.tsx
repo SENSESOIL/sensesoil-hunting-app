@@ -16,7 +16,7 @@ export default function DiversionPage() {
   const HUNTING_MGMT_PERM_KEYS = ["專案情報", "工進排程", "任務追蹤", "狩獵任務", "指揮中心"];
   const hasHuntingMgmtAccess = HUNTING_MGMT_PERM_KEYS.some(key => {
     const role = roles[key];
-    return role === 'admin' || role === 'editor' || role === 'viewer';
+    return role === 'admin' || role === 'editor' || role === 'user' || role === 'viewer';
   });
 
   const handleEnterHuntingMgmt = () => {

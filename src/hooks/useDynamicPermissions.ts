@@ -7,7 +7,7 @@ const fetcher = (url: string) => fetch(url).then((res) => {
 });
 
 export interface DynamicPermissions {
-  roles: { [key: string]: "admin" | "editor" | "viewer" | "none" };
+  roles: { [key: string]: "admin" | "editor" | "user" | "viewer" | "none" };
   hunterName: string;
 }
 

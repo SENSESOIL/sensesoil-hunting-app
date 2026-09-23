@@ -704,7 +704,7 @@ export default function HuntingManagementPage() {
   // 還沒加欄位時退回 admin-only（保守，不會不小心外洩）。
   const canSeeFinance = (() => {
     const r = roles["財務"];
-    if (r) return r === "admin" || r === "editor" || r === "viewer";
+    if (r) return r === "admin" || r === "editor" || r === "user" || r === "viewer";
     return isAdmin;
   })();
 
@@ -716,7 +716,7 @@ export default function HuntingManagementPage() {
     ? allNavItems
     : allNavItems.filter((item) => {
         const role = roles[item.permKey];
-        return role === "admin" || role === "editor" || role === "viewer";
+        return role === "admin" || role === "editor" || role === "user" || role === "viewer";
       });
 
   const defaultNav = navItems.length > 0 ? navItems[0].id : "hunting_tasks";

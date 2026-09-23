@@ -4,7 +4,7 @@ export interface UserPermissions {
   email: string;
   hunterName: string;
   roles: {
-    [key: string]: "admin" | "editor" | "viewer" | "none";
+    [key: string]: "admin" | "editor" | "user" | "viewer" | "none";
   };
 }
 
@@ -83,16 +83,18 @@ export async function checkPermissions(email: string): Promise<UserPermissions |
     return null; // Force revoke access for resigned users
   }
 
-  const roles: { [key: string]: "admin" | "editor" | "viewer" | "none" } = {};
+  const roles: { [key: string]: "admin" | "editor" | "user" | "viewer" | "none" } = {};
   headers.forEach((header, idx) => {
     if (!header || idx === emailIdx || idx === hunterIdx) return; // Skip empty headers, email, or hunterName column
     const rawVal = userRow[idx]?.trim().toLowerCase();
     
-    let role: "admin" | "editor" | "viewer" | "none" = "none";
+    let role: "admin" | "editor" | "user" | "viewer" | "none" = "none";
     if (rawVal === "admin") {
       role = "admin";
     } else if (rawVal === "editor") {
       role = "editor";
+    } else if (rawVal === "user") {
+      role = "user";
     } else if (rawVal === "viewer" || rawVal === "view") {
       role = "viewer";
     }
