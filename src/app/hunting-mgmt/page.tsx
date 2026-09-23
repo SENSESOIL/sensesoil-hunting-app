@@ -717,16 +717,21 @@ export default function HuntingManagementPage() {
   //   editor  /?mode=editor   半開：只能編輯負責人名冊（改名、調順序、增刪）
   //   其餘    /?view=1        唯讀：只有負責人篩選、KR、版本切換
   //
-  // ⚠️ 這些網址參數在架構圖那邊「沒有任何驗證」——知道網址的人直接開就能改。
-  //    APP 這邊只是決定把人導向哪一個，擋不住直接輸入網址的人。
-  //    要真正鎖住得把 Supabase 的寫入 policy 從 anon 收緊成 authenticated。
-  const ORG_CHART_BASE = "https://sensesoil-org-structure.vercel.app/";
-  const orgChartUrl = (() => {
-    const r = roles["組織圖"];
-    if (r === "admin") return ORG_CHART_BASE;
-    if (r === "editor") return `${ORG_CHART_BASE}?mode=editor`;
-    return `${ORG_CHART_BASE}?view=1`;
-  })();
+  // 網址參數本身沒有驗證，真正的把關在 /api/org-chart/save（依 orgRole 決定能寫什麼）。
+  const ORG_CHART_ORIGIN = "https://sensesoil-org-structure.vercel.app";
+  const ORG_CHART_BASE = `${ORG_CHART_ORIGIN}/`;
+  const orgRole =
+    roles["組織圖"] === "admin"
+      ? "admin"
+      : roles["組織圖"] === "editor"
+      ? "editor"
+      : "viewer";
+  const orgChartUrl =
+    orgRole === "admin"
+      ? ORG_CHART_BASE
+      : orgRole === "editor"
+      ? `${ORG_CHART_BASE}?mode=editor`
+      : `${ORG_CHART_BASE}?view=1`;
 
   // 狩獵任務底下的三個面板永遠都在（位置固定），但「看得到哪幾個」要依權限決定。
   // 分頁列與左右滑動手勢共用這一份，否則沒權限的人可以用滑的滑進去。
@@ -818,6 +823,7 @@ export default function HuntingManagementPage() {
   // 同時完全不會有 resize 傳進架構圖裡觸發重新定位。
   const [orgShiftY, setOrgShiftY] = useState(0);
   const orgLockedHRef = useRef<number | null>(null);
+  const orgFrameRef = useRef<HTMLIFrameElement>(null);
 
   // Swipe gesture handler for mobile sub-tab switching with real-time content sliding
   const handleTouchStart = useCallback(
@@ -905,6 +911,57 @@ export default function HuntingManagementPage() {
     },
     [activeNav, isSwiping],
   );
+
+  // ── 與組織架構圖 iframe 的 postMessage 橋接 ────────────────────────────
+  //
+  // 架構圖是跨網域 iframe，父視窗碰不到它的 DOM，所以身分與寫入都走 postMessage。
+  // 握手刻意由 iframe 先發球（ss-auth-request）—— 若改成父視窗主動送，
+  // 很容易在 iframe 的 listener 還沒註冊好時就送出，訊息就這樣掉了。
+  //
+  // 寫入不直接回傳任何憑證：iframe 把要存的內容送過來，由 /api/org-chart/save
+  // 在伺服器端驗證身分後用 service role key 寫入。瀏覽器端不持有任何金鑰。
+  useEffect(() => {
+    if (!showOrgChart) return;
+
+    const post = (msg: Record<string, unknown>) => {
+      orgFrameRef.current?.contentWindow?.postMessage(msg, ORG_CHART_ORIGIN);
+    };
+
+    const onMessage = async (e: MessageEvent) => {
+      if (e.origin !== ORG_CHART_ORIGIN) return; // 只信任架構圖那個來源
+      const msg = e.data as { type?: string; requestId?: string; payload?: unknown };
+      if (!msg || typeof msg.type !== "string") return;
+
+      if (msg.type === "ss-auth-request") {
+        post({ type: "ss-auth", orgRole });
+        return;
+      }
+
+      if (msg.type === "ss-save") {
+        const requestId = msg.requestId;
+        try {
+          const res = await fetch("/api/org-chart/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(msg.payload ?? {}),
+          });
+          const body = await res.json().catch(() => ({}));
+          post({
+            type: "ss-save-result",
+            requestId,
+            ok: res.ok && body?.ok === true,
+            updated_at: body?.updated_at,
+            error: body?.error,
+          });
+        } catch {
+          post({ type: "ss-save-result", requestId, ok: false, error: "連線失敗" });
+        }
+      }
+    };
+
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [showOrgChart, orgRole]);
 
   // 組織圖覆蓋層開關：鎖住底層捲動、鎖定 iframe 高度、延後掛載 iframe。
   useEffect(() => {
@@ -2148,6 +2205,7 @@ export default function HuntingManagementPage() {
             等權限確定後才掛載；這段期間本來就有載入遮罩，使用者不會看到空白。 */}
         {orgFrameMounted && !permsLoading && (
           <iframe
+            ref={orgFrameRef}
             src={orgChartUrl}
             className="flex-1 w-full border-none bg-[#18181B]"
             title="組織架構"
