@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import { readSheet } from "@/lib/google-sheets";
+import { auth } from "@/lib/auth-options";
+
+// 有讀 cookie 判斷登入，明確宣告動態，避免 401 被靜態快取住
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
+    // 這支會回傳公司內部資料，必須先確認是已登入的狩獵者
+    const session = await auth();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year') || '2026';
     const sheetId = '1bYwZNqQLU-jgmJvz3tB_195QB4uZwqWOVPDI-c4_Pm4';

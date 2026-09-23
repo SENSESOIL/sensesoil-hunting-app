@@ -95,7 +95,7 @@ const allNavItems = [
     id: "hunting_tasks",
     label: "狩獵任務",
     icon: "check_circle",
-    permKeys: ["狩獵任務", "每週任務", "領款簽收"],
+    permKeys: ["狩獵任務"],
   },
   {
     id: "command_center",
@@ -702,14 +702,14 @@ export default function HuntingManagementPage() {
 
   // 財務只給管理層。權限表若加了「財務」欄就以該欄為準，
   // 還沒加欄位時退回 admin-only（保守，不會不小心外洩）。
-  const canSeeFinance = (() => {
-    const r = roles["財務"];
-    if (r) return r === "admin" || r === "editor" || r === "user" || r === "viewer";
-    return isAdmin;
-  })();
+  const hasRole = (key: string) =>
+    ["admin", "editor", "user", "viewer"].includes(roles[key]);
+  // 權限表有「營運」「財務」欄就以它為準；表上還沒有該欄時退回 admin-only（保守）
+  const canSeeOperations = roles["營運"] !== undefined ? hasRole("營運") : isAdmin;
+  const canSeeFinance = roles["財務"] !== undefined ? hasRole("財務") : isAdmin;
 
   // 指揮中心的分頁：沒有財務權限就只有兩頁。分頁列與內容面板共用同一份清單。
-  const commandTabs = getCommandTabs(canSeeFinance);
+  const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance });
 
   // Filter nav items based on permissions
   const navItems = isAdmin
@@ -1473,13 +1473,15 @@ export default function HuntingManagementPage() {
               {activeNav === "hunting_tasks" &&
                 (() => {
                   const getSubTabs = () => {
-                    if (isAdmin) return ["專案任務", "每週任務", "領款簽收"];
+                    // 注意：權限表用的是「每周任務」（周），不是「每週任務」（週）。
+                    // 之前這裡查的 key 拼錯，永遠查不到，所以才要靠 fallback 硬塞。
+                    const checkRole = (key: string) =>
+                      ["admin", "editor", "user", "viewer"].includes(roles[key]);
+                    if (isAdmin) return ["專案任務", "每週任務"];
                     const t = [];
-                    const checkRole = (key: string) => roles[key] === "admin" || roles[key] === "editor" || roles[key] === "user" || roles[key] === "viewer";
-                    if (checkRole("狩獵任務")) t.push("專案任務");
-                    if (checkRole("每週任務")) t.push("每週任務");
-                    if (checkRole("領款簽收")) t.push("領款簽收");
-                    return t.length > 0 ? t : ["每週任務"]; // fallback
+                    if (checkRole("專案任務")) t.push("專案任務");
+                    if (checkRole("每周任務")) t.push("每週任務");
+                    return t.length > 0 ? t : ["每週任務"]; // 保底，避免整列空掉
                   };
                   const tabs = getSubTabs();
                   return (
@@ -1663,6 +1665,7 @@ export default function HuntingManagementPage() {
             <CommandCenter
               onOpenOrgChart={() => setShowOrgChart(true)}
               hunterName={hunterName}
+              canSeeOperations={canSeeOperations}
               canSeeFinance={canSeeFinance}
               activeTab={commandTab}
               onTabChange={setCommandTab}

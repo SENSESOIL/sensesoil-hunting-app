@@ -1,10 +1,20 @@
 import { NextResponse } from 'next/server';
 import { readSheet } from "@/lib/google-sheets";
+import { auth } from "@/lib/auth-options";
+
+// 有讀 cookie 判斷登入，明確宣告動態，避免 401 被靜態快取住
+export const dynamic = "force-dynamic";
 
 const SPREADSHEET_ID = '11IiXZbVxFAMzd8wEjU2Z9-W3CqoRa6aW1vQ50dJtrDk';
 
 export async function GET() {
   try {
+    // 這支會回傳公司內部資料，必須先確認是已登入的狩獵者
+    const session = await auth();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // 1. Fetch Hunters from 員工CRM
     const huntersRows = await readSheet(SPREADSHEET_ID, "員工CRM!A:M").catch(() => null);
     const activeHunters: string[] = [];

@@ -13,11 +13,15 @@ export default function DiversionPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const roles: Record<string, string> = permissions?.roles || (session?.user as any)?.roles || {};
 
-  const HUNTING_MGMT_PERM_KEYS = ["專案情報", "工進排程", "任務追蹤", "狩獵任務", "指揮中心", "每週任務", "領款簽收"];
-  const hasHuntingMgmtAccess = HUNTING_MGMT_PERM_KEYS.some(key => {
-    const role = roles[key];
-    return role === 'admin' || role === 'editor' || role === 'user' || role === 'viewer';
-  });
+  // 權限表的父層（狩獵管理／狩獵覺醒）會自動彙總底下所有子項目：
+  // 只要任何一個子項目有權限，父層就是可進入的。所以這裡查父層一個 key 就夠，
+  // 不必再把子項目名稱寫死（寫死的話每新增一個子欄位都要回來改，而且很容易漏）。
+  const roleOf = (key: string) => roles[key];
+  const canEnter = (key: string) => {
+    const r = roleOf(key);
+    return r === "admin" || r === "editor" || r === "user" || r === "viewer";
+  };
+  const hasHuntingMgmtAccess = canEnter("狩獵管理");
 
   const handleEnterHuntingMgmt = () => {
     if (!session) {

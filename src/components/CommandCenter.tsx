@@ -12,14 +12,22 @@ import {
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export const COMMAND_TABS_BASE = ["定位定崗", "營運"] as const;
+export const COMMAND_TAB_OPERATIONS = "營運";
 export const COMMAND_TAB_FINANCE = "財務";
 
-/** 依權限算出實際的分頁清單。page.tsx 的分頁列與這裡的面板都用同一份。 */
-export function getCommandTabs(canSeeFinance: boolean): string[] {
-  return canSeeFinance
-    ? [...COMMAND_TABS_BASE, COMMAND_TAB_FINANCE]
-    : [...COMMAND_TABS_BASE];
+/**
+ * 依權限算出實際的分頁清單。page.tsx 的分頁列與這裡的面板都用同一份，
+ * 避免出現「有標籤但點進去沒內容」或「沒權限卻看得到」的狀況。
+ * 定位定崗是基本頁（能進指揮中心就看得到），營運與財務各自對應權限表的欄位。
+ */
+export function getCommandTabs(opts: {
+  canSeeOperations: boolean;
+  canSeeFinance: boolean;
+}): string[] {
+  const tabs: string[] = ["定位定崗"];
+  if (opts.canSeeOperations) tabs.push(COMMAND_TAB_OPERATIONS);
+  if (opts.canSeeFinance) tabs.push(COMMAND_TAB_FINANCE);
+  return tabs;
 }
 
 interface MyProfile {
@@ -32,7 +40,8 @@ interface CommandCenterProps {
   /** 開啟組織架構圖滿版覆蓋層（覆蓋層本身仍由頁面持有） */
   onOpenOrgChart: () => void;
   hunterName: string;
-  /** 是否看得到財務分頁（管理層） */
+  /** 對應權限表的「營運」「財務」欄，沒權限就不顯示該分頁 */
+  canSeeOperations: boolean;
   canSeeFinance: boolean;
   activeTab: string;
   onTabChange: (tab: string) => void;
@@ -174,6 +183,7 @@ function Card({ children }: { children: React.ReactNode }) {
 export default function CommandCenter({
   onOpenOrgChart,
   hunterName,
+  canSeeOperations,
   canSeeFinance,
   activeTab,
   onTabChange,
@@ -203,7 +213,10 @@ export default function CommandCenter({
   const sops = useMemo(() => getSops(), []);
   const projects = crm?.projects ?? [];
 
-  const tabs = useMemo(() => getCommandTabs(canSeeFinance), [canSeeFinance]);
+  const tabs = useMemo(
+    () => getCommandTabs({ canSeeOperations, canSeeFinance }),
+    [canSeeOperations, canSeeFinance]
+  );
   const activeIdx = Math.max(0, tabs.indexOf(activeTab));
 
   // 只要有任何子頁開著，狀態列就跟著子頁標題列一起變白。
@@ -385,6 +398,7 @@ export default function CommandCenter({
           </section>
 
           {/* ── 分頁 2：營運 ───────────────────────────────── */}
+          {canSeeOperations && (
           <section
             className="shrink-0 px-6 lg:px-10 pt-0 pb-28 md:w-full"
             style={{ width: panelW || `${100 / tabs.length}%` }}
@@ -415,6 +429,7 @@ export default function CommandCenter({
               />
             </Card>
           </section>
+          )}
 
           {/* ── 分頁 3：財務（管理層）───────────────────────── */}
           {canSeeFinance && (
