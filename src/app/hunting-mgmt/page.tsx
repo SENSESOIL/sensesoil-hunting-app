@@ -711,6 +711,15 @@ export default function HuntingManagementPage() {
   // 指揮中心的分頁：沒有財務權限就只有兩頁。分頁列與內容面板共用同一份清單。
   const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance });
 
+  // 組織架構圖有兩種模式（見 Sensesoil_Org_Structure/CLAUDE.md）：
+  //   /         管理者：可編輯內文、版面、架構、名冊
+  //   /?view=1  唯讀：只有負責人篩選、KR、S／M／L 版本切換
+  // 只有「組織圖」欄是 admin 的人給可編輯版，其餘（含 editor）一律唯讀。
+  // 編輯是直接寫進 Supabase 正式資料、沒有草稿或還原機制，所以放行範圍刻意收窄。
+  const ORG_CHART_BASE = "https://sensesoil-org-structure.vercel.app/";
+  const canEditOrgChart = roles["組織圖"] === "admin";
+  const orgChartUrl = canEditOrgChart ? ORG_CHART_BASE : `${ORG_CHART_BASE}?view=1`;
+
   // 狩獵任務底下的三個面板永遠都在（位置固定），但「看得到哪幾個」要依權限決定。
   // 分頁列與左右滑動手勢共用這一份，否則沒權限的人可以用滑的滑進去。
   // 注意：權限表上是「每周任務」（周），APP 顯示用「每週任務」（週）。
@@ -2128,7 +2137,7 @@ export default function HuntingManagementPage() {
             onLoad 後再多撐一下遮罩，讓使用者看到的是已經定位好的畫面 */}
         {orgFrameMounted && (
           <iframe
-            src="https://sensesoil-org-structure.vercel.app/?view=1"
+            src={orgChartUrl}
             className="flex-1 w-full border-none bg-[#18181B]"
             title="組織架構"
             style={orgShiftY ? { transform: `translateY(-${orgShiftY}px)` } : undefined}
