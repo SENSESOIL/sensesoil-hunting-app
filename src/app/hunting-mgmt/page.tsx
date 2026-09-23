@@ -681,7 +681,7 @@ const ManualCards = () => (
 export default function HuntingManagementPage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const { permissions } = useDynamicPermissions();
+  const { permissions, isLoading: permsLoading } = useDynamicPermissions();
   const userName =
     permissions?.hunterName ||
     (session?.user as any)?.hunterName ||
@@ -2135,7 +2135,10 @@ export default function HuntingManagementPage() {
         >
         {/* 架構圖頁在掛載後 300／1000／2000ms 還會各做一次自我重新適應，
             onLoad 後再多撐一下遮罩，讓使用者看到的是已經定位好的畫面 */}
-        {orgFrameMounted && (
+        {/* 權限是非同步載入的。若在它回來之前就掛載 iframe，orgChartUrl 會用空的
+            roles 算出唯讀網址並鎖定 —— 管理者就永遠開到唯讀版。
+            等權限確定後才掛載；這段期間本來就有載入遮罩，使用者不會看到空白。 */}
+        {orgFrameMounted && !permsLoading && (
           <iframe
             src={orgChartUrl}
             className="flex-1 w-full border-none bg-[#18181B]"
