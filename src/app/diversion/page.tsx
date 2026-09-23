@@ -13,7 +13,7 @@ export default function DiversionPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const roles: Record<string, string> = permissions?.roles || (session?.user as any)?.roles || {};
 
-  const HUNTING_MGMT_PERM_KEYS = ["專案情報", "工進排程", "任務追蹤", "狩獵任務", "指揮中心"];
+  const HUNTING_MGMT_PERM_KEYS = ["專案情報", "工進排程", "任務追蹤", "狩獵任務", "指揮中心", "每週任務", "領款簽收"];
   const hasHuntingMgmtAccess = HUNTING_MGMT_PERM_KEYS.some(key => {
     const role = roles[key];
     return role === 'admin' || role === 'editor' || role === 'user' || role === 'viewer';
