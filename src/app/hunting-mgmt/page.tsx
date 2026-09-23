@@ -711,14 +711,22 @@ export default function HuntingManagementPage() {
   // 指揮中心的分頁：沒有財務權限就只有兩頁。分頁列與內容面板共用同一份清單。
   const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance });
 
-  // 組織架構圖有兩種模式（見 Sensesoil_Org_Structure/CLAUDE.md）：
-  //   /         管理者：可編輯內文、版面、架構、名冊
-  //   /?view=1  唯讀：只有負責人篩選、KR、S／M／L 版本切換
-  // 只有「組織圖」欄是 admin 的人給可編輯版，其餘（含 editor）一律唯讀。
-  // 編輯是直接寫進 Supabase 正式資料、沒有草稿或還原機制，所以放行範圍刻意收窄。
+  // 組織架構圖有三種模式，由權限表「組織圖」欄決定要載入哪一個網址：
+  //
+  //   admin   /               全部編輯功能（內文、版面、架構、名冊）
+  //   editor  /?mode=editor   半開：只能編輯負責人名冊（改名、調順序、增刪）
+  //   其餘    /?view=1        唯讀：只有負責人篩選、KR、版本切換
+  //
+  // ⚠️ 這些網址參數在架構圖那邊「沒有任何驗證」——知道網址的人直接開就能改。
+  //    APP 這邊只是決定把人導向哪一個，擋不住直接輸入網址的人。
+  //    要真正鎖住得把 Supabase 的寫入 policy 從 anon 收緊成 authenticated。
   const ORG_CHART_BASE = "https://sensesoil-org-structure.vercel.app/";
-  const canEditOrgChart = roles["組織圖"] === "admin";
-  const orgChartUrl = canEditOrgChart ? ORG_CHART_BASE : `${ORG_CHART_BASE}?view=1`;
+  const orgChartUrl = (() => {
+    const r = roles["組織圖"];
+    if (r === "admin") return ORG_CHART_BASE;
+    if (r === "editor") return `${ORG_CHART_BASE}?mode=editor`;
+    return `${ORG_CHART_BASE}?view=1`;
+  })();
 
   // 狩獵任務底下的三個面板永遠都在（位置固定），但「看得到哪幾個」要依權限決定。
   // 分頁列與左右滑動手勢共用這一份，否則沒權限的人可以用滑的滑進去。
