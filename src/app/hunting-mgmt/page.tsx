@@ -711,6 +711,19 @@ export default function HuntingManagementPage() {
   // 指揮中心的分頁：沒有財務權限就只有兩頁。分頁列與內容面板共用同一份清單。
   const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance });
 
+  // 狩獵任務底下的三個面板永遠都在（位置固定），但「看得到哪幾個」要依權限決定。
+  // 分頁列與左右滑動手勢共用這一份，否則沒權限的人可以用滑的滑進去。
+  // 注意：權限表上是「每周任務」（周），APP 顯示用「每週任務」（週）。
+  const HUNTING_SUB_PANELS = ["專案任務", "每週任務", "領款"];
+  const visibleSubTabs = (() => {
+    if (isAdmin) return [...HUNTING_SUB_PANELS];
+    const t: string[] = [];
+    if (hasRole("專案任務")) t.push("專案任務");
+    if (hasRole("每周任務")) t.push("每週任務");
+    if (hasRole("領款")) t.push("領款");
+    return t.length > 0 ? t : ["每週任務"]; // 保底，避免整列空掉
+  })();
+
   // Filter nav items based on permissions
   const navItems = isAdmin
     ? allNavItems
@@ -724,6 +737,13 @@ export default function HuntingManagementPage() {
   const defaultNav = navItems.length > 0 ? navItems[0].id : "hunting_tasks";
   const [activeNav, setActiveNav] = useState(defaultNav);
   const [activeSubTab, setActiveSubTab] = useState("每週任務");
+  // 權限載入後，若目前分頁不在這個人看得到的清單裡，就切到第一個可見的分頁。
+  // （權限是非同步載入的，初始值不可能一開始就正確）
+  useEffect(() => {
+    if (visibleSubTabs.length && !visibleSubTabs.includes(activeSubTab)) {
+      setActiveSubTab(visibleSubTabs[0]);
+    }
+  }, [visibleSubTabs, activeSubTab]);
   const [commandTab, setCommandTab] = useState("定位定崗");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -829,7 +849,7 @@ export default function HuntingManagementPage() {
 
       if (swipeLocked.current) return;
 
-      const tabs = ["專案任務", "每週任務", "領款簽收"];
+      const tabs = visibleSubTabs;
       const activeIdx = tabs.indexOf(activeSubTab);
       let clampedOffset = dx;
       // If on first tab, can't swipe right further; if on last, can't swipe left further
@@ -838,7 +858,7 @@ export default function HuntingManagementPage() {
 
       setSwipeOffset(clampedOffset);
     },
-    [activeNav, activeSubTab, isSwiping],
+    [activeNav, activeSubTab, isSwiping, visibleSubTabs],
   );
 
   const handleTouchEnd = useCallback(
@@ -854,7 +874,7 @@ export default function HuntingManagementPage() {
       touchStartY.current = null;
 
       if (Math.abs(diff) > 60 && isSwiping) {
-        const tabs = ["專案任務", "每週任務", "領款簽收"];
+        const tabs = visibleSubTabs;
         const activeIdx = tabs.indexOf(activeSubTab);
         if (diff > 0 && activeIdx > 0) {
           setActiveSubTab(tabs[activeIdx - 1]);
@@ -1413,7 +1433,7 @@ export default function HuntingManagementPage() {
               <div className="relative md:hidden" ref={shareRefMobile}>
                 <button
                   onClick={() => {
-                    if (activeNav === "hunting_tasks" && activeSubTab === "領款簽收") {
+                    if (activeNav === "hunting_tasks" && activeSubTab === "領款") {
                       receiptFormRef.current?.shareReceipt();
                     } else {
                       setIsShareOpen(!isShareOpen);
@@ -1472,18 +1492,7 @@ export default function HuntingManagementPage() {
 
               {activeNav === "hunting_tasks" &&
                 (() => {
-                  const getSubTabs = () => {
-                    // 注意：權限表用的是「每周任務」（周），不是「每週任務」（週）。
-                    // 之前這裡查的 key 拼錯，永遠查不到，所以才要靠 fallback 硬塞。
-                    const checkRole = (key: string) =>
-                      ["admin", "editor", "user", "viewer"].includes(roles[key]);
-                    if (isAdmin) return ["專案任務", "每週任務"];
-                    const t = [];
-                    if (checkRole("專案任務")) t.push("專案任務");
-                    if (checkRole("每周任務")) t.push("每週任務");
-                    return t.length > 0 ? t : ["每週任務"]; // 保底，避免整列空掉
-                  };
-                  const tabs = getSubTabs();
+                  const tabs = visibleSubTabs;
                   return (
                     <AnimatedTabs
                       tabs={tabs}
@@ -1515,7 +1524,7 @@ export default function HuntingManagementPage() {
               <div className="relative hidden md:block" ref={shareRefDesktop}>
                 <button
                   onClick={() => {
-                    if (activeNav === "hunting_tasks" && activeSubTab === "領款簽收") {
+                    if (activeNav === "hunting_tasks" && activeSubTab === "領款") {
                       receiptFormRef.current?.shareReceipt();
                     } else {
                       setIsShareOpen(!isShareOpen);
@@ -1581,7 +1590,7 @@ export default function HuntingManagementPage() {
           {/* Mobile Search Bar */}
           {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
               真正需要搜尋的制度／SOP 清單各自內建 */}
-          {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款簽收")) &&
+          {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款")) &&
             activeNav !== "command_center" && (
             <div className="px-6 md:hidden">
               <div className="relative group w-full">
@@ -1606,12 +1615,11 @@ export default function HuntingManagementPage() {
               <div
                 className="flex w-[300%] md:w-full h-full md:!transform-none"
                 style={{
-                  transform:
-                    activeSubTab === "領款簽收"
-                      ? `translateX(calc(-66.666% + ${swipeOffset}px))`
-                      : activeSubTab === "每週任務"
-                      ? `translateX(calc(-33.333% + ${swipeOffset}px))`
-                      : `translateX(${swipeOffset}px)`,
+                  // 三個面板永遠都在，位置固定；用面板順序算位移即可
+                  transform: `translateX(calc(${
+                    (-100 / HUNTING_SUB_PANELS.length) *
+                    Math.max(0, HUNTING_SUB_PANELS.indexOf(activeSubTab))
+                  }% + ${swipeOffset}px))`,
                   transition: isSwiping
                     ? "none"
                     : "transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)",
@@ -1648,9 +1656,9 @@ export default function HuntingManagementPage() {
                     )}
                   </div>
                 </div>
-                {/* Panel 3: 領款簽收 */}
+                {/* Panel 3: 領款 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款簽收" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
                     <div className="flex-1 max-w-3xl mx-auto w-full">
