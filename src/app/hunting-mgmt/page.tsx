@@ -84,24 +84,24 @@ const liveFeed = [
 ];
 
 const allNavItems = [
-  { id: "project_info", label: "專案情報", icon: "home", permKey: "專案情報" },
+  { id: "project_info", label: "專案情報", icon: "home", permKeys: ["專案情報"] },
   {
     id: "schedule",
     label: "工進排程",
     icon: "calendar_today",
-    permKey: "工進排程",
+    permKeys: ["工進排程"],
   },
   {
     id: "hunting_tasks",
     label: "狩獵任務",
     icon: "check_circle",
-    permKey: "狩獵任務",
+    permKeys: ["狩獵任務", "每週任務", "領款簽收"],
   },
   {
     id: "command_center",
     label: "指揮中心",
     icon: "grid_view",
-    permKey: "指揮中心",
+    permKeys: ["指揮中心"],
   },
 ];
 
@@ -715,8 +715,10 @@ export default function HuntingManagementPage() {
   const navItems = isAdmin
     ? allNavItems
     : allNavItems.filter((item) => {
-        const role = roles[item.permKey];
-        return role === "admin" || role === "editor" || role === "user" || role === "viewer";
+        return item.permKeys.some((key) => {
+          const role = roles[key];
+          return role === "admin" || role === "editor" || role === "user" || role === "viewer";
+        });
       });
 
   const defaultNav = navItems.length > 0 ? navItems[0].id : "hunting_tasks";
@@ -1470,7 +1472,16 @@ export default function HuntingManagementPage() {
 
               {activeNav === "hunting_tasks" &&
                 (() => {
-                  const tabs = ["專案任務", "每週任務", "領款簽收"];
+                  const getSubTabs = () => {
+                    if (isAdmin) return ["專案任務", "每週任務", "領款簽收"];
+                    const t = [];
+                    const checkRole = (key: string) => roles[key] === "admin" || roles[key] === "editor" || roles[key] === "user" || roles[key] === "viewer";
+                    if (checkRole("狩獵任務")) t.push("專案任務");
+                    if (checkRole("每週任務")) t.push("每週任務");
+                    if (checkRole("領款簽收")) t.push("領款簽收");
+                    return t.length > 0 ? t : ["每週任務"]; // fallback
+                  };
+                  const tabs = getSubTabs();
                   return (
                     <AnimatedTabs
                       tabs={tabs}
