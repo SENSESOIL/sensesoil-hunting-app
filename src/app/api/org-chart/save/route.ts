@@ -19,8 +19,17 @@ export const dynamic = "force-dynamic";
 
 const DOC_ID = "shirang";
 
-/** editor 只能動名冊與各層級的負責人，其餘一律不准 */
-const EDITOR_ALLOWED_SEGMENTS = new Set(["staff", "leaders"]);
+/** editor 在 data 裡只能動名冊與各層級的負責人（路徑中任一層是這些字就放行） */
+const EDITOR_ALLOWED_DATA_SEGMENTS = new Set(["staff", "leaders"]);
+
+/**
+ * editor 在 layout 裡只能動這三個頂層欄位：
+ *   offS / offN  逐項的 S／M 版本開關（編輯面板裡的 S/M/L 切換）
+ *   version      目前顯示的版本（右上角 S/M/L 鈕，點了就會寫入）
+ * 其餘（sysPaths、sysPos、logo、title 等版面座標）一律不准。
+ * 注意這裡比對的是「第一層」欄位名，不是任意層 —— 版面座標裡若剛好有同名子欄位不該被放行。
+ */
+const EDITOR_ALLOWED_LAYOUT_KEYS = new Set(["offS", "offN", "version"]);
 
 /** payload 上限，避免有人塞超大 JSON 進來 */
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
@@ -127,23 +136,26 @@ export async function POST(request: Request) {
     const rows = (await cur.json()) as Array<{ payload?: { data?: unknown; layout?: unknown } }>;
     const currentPayload = rows?.[0]?.payload ?? {};
 
-    const dataChanges = collectChangedPaths(currentPayload.data ?? {}, incoming.data);
-    const illegal = dataChanges.filter(
-      (p) => !p.some((seg) => EDITOR_ALLOWED_SEGMENTS.has(seg))
-    );
+    const illegalData = collectChangedPaths(
+      currentPayload.data ?? {},
+      incoming.data
+    ).filter((p) => !p.some((seg) => EDITOR_ALLOWED_DATA_SEGMENTS.has(seg)));
 
-    // 版面（layout）完全不開放給 editor
-    const layoutChanged =
-      collectChangedPaths(currentPayload.layout ?? {}, incoming.layout ?? {}).length > 0;
+    const illegalLayout = collectChangedPaths(
+      currentPayload.layout ?? {},
+      incoming.layout ?? {}
+    ).filter((p) => !(p.length > 0 && EDITOR_ALLOWED_LAYOUT_KEYS.has(p[0])));
 
-    if (illegal.length > 0 || layoutChanged) {
+    if (illegalData.length > 0 || illegalLayout.length > 0) {
       return NextResponse.json(
         {
           ok: false,
-          error: "editor 只能修改負責人名冊",
-          // 回報前 5 筆逾越的路徑，方便對照除錯
-          rejectedPaths: illegal.slice(0, 5).map((p) => p.join(".")),
-          layoutChanged,
+          error: "editor 只能修改負責人名冊與版本開關",
+          // 回報前幾筆逾越的路徑，方便對照除錯
+          rejectedPaths: [
+            ...illegalData.map((p) => "data." + p.join(".")),
+            ...illegalLayout.map((p) => "layout." + (p.join(".") || "(root)")),
+          ].slice(0, 5),
         },
         { status: 403 }
       );
