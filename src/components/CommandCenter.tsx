@@ -343,7 +343,10 @@ export default function CommandCenter({
         onTouchCancel={onTouchEnd}
       >
         <div
-          className="flex items-start h-full md:!transform-none"
+          // 桌機不再特例處理：px 位移在兩種尺寸都正常運作。
+          // 先前 md:!transform-none 會把桌機的位移關掉，但面板寬度是 inline style
+          // （優先度高於 md:w-full），三個面板照樣並排 —— 結果就是永遠停在第一頁。
+          className="flex items-start h-full"
           style={{
             width: panelW ? panelW * tabs.length : `${tabs.length * 100}%`,
             transform: `translateX(${-activeIdx * panelW + offset}px)`,
@@ -354,7 +357,7 @@ export default function CommandCenter({
         >
           {/* ── 分頁 1：定位定崗 ───────────────────────────── */}
           <section
-            className="shrink-0 px-6 lg:px-10 pt-0 pb-28 md:w-full"
+            className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
             style={{ width: panelW || `${100 / tabs.length}%` }}
           >
             
@@ -400,7 +403,7 @@ export default function CommandCenter({
           {/* ── 分頁 2：營運 ───────────────────────────────── */}
           {canSeeOperations && (
           <section
-            className="shrink-0 px-6 lg:px-10 pt-0 pb-28 md:w-full"
+            className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
             style={{ width: panelW || `${100 / tabs.length}%` }}
           >
             
@@ -434,7 +437,7 @@ export default function CommandCenter({
           {/* ── 分頁 3：財務（管理層）───────────────────────── */}
           {canSeeFinance && (
             <section
-              className="shrink-0 px-6 lg:px-10 pt-0 pb-28 md:w-full"
+              className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
             style={{ width: panelW || `${100 / tabs.length}%` }}
             >
               
