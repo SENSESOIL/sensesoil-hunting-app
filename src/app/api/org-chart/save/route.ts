@@ -19,8 +19,14 @@ export const dynamic = "force-dynamic";
 
 const DOC_ID = "shirang";
 
-/** editor 在 data 裡只能動名冊與各層級的負責人（路徑中任一層是這些字就放行） */
-const EDITOR_ALLOWED_DATA_SEGMENTS = new Set(["staff", "leaders"]);
+/**
+ * editor 在 data 裡只能動名冊與各層級的負責人（路徑中任一層是這些字就放行）。
+ *
+ * leadersBy 是分階段的負責人覆寫：leaders 當現況（N）用，
+ * leadersBy.S／leadersBy.L 只存跟上一階段不同的人，沒填就往前沿用。
+ * 鍵名刻意跟 layout.version 的實際值一致（N／S／L），不是按鈕上顯示的 S／M／L。
+ */
+const EDITOR_ALLOWED_DATA_SEGMENTS = new Set(["staff", "leaders", "leadersBy"]);
 
 /**
  * editor 在 layout 裡只能動這三個頂層欄位：
@@ -92,6 +98,15 @@ function mergeAllowed(
     const out: Record<string, unknown> = {};
     for (const k of Object.keys(cur)) {
       out[k] = mergeAllowed(cur[k], inc[k], [...path, k], isAllowed, dropped);
+    }
+    // 資料庫還沒有、但白名單允許的欄位也要放行。
+    // 否則新欄位（例如某個節點第一次出現 leadersBy）因為現況裡沒有這個 key
+    // 就不會被走訪，結果被靜默丟棄 —— 燈號還是綠的，使用者以為存好了。
+    // 只認白名單本身，所以 editor 仍然無法憑空塞進任意結構。
+    for (const k of Object.keys(inc)) {
+      if (k in cur) continue;
+      if (isAllowed([...path, k])) out[k] = inc[k];
+      else if (inc[k] !== undefined) dropped.push([...path, k].join("."));
     }
     return out;
   }
