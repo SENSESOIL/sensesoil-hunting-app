@@ -44,42 +44,63 @@ function supaHeaders(key: string) {
 }
 
 /**
- * 逐層比對兩份資料，收集「有差異的路徑」。
- * 刻意以欄位名稱（而非位置）判斷，這樣架構圖日後調整結構也不容易誤判。
+ * 以「現況」為底，只把白名單路徑的值換成 editor 送上來的版本。
+ *
+ * 為什麼不是「比對後整包拒絕」——
+ * 架構圖載入時會跑 sanitize() 正規化資料（補缺欄位、換掉舊的預設文字），
+ * 所以前端手上的 data 從一開始就跟資料庫有差異，使用者根本還沒動任何東西。
+ * 若採「有白名單外的差異就拒絕」，這些正規化雜訊會讓 editor 永遠存不進去，
+ * 而且是死結：要消掉差異得先存一次，但存不進去。
+ *
+ * 改成合併之後，白名單外的欄位一律沿用資料庫的值 —— 正規化雜訊被安靜忽略，
+ * 真正越權的改動同樣寫不進去。安全性不變（仍是白名單），但不會被雜訊卡死。
+ *
+ * 結構以資料庫為準：只走現況既有的 key／陣列長度，
+ * editor 無法新增或刪除區段，也無法改變陣列長度。
  */
-function collectChangedPaths(
-  a: unknown,
-  b: unknown,
-  path: string[] = [],
-  out: string[][] = []
-): string[][] {
-  if (a === b) return out;
+function mergeAllowed(
+  current: unknown,
+  incoming: unknown,
+  path: string[],
+  isAllowed: (path: string[]) => boolean,
+  dropped: string[]
+): unknown {
+  if (isAllowed(path)) {
+    // 整個子樹交給 editor；但對方沒帶這個欄位時不要寫成 undefined
+    return incoming === undefined ? current : incoming;
+  }
 
-  const bothObjects =
-    a !== null &&
-    b !== null &&
-    typeof a === "object" &&
-    typeof b === "object" &&
-    Array.isArray(a) === Array.isArray(b);
+  const bothArrays = Array.isArray(current) && Array.isArray(incoming);
+  const bothPlainObjects =
+    !Array.isArray(current) &&
+    !Array.isArray(incoming) &&
+    current !== null &&
+    incoming !== null &&
+    typeof current === "object" &&
+    typeof incoming === "object";
 
-  if (!bothObjects) {
-    out.push(path);
+  if (bothArrays) {
+    // 長度以現況為準，逐項往下找白名單欄位
+    return (current as unknown[]).map((item, i) =>
+      mergeAllowed(item, (incoming as unknown[])[i], [...path, String(i)], isAllowed, dropped)
+    );
+  }
+
+  if (bothPlainObjects) {
+    const cur = current as Record<string, unknown>;
+    const inc = incoming as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(cur)) {
+      out[k] = mergeAllowed(cur[k], inc[k], [...path, k], isAllowed, dropped);
+    }
     return out;
   }
 
-  const keys = new Set([
-    ...Object.keys(a as object),
-    ...Object.keys(b as object),
-  ]);
-  for (const k of keys) {
-    collectChangedPaths(
-      (a as Record<string, unknown>)[k],
-      (b as Record<string, unknown>)[k],
-      [...path, k],
-      out
-    );
+  // 純值或結構對不上 —— 沿用現況，並記下來方便除錯
+  if (incoming !== undefined && JSON.stringify(current) !== JSON.stringify(incoming)) {
+    dropped.push(path.join(".") || "(root)");
   }
-  return out;
+  return current;
 }
 
 export async function POST(request: Request) {
@@ -121,7 +142,11 @@ export async function POST(request: Request) {
 
   const docUrl = `${url.replace(/\/$/, "")}/rest/v1/org_doc?id=eq.${DOC_ID}`;
 
-  // 4) editor 只能改名冊與負責人 —— 跟現況比對，逾越範圍就擋下
+  // 4) editor 只能改名冊與負責人 —— 以現況為底，只蓋上白名單欄位
+  let outData: unknown = incoming.data;
+  let outLayout: unknown = incoming.layout ?? {};
+  let dropped: string[] = [];
+
   if (orgRole === "editor") {
     const cur = await fetch(`${docUrl}&select=payload`, {
       headers: supaHeaders(key),
@@ -136,29 +161,33 @@ export async function POST(request: Request) {
     const rows = (await cur.json()) as Array<{ payload?: { data?: unknown; layout?: unknown } }>;
     const currentPayload = rows?.[0]?.payload ?? {};
 
-    const illegalData = collectChangedPaths(
+    const droppedData: string[] = [];
+    outData = mergeAllowed(
       currentPayload.data ?? {},
-      incoming.data
-    ).filter((p) => !p.some((seg) => EDITOR_ALLOWED_DATA_SEGMENTS.has(seg)));
+      incoming.data,
+      [],
+      // data：路徑中任一層是 staff／leaders 就放行
+      (p) => p.length > 0 && p.some((seg) => EDITOR_ALLOWED_DATA_SEGMENTS.has(seg)),
+      droppedData
+    );
 
-    const illegalLayout = collectChangedPaths(
+    const droppedLayout: string[] = [];
+    outLayout = mergeAllowed(
       currentPayload.layout ?? {},
-      incoming.layout ?? {}
-    ).filter((p) => !(p.length > 0 && EDITOR_ALLOWED_LAYOUT_KEYS.has(p[0])));
+      incoming.layout ?? {},
+      [],
+      // layout：只認第一層欄位名，避免版面座標裡剛好有同名子欄位被放行
+      (p) => p.length === 1 && EDITOR_ALLOWED_LAYOUT_KEYS.has(p[0]),
+      droppedLayout
+    );
 
-    if (illegalData.length > 0 || illegalLayout.length > 0) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "editor 只能修改負責人名冊與版本開關",
-          // 回報前幾筆逾越的路徑，方便對照除錯
-          rejectedPaths: [
-            ...illegalData.map((p) => "data." + p.join(".")),
-            ...illegalLayout.map((p) => "layout." + (p.join(".") || "(root)")),
-          ].slice(0, 5),
-        },
-        { status: 403 }
-      );
+    dropped = [
+      ...droppedData.map((p) => "data." + p),
+      ...droppedLayout.map((p) => "layout." + p),
+    ];
+    if (dropped.length > 0) {
+      // 多半是架構圖 sanitize() 造成的正規化落差，不是真的越權；記著方便追。
+      console.warn("[org-chart/save] editor 送來但未採用的欄位:", dropped.slice(0, 20));
     }
   }
 
@@ -168,7 +197,7 @@ export async function POST(request: Request) {
     method: "PATCH",
     headers: supaHeaders(key),
     body: JSON.stringify({
-      payload: { v: 2, ts, data: incoming.data, layout: incoming.layout ?? {} },
+      payload: { v: 2, ts, data: outData, layout: outLayout },
       updated_at: ts,
     }),
   });
@@ -184,5 +213,6 @@ export async function POST(request: Request) {
     ok: true,
     updated_at: saved?.[0]?.updated_at ?? ts,
     orgRole,
+    ...(dropped.length > 0 ? { droppedPaths: dropped.slice(0, 20) } : {}),
   });
 }
