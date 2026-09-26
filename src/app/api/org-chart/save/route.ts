@@ -22,11 +22,22 @@ const DOC_ID = "shirang";
 /**
  * editor 在 data 裡只能動名冊與各層級的負責人（路徑中任一層是這些字就放行）。
  *
- * leadersBy 是分階段的負責人覆寫：leaders 當現況（N）用，
- * leadersBy.S／leadersBy.L 只存跟上一階段不同的人，沒填就往前沿用。
- * 鍵名刻意跟 layout.version 的實際值一致（N／S／L），不是按鈕上顯示的 S／M／L。
+ * leadersBy  分階段的負責人覆寫：leaders 當現況（N）用，
+ *            leadersBy.S／leadersBy.L 只存跟上一階段不同的人，沒填就往前沿用。
+ *            鍵名刻意跟 layout.version 的實際值一致（N／S／L），
+ *            不是按鈕上顯示的 S／M／L。
+ *
+ * staffCat   名冊分類：{ 姓名: 'partner' | 'vendor' | 'alliance' }（夥伴／廠商／聯盟）。
+ *            沒標記的就是員工 —— 改回員工是「刪掉那個 key」而不是寫成 'staff'，
+ *            所以整個物件必須整包替換，不能只做欄位層級的合併。
+ *            排序仍共用 data.staff，分類只影響名冊面板的分頁。
  */
-const EDITOR_ALLOWED_DATA_SEGMENTS = new Set(["staff", "leaders", "leadersBy"]);
+const EDITOR_ALLOWED_DATA_SEGMENTS = new Set([
+  "staff",
+  "leaders",
+  "leadersBy",
+  "staffCat",
+]);
 
 /**
  * editor 在 layout 裡只能動這三個頂層欄位：
