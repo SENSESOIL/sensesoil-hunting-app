@@ -30,16 +30,9 @@ export function getCommandTabs(opts: {
   return tabs;
 }
 
-interface MyProfile {
-  hunterName: string;
-  fields: { label: string; value: string }[];
-  note?: string;
-}
-
 interface CommandCenterProps {
   /** 開啟組織架構圖滿版覆蓋層（覆蓋層本身仍由頁面持有） */
   onOpenOrgChart: () => void;
-  hunterName: string;
   /** 對應權限表的「營運」「財務」欄，沒權限就不顯示該分頁 */
   canSeeOperations: boolean;
   canSeeFinance: boolean;
@@ -182,7 +175,6 @@ function Card({ children }: { children: React.ReactNode }) {
 
 export default function CommandCenter({
   onOpenOrgChart,
-  hunterName,
   canSeeOperations,
   canSeeFinance,
   activeTab,
@@ -202,9 +194,6 @@ export default function CommandCenter({
   const [openForm, setOpenForm] = useState<string | null>(null);
   const receiptFormRef = useRef<ReceiptFormRef>(null);
 
-  const { data: profile } = useSWR<MyProfile>("/api/me", fetcher, {
-    revalidateOnFocus: false,
-  });
   const { data: crm } = useSWR<{ projects: string[] }>("/api/crm-data", fetcher, {
     revalidateOnFocus: false,
   });
@@ -240,16 +229,6 @@ export default function CommandCenter({
       if (original) meta.setAttribute("content", original);
     };
   }, [anySubScreenOpen]);
-
-  const displayName = profile?.hunterName || hunterName || "";
-  const roleLine = useMemo(() => {
-    const f = profile?.fields ?? [];
-    const pick = (...keys: string[]) =>
-      f.find((x) => keys.some((k) => x.label.includes(k)))?.value;
-    return [pick("部門", "事業部"), pick("職稱", "職務", "科別")]
-      .filter(Boolean)
-      .join(" · ");
-  }, [profile]);
 
   /* ── 左右滑動切換分頁 ──────────────────────────────────── */
   const startX = useRef<number | null>(null);
@@ -394,7 +373,7 @@ export default function CommandCenter({
                 </div>
                 <div>
                   <p className="text-[15px] font-bold text-[#18181B]">職務說明</p>
-                  <p className="text-[11px] text-[#A1A1AA] mt-0.5">我的職責與資料</p>
+                  <p className="text-[11px] text-[#A1A1AA] mt-0.5">內容待建立</p>
                 </div>
               </button>
             </div>
@@ -476,49 +455,13 @@ export default function CommandCenter({
         title="職務說明"
         onClose={() => setScreen(null)}
       >
-        <div className="px-5 py-5 max-w-3xl mx-auto">
-          <div className="bg-[#18181B] rounded-[18px] p-5 mb-5 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[#F39C12] flex items-center justify-center shrink-0">
-              <span className="text-[20px] font-bold text-[#18181B]">
-                {displayName ? displayName.slice(0, 1) : "—"}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[19px] font-bold text-white truncate">
-                {displayName || "—"}
-              </p>
-              {roleLine && (
-                <p className="text-[12px] text-[#A1A1AA] truncate mt-1">{roleLine}</p>
-              )}
-            </div>
-          </div>
-
-          {profile?.fields?.length ? (
-            <Card>
-              {profile.fields.map((f, i) => (
-                <div
-                  key={f.label}
-                  className={`px-4 py-3.5 flex gap-4 ${
-                    i === profile.fields.length - 1 ? "" : "border-b border-[#F4F4F5]"
-                  }`}
-                >
-                  <span className="text-[13px] text-[#A1A1AA] w-24 shrink-0">
-                    {f.label}
-                  </span>
-                  <span className="text-[14px] text-[#18181B] flex-1 whitespace-pre-wrap break-words">
-                    {f.value}
-                  </span>
-                </div>
-              ))}
-            </Card>
-          ) : (
-            <EmptyState
-              icon="badge"
-              title={profile ? "員工CRM 中找不到你的資料" : "載入中…"}
-              hint={profile?.note}
-            />
-          )}
-        </div>
+        {/* 原本這裡接員工CRM，顯示姓名、部門與個人欄位 —— 那是「員工資料」，
+            不是職務說明。內容待建立前先留空，不放不相干的資料充數。 */}
+        <EmptyState
+          icon="badge"
+          title="職務說明尚未建立"
+          hint="這裡會放各職務的權責範圍與產出目標，內容確定後再接上。"
+        />
       </SubScreen>
 
       <SubScreen

@@ -697,9 +697,6 @@ export default function HuntingManagementPage() {
   // Check if user is admin (any role is admin)
   const isAdmin = Object.values(roles).some((r) => r === "admin");
 
-  const hunterName =
-    permissions?.hunterName || (session?.user as any)?.hunterName || "";
-
   // 財務只給管理層。權限表若加了「財務」欄就以該欄為準，
   // 還沒加欄位時退回 admin-only（保守，不會不小心外洩）。
   const hasRole = (key: string) =>
@@ -1746,7 +1743,6 @@ export default function HuntingManagementPage() {
           ) : activeNav === "command_center" ? (
             <CommandCenter
               onOpenOrgChart={() => setShowOrgChart(true)}
-              hunterName={hunterName}
               canSeeOperations={canSeeOperations}
               canSeeFinance={canSeeFinance}
               activeTab={commandTab}
