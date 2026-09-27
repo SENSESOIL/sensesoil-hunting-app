@@ -41,6 +41,9 @@ export function VersionGuard() {
           // 私密模式等情況讀不到，當作沒重載過
         }
         if (Date.now() - last < RELOAD_COOLDOWN_MS) return;
+        // 使用者正在編輯、還沒儲存（例如專案情報的編輯抽屜開著）→ 先不重載，
+        // 等下一次切回前景再檢查。否則切去 LINE 回來，打到一半的內容就被洗掉了。
+        if (((window as { __ssUnsavedEdits?: number }).__ssUnsavedEdits ?? 0) > 0) return;
         try {
           sessionStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()));
         } catch {

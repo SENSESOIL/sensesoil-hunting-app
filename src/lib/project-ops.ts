@@ -34,7 +34,7 @@ export const ACTIVE_STAGES: Stage[] = ["簽約", "施工中", "驗收"];
 export type Risk = "正常" | "注意" | "異常";
 
 /** 綜合健康度：畫面上的狀態標籤與排序都依這個 */
-export type Health = "逾期" | "落後" | "注意" | "正常" | "未開工" | "完工" | "未建檔";
+export type Health = "逾期" | "落後" | "注意" | "暫停" | "正常" | "未開工" | "完工" | "未建檔";
 
 export interface RegistryProject {
   code: string;
@@ -63,10 +63,14 @@ export interface OpsRecord {
   risk?: Risk;
   note?: string;
   updatedAt?: string;
+  /** 雲端資料庫的版本戳記（樂觀鎖用；試算表與本機試編沒有） */
+  serverUpdatedAt?: string;
 }
 
 /** 「工進排程」分頁的一列 */
 export interface WorkItem {
+  /** 編輯用的識別碼；試算表讀進來的沒有，由 parseWorkRows 依位置補上 */
+  id?: string;
   code: string;
   trade: string;
   crew?: string;
@@ -74,7 +78,14 @@ export interface WorkItem {
   end?: string;
   progress?: number;
   note?: string;
+  /** 手動排序（編輯器存檔時依清單順序寫入）；沒有時依開始日排序 */
+  seq?: number;
+  /** 施工＝要派工；等待＝養護／試水／生產期（不派工）；檢驗、里程碑＝節點 */
+  kind?: WorkKind;
 }
+
+export type WorkKind = "施工" | "等待" | "檢驗" | "里程碑";
+export const WORK_KINDS: WorkKind[] = ["施工", "等待", "檢驗", "里程碑"];
 
 export type WorkStatus = "未開始" | "進行中" | "完成" | "延遲" | "未排定";
 
@@ -104,6 +115,8 @@ export interface ProjectView extends RegistryProject {
   daysLeft?: number;
   /** 需要注意的原因（一句話，給清單顯示） */
   reason?: string;
+  /** 應收裡屬於保固金的部分（保固期內未到期，不算催收對象） */
+  retentionHeld?: number;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -139,6 +152,7 @@ export const WORK_COLUMNS: { key: keyof WorkItem; header: string; aliases?: stri
   { key: "start", header: "開始", aliases: ["開始日"], hint: "" },
   { key: "end", header: "結束", aliases: ["結束日", "完成日"], hint: "" },
   { key: "progress", header: "進度", hint: "0–100" },
+  { key: "kind", header: "類型", hint: "施工／等待／檢驗／里程碑；留白＝施工。等待（養護、試水）不派工" },
   { key: "note", header: "備註", hint: "" },
 ];
 
@@ -148,6 +162,19 @@ export const WORK_TAB = "工進排程";
 /* ══════════════════════════════════════════════════════════
    解析
    ══════════════════════════════════════════════════════════ */
+
+/** 中文輸入法常打出全形數字與符號：１２３．５、１，２００、／ → 轉成半形再解析 */
+export function toHalfWidth(v: unknown): string {
+  return String(v ?? "")
+    .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/．/g, ".")
+    .replace(/，/g, ",")
+    .replace(/／/g, "/")
+    .replace(/－|—|–/g, "-")
+    .replace(/％/g, "%")
+    .replace(/＄/g, "$")
+    .replace(/　/g, " ");
+}
 
 const norm = (s: unknown) =>
   String(s ?? "")
@@ -160,12 +187,14 @@ const norm = (s: unknown) =>
  * 讀不懂就回 undefined —— 寧可留白也不要猜錯日期。
  */
 export function parseDate(v: unknown): string | undefined {
-  const s = String(v ?? "").trim();
+  const s = toHalfWidth(v).trim();
   if (!s) return undefined;
   const m = s.match(/^(\d{2,4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})日?$/);
   if (!m) return undefined;
   let y = +m[1];
-  if (y < 1000) y += 1911; // 民國年
+  // 兩位數年份有歧義（26 是西元 2026 還是民國 26 年？）→ 不猜，當作讀不懂
+  if (m[1].length === 2) return undefined;
+  if (y < 1000) y += 1911; // 民國年（三位數）
   const mo = +m[2], d = +m[3];
   if (mo < 1 || mo > 12 || d < 1 || d > 31) return undefined;
   const dt = new Date(Date.UTC(y, mo - 1, d));
@@ -175,7 +204,7 @@ export function parseDate(v: unknown): string | undefined {
 
 /** 金額：接受 1,850,000、NT$1850000、185萬、-12萬（追減） */
 export function parseMoney(v: unknown): number | undefined {
-  let s = String(v ?? "").replace(/[,\s，]/g, "").replace(/^NT\$|^\$|元$/gi, "").trim();
+  let s = toHalfWidth(v).replace(/[,\s，]/g, "").replace(/^NT\$|^\$|元$/gi, "").trim();
   if (!s || s === "-") return undefined;
   let mul = 1;
   if (s.endsWith("萬")) { mul = 10000; s = s.slice(0, -1); }
@@ -185,7 +214,7 @@ export function parseMoney(v: unknown): number | undefined {
 
 /** 進度：接受 62、62%、0.62（小於 1 且有小數點時視為比例） */
 export function parsePct(v: unknown): number | undefined {
-  const s = String(v ?? "").replace(/\s/g, "").trim();
+  const s = toHalfWidth(v).replace(/\s/g, "").trim();
   if (!s) return undefined;
   const hasPct = s.endsWith("%");
   let n = Number(hasPct ? s.slice(0, -1) : s);
@@ -291,12 +320,14 @@ export function parseWorkRows(rows: string[][]): WorkItem[] {
     const trade = get(r, "trade");
     if (!code || !trade) continue;
     out.push({
+      id: `${code}-row${out.length}`,
       code,
       trade,
       crew: get(r, "crew") || undefined,
       start: parseDate(get(r, "start")),
       end: parseDate(get(r, "end")),
       progress: parsePct(get(r, "progress")),
+      kind: (WORK_KINDS as string[]).includes(get(r, "kind")) ? (get(r, "kind") as WorkKind) : undefined,
       note: get(r, "note") || undefined,
     });
   }
@@ -409,12 +440,13 @@ export const isInternal = (p: RegistryProject) => /^0\d+$/.test(p.code);
 export function workStatus(it: WorkItem, today: string): WorkStatus {
   if ((it.progress ?? 0) >= 100) return "完成";
   if (!it.start || !it.end) return "未排定";
-  if (it.end < today) return "延遲";
+  // 等待期（養護、乾燥）時間到了就算結束，不會「延遲」
+  if (it.end < today) return it.kind === "等待" ? "完成" : "延遲";
   if (it.start > today) return "未開始";
   return "進行中";
 }
 
-const HEALTH_RANK: Record<Health, number> = { 逾期: 0, 落後: 1, 注意: 2, 正常: 3, 未開工: 4, 完工: 5, 未建檔: 6 };
+const HEALTH_RANK: Record<Health, number> = { 逾期: 0, 落後: 1, 注意: 2, 暫停: 3, 正常: 4, 未開工: 5, 完工: 6, 未建檔: 7 };
 export const healthRank = (h: Health) => HEALTH_RANK[h];
 
 /** 落後幾個百分點才算「落後」；介於兩者之間算「注意」 */
@@ -435,7 +467,8 @@ export function deriveProject(
     ops,
     items: items
       .map((it) => ({ ...it, status: workStatus(it, today) }))
-      .sort((a, b) => (a.start || "9").localeCompare(b.start || "9")),
+      // 有手動順序（seq）就照手動順序；否則依開始日
+      .sort((a, b) => (a.seq ?? Infinity) - (b.seq ?? Infinity) || (a.start || "9").localeCompare(b.start || "9")),
     category,
     categoryInferred: !ops?.category,
     siteGroup: siteGroups.get(p.code),
@@ -460,6 +493,8 @@ export function deriveProject(
   }
   if (ops.billed !== undefined) {
     view.receivable = ops.billed - (ops.collected ?? 0);
+    // 保固期內的未收款多半是保固金，到期才能請，不列入催收
+    if (ops.stage === "保固" && view.receivable > 0) view.retentionHeld = view.receivable;
     if (view.contractTotal) view.billedRate = ops.billed / view.contractTotal;
     if (ops.billed > 0) view.collectedRate = (ops.collected ?? 0) / ops.billed;
   }
@@ -467,7 +502,11 @@ export function deriveProject(
   // 健康度：逾期 > 落後 > 注意 > 正常；還沒開工、已完工各自獨立
   if (done) {
     view.health = "完工";
-  } else if (ops.stage === "洽談" || ops.stage === "報價" || ops.stage === "暫停" || (ops.startAt && ops.startAt > today)) {
+  } else if (ops.stage === "暫停") {
+    // 施工到一半暫停：不是「未開工」，也不該在暫停期間被判逾期
+    view.health = "暫停";
+    view.reason = "暫停施工" + (ops.note ? `：${ops.note}` : "");
+  } else if (ops.stage === "洽談" || ops.stage === "報價" || (ops.startAt && ops.startAt > today)) {
     view.health = "未開工";
   } else if (view.daysLeft !== undefined && view.daysLeft < 0 && (progress ?? 0) < 100) {
     // 逾期＝過了預計完工日「而且工程還沒做完」。已完工、等點交的不算逾期。
@@ -529,6 +568,13 @@ export function fmtMoney(n: number | undefined, opts: { unit?: boolean } = {}): 
   return `${sign}${abs.toLocaleString("zh-TW")}${unit ? " 元" : ""}`;
 }
 
+/** 以「萬」為單位的數字（不帶單位）。KPI 旁邊固定寫「萬」時用，不會把幾千元誤當成幾千萬 */
+export function fmtWan(n: number | undefined): string {
+  if (n === undefined || !Number.isFinite(n)) return "—";
+  const w = n / 10000;
+  return w.toLocaleString("zh-TW", { maximumFractionDigits: Math.abs(w) >= 100 ? 0 : 1 });
+}
+
 export function fmtDate(iso: string | undefined, today: string = todayISO()): string {
   if (!iso) return "—";
   const [y, m, d] = iso.split("-").map(Number);
@@ -557,51 +603,72 @@ function seeded(code: string) {
   };
 }
 
-const TEMPLATES: Record<string, { trade: string; crew: string; w: number }[]> = {
+/**
+ * 各類別的標準工序。w＝相對工作量（依比例分配到開工→預計完工之間）。
+ * 等待（養護、試水、生產期）不派工；里程碑、檢驗是節點。
+ * 泥作工藝的兩段養護合計約佔四成工期，是白泥／紅泥牆不龜裂的關鍵，不能省。
+ */
+type TemplateStep = { trade: string; crew?: string; w: number; kind: WorkKind };
+const TEMPLATES: Record<string, TemplateStep[]> = {
   室內裝修: [
-    { trade: "保護工程", crew: "清潔班", w: 2 },
-    { trade: "拆除", crew: "拆除班", w: 4 },
-    { trade: "水電配管", crew: "水電班", w: 6 },
-    { trade: "泥作", crew: "泥作一班", w: 8 },
-    { trade: "木作", crew: "木作班", w: 12 },
-    { trade: "油漆", crew: "油漆班", w: 8 },
-    { trade: "系統櫃", crew: "系統櫃廠", w: 4 },
-    { trade: "燈具安裝", crew: "水電班", w: 2 },
-    { trade: "細部清潔", crew: "清潔班", w: 2 },
-    { trade: "驗收", crew: "工務", w: 1 },
+    { trade: "保護工程", crew: "清潔班", w: 2, kind: "施工" },
+    { trade: "拆除清運", crew: "拆除班", w: 5, kind: "施工" },
+    { trade: "放樣確認", crew: "工務", w: 1, kind: "里程碑" },
+    { trade: "水電配管", crew: "水電班", w: 7, kind: "施工" },
+    { trade: "泥作", crew: "泥作一班", w: 12, kind: "施工" },
+    { trade: "隱蔽工程查驗", crew: "工務", w: 1, kind: "檢驗" },
+    { trade: "木作", crew: "木作班", w: 15, kind: "施工" },
+    { trade: "油漆", crew: "油漆班", w: 10, kind: "施工" },
+    { trade: "地板", crew: "地板廠", w: 3, kind: "施工" },
+    { trade: "系統櫃安裝", crew: "系統櫃廠", w: 3, kind: "施工" },
+    { trade: "燈具面板試車", crew: "水電班", w: 3, kind: "施工" },
+    { trade: "細部清潔", crew: "清潔班", w: 2, kind: "施工" },
+    { trade: "驗收點交", crew: "工務", w: 1, kind: "里程碑" },
   ],
   泥作工藝: [
-    { trade: "保護工程", crew: "泥作二班", w: 1 },
-    { trade: "基底整理", crew: "泥作二班", w: 3 },
-    { trade: "泥作打底", crew: "泥作一班", w: 5 },
-    { trade: "乾燥養護", crew: "自然養護（免派工）", w: 7 },
-    { trade: "面層施作", crew: "泥作一班", w: 6 },
-    { trade: "收邊修飾", crew: "泥作一班", w: 2 },
-    { trade: "清潔", crew: "清潔班", w: 1 },
-    { trade: "驗收", crew: "工務", w: 1 },
+    { trade: "色樣簽認", crew: "工務", w: 2, kind: "里程碑" },
+    { trade: "保護工程", crew: "泥作二班", w: 1, kind: "施工" },
+    { trade: "基底整理", crew: "泥作二班", w: 2, kind: "施工" },
+    { trade: "界面處理", crew: "泥作二班", w: 1, kind: "施工" },
+    { trade: "打底", crew: "泥作一班", w: 3, kind: "施工" },
+    { trade: "打底養護", w: 5, kind: "等待" },
+    { trade: "面層施作", crew: "泥作一班", w: 3, kind: "施工" },
+    { trade: "面層養護", w: 9, kind: "等待" },
+    { trade: "表面封護", crew: "泥作一班", w: 1, kind: "施工" },
+    { trade: "收邊清潔", crew: "清潔班", w: 1, kind: "施工" },
+    { trade: "驗收點交", crew: "工務", w: 1, kind: "里程碑" },
   ],
   拆除: [
-    { trade: "保護工程", crew: "拆除班", w: 1 },
-    { trade: "拆除", crew: "拆除班", w: 5 },
-    { trade: "廢料清運", crew: "清運車隊", w: 2 },
-    { trade: "驗收", crew: "工務", w: 1 },
+    { trade: "保護工程", crew: "拆除班", w: 1, kind: "施工" },
+    { trade: "斷水斷電", crew: "水電班", w: 1, kind: "施工" },
+    { trade: "拆除", crew: "拆除班", w: 5, kind: "施工" },
+    { trade: "廢料清運", crew: "清運車隊", w: 2, kind: "施工" },
+    { trade: "拆後現況檢視", crew: "工務", w: 1, kind: "檢驗" },
+    { trade: "驗收", crew: "工務", w: 1, kind: "里程碑" },
   ],
   防水: [
-    { trade: "基面處理", crew: "防水班", w: 2 },
-    { trade: "防水塗佈", crew: "防水班", w: 4 },
-    { trade: "試水", crew: "觀察期（免派工）", w: 3 },
-    { trade: "保護層", crew: "泥作二班", w: 2 },
-    { trade: "驗收", crew: "工務", w: 1 },
+    { trade: "打除至結構面", crew: "泥作二班", w: 2, kind: "施工" },
+    { trade: "基面處理", crew: "防水班", w: 2, kind: "施工" },
+    { trade: "防水塗佈", crew: "防水班", w: 3, kind: "施工" },
+    { trade: "閉水試驗", w: 3, kind: "等待" },
+    { trade: "保護層", crew: "泥作二班", w: 2, kind: "施工" },
+    { trade: "面層貼磚", crew: "泥作一班", w: 3, kind: "施工" },
+    { trade: "驗收", crew: "工務", w: 1, kind: "里程碑" },
   ],
   修繕維護: [
-    { trade: "現況勘查", crew: "工務", w: 1 },
-    { trade: "修繕施作", crew: "泥作二班", w: 5 },
-    { trade: "清潔", crew: "清潔班", w: 1 },
-    { trade: "驗收", crew: "工務", w: 1 },
+    { trade: "現況勘查", crew: "工務", w: 1, kind: "檢驗" },
+    { trade: "叫料約工班", w: 2, kind: "等待" },
+    { trade: "修繕施作", crew: "泥作二班", w: 3, kind: "施工" },
+    { trade: "乾燥觀察", w: 3, kind: "等待" },
+    { trade: "補色封護", crew: "泥作二班", w: 1, kind: "施工" },
+    { trade: "驗收", crew: "工務", w: 1, kind: "里程碑" },
   ],
   追加減: [
-    { trade: "追加項目施作", crew: "泥作一班", w: 8 },
-    { trade: "驗收", crew: "工務", w: 1 },
+    { trade: "現場確認丈量", crew: "工務", w: 1, kind: "檢驗" },
+    { trade: "業主簽認", crew: "工務", w: 1, kind: "里程碑" },
+    { trade: "叫料", w: 2, kind: "等待" },
+    { trade: "追加項目施作", crew: "泥作一班", w: 6, kind: "施工" },
+    { trade: "驗收", crew: "工務", w: 1, kind: "里程碑" },
   ],
 };
 
@@ -746,30 +813,154 @@ export function generateDemo(registry: RegistryProject[], today: string): { reco
     rec.updatedAt = addDays(today, -between(r, [0, 6]));
     records.push(rec);
 
-    // 工項：依類別範本，按權重分配到 開工→預計完工 之間
+    // 工項：依類別範本，按權重分配到 開工→預計完工 之間（與「套用範本」同一套邏輯）
     if (!rec.startAt || !rec.dueAt) return;
-    const tpl = TEMPLATES[cat];
-    const span = diffDays(rec.startAt, rec.dueAt);
-    const sumW = tpl.reduce((s, t) => s + t.w, 0);
-    let cursor = 0;
-    // span 是「第 0 天到第 span 天」，共 span+1 天；用 span+1 才能讓 100% 蓋滿最後一個工項
-    const doneUntil = (progress / 100) * (span + 1);
-    tpl.forEach((t, k) => {
-      const len = Math.max(1, Math.round((t.w / sumW) * span));
-      // 相鄰工項略為重疊，比較接近現場實際
-      const s = Math.max(0, cursor - (k > 0 && r() < 0.35 ? 1 : 0));
-      const e = Math.min(span, s + len - 1);
-      const itemProg = doneUntil >= e + 1 ? 100 : doneUntil <= s ? 0 : Math.round(((doneUntil - s) / (e - s + 1)) * 100);
-      items.push({
-        code: p.code,
-        trade: t.trade,
-        crew: t.crew === "—" ? undefined : t.crew,
-        start: addDays(rec.startAt!, s),
-        end: addDays(rec.startAt!, e),
-        progress: itemProg,
-      });
-      cursor = e + 1;
-    });
+    items.push(
+      ...spreadTemplate(cat, p.code, rec.startAt, rec.dueAt, { progress, rand: r, idPrefix: `${p.code}-demo` })
+    );
   });
   return { records, items };
+}
+
+/* ══════════════════════════════════════════════════════════
+   編輯：範本、順延、驗證
+   ══════════════════════════════════════════════════════════ */
+
+export function newId(prefix = "wi"): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  if (c?.randomUUID) return `${prefix}-${c.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+  return `${prefix}-${Math.random().toString(36).slice(2, 8)}${Date.now().toString(36).slice(-6)}`;
+}
+
+/** 範本裡的工項名稱（給新增工項時的快速選擇） */
+export function templateTrades(category: string): string[] {
+  return (TEMPLATES[category] || TEMPLATES["室內裝修"]).map((t) => t.trade);
+}
+
+/**
+ * 依工程類別的範本，把工項按權重分配到 開工→預計完工 之間。
+ * progress：整體進度（0–100），用來推算每個工項已完成多少（示範資料用）；
+ * rand：給定時相鄰工項會隨機重疊一天，比較接近現場實際（示範資料用）。
+ */
+export function spreadTemplate(
+  category: string,
+  code: string,
+  startAt: string,
+  dueAt: string,
+  opts: { progress?: number; rand?: () => number; idPrefix?: string } = {}
+): WorkItem[] {
+  const tpl = TEMPLATES[category] || TEMPLATES["室內裝修"];
+  const span = Math.max(0, diffDays(startAt, dueAt));
+  const sumW = tpl.reduce((s, t) => s + t.w, 0);
+  const progress = opts.progress ?? 0;
+  // span 是「第 0 天到第 span 天」，共 span+1 天；用 span+1 才能讓 100% 蓋滿最後一個工項
+  const doneUntil = (progress / 100) * (span + 1);
+  const out: WorkItem[] = [];
+  let cursor = 0;
+  tpl.forEach((t, k) => {
+    const len = Math.max(1, Math.round((t.w / sumW) * (span + 1)));
+    const overlap = opts.rand && k > 0 && opts.rand() < 0.35 ? 1 : 0;
+    const s = Math.min(span, Math.max(0, cursor - overlap));
+    // 最後一個工項一律收在預計完工日
+    const e = k === tpl.length - 1 ? span : Math.min(span, s + len - 1);
+    const itemProg =
+      doneUntil >= e + 1 ? 100 : doneUntil <= s ? 0 : Math.round(((doneUntil - s) / (e - s + 1)) * 100);
+    out.push({
+      id: opts.idPrefix ? `${opts.idPrefix}-${k}` : newId(),
+      code,
+      trade: t.trade,
+      crew: t.crew,
+      kind: t.kind,
+      seq: k,
+      start: addDays(startAt, s),
+      end: addDays(startAt, Math.max(s, e)),
+      progress: itemProg,
+    });
+    cursor = Math.max(s, e) + 1;
+  });
+  return out;
+}
+
+/**
+ * 順延：雨天停工、業主延後進場時使用。從 fromId 這一項起（null＝全部）：
+ *   已完成的工項不動（事情已經發生了）
+ *   進行中的工項只延後結束日（已經開始的那天不會改）
+ *   還沒開始的工項整段往後移
+ * days 可以是負數（提前）。
+ */
+export function shiftItems(items: WorkItem[], fromId: string | null, days: number, today: string = todayISO()): WorkItem[] {
+  if (!days) return items;
+  const from = fromId ? Math.max(0, items.findIndex((i) => i.id === fromId)) : 0;
+  return items.map((it, i) => {
+    if (i < from || (it.progress ?? 0) >= 100 || !it.start || !it.end) return it;
+    const started = it.start <= today || (it.progress ?? 0) > 0;
+    if (started) {
+      const end = addDays(it.end, days);
+      return { ...it, end: end < it.start ? it.start : end };
+    }
+    return { ...it, start: addDays(it.start, days), end: addDays(it.end, days) };
+  });
+}
+
+export interface Issue {
+  field: string;
+  level: "error" | "warn";
+  message: string;
+}
+
+/** 專案資料的檢查。error 擋住儲存；warn 只提醒 */
+export function validateRecord(r: OpsRecord, today: string = todayISO()): Issue[] {
+  const out: Issue[] = [];
+  const e = (field: string, message: string) => out.push({ field, level: "error", message });
+  const w = (field: string, message: string) => out.push({ field, level: "warn", message });
+
+  if (r.startAt && r.dueAt && r.dueAt < r.startAt) e("dueAt", "預計完工早於開工日");
+  if (r.startAt && r.doneAt && r.doneAt < r.startAt) e("doneAt", "實際完工早於開工日");
+  if (r.signedAt && r.startAt && r.signedAt > r.startAt) w("signedAt", "簽約日晚於開工日");
+  if (r.doneAt && r.doneAt > today) e("doneAt", "實際完工日不能在未來");
+  if (r.startAt && r.dueAt && diffDays(r.startAt, r.dueAt) > 730) w("dueAt", "工期超過兩年，請確認日期");
+  for (const k of ["contract", "billed", "collected"] as const) {
+    if (r[k] !== undefined && r[k]! < 0) e(k, "金額不可為負數");
+  }
+  const total = (r.contract ?? 0) + (r.variation ?? 0);
+  if (r.billed !== undefined && r.contract !== undefined && r.billed > total) w("billed", "已請款超過合約合計");
+  if (r.collected !== undefined && r.billed !== undefined && r.collected > r.billed)
+    e("collected", "已收款不能大於已請款（預收款請先記為一期請款）");
+  if (r.contract !== undefined && r.contract > 0 && (r.contract < 10000 || r.contract > 30000000))
+    w("contract", `合約 ${fmtMoney(r.contract)}，請確認單位`);
+  if (r.stage === "施工中" && r.startAt && !r.dueAt) w("dueAt", "施工中的專案建議填預計完工日");
+  if (r.progress !== undefined && (r.progress < 0 || r.progress > 100)) e("progress", "進度需在 0–100 之間");
+  if (r.stage === "施工中" && !r.startAt) w("startAt", "施工中的專案建議填開工日");
+  if ((r.stage === "保固" || r.stage === "結案") && !r.doneAt) w("doneAt", "已完工的專案建議填實際完工日");
+  if (r.stage === "施工中" && (r.progress ?? 0) >= 100) w("stage", "進度已 100%，階段可改為驗收");
+  return out;
+}
+
+export function validateItem(it: WorkItem, rec?: OpsRecord): Issue[] {
+  const out: Issue[] = [];
+  if (!it.trade?.trim()) out.push({ field: "trade", level: "error", message: "工項名稱必填" });
+  else if (it.trade.trim().length > 20) out.push({ field: "trade", level: "warn", message: "工項名稱建議 20 字以內" });
+  if (it.start && it.end && it.end < it.start) out.push({ field: "end", level: "error", message: "結束早於開始" });
+  if (it.progress !== undefined && (it.progress < 0 || it.progress > 100))
+    out.push({ field: "progress", level: "error", message: "進度需在 0–100 之間" });
+  if (rec?.startAt && it.start && it.start < rec.startAt)
+    out.push({ field: "start", level: "warn", message: "早於專案開工日" });
+  if (rec?.dueAt && it.end && it.end > rec.dueAt)
+    out.push({ field: "end", level: "warn", message: "晚於專案預計完工日" });
+  return out;
+}
+
+/** 工項進度加權平均（依天數）→ 可當作整體進度的參考值 */
+export function weightedProgress(items: WorkItem[]): number | undefined {
+  const withDates = items.filter((i) => i.start && i.end);
+  const work = withDates.filter((i) => !i.kind || i.kind === "施工");
+  const dated = work.length ? work : withDates;
+  if (!dated.length) return undefined;
+  let sum = 0, w = 0;
+  for (const i of dated) {
+    const d = diffDays(i.start!, i.end!) + 1;
+    sum += d * (i.progress ?? 0);
+    w += d;
+  }
+  return w ? Math.round(sum / w) : undefined;
 }

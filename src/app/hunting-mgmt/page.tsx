@@ -706,6 +706,15 @@ export default function HuntingManagementPage() {
   const [commandTab, setCommandTab] = useState("定位定崗");
   const [intelTab, setIntelTab] = useState(INTEL_TABS[0]);
   const [scheduleTab, setScheduleTab] = useState(SCHEDULE_TABS[0]);
+  // 專案情報／工進排程切換分頁時回到頂端，不要停在上一頁捲到的位置
+  const tabScrollMounted = useRef(false);
+  useEffect(() => {
+    if (!tabScrollMounted.current) {
+      tabScrollMounted.current = true;
+      return;
+    }
+    window.scrollTo({ top: 0 });
+  }, [intelTab, scheduleTab]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);

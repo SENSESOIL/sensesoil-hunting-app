@@ -41,9 +41,25 @@ export interface ProjectOpsResponse {
       tabs?: Record<string, TabState>;
       /** 試算表要共用給這個帳號（檢視者即可），設定說明頁會顯示 */
       serviceAccount?: string;
+      /** 工程資料的來源 */
+      backend?: "supabase" | "sheet";
+      /** 可以從 APP 寫入（目前只有雲端資料庫可以） */
+      writable?: boolean;
     };
   };
   fetchedAt: string;
+}
+
+/** POST /api/project-ops 的請求 */
+export type SaveRequest =
+  | { op: "saveRecord"; record: OpsRecord; expectedUpdatedAt: string | null }
+  | { op: "saveItems"; code: string; items: WorkItem[] }
+  | { op: "import"; records: OpsRecord[]; items: Record<string, WorkItem[]> };
+
+export interface SaveResponse {
+  ok: boolean;
+  error?: string;
+  updatedAt?: string;
 }
 
 async function readTab(spreadsheetId: string, tab: string): Promise<{ state: TabState; rows: string[][] }> {
