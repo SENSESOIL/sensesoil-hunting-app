@@ -210,6 +210,44 @@ export async function checkPermissions(
   return { email, hunterName, roles };
 }
 
+/**
+ * 權限表上所有（未離職的）人：姓名、email、各欄權限。
+ * 專案／任務用來列出「可以被指派的人」。
+ */
+export async function listPermissionUsers(): Promise<UserPermissions[]> {
+  const rows = await fetchPermissionsFromSheet();
+  if (rows.length <= HEADER_ROW_COUNT) return [];
+  const emailIdx = findEmailColumn(rows);
+  if (emailIdx === -1) return [];
+  const nameIdx = findNameColumn(rows, emailIdx);
+  const resigned = new Set(await getResignedHunters());
+  const maxCols = Math.max(...rows.map((r) => r.length), 0);
+  const paths = buildColumnPaths(rows, emailIdx + 1, maxCols - 1);
+
+  const out: UserPermissions[] = [];
+  const seen = new Set<string>();
+  for (const row of rows.slice(HEADER_ROW_COUNT)) {
+    const email = (row?.[emailIdx] ?? "").toString().trim().toLowerCase();
+    const hunterName = (row?.[nameIdx] ?? "").toString().trim();
+    if (!email.includes("@") || seen.has(email)) continue;
+    if (hunterName && resigned.has(hunterName)) continue;
+    seen.add(email);
+    const roles: { [key: string]: Role } = {};
+    for (let c = emailIdx + 1; c < maxCols; c++) {
+      const path = paths[c] ?? [];
+      const role = parseRole(row[c]);
+      for (const label of path) {
+        const k = label.trim().toLowerCase();
+        if (!k) continue;
+        if (ROLE_RANK[role] > ROLE_RANK[roles[k] ?? "none"]) roles[k] = role;
+        else if (!(k in roles)) roles[k] = roles[k] ?? "none";
+      }
+    }
+    out.push({ email, hunterName, roles });
+  }
+  return out;
+}
+
 let cachedResignedHunters: { data: string[]; timestamp: number } | null = null;
 
 export async function getResignedHunters(): Promise<string[]> {

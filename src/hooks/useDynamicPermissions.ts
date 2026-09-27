@@ -15,7 +15,10 @@ export function useDynamicPermissions() {
   const { data: session, status } = useSession();
   
   const { data, error, isLoading } = useSWR<DynamicPermissions>(
-    status === "authenticated" ? "/api/auth/permissions" : null,
+    // 開發環境沒登入也去問（伺服器端可用 PM_DEV_USER 模擬身分）
+    status === "authenticated" || (process.env.NODE_ENV === "development" && status === "unauthenticated")
+      ? "/api/auth/permissions"
+      : null,
     fetcher,
     {
       revalidateOnFocus: true,

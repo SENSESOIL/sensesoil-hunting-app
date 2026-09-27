@@ -12,17 +12,18 @@ import CommandCenter, { getCommandTabs } from "@/components/CommandCenter";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 import VersionGuard from "@/components/VersionGuard";
 import AnimatedTabs from "@/components/AnimatedTabs";
-import ProjectIntel, { INTEL_TABS } from "@/components/pm/ProjectIntel";
-import ScheduleBoard, { SCHEDULE_TABS } from "@/components/pm/ScheduleBoard";
+import ProjectsPage, { PROJECT_TABS } from "@/components/pm/ProjectsPage";
+import TasksPage, { TASK_TABS_MANAGER, TASK_TABS_MEMBER } from "@/components/pm/TasksPage";
+import { NotificationBell } from "@/components/pm/Notifications";
+import { PhotoUpload } from "@/components/pm/PhotoUpload";
+import { ToastHost } from "@/components/pm/Sheet";
+import { disablePush, refreshPush } from "@/components/pm/push-client";
+import { isManagerRoles } from "@/lib/pm/model";
 
 const allNavItems = [
-  { id: "project_info", label: "專案情報", icon: "home", permKeys: ["專案情報"] },
-  {
-    id: "schedule",
-    label: "工進排程",
-    icon: "calendar_today",
-    permKeys: ["工進排程"],
-  },
+  { id: "project_info", label: "專案", icon: "home", permKeys: ["專案情報"] },
+  // 任務：每個人都有（看指派給自己的）；管理者另外看得到全部與工作量
+  { id: "tasks", label: "任務", icon: "checklist", permKeys: [] as string[] },
   {
     id: "hunting_tasks",
     label: "狩獵任務",
@@ -38,11 +39,12 @@ const allNavItems = [
 ];
 
 /**
- * 目前只開放給 admin 的主頁。
- * 要開放給其他人時，把 id 從這裡拿掉即可 —— 權限表「專案情報」「工進排程」欄就會生效。
- * （API /api/project-ops 另有 admin 檢查，要一併放寬）
+ * 只給「可以派工的人」的主頁：權限表任一欄是 Admin，或「專案情報／工進排程／任務追蹤」是 Editor。
+ * （規則在 src/lib/pm/model.ts 的 isManagerRoles；API 也用同一套）
  */
-const ADMIN_ONLY_NAV = new Set(["project_info", "schedule"]);
+const MANAGER_ONLY_NAV = new Set(["project_info"]);
+/** 在權限表上的人都看得到 */
+const EVERYONE_NAV = new Set(["tasks"]);
 
 const HUNTING_MGMT_PERM_KEYS = [
   "專案情報",
@@ -683,10 +685,13 @@ export default function HuntingManagementPage() {
   })();
 
   // Filter nav items based on permissions
+  const isPmManager = isManagerRoles(roles);
+  const inPermissionSheet = !!permissions?.hunterName || Object.keys(roles).length > 0;
   const navItems = isAdmin
     ? allNavItems
     : allNavItems.filter((item) => {
-        if (ADMIN_ONLY_NAV.has(item.id)) return false;
+        if (MANAGER_ONLY_NAV.has(item.id)) return isPmManager;
+        if (EVERYONE_NAV.has(item.id)) return inPermissionSheet;
         return item.permKeys.some((key) => {
           const role = roles[key];
           return role === "admin" || role === "editor" || role === "user" || role === "viewer";
@@ -704,9 +709,40 @@ export default function HuntingManagementPage() {
     }
   }, [visibleSubTabs, activeSubTab]);
   const [commandTab, setCommandTab] = useState("定位定崗");
-  const [intelTab, setIntelTab] = useState(INTEL_TABS[0]);
-  const [scheduleTab, setScheduleTab] = useState(SCHEDULE_TABS[0]);
-  // 專案情報／工進排程切換分頁時回到頂端，不要停在上一頁捲到的位置
+  const [intelTab, setIntelTab] = useState(PROJECT_TABS[0]);
+  const TASK_TABS = isPmManager ? TASK_TABS_MANAGER : TASK_TABS_MEMBER;
+  const [scheduleTab, setScheduleTab] = useState(TASK_TABS_MANAGER[0]);
+  // 從通知點進來：要打開的任務
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const openTask = useCallback((id: string) => {
+    setActiveNav("tasks");
+    setOpenTaskId(id);
+  }, []);
+  const clearOpenTask = useCallback(() => setOpenTaskId(null), []);
+  // 網址帶 ?task=… 或 ?tab=tasks（推播通知點進來）
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const t = sp.get("task");
+    if (t) openTask(t);
+    else if (sp.get("tab") === "tasks") setActiveNav("tasks");
+    if (t || sp.get("tab")) window.history.replaceState(null, "", window.location.pathname);
+    // APP 開著時點推播：Service Worker 會傳訊息過來
+    const onMsg = (e: MessageEvent) => {
+      if (e.data?.type !== "pm-open") return;
+      const u = new URL(e.data.url, window.location.origin);
+      const id = u.searchParams.get("task");
+      if (id) openTask(id);
+      else setActiveNav("tasks");
+    };
+    navigator.serviceWorker?.addEventListener("message", onMsg);
+    return () => navigator.serviceWorker?.removeEventListener("message", onMsg);
+  }, [openTask]);
+  // 已允許通知的裝置：把推播訂閱綁到目前登入的人
+  useEffect(() => {
+    if (inPermissionSheet) refreshPush();
+  }, [inPermissionSheet]);
+  // 專案／任務切換分頁時回到頂端，不要停在上一頁捲到的位置
   const tabScrollMounted = useRef(false);
   useEffect(() => {
     if (!tabScrollMounted.current) {
@@ -1392,7 +1428,11 @@ export default function HuntingManagementPage() {
                   個人設定
                 </button>
                 <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={async () => {
+                    // 登出前先取消這支手機的推播，才不會收到下一個人的任務通知
+                    await disablePush().catch(() => {});
+                    signOut({ callbackUrl: "/" });
+                  }}
                   className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors outline-none focus-visible:bg-red-50"
                 >
                   <span
@@ -1473,14 +1513,8 @@ export default function HuntingManagementPage() {
                 </button>
               </div>
 
-              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F4F4F5] transition-all text-[#71717A] hover:text-[#18181B] relative outline-none">
-                <span
-                  className="material-symbols-outlined text-[20px]"
-                  style={{ fontVariationSettings: "'wght' 200" }}
-                >
-                  notifications_none
-                </span>
-              </button>
+              {/* 通知：任務指派、改期、完成、收到 */}
+              <NotificationBell onOpenTask={openTask} />
 
               {/* Mobile Avatar */}
               <div className="relative md:hidden">
@@ -1512,10 +1546,10 @@ export default function HuntingManagementPage() {
                 />
               )}
               {activeNav === "project_info" && (
-                <AnimatedTabs tabs={INTEL_TABS} activeTab={intelTab} onTabChange={setIntelTab} />
+                <AnimatedTabs tabs={PROJECT_TABS} activeTab={intelTab} onTabChange={setIntelTab} />
               )}
-              {activeNav === "schedule" && (
-                <AnimatedTabs tabs={SCHEDULE_TABS} activeTab={scheduleTab} onTabChange={setScheduleTab} />
+              {activeNav === "tasks" && (
+                <AnimatedTabs tabs={TASK_TABS} activeTab={TASK_TABS.includes(scheduleTab) ? scheduleTab : TASK_TABS[0]} onTabChange={setScheduleTab} />
               )}
 
               {activeNav === "hunting_tasks" &&
@@ -1621,7 +1655,7 @@ export default function HuntingManagementPage() {
           {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款")) &&
             activeNav !== "command_center" &&
             activeNav !== "project_info" &&
-            activeNav !== "schedule" && (
+            activeNav !== "tasks" && (
             <div className="px-6 md:hidden">
               <div className="relative group w-full">
                 <span
@@ -1707,10 +1741,15 @@ export default function HuntingManagementPage() {
               activeTab={commandTab}
               onTabChange={setCommandTab}
             />
-          ) : activeNav === "schedule" ? (
-            <ScheduleBoard activeTab={scheduleTab} />
+          ) : activeNav === "tasks" ? (
+            <TasksPage
+              activeTab={TASK_TABS.includes(scheduleTab) ? scheduleTab : TASK_TABS[0]}
+              onTabChange={setScheduleTab}
+              openTaskId={openTaskId}
+              onOpenedTask={clearOpenTask}
+            />
           ) : (
-            <ProjectIntel activeTab={intelTab} onTabChange={setIntelTab} />
+            <ProjectsPage activeTab={intelTab} />
           )}
         </div>
       </main>
@@ -1749,8 +1788,12 @@ export default function HuntingManagementPage() {
 
           <div className="w-[1px] h-6 bg-[#E4E4E7]/60 mx-1"></div>
 
-          {/* Integrated Add Button */}
-          <button className="w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5] focus:text-[#18181B] shrink-0">
+          {/* 上傳工程照（拍照 → 專案雲端資料夾的「工程照」） */}
+          <button
+            onClick={() => setPhotoOpen(true)}
+            aria-label="上傳工程照"
+            className="w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5] focus:text-[#18181B] shrink-0"
+          >
             <span
               className="material-symbols-outlined text-[22px]"
               style={{ fontVariationSettings: "'wght' 200" }}
@@ -1760,6 +1803,10 @@ export default function HuntingManagementPage() {
           </button>
         </div>
       </div>
+
+      {/* 上傳工程照（底部「＋」）與提示訊息 */}
+      {inPermissionSheet && <PhotoUpload open={photoOpen} onClose={() => setPhotoOpen(false)} />}
+      <ToastHost />
 
       {/* Mobile FAB padding spacer */}
       <div className="h-[84px] md:hidden shrink-0"></div>
@@ -1872,7 +1919,11 @@ export default function HuntingManagementPage() {
                 </button>
 
                 <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={async () => {
+                    // 登出前先取消這支手機的推播，才不會收到下一個人的任務通知
+                    await disablePush().catch(() => {});
+                    signOut({ callbackUrl: "/" });
+                  }}
                   className="w-full flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl py-4 transition-colors font-medium text-base outline-none"
                 >
                   <span

@@ -7,7 +7,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const session = await auth();
-    const email = session?.user?.email;
+    // 開發環境可用 PM_DEV_USER 模擬登入身分（next dev 限定；正式環境不會走到）
+    const email =
+      session?.user?.email ||
+      (process.env.NODE_ENV === "development" ? process.env.PM_DEV_USER : undefined);
 
     if (!email) {
       return NextResponse.json(

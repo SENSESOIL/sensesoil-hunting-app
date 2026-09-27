@@ -31,3 +31,6 @@ sensesoil-*.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 本機開發用的假資料庫（scripts/pm-dev-db.mjs）
+/.pm-dev-db/
