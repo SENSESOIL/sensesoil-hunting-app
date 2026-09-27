@@ -14,13 +14,19 @@ interface RouteParams {
   params: Promise<{ sheetKey: string }>;
 }
 
+/** 標記為 private 的試算表（例如狩獵管理的工程金額）不從這支通用路由對外 */
+const isPrivate = (key: string) => {
+  const c = SHEET_REGISTRY[key as SheetKey] as { private?: boolean } | undefined;
+  return !!c?.private;
+};
+
 // ─── GET: Read sheet data (guests allowed) ────────────────────────────────
 
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   const { sheetKey } = await params;
 
   const config = SHEET_REGISTRY[sheetKey as SheetKey];
-  if (!config) {
+  if (!config || isPrivate(sheetKey)) {
     return NextResponse.json({ error: `Sheet "${sheetKey}" not found` }, { status: 404 });
   }
   if (!config.spreadsheetId) {
@@ -72,6 +78,9 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
   const { sheetKey } = await params;
+  if (isPrivate(sheetKey)) {
+    return NextResponse.json({ error: `Sheet "${sheetKey}" not found` }, { status: 404 });
+  }
 
   // Auth guard — only Google-logged-in users can write
   const session = await auth();
@@ -114,6 +123,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   const { sheetKey } = await params;
+  if (isPrivate(sheetKey)) {
+    return NextResponse.json({ error: `Sheet "${sheetKey}" not found` }, { status: 404 });
+  }
 
   // Auth guard — only Google-logged-in users can write
   const session = await auth();

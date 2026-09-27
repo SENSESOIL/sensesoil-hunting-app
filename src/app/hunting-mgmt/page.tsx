@@ -12,76 +12,8 @@ import CommandCenter, { getCommandTabs } from "@/components/CommandCenter";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 import VersionGuard from "@/components/VersionGuard";
 import AnimatedTabs from "@/components/AnimatedTabs";
-
-// Mock Data
-const projects = [
-  {
-    id: "P001",
-    name: "徐公館裝修工程",
-    location: "信義區, 台北",
-    status: "進行中",
-    progress: 65,
-    crew: 34,
-    milestone: "木作天花板封板",
-    tag: "On Track",
-    tagColor: "border border-[#E4E4E7] text-[#A1A1AA] bg-[#FAFAFA]",
-  },
-  {
-    id: "P002",
-    name: "微熱山丘裝修工程",
-    location: "南投市, 南投",
-    status: "待處理",
-    progress: 10,
-    crew: 12,
-    milestone: "現場尺寸丈量",
-    tag: "Pending",
-    tagColor: "border border-[#E4E4E7] text-[#A1A1AA] bg-[#FAFAFA]",
-  },
-  {
-    id: "P003",
-    name: "A區防水補漏專案",
-    location: "內湖區, 台北",
-    status: "異常",
-    progress: 45,
-    crew: 8,
-    milestone: "防水漆塗佈",
-    tag: "Issue",
-    tagColor: "border border-[#E4E4E7] text-[#A1A1AA] bg-[#FAFAFA]",
-  },
-];
-
-const liveFeed = [
-  {
-    id: 1,
-    name: "德霖",
-    action: "完成「地下室鋼筋勘驗」",
-    time: "15 分鐘前",
-    project: "PRJ-A",
-    icon: "done",
-    iconColor: "text-[#F39C12]",
-    iconBg: "bg-white border border-[#F39C12]/30 shadow-sm",
-  },
-  {
-    id: 2,
-    name: "阿剛",
-    action: "新增 4 項任務至 PRJ-B",
-    time: "1 小時前",
-    project: "已指派",
-    icon: "add",
-    iconColor: "text-[#18181B]",
-    iconBg: "bg-white border border-[#E4E4E7] shadow-sm",
-  },
-  {
-    id: 3,
-    name: "阿威",
-    action: "晉升為 A 級獵人",
-    time: "3 小時前",
-    project: "戰力 +320",
-    icon: "north",
-    iconColor: "text-[#F39C12]",
-    iconBg: "bg-white border border-[#F39C12]/30 shadow-sm",
-  },
-];
+import ProjectIntel, { INTEL_TABS } from "@/components/pm/ProjectIntel";
+import ScheduleBoard, { SCHEDULE_TABS } from "@/components/pm/ScheduleBoard";
 
 const allNavItems = [
   { id: "project_info", label: "專案情報", icon: "home", permKeys: ["專案情報"] },
@@ -104,6 +36,13 @@ const allNavItems = [
     permKeys: ["指揮中心"],
   },
 ];
+
+/**
+ * 目前只開放給 admin 的主頁。
+ * 要開放給其他人時，把 id 從這裡拿掉即可 —— 權限表「專案情報」「工進排程」欄就會生效。
+ * （API /api/project-ops 另有 admin 檢查，要一併放寬）
+ */
+const ADMIN_ONLY_NAV = new Set(["project_info", "schedule"]);
 
 const HUNTING_MGMT_PERM_KEYS = [
   "專案情報",
@@ -747,6 +686,7 @@ export default function HuntingManagementPage() {
   const navItems = isAdmin
     ? allNavItems
     : allNavItems.filter((item) => {
+        if (ADMIN_ONLY_NAV.has(item.id)) return false;
         return item.permKeys.some((key) => {
           const role = roles[key];
           return role === "admin" || role === "editor" || role === "user" || role === "viewer";
@@ -764,6 +704,8 @@ export default function HuntingManagementPage() {
     }
   }, [visibleSubTabs, activeSubTab]);
   const [commandTab, setCommandTab] = useState("定位定崗");
+  const [intelTab, setIntelTab] = useState(INTEL_TABS[0]);
+  const [scheduleTab, setScheduleTab] = useState(SCHEDULE_TABS[0]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -1560,6 +1502,12 @@ export default function HuntingManagementPage() {
                   onTabChange={setCommandTab}
                 />
               )}
+              {activeNav === "project_info" && (
+                <AnimatedTabs tabs={INTEL_TABS} activeTab={intelTab} onTabChange={setIntelTab} />
+              )}
+              {activeNav === "schedule" && (
+                <AnimatedTabs tabs={SCHEDULE_TABS} activeTab={scheduleTab} onTabChange={setScheduleTab} />
+              )}
 
               {activeNav === "hunting_tasks" &&
                 (() => {
@@ -1662,7 +1610,9 @@ export default function HuntingManagementPage() {
           {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
               真正需要搜尋的制度／SOP 清單各自內建 */}
           {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款")) &&
-            activeNav !== "command_center" && (
+            activeNav !== "command_center" &&
+            activeNav !== "project_info" &&
+            activeNav !== "schedule" && (
             <div className="px-6 md:hidden">
               <div className="relative group w-full">
                 <span
@@ -1748,233 +1698,10 @@ export default function HuntingManagementPage() {
               activeTab={commandTab}
               onTabChange={setCommandTab}
             />
+          ) : activeNav === "schedule" ? (
+            <ScheduleBoard activeTab={scheduleTab} />
           ) : (
-            /* ============ Default Dashboard View ============ */
-            <>
-              {/* 4-Column Grid */}
-              <div className="px-6 lg:px-10 grid grid-cols-1 lg:grid-cols-4 gap-2">
-                {/* Col 1: Portfolio Rank -> Task Status */}
-                <div className="lg:col-span-1 flex flex-col gap-4">
-                  <div className="bg-transparent md:bg-[#FFFFFF] p-0 md:p-5 rounded-[24px] border-none md:border-solid md:border-[#E4E4E7] shadow-none md:shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full">
-                    <div className="hidden md:block mb-5">
-                      <h3 className="font-semibold text-[17px] text-[#18181B]">
-                        任務狀態
-                      </h3>
-                    </div>
-
-                    <div className="hidden md:flex flex-col items-center justify-center mb-6 mt-2">
-                      <span className="text-[72px] leading-none font-light tracking-tighter text-[#1d1d1f]">
-                        5
-                      </span>
-                      <span className="text-gray-400 text-sm font-bold tracking-widest mt-2">
-                        今天
-                      </span>
-                    </div>
-
-                    {/* Desktop View: List */}
-                    <div className="hidden md:flex flex-col gap-3.5 pt-4 border-t border-[#E4E4E7]/60">
-                      {[
-                        { label: "待辦", count: 12, icon: "note" },
-                        { label: "緊急", count: 2, icon: "error" },
-                        { label: "重要", count: 8, icon: "bookmark" },
-                        { label: "超時", count: 1, icon: "schedule" },
-                        { label: "完成", count: 24, icon: "check_circle" },
-                      ].map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="flex justify-between items-center group cursor-pointer"
-                        >
-                          <div className="flex items-center gap-2.5 text-[#A1A1AA] group-hover:text-[#F39C12] transition-colors">
-                            <span
-                              className="material-symbols-outlined text-[16px]"
-                              style={{ fontVariationSettings: "'wght' 200" }}
-                            >
-                              {item.icon}
-                            </span>
-                            <span className="text-[12px] font-medium uppercase tracking-widest">
-                              {item.label}
-                            </span>
-                          </div>
-                          <span className="text-[14px] font-bold text-[#18181B] group-hover:text-[#F39C12] transition-colors">
-                            {item.count}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Mobile View: Minimalist Grid */}
-                    <div className="grid md:hidden grid-cols-2 gap-2">
-                      {[
-                        { label: "今天", count: 5, icon: "calendar_today" },
-                        { label: "待辦", count: 12, icon: "note" },
-                        { label: "緊急", count: 2, icon: "error" },
-                        { label: "重要", count: 8, icon: "bookmark" },
-                        { label: "超時", count: 1, icon: "schedule" },
-                        { label: "完成", count: 24, icon: "check_circle" },
-                      ].map((item, idx) => (
-                        <button
-                          key={idx}
-                          className="relative overflow-hidden rounded-[14px] p-3 shadow-[0_2px_8px_rgba(0,0,0,0.02)] border border-[#E4E4E7] flex flex-col justify-between h-[76px] bg-white text-left outline-none hover:border-[#F39C12]/50 transition-colors group"
-                        >
-                          <div className="flex justify-between items-start w-full">
-                            <span
-                              className="material-symbols-outlined text-[20px] text-[#A1A1AA] group-hover:text-[#F39C12] transition-colors"
-                              style={{ fontVariationSettings: "'wght' 200" }}
-                            >
-                              {item.icon}
-                            </span>
-                            <span className="text-[24px] font-bold leading-none text-[#18181B] tracking-tight">
-                              {item.count}
-                            </span>
-                          </div>
-                          <span className="font-semibold text-[10px] text-[#A1A1AA] uppercase tracking-widest mt-1">
-                            {item.label}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Col 2 & 3: Active Projects List */}
-                <div className="lg:col-span-2 flex flex-col gap-2">
-                  {/* Mobile Section Title Outside Panel */}
-                  <div className="md:hidden px-2 pt-5 pb-1">
-                    <h2 className="font-bold text-[24px] text-[#1d1d1f]">
-                      專案列表
-                    </h2>
-                  </div>
-
-                  <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col h-full">
-                    {/* Desktop Section Title Inside Panel */}
-                    <div className="hidden md:block mb-5">
-                      <h3 className="font-semibold text-[17px] text-[#18181B]">
-                        專案列表
-                      </h3>
-                    </div>
-
-                    {/* Table Header */}
-                    <div className="grid grid-cols-12 gap-4 pb-3 border-b border-dashed border-[#E4E4E7] text-[10px] font-semibold text-[#A1A1AA] uppercase tracking-widest">
-                      <div className="col-span-4">專案</div>
-                      <div className="col-span-2 text-center">狀態</div>
-                      <div className="col-span-3">進度</div>
-                      <div className="col-span-3">下一步里程碑</div>
-                    </div>
-
-                    {/* Table Rows */}
-                    <div className="flex flex-col pt-3 gap-0">
-                      {projects.map((p, idx) => (
-                        <div
-                          key={p.id}
-                          className={`grid grid-cols-12 gap-4 items-center group cursor-pointer py-4 ${idx !== projects.length - 1 ? "border-b border-dashed border-[#E4E4E7]" : ""}`}
-                        >
-                          <div className="col-span-4 flex flex-col">
-                            <span className="text-[14px] font-semibold text-[#18181B] group-hover:text-[#F39C12] transition-colors">
-                              {p.name}
-                            </span>
-                            <span className="text-[11px] text-[#A1A1AA] flex items-center gap-1 mt-0.5 uppercase tracking-wide">
-                              <span
-                                className="material-symbols-outlined text-[12px]"
-                                style={{ fontVariationSettings: "'wght' 200" }}
-                              >
-                                pin_drop
-                              </span>
-                              {p.location}
-                            </span>
-                          </div>
-
-                          <div className="col-span-2 flex justify-center">
-                            <span
-                              className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ${p.tagColor}`}
-                            >
-                              {p.tag}
-                            </span>
-                          </div>
-
-                          <div className="col-span-3 flex items-center gap-3">
-                            <div className="w-full bg-[#F4F4F5] rounded-full h-1 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-[#F39C12]"
-                                style={{ width: `${p.progress}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-[10px] font-bold text-[#A1A1AA] w-8">
-                              {p.progress}%
-                            </span>
-                          </div>
-
-                          <div className="col-span-3 flex items-center justify-between">
-                            <span className="text-[12px] text-[#A1A1AA] font-medium truncate">
-                              {p.milestone}
-                            </span>
-                            <div className="flex items-center gap-1 text-[#A1A1AA]">
-                              <span
-                                className="material-symbols-outlined text-[14px]"
-                                style={{ fontVariationSettings: "'wght' 200" }}
-                              >
-                                people
-                              </span>
-                              <span className="text-[11px] font-semibold">
-                                {p.crew}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Col 4: Recent Activity (LIVE) */}
-                <div className="lg:col-span-1 flex flex-col gap-2">
-                  <div className="bg-[#FFFFFF] p-5 rounded-[24px] border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] flex flex-col">
-                    <div className="flex justify-between items-center mb-5">
-                      <h3 className="font-semibold text-[17px] text-[#18181B]">
-                        近期戰報
-                      </h3>
-                      <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase">
-                        Live
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col gap-5">
-                      {liveFeed.map((feed) => (
-                        <div
-                          key={feed.id}
-                          className="flex gap-4 items-start group"
-                        >
-                          <div
-                            className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${feed.iconBg}`}
-                          >
-                            <span
-                              className={`material-symbols-outlined text-[16px] ${feed.iconColor}`}
-                              style={{ fontVariationSettings: "'wght' 200" }}
-                            >
-                              {feed.icon}
-                            </span>
-                          </div>
-                          <div className="flex flex-col pt-0.5">
-                            <p className="text-[13px] text-[#18181B] font-medium leading-tight mb-1">
-                              <span className="font-semibold">{feed.name}</span>{" "}
-                              <span className="text-[#A1A1AA]">
-                                {feed.action}
-                              </span>
-                            </p>
-                            <p className="text-[10px] uppercase tracking-widest text-[#A1A1AA] font-semibold">
-                              {feed.time} · {feed.project}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <button className="mt-6 w-full py-2.5 rounded-full border border-[#E4E4E7] text-[11px] uppercase tracking-widest font-bold text-[#18181B] hover:bg-[#F4F4F5] transition-colors outline-none">
-                      View All
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </>
+            <ProjectIntel activeTab={intelTab} onTabChange={setIntelTab} />
           )}
         </div>
       </main>

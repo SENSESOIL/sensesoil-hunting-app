@@ -13,14 +13,17 @@ export const SHEET_REGISTRY = {
       authenticated: "read-write" as const,
     },
   },
-  // 狩獵管理 (fill SHEET_ID_HUNTING_MGMT in .env.local when ready)
+  // 狩獵管理：專案情報／工進排程的工程資料（合約金額、請款）。
+  // 只經由 /api/project-ops（admin 限定）提供 —— private 讓通用路由一律拒絕，
+  // 否則 GET /api/sheets/hunting-mgmt 不驗登入，設定好試算表後金額就會對外公開。
   "hunting-mgmt": {
     spreadsheetId: process.env.SHEET_ID_HUNTING_MGMT ?? "",
     defaultRange: "A:Z",
     label: "狩獵管理",
+    private: true,
     permissions: {
-      guest: "read" as const,
-      authenticated: "read-write" as const,
+      guest: "none" as const,
+      authenticated: "none" as const,
     },
   },
   // 隱藏任務 (投資激勵)
