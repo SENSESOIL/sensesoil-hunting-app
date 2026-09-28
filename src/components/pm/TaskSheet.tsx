@@ -247,32 +247,16 @@ export function TaskSheet({
           )}
           <div className="px-4 py-3">
             <div className="flex items-center gap-3 mb-2.5">
-              <RowIcon icon="person" color={d.assigneeEmail ? personColor(d.assigneeEmail) : "#A1A1AA"} />
+              {d.assigneeEmail ? (
+                <Avatar name={pm.personBy.get(d.assigneeEmail)?.name} email={d.assigneeEmail} size={32} />
+              ) : (
+                <RowIcon icon="person" color="#A1A1AA" />
+              )}
               <span className="text-[15px] text-[#18181B]">
                 {d.assigneeEmail ? `指派給 ${personLabel(pm, d.assigneeEmail)}` : "未指派"}
               </span>
             </div>
-            {pm.isManager ? (
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-0.5">
-                {pm.people.map((p) => {
-                  const on = d.assigneeEmail === p.email;
-                  return (
-                    <button
-                      key={p.email}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => set("assigneeEmail", on ? undefined : p.email)}
-                      className={`shrink-0 h-11 pl-1.5 pr-3.5 rounded-full flex items-center gap-2 text-[14px] transition-colors ${
-                        on ? "bg-[#18181B] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"
-                      }`}
-                    >
-                      <Avatar name={p.name} email={p.email} size={30} />
-                      {p.email === me ? "我" : p.name}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
+            {pm.isManager ? <AssigneeGrid pm={pm} value={d.assigneeEmail} onChange={(v) => set("assigneeEmail", v)} /> : null}
             {task?.assigneeEmail && task.assigneeEmail !== me && <Receipt task={task} pm={pm} />}
           </div>
         </div>
@@ -407,6 +391,49 @@ export function TaskSheet({
 }
 
 /* ── 小元件 ───────────────────────────────────────────── */
+
+/** 指派：大頭照格子，點一下選人；下方小字是對方手上還有幾件，方便分配 */
+function AssigneeGrid({ pm, value, onChange }: { pm: Pm; value?: string; onChange: (v: string | undefined) => void }) {
+  const load = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of pm.tasks) if (t.status !== "done" && t.assigneeEmail) m.set(t.assigneeEmail, (m.get(t.assigneeEmail) ?? 0) + 1);
+    return m;
+  }, [pm.tasks]);
+  const me = pm.me?.email;
+  return (
+    <div className="grid grid-cols-4 sm:grid-cols-6 gap-y-3 gap-x-1 pt-1" role="radiogroup" aria-label="指派給">
+      {pm.people.map((p) => {
+        const on = value === p.email;
+        const n = load.get(p.email) ?? 0;
+        return (
+          <button
+            key={p.email}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(on ? undefined : p.email)}
+            className="flex flex-col items-center gap-1 min-w-0 active:scale-95 transition-transform"
+          >
+            <span className="relative rounded-full p-[3px] transition-colors" style={{ background: on ? ORANGE : "transparent" }}>
+              <span className="block rounded-full ring-2 ring-white">
+                <Avatar name={p.name} email={p.email} size={52} />
+              </span>
+              {on && (
+                <span className="absolute -right-0.5 -bottom-0.5 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center" style={{ background: ORANGE }}>
+                  <Icon name="check" weight={700} className="text-[15px] text-white" />
+                </span>
+              )}
+            </span>
+            <span className={`text-[12.5px] leading-tight truncate max-w-full ${on ? "font-bold text-[#18181B]" : "text-[#3F3F46]"}`}>
+              {p.email === me ? "我" : p.name}
+            </span>
+            <span className="text-[11px] leading-none text-[#A1A1AA] tabular-nums">{n ? `${n} 件` : "空閒"}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function RowIcon({ icon, color, fill }: { icon: string; color: string; fill?: boolean }) {
   return (

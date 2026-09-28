@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { fmtDate, fmtMoney, STAGES, type Stage } from "@/lib/project-ops";
 import { personColor, type PmPhoto, type Task } from "@/lib/pm/model";
 import { HealthBadge, Icon, ProgressBar, SubScreen } from "./ui";
-import { Empty, Group, ORANGE, SegmentedIcons, Spinner } from "./kit";
+import { Avatar, AvatarStack, Empty, Group, ORANGE, SegmentedIcons, Spinner } from "./kit";
 import { TaskList } from "./TaskList";
 import { TaskBoard } from "./TaskBoard";
 import { TaskGantt } from "./TaskGantt";
@@ -35,11 +35,13 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
   const [upload, setUpload] = useState(false);
   const [stageMenu, setStageMenu] = useState(false);
   const [showDone, setShowDone] = useState(false);
+  const [showPeople, setShowPeople] = useState(false);
 
   useEffect(() => {
     setSection("tasks");
     setStageMenu(false);
     setShowDone(false);
+    setShowPeople(false);
   }, [code]);
 
   const setStage = async (s: Stage) => {
@@ -144,6 +146,30 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
                   <span className="text-[12px] text-[#A1A1AA] block mb-0.5">近況</span>
                   {shown.note}
                 </p>
+              )}
+              {/* 參與者：小頭像疊在一起，點開看每個人手上幾件 */}
+              <div className="mt-4 pt-3 border-t border-[#F2F2F4] flex items-center justify-between gap-2">
+                {shown.participants.length ? (
+                  <button onClick={() => setShowPeople((v) => !v)} className="flex items-center gap-2 min-h-[40px] -ml-1 pl-1 pr-2 rounded-full active:bg-[#F4F4F5] shrink-0" aria-expanded={showPeople}>
+                    <AvatarStack people={shown.participants} max={5} size={30} label={`${shown.participants.length} 位參與者`} />
+                    <span className="text-[13px] text-[#71717A] whitespace-nowrap">{shown.participants.length} 位參與</span>
+                    <Icon name={showPeople ? "expand_less" : "expand_more"} className="text-[18px] text-[#A1A1AA]" />
+                  </button>
+                ) : (
+                  <span className="text-[13px] text-[#A1A1AA]">還沒有指派任何人</span>
+                )}
+                {shown.manager && <span className="text-[12.5px] text-[#8E8E93] truncate min-w-0">主任 {shown.manager}</span>}
+              </div>
+              {showPeople && (
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                  {shown.participants.map((u) => (
+                    <div key={u.email} className="flex items-center gap-2.5 px-1 py-1.5">
+                      <Avatar name={u.name} email={u.email} size={34} />
+                      <span className="flex-1 min-w-0 text-[14px] text-[#18181B] truncate">{u.email === pm.me?.email ? `${u.name}（我）` : u.name}</span>
+                      <span className="text-[12.5px] text-[#8E8E93] tabular-nums">{u.open ? `${u.open} 件進行中` : "已完成"}</span>
+                    </div>
+                  ))}
+                </div>
               )}
             </Group>
 

@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef, useCallback } from "react";
 import useSWR from "swr";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
+import TeamPage from "@/components/team/TeamPage";
 import {
   getPolicies,
   getSops,
@@ -14,6 +15,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export const COMMAND_TAB_OPERATIONS = "營運";
 export const COMMAND_TAB_FINANCE = "財務";
+export const COMMAND_TAB_TEAM = "團隊";
 
 /**
  * 依權限算出實際的分頁清單。page.tsx 的分頁列與這裡的面板都用同一份，
@@ -24,7 +26,8 @@ export function getCommandTabs(opts: {
   canSeeOperations: boolean;
   canSeeFinance: boolean;
 }): string[] {
-  const tabs: string[] = ["定位定崗"];
+  // 團隊：內部職員卡牌、外部職員、協力廠商、聯盟品牌（能進指揮中心就看得到）
+  const tabs: string[] = ["定位定崗", COMMAND_TAB_TEAM];
   if (opts.canSeeOperations) tabs.push(COMMAND_TAB_OPERATIONS);
   if (opts.canSeeFinance) tabs.push(COMMAND_TAB_FINANCE);
   return tabs;
@@ -207,6 +210,11 @@ export default function CommandCenter({
     [canSeeOperations, canSeeFinance]
   );
   const activeIdx = Math.max(0, tabs.indexOf(activeTab));
+  // 團隊頁第一次打開才載入（照片比較大），之後保留，切回來不用重抓
+  const [teamSeen, setTeamSeen] = useState(false);
+  React.useEffect(() => {
+    if (tabs[activeIdx] === COMMAND_TAB_TEAM) setTeamSeen(true);
+  }, [activeIdx, tabs]);
 
   // 只要有任何子頁開著，狀態列就跟著子頁標題列一起變白。
   // 寫法刻意與 page.tsx 裡「每週任務操作說明」那個能正常運作的覆蓋層一致：
@@ -377,6 +385,15 @@ export default function CommandCenter({
                 </div>
               </button>
             </div>
+          </section>
+
+          {/* ── 分頁：團隊 ─────────────────────────────────── */}
+          {/* 團隊頁很長：不在這一頁時把高度收起來，其他分頁才不會多出一大段空白可以捲 */}
+          <section
+            className={`shrink-0 px-6 lg:px-10 pt-0 ${activeIdx === 1 ? "pb-28" : "h-0 overflow-hidden"}`}
+            style={{ width: panelW || `${100 / tabs.length}%` }}
+          >
+            {teamSeen && <TeamPage />}
           </section>
 
           {/* ── 分頁 2：營運 ───────────────────────────────── */}

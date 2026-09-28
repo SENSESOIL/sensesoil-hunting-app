@@ -84,6 +84,15 @@ export async function GET() {
     } catch (e) {
       base.dbError = explainDbError(e);
     }
+    // 大頭照（團隊頁上傳的）；團隊的資料表還沒建也不影響其他功能
+    if (!base.dbError) {
+      try {
+        const avatars = await rpc<Record<string, string>>("pm_avatars", {});
+        for (const p of base.people) if (avatars[p.email]) p.avatar = avatars[p.email];
+      } catch {
+        /* 20260929000000_pm_team.sql 還沒執行 */
+      }
+    }
   }
 
   // 名冊（CRM）＋資料庫：CRM 有的以 CRM 的名稱為準；資料庫裡 APP 新建的也列進來

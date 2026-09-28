@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import useSWR from "swr";
 import {
   buildSiteGroups,
@@ -18,6 +18,7 @@ import {
   type Task,
 } from "@/lib/pm/model";
 import { toast } from "./Sheet";
+import { setAvatarDirectory } from "./kit";
 
 /* ══════════════════════════════════════════════════════════
    專案／任務的前端資料層
@@ -58,6 +59,8 @@ export interface ProjectItem extends PmProject {
   tasks: Task[];
   openCount: number;
   lateCount: number;
+  /** 參與者：有任務在這個專案的人（未完成的在前） */
+  participants: { email: string; name: string; open: number }[];
 }
 
 /** 本地先套用的狀態規則（與資料庫 pm_task_save 一致） */
@@ -105,6 +108,7 @@ export function usePm() {
   const isManager = me?.role === "manager";
 
   const people = useMemo(() => data?.people ?? [], [data?.people]);
+  useEffect(() => setAvatarDirectory(people), [people]);
   const personBy = useMemo(() => new Map(people.map((p) => [p.email, p])), [people]);
 
   /** 專案（含衍生指標），依代碼排序 */
@@ -126,10 +130,18 @@ export function usePm() {
         siteGroups,
         codesBySite
       );
+      const who = new Map<string, { email: string; name: string; open: number }>();
+      for (const t of tasks) {
+        if (!t.assigneeEmail) continue;
+        const cur = who.get(t.assigneeEmail) ?? { email: t.assigneeEmail, name: t.assigneeName ?? t.assigneeEmail.split("@")[0], open: 0 };
+        if (t.status !== "done") cur.open++;
+        who.set(t.assigneeEmail, cur);
+      }
       return {
         ...p,
         view,
         tasks,
+        participants: [...who.values()].sort((a, b) => b.open - a.open),
         openCount: tasks.filter((t) => t.status !== "done").length,
         lateCount: tasks.filter((t) => isLate(t, today)).length,
       };

@@ -59,7 +59,7 @@ export function explainDbError(e: unknown): string {
   const err = e as PmDbError;
   const msg = String(err?.message || e);
   if (err?.code === "PGRST202" || /Could not find the function/i.test(msg)) {
-    return "資料庫還沒建立資料表：請到 Supabase → SQL Editor 執行 supabase/migrations/20260928000000_pm_schema.sql";
+    return "資料庫還沒建立資料表：請到 Supabase → SQL Editor 依序執行 supabase/migrations/ 裡的 20260928000000_pm_schema.sql、20260929000000_pm_team.sql";
   }
   if (err?.code === "42501" || /permission denied/i.test(msg)) {
     return "資料庫拒絕存取：SUPABASE_SECRET_KEY 可能填成了公開的 anon key";

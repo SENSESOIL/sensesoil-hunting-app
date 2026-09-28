@@ -120,7 +120,7 @@ function NotificationsSheet({ open, onClose, onOpenTask }: { open: boolean; onCl
                   className={`w-full flex items-start gap-3 px-4 py-3 text-left active:bg-[#F7F7F8] ${i ? "border-t border-[#F2F2F4]" : ""} ${n.readAt ? "" : "bg-[#FFFAF2]"}`}
                 >
                   <span className="relative shrink-0">
-                    <Avatar name={n.actorName} size={36} />
+                    <Avatar name={n.actorName} email={n.actorEmail} size={36} />
                     <span className="absolute -right-1 -bottom-1 w-[18px] h-[18px] rounded-full border-2 border-white flex items-center justify-center" style={{ background: meta.color }}>
                       <Icon name={meta.icon} weight={500} className="text-[11px] text-white" />
                     </span>

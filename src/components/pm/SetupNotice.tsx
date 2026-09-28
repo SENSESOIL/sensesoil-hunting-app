@@ -36,8 +36,9 @@ export function SetupNotice({ pm }: { pm: Pm }) {
           {d.dbError && <p className="text-[13px] mt-0.5" style={{ color: RED }}>{d.dbError}</p>}
           <ol className="text-[13px] text-[#52525B] mt-2 leading-relaxed list-decimal pl-4 flex flex-col gap-1">
             <li>
-              Supabase（APP 自己的專案，裡面有 hunting_tasks）→ SQL Editor → 貼上
-              <code className="mx-1 px-1 rounded bg-[#F4F4F5] text-[12px]">supabase/migrations/20260928000000_pm_schema.sql</code>→ Run
+              Supabase（APP 自己的專案，裡面有 hunting_tasks）→ SQL Editor → 依序貼上並執行
+              <code className="mx-1 px-1 rounded bg-[#F4F4F5] text-[12px]">20260928000000_pm_schema.sql</code>、
+              <code className="mx-1 px-1 rounded bg-[#F4F4F5] text-[12px]">20260929000000_pm_team.sql</code>（在 supabase/migrations/）
             </li>
             <li>Project Settings → API Keys → 建一把 Secret key（sb_secret_ 開頭）</li>
             <li>

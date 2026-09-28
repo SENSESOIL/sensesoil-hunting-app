@@ -322,7 +322,7 @@ export function TaskRow({
       </div>
       <div className="flex items-center gap-1.5 pt-0.5 shrink-0">
         {t.flagged && !done && <Icon name="flag" fill={1} weight={400} className="text-[17px]" style={{ color: ORANGE }} />}
-        {showAssignee && t.assigneeEmail && !mine && <Avatar name={t.assigneeName} email={t.assigneeEmail} size={24} />}
+        {showAssignee && t.assigneeEmail && !mine && <Avatar name={t.assigneeName} email={t.assigneeEmail} size={28} />}
         {showAssignee && !t.assigneeEmail && pm.isManager && !done && (
           <span className="w-6 h-6 rounded-full border border-dashed border-[#D4D4D8] flex items-center justify-center" title="未指派">
             <Icon name="person_add" className="text-[13px] text-[#C7C7CC]" />

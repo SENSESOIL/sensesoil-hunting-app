@@ -16,25 +16,75 @@ export const GREEN = "#30A46C";
 export const INK = "#18181B";
 export const GRAY = "#8E8E93";
 
-/** 圓形頭像（姓名縮寫） */
+/* ── 大頭照目錄：團隊頁上傳的照片，全 APP 的頭像共用 ───────── */
+
+const avatarStore = { map: new Map<string, string>(), v: 0, subs: new Set<() => void>() };
+
+/** usePm／團隊頁拿到新資料時呼叫；內容沒變就不會觸發重繪 */
+export function setAvatarDirectory(list: { email: string; avatar?: string }[]) {
+  let changed = false;
+  for (const p of list) {
+    if (!p.email) continue;
+    if ((avatarStore.map.get(p.email) ?? "") !== (p.avatar ?? "")) {
+      if (p.avatar) avatarStore.map.set(p.email, p.avatar);
+      else avatarStore.map.delete(p.email);
+      changed = true;
+    }
+  }
+  if (changed) {
+    avatarStore.v++;
+    avatarStore.subs.forEach((f) => f());
+  }
+}
+
+function useAvatarSrc(email?: string): string | undefined {
+  React.useSyncExternalStore(
+    (cb) => {
+      avatarStore.subs.add(cb);
+      return () => avatarStore.subs.delete(cb);
+    },
+    () => avatarStore.v,
+    () => 0
+  );
+  return email ? avatarStore.map.get(email) : undefined;
+}
+
+/** 圓形頭像：有上傳大頭照就用照片，沒有就是姓名縮寫 */
 export function Avatar({
   name,
   email,
   size = 24,
   ring,
+  src,
 }: {
   name?: string;
   email?: string;
   size?: number;
   ring?: boolean;
+  src?: string;
 }) {
+  const photo = useAvatarSrc(email);
+  const img = src ?? photo;
   const label = initials(name);
+  const style: React.CSSProperties = { width: size, height: size };
+  if (img) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={img}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className={`rounded-full object-cover shrink-0 select-none bg-[#E4E4E7] ${ring ? "ring-2 ring-white" : ""}`}
+        style={style}
+      />
+    );
+  }
   return (
     <span
       className={`inline-flex items-center justify-center rounded-full text-white font-semibold shrink-0 select-none ${ring ? "ring-2 ring-white" : ""}`}
       style={{
-        width: size,
-        height: size,
+        ...style,
         background: email || name ? personColor(email || name) : "#D4D4D8",
         fontSize: Math.max(9, Math.round(size * (label.length > 1 ? 0.36 : 0.46))),
         letterSpacing: label.length > 1 ? "-0.02em" : undefined,
@@ -42,6 +92,53 @@ export function Avatar({
       aria-hidden
     >
       {email || name ? label : <Icon name="person" className="text-[14px]" />}
+    </span>
+  );
+}
+
+/** 疊在一起的小頭像（參與者）：最多顯示 max 個，其餘顯示 +N */
+export function AvatarStack({
+  people,
+  max = 4,
+  size = 26,
+  onClick,
+  label,
+}: {
+  people: { email?: string; name?: string }[];
+  max?: number;
+  size?: number;
+  onClick?: () => void;
+  /** 報讀用說明，例如「5 位參與者」 */
+  label?: string;
+}) {
+  if (!people.length) return null;
+  const shown = people.slice(0, max);
+  const more = people.length - shown.length;
+  const inner = (
+    <span className="flex items-center" style={{ paddingLeft: size * 0.3 }}>
+      {shown.map((p, i) => (
+        <span key={p.email ?? p.name ?? i} style={{ marginLeft: -size * 0.3, zIndex: shown.length - i }} className="relative rounded-full ring-2 ring-white">
+          <Avatar name={p.name} email={p.email} size={size} />
+        </span>
+      ))}
+      {more > 0 && (
+        <span
+          className="relative rounded-full ring-2 ring-white bg-[#F2F2F4] text-[#52525B] font-semibold flex items-center justify-center tabular-nums"
+          style={{ width: size, height: size, marginLeft: -size * 0.3, fontSize: Math.max(10, size * 0.38) }}
+        >
+          +{more}
+        </span>
+      )}
+    </span>
+  );
+  const title = label ?? people.map((p) => p.name).filter(Boolean).join("、");
+  return onClick ? (
+    <button type="button" onClick={onClick} aria-label={title} title={title} className="shrink-0 rounded-full active:opacity-70">
+      {inner}
+    </button>
+  ) : (
+    <span aria-label={title} title={title} className="shrink-0">
+      {inner}
     </span>
   );
 }

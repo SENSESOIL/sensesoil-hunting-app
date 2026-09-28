@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./ui";
 
 /* ══════════════════════════════════════════════════════════
@@ -120,11 +121,17 @@ export function Sheet({
 
   if (!mounted) return null;
 
-  return (
+  // 掛到 body：放在有 transform 的容器裡（例如指揮中心左右滑的分頁）時，fixed 才會以整個畫面為準。
+  // 觸控事件在 React 裡仍會沿著元件樹往上傳，要擋掉，否則在抽屜裡左右滑會觸發外層換分頁。
+  const stop = (e: React.TouchEvent) => e.stopPropagation();
+  return createPortal(
     <div
       className="fixed inset-0 z-[150] flex items-end md:items-center justify-center font-sans"
       role="presentation"
       style={kb.inset > 0 ? { bottom: kb.inset, top: "auto", height: kb.height } : undefined}
+      onTouchStart={stop}
+      onTouchMove={stop}
+      onTouchEnd={stop}
     >
       <div
         className={`absolute inset-0 bg-black/35 transition-opacity duration-300 ${shown ? "opacity-100" : "opacity-0"}`}
@@ -206,7 +213,8 @@ export function Sheet({
           )
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

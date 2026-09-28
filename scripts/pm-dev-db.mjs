@@ -6,16 +6,19 @@
 //   node scripts/pm-dev-db.mjs
 //   PM_SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_SECRET_KEY=dev PM_DEV_USER=你的email npm run dev
 import { PGlite } from "@electric-sql/pglite";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 
 const DIR = fileURLToPath(new URL("../.pm-dev-db/", import.meta.url));
 const fresh = !existsSync(DIR);
 const db = new PGlite(DIR);
-const SQL = readFileSync(new URL("../supabase/migrations/20260928000000_pm_schema.sql", import.meta.url), "utf8");
+const MIG = new URL("../supabase/migrations/", import.meta.url);
 if (fresh) await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;`);
-await db.exec(SQL);
+// 依檔名順序套用全部 migration（每一份都可以重複執行）
+for (const f of readdirSync(MIG).filter((x) => x.endsWith(".sql")).sort()) {
+  await db.exec(readFileSync(new URL(f, MIG), "utf8"));
+}
 console.log("[pm-dev-db] schema applied", fresh ? "(fresh)" : "(existing data)");
 
 http

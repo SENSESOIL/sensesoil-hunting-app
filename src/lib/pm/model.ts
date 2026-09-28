@@ -35,6 +35,8 @@ export interface Person {
   name: string;
   /** 可以建立／指派任務、看全部 */
   manager: boolean;
+  /** 大頭照（團隊頁上傳的，data URL） */
+  avatar?: string;
 }
 
 export interface Task {
@@ -106,6 +108,7 @@ export interface PmNotification {
   title: string;
   body?: string;
   actorName?: string;
+  actorEmail?: string;
   createdAt: string;
   readAt?: string;
 }
@@ -277,6 +280,7 @@ export function rowToNotification(r: Row): PmNotification {
     title: String(r.title ?? ""),
     body: s(r.body),
     actorName: s(r.actor_name),
+    actorEmail: s(r.actor),
     createdAt: String(r.created_at),
     readAt: s(r.read_at),
   };
@@ -371,4 +375,85 @@ export function personColor(key?: string): string {
   let h = 0;
   for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
+
+/* ══════════════════════════════════════════════════════════
+   團隊（指揮中心 → 團隊）
+   ══════════════════════════════════════════════════════════ */
+
+export interface TeamMember {
+  email: string;
+  name: string;
+  title?: string;
+  bio?: string;
+  phone?: string;
+  avatar?: string;
+  cardBg?: string;
+  hasCard: boolean;
+  /** 卡牌圖的版本（更新時間），網址帶著它才不會吃到舊快取 */
+  cardVersion?: string;
+  manager: boolean;
+  sort?: number;
+}
+
+export type ContactKind = "external" | "vendor" | "brand";
+
+export interface Contact {
+  id: string;
+  kind: ContactKind;
+  name: string;
+  company?: string;
+  title?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  note?: string;
+  avatar?: string;
+  /** 從廠商CRM 讀來的（唯讀） */
+  fromCrm?: boolean;
+  /** 廠商CRM 的第二位聯絡人 */
+  contact2?: string;
+  phone2?: string;
+}
+
+export interface TeamData {
+  me: { email: string; name: string; role: Role };
+  configured: boolean;
+  dbError?: string;
+  members: TeamMember[];
+  contacts: Contact[];
+}
+
+export function rowToContact(r: Row): Contact {
+  return {
+    id: String(r.id),
+    kind: r.kind as ContactKind,
+    name: String(r.name ?? ""),
+    company: s(r.company),
+    title: s(r.title),
+    phone: s(r.phone),
+    email: s(r.email),
+    website: s(r.website),
+    note: s(r.note),
+    avatar: s(r.avatar),
+  };
+}
+
+/** 卡牌背景色組（與參考影片一樣的柔和漸層） */
+export const CARD_BGS: Record<string, [string, string]> = {
+  peach: ["#FFB88C", "#F7A8E8"],
+  lilac: ["#C9A8FF", "#7ED6C9"],
+  mint: ["#9BE3C3", "#F4E28A"],
+  sky: ["#8EC5FF", "#E0B3FF"],
+  sunset: ["#FF9A6B", "#E36BAE"],
+  sand: ["#F2D29B", "#E7A27A"],
+  ocean: ["#6FB7E9", "#86E3B5"],
+  rose: ["#F7A1B5", "#FFD3A5"],
+};
+export const CARD_BG_KEYS = Object.keys(CARD_BGS);
+export function cardBg(key: string | undefined, seed: string): [string, string] {
+  if (key && CARD_BGS[key]) return CARD_BGS[key];
+  let h = 0;
+  for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return CARD_BGS[CARD_BG_KEYS[h % CARD_BG_KEYS.length]];
 }

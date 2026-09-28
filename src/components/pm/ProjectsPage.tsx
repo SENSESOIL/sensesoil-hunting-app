@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { ACTIVE_STAGES, fmtDate, fmtWan, healthRank, type Stage } from "@/lib/project-ops";
 import { personColor } from "@/lib/pm/model";
 import { HEALTH_META, Icon } from "./ui";
-import { Empty, Group, ORANGE, Pill, RED, Spinner } from "./kit";
+import { AvatarStack, Empty, Group, ORANGE, Pill, RED, Spinner } from "./kit";
 import { ProjectScreen } from "./ProjectScreen";
 import { ProjectInfoSheet } from "./ProjectInfoSheet";
 import { SetupNotice } from "./SetupNotice";
@@ -159,7 +159,7 @@ function ProjectRow({ p, pm, last, onOpen }: { p: ProjectItem; pm: Pm; last: boo
   const meta: string[] = [];
   if (p.view.ops?.progress !== undefined && h !== "未建檔") meta.push(`${p.view.ops.progress}%`);
   if (p.dueAt && !p.doneAt) meta.push(`預計 ${fmtDate(p.dueAt, pm.today)}`);
-  if (p.manager) meta.push(p.manager);
+  if (p.manager && !p.participants.length) meta.push(p.manager);
   const warn = ["逾期", "落後", "注意"].includes(h);
   return (
     <button onClick={onOpen} className="relative w-full flex items-center gap-3 pl-4 pr-3 py-3 text-left active:bg-[#F7F7F8]">
@@ -175,7 +175,12 @@ function ProjectRow({ p, pm, last, onOpen }: { p: ProjectItem; pm: Pm; last: boo
           {warn && p.view.reason ? <span style={{ color: HEALTH_META[h].color }}>{p.view.reason}</span> : meta.join("　·　") || p.company}
         </span>
       </span>
-      <span className="flex items-center gap-1 shrink-0">
+      <span className="flex items-center gap-1.5 shrink-0">
+        {p.participants.length > 0 && (
+          <span className="hidden min-[380px]:block">
+            <AvatarStack people={p.participants} max={3} size={24} label={`${p.participants.length} 位參與者`} />
+          </span>
+        )}
         {p.lateCount > 0 && (
           <span className="h-6 min-w-6 px-1.5 rounded-full text-[12px] font-bold text-white flex items-center justify-center tabular-nums" style={{ background: RED }}>
             {p.lateCount}
