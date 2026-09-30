@@ -1,7 +1,12 @@
 "use client";
 
 /* ══════════════════════════════════════════════════════════
-   員工卡牌人像：上傳一張大頭照 →
+   員工卡牌人像，兩種做法：
+   A. AI 重新生成（makeAiPortrait，有設定 GEMINI_API_KEY 時）：
+      照片 → 伺服器請影像模型生成「同一個人、穿公司連帽上衣的攝影棚人像」→ 這裡對齊、去背
+      → 放到卡牌漸層背景上。效果最接近參考影片，衣服是真的「穿上去」的。
+   B. 快速模式（makePortrait，沒有 AI 時的備案）：
+      上傳一張大頭照 →
      1. 找臉（MediaPipe Face Landmarker）：對齊、轉正、統一大小與位置
      2. 去背（MediaPipe Selfie Segmenter）
      3. 穿上公司制服（uniform.ts）
@@ -176,6 +181,136 @@ export async function makePortrait(file: Blob, bg: [string, string], onStage?: (
   onStage?.("完成");
   return { card: encodeCard(out), avatar: avatarFrom(out, out.width, bg) };
 }
+
+/* ── A. AI 重新生成 ─────────────────────────────────────── */
+
+interface FaceGeo {
+  center: { x: number; y: number };
+  angle: number;
+  faceW: number;
+}
+
+function faceGeo(face: FaceLandmarker, src: HTMLCanvasElement): FaceGeo {
+  const lm = face.detect(src).faceLandmarks?.[0];
+  if (!lm) throw new PortraitError("照片裡找不到臉，請換一張正面、清楚、臉不要太小的照片");
+  const W = src.width;
+  const H = src.height;
+  const P = (i: number) => ({ x: lm[i].x * W, y: lm[i].y * H });
+  const left = P(234), right = P(454), top = P(10), chin = P(152), eyeR = P(33), eyeL = P(263);
+  const faceW = Math.hypot(right.x - left.x, right.y - left.y);
+  if (faceW < 40) throw new PortraitError("臉太小了，請裁切或換一張近一點的大頭照");
+  return {
+    center: { x: (left.x + right.x) / 2, y: (top.y + chin.y) / 2 },
+    angle: Math.atan2(eyeL.y - eyeR.y, eyeL.x - eyeR.x),
+    faceW,
+  };
+}
+
+function cutout(seg: ImageSegmenter, src: HTMLCanvasElement, center: { x: number; y: number }): HTMLCanvasElement {
+  const W = src.width;
+  const H = src.height;
+  const res = seg.segment(src);
+  const masks = res.confidenceMasks ?? [];
+  if (!masks.length) throw new PortraitError("去背失敗，請換一張照片");
+  let best: Float32Array | null = null;
+  let bestV = -1;
+  for (const m of masks) {
+    const a = m.getAsFloat32Array();
+    const v = a[Math.round(center.y) * W + Math.round(center.x)] ?? 0;
+    if (v > bestV) {
+      bestV = v;
+      best = a;
+    }
+  }
+  const person = document.createElement("canvas");
+  person.width = W;
+  person.height = H;
+  const ctx = person.getContext("2d")!;
+  ctx.drawImage(src, 0, 0);
+  const img = ctx.getImageData(0, 0, W, H);
+  for (let i = 0; i < best!.length; i++) img.data[i * 4 + 3] = Math.round(255 * smooth(0.2, 0.8, best![i]));
+  ctx.putImageData(img, 0, 0);
+  masks.forEach((m) => m.close());
+  res.close?.();
+  return person;
+}
+
+/** 上傳給 AI 的照片：以臉為中心裁成 3:4、長邊最多 1024px（臉清楚，檔案也小） */
+function uploadCrop(src: HTMLCanvasElement, g: FaceGeo): string {
+  const w = Math.min(src.width, g.faceW * 3.4);
+  const h = Math.min(src.height, w * (4 / 3));
+  const x = Math.max(0, Math.min(src.width - w, g.center.x - w / 2));
+  const y = Math.max(0, Math.min(src.height - h, g.center.y - h * 0.36));
+  const k = Math.min(1, 1024 / Math.max(w, h));
+  const c = document.createElement("canvas");
+  c.width = Math.round(w * k);
+  c.height = Math.round(h * k);
+  c.getContext("2d")!.drawImage(src, x, y, w, h, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.9).split(",")[1];
+}
+
+async function urlToCanvas(url: string): Promise<HTMLCanvasElement> {
+  const img = new Image();
+  img.src = url;
+  await img.decode();
+  const k = Math.min(1, MAX_INPUT / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * k);
+  c.height = Math.round(img.naturalHeight * k);
+  c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+
+/**
+ * AI 重新生成：generate 由呼叫端提供（呼叫 /api/pm/team），收 jpeg base64、回傳生成圖的 data URL。
+ * 生成圖再對齊到卡牌固定的位置、去掉灰色背景，所以每個人的卡牌大小位置一致。
+ */
+export async function makeAiPortrait(
+  file: Blob,
+  bg: [string, string],
+  generate: (jpegBase64: string) => Promise<string>,
+  onStage?: (s: string) => void
+): Promise<PortraitResult & { generated: string }> {
+  onStage?.("讀取照片…");
+  const src = await toCanvas(file);
+  onStage?.("載入人像模型…（第一次約需 10–30 秒）");
+  const { face, seg } = await preloadVision();
+  onStage?.("確認照片裡的臉…");
+  const g0 = faceGeo(face, src);
+
+  onStage?.("AI 生成中：換上公司制服（約 10–40 秒）…");
+  const generated = await generate(uploadCrop(src, g0));
+
+  onStage?.("對齊、去背…");
+  const gen = await urlToCanvas(generated);
+  let g: FaceGeo;
+  try {
+    g = faceGeo(face, gen);
+  } catch {
+    throw new PortraitError("AI 生成的照片看不清楚臉，請按「重新生成」再試一次");
+  }
+  const person = cutout(seg, gen, g.center);
+
+  const out = document.createElement("canvas");
+  out.width = CARD_W;
+  out.height = CARD_H;
+  const ctx = out.getContext("2d")!;
+  // 臉的大小以卡牌固定比例為準；生成圖太短蓋不到卡牌底部時再放大一點
+  const s = Math.max(FACE_W / g.faceW, (CARD_H - FACE_CY) / Math.max(1, gen.height - g.center.y));
+  ctx.save();
+  ctx.translate(FACE_CX, FACE_CY);
+  ctx.rotate(-g.angle);
+  ctx.scale(s, s);
+  ctx.translate(-g.center.x, -g.center.y);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(person, 0, 0);
+  ctx.restore();
+
+  onStage?.("完成");
+  return { card: encodeCard(out), avatar: avatarFrom(out, out.width, bg), generated };
+}
+
+/* ── 共用 ──────────────────────────────────────────────── */
 
 /** 透明底的卡牌：優先 webp（小）；瀏覽器不支援 webp 編碼時改 png，太大就縮小 */
 function encodeCard(c: HTMLCanvasElement): string {

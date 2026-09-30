@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { readSheet } from "@/lib/google-sheets";
 import { explainDbError, getPmUser, listPeople, pmDbConfigured, rpc } from "@/lib/pm/server";
 import { rowToContact, type Contact, type ContactKind, type TeamData, type TeamMember } from "@/lib/pm/model";
+import { avatarProvider, generateAvatar } from "@/lib/pm/avatar-ai";
 
 export const dynamic = "force-dynamic";
+// AI 生成人像約 10–40 秒
+export const maxDuration = 60;
 
 /**
  * 團隊（指揮中心 → 團隊）
@@ -118,6 +121,7 @@ export async function GET(req: Request) {
   const data: TeamData = {
     me: { email: user.email, name: user.name, role: user.role },
     configured: pmDbConfigured(),
+    aiReady: !!avatarProvider(),
     members: [],
     contacts: [],
   };
@@ -156,6 +160,7 @@ export async function GET(req: Request) {
 }
 
 const KINDS: ContactKind[] = ["external", "vendor", "brand"];
+const genCount = new Map<string, number>();
 const isImg = (v: unknown, max: number) => v === null || v === undefined || (typeof v === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(v) && v.length <= max);
 
 export async function POST(req: Request) {
@@ -181,6 +186,23 @@ export async function POST(req: Request) {
       const clean = Object.fromEntries(Object.entries(patch).filter(([k]) => allowed.includes(k)));
       const r = await rpc<{ status: string; updated_at?: string }>("pm_profile_save", { ...actor, email, patch: clean });
       return json(r, r.status === "forbidden" ? 403 : 200);
+    }
+    if (b.op === "avatar.generate") {
+      const email = String(b.email ?? "").toLowerCase();
+      if (email !== user.email && user.role !== "manager") return json({ error: "只能生成自己的照片" }, 403);
+      const photo = String(b.photo ?? "");
+      if (!/^[A-Za-z0-9+/=]+$/.test(photo) || photo.length < 1000 || photo.length > 3_000_000) return json({ error: "照片格式或大小不正確" }, 400);
+      // 避免誤按或濫用燒掉 AI 額度：每人每天最多 20 次
+      const key = `${user.email}:${new Date().toISOString().slice(0, 10)}`;
+      const n = (genCount.get(key) ?? 0) + 1;
+      if (n > 20) return json({ error: "今天生成太多次了，明天再試" }, 429);
+      genCount.set(key, n);
+      try {
+        const r = await generateAvatar(photo);
+        return json({ image: `data:${r.mime};base64,${r.data}`, model: r.model });
+      } catch (e) {
+        return json({ error: e instanceof Error ? e.message : "AI 生成失敗" }, 502);
+      }
     }
     if (b.op === "contact.save") {
       if (user.role !== "manager") return json({ error: "只有管理者可以編輯" }, 403);

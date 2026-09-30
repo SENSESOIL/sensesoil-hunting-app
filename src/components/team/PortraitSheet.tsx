@@ -5,13 +5,15 @@ import { CARD_BG_KEYS, cardBg, type TeamMember } from "@/lib/pm/model";
 import { Sheet, toast } from "@/components/pm/Sheet";
 import { Icon } from "@/components/pm/ui";
 import { ORANGE, Spinner } from "@/components/pm/kit";
-import { avatarFromUrl, makePortrait, PortraitError, preloadVision } from "./portrait";
+import { avatarFromUrl, makeAiPortrait, makePortrait, PortraitError, preloadVision } from "./portrait";
 import { MemberCard } from "./MemberCard";
 import { cardUrl, teamPost } from "./useTeam";
 
 /* ══════════════════════════════════════════════════════════
-   更換大頭照：拍照／選照片 → 自動去背、穿上公司制服 → 選背景色 → 儲存
-   同時產生全 APP 共用的圓形大頭照（任務指派、參與者頭像）
+   更換大頭照：拍照／選照片 →
+     有 AI（aiReady）：AI 重新生成「同一個人、真的穿著公司連帽上衣」的寫實人像 → 對齊、去背
+     沒有 AI：快速模式（去背＋向量制服）
+   → 選背景色 → 儲存。同時產生全 APP 共用的圓形大頭照（任務指派、參與者頭像）
    ══════════════════════════════════════════════════════════ */
 
 export function PortraitSheet({
@@ -19,7 +21,9 @@ export function PortraitSheet({
   open,
   onClose,
   onSaved,
+  aiReady,
 }: {
+  aiReady?: boolean;
   member: TeamMember | null;
   open: boolean;
   onClose: () => void;
@@ -33,6 +37,9 @@ export function PortraitSheet({
   const [stage, setStage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // 保留這次選的照片：AI 結果不滿意可以「重新生成」
+  const [source, setSource] = useState<File | null>(null);
+  const [aiFailed, setAiFailed] = useState(false);
   const cam = useRef<HTMLInputElement>(null);
   const lib = useRef<HTMLInputElement>(null);
 
@@ -45,6 +52,8 @@ export function PortraitSheet({
     setBio(member.bio ?? "");
     setStage(null);
     setError(null);
+    setSource(null);
+    setAiFailed(false);
     // 先在背景載入模型，選好照片時通常已經準備好
     preloadVision().catch(() => {});
   }, [open, member]);
@@ -52,20 +61,39 @@ export function PortraitSheet({
   if (!member) return null;
   const colors = cardBg(bg, member.email);
 
-  const pick = async (files: FileList | null) => {
-    const f = files?.[0];
-    if (!f) return;
+  const run = async (f: File, useAi: boolean) => {
     setError(null);
     try {
-      const r = await makePortrait(f, colors, setStage);
+      const r = useAi
+        ? await makeAiPortrait(
+            f,
+            colors,
+            async (photo) => {
+              const res = await teamPost({ op: "avatar.generate", email: member.email, photo });
+              const img = res.data.image;
+              if (!res.ok || typeof img !== "string") throw new PortraitError(res.data.error || "AI 生成失敗，請再試一次");
+              return img;
+            },
+            setStage
+          )
+        : await makePortrait(f, colors, setStage);
       setCard(r.card);
       setAvatar(r.avatar);
       setStage(null);
+      setAiFailed(false);
     } catch (e) {
       setStage(null);
-      setError(e instanceof PortraitError ? e.message : "處理失敗，請換一張照片或稍後再試（需要網路下載人像模型）");
+      if (useAi) setAiFailed(true);
+      setError(e instanceof PortraitError ? e.message : "處理失敗，請換一張照片或稍後再試（需要網路）");
       console.error("[portrait]", e);
     }
+  };
+
+  const pick = async (files: FileList | null) => {
+    const f = files?.[0];
+    if (!f) return;
+    setSource(f);
+    await run(f, !!aiReady);
   };
 
   const changed = !!card || bg !== (member.cardBg ?? CARD_BG_KEYS[0]) || title !== (member.title ?? "") || bio !== (member.bio ?? "");
@@ -133,6 +161,22 @@ export function PortraitSheet({
           </p>
         )}
 
+        {source && !stage && (aiReady || aiFailed) && (
+          <div className="flex gap-2 -mt-1">
+            {aiReady && (
+              <button type="button" onClick={() => run(source, true)} className="flex-1 h-11 rounded-[12px] bg-white border border-[#E4E4E7] text-[14px] font-semibold text-[#18181B] inline-flex items-center justify-center gap-1.5 active:bg-[#F4F4F5]">
+                <Icon name="auto_awesome" weight={400} className="text-[18px]" style={{ color: ORANGE }} />
+                {card ? "不像？重新生成" : "再試一次"}
+              </button>
+            )}
+            {aiFailed && (
+              <button type="button" onClick={() => run(source, false)} className="flex-1 h-11 rounded-[12px] bg-white border border-[#E4E4E7] text-[14px] font-semibold text-[#3F3F46] active:bg-[#F4F4F5]">
+                改用快速模式
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-2">
           <button type="button" disabled={!!stage} onClick={() => cam.current?.click()} className="h-12 rounded-[14px] bg-[#18181B] text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40">
             <Icon name="photo_camera" weight={400} className="text-[20px]" />
@@ -146,7 +190,9 @@ export function PortraitSheet({
           <input ref={lib} type="file" accept="image/*" className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
         </div>
         <p className="text-[12px] text-[#8E8E93] leading-relaxed -mt-1">
-          正面、臉清楚、背景單純效果最好。系統會自動去背、對齊，並換上公司制服；照片只在這支手機處理。
+          {aiReady
+            ? "正面、臉清楚的照片效果最好。照片會交給 AI（Google Gemini）重新生成：同一個人、穿上公司連帽上衣的攝影棚人像，約 10–40 秒；APP 不保存原始照片。"
+            : "目前是快速模式：自動去背、對齊，套上向量制服（照片只在這支手機處理）。管理者設定 AI 金鑰（GEMINI_API_KEY）後，會改成 AI 重新生成穿制服的寫實人像。"}
         </p>
 
         <div className="bg-white rounded-[16px] border border-[#EBEBED] px-4 py-3">

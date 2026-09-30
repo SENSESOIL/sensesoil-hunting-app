@@ -67,7 +67,7 @@ export default function TeamPage() {
       )}
 
       {seg === "internal" ? (
-        <Internal members={data.members} me={data.me.email} isManager={isManager} canSave={data.configured && !data.dbError} onChanged={() => mutate()} />
+        <Internal members={data.members} me={data.me.email} isManager={isManager} canSave={data.configured && !data.dbError} onChanged={() => mutate()} aiReady={data.aiReady} />
       ) : (
         <Contacts kind={seg} contacts={data.contacts.filter((c) => c.kind === seg)} isManager={isManager && data.configured && !data.dbError} onChanged={() => mutate()} />
       )}
@@ -83,12 +83,14 @@ function Internal({
   isManager,
   canSave,
   onChanged,
+  aiReady,
 }: {
   members: TeamMember[];
   me: string;
   isManager: boolean;
   canSave: boolean;
   onChanged: () => void;
+  aiReady?: boolean;
 }) {
   // 順序固定（權限表順序，管理者在前）；上傳照片後卡片不會跳位置
   const list = useMemo(() => [...members].sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999)), [members]);
@@ -173,7 +175,7 @@ function Internal({
           <Icon name="add_a_photo" weight={400} className="text-[24px] shrink-0" style={{ color: ORANGE }} />
           <span className="flex-1 min-w-0">
             <span className="block text-[14px] font-semibold text-[#18181B]">上傳你的大頭照</span>
-            <span className="block text-[12.5px] text-[#71717A]">自動去背、穿上公司制服；任務指派也會顯示你的照片</span>
+            <span className="block text-[12.5px] text-[#71717A]">{aiReady ? "AI 生成穿公司制服的人像" : "自動去背、穿上公司制服"}；任務指派也會顯示你的照片</span>
           </span>
           <Icon name="chevron_right" className="text-[20px] text-[#C7C7CC]" />
         </button>
@@ -251,7 +253,7 @@ function Internal({
         </div>
       </Group>
 
-      <PortraitSheet member={edit} open={!!edit} onClose={() => setEdit(null)} onSaved={onChanged} />
+      <PortraitSheet member={edit} open={!!edit} onClose={() => setEdit(null)} onSaved={onChanged} aiReady={aiReady} />
     </>
   );
 }
