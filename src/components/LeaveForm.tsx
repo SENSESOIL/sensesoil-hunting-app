@@ -83,7 +83,8 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
     `h-9 px-3.5 rounded-full text-[14px] transition-colors ${on ? "bg-[#18181B] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"}`;
 
   return (
-    <div className="w-full flex flex-col pt-0 pb-4">
+    <div className="w-full flex flex-col pt-0 pb-4 gap-4">
+      <LeaveRules />
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
         <div className="text-center mb-6 border-b border-gray-100 pb-4">
           <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">請假公告</h2>
@@ -186,6 +187,63 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
 });
 
 LeaveForm.displayName = "LeaveForm";
+
+/* 請假規則提醒（表單上方） */
+const RULES: { no: string; title: string; type: string; when: string; whenSuffix: string; note: string }[] = [
+  {
+    no: "01",
+    title: "遠征性離線",
+    type: "長假",
+    when: "1月前",
+    whenSuffix: "提出申請與告知。",
+    note: "長期脫離戰線形同遠征，團隊需要重新配置大型陣型與資源調度。提前一個月佈局，確保公會推進進度不受影響，也讓你能安心切換至無干擾的恢復模式。",
+  },
+  {
+    no: "02",
+    title: "預知性暫離",
+    type: "事假",
+    when: "1週前",
+    whenSuffix: "提出申請與告知。",
+    note: "事假是為了籌備下一次升級的戰略性離線。提前佈局你的位置空缺，讓團隊有足夠的時間進行戰力微調與補位，確保日常副本推進不斷鏈。",
+  },
+  {
+    no: "03",
+    title: "異常狀態強制修復",
+    type: "病假",
+    when: "即時",
+    whenSuffix: "提出申請與告知。",
+    note: "隱瞞傷病是攻略大忌。迅速通報並啟動修復，是為了讓團隊能即時啟動防禦機制，降低突發風險，維持整體極致專注的推進。",
+  },
+];
+
+function LeaveRules() {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-5 flex flex-col gap-5">
+      {RULES.map((r) => (
+        <section key={r.no}>
+          <h3 className="text-[15px] text-[#18181B] font-bold">
+            <span className="font-normal text-gray-500 mr-1.5">[ {r.no} ]</span>
+            {r.title}：{r.type}
+          </h3>
+          <ul className="mt-2 flex flex-col gap-1.5 text-[14px] leading-relaxed text-[#3F3F46]">
+            <li className="flex gap-2">
+              <span className="text-[#18181B] shrink-0">•</span>
+              <span>
+                {r.no === "03" ? "突發異常狀態須" : "離線日"}
+                <span className="text-[#F39C12] underline underline-offset-2">{r.when}</span>
+                {r.whenSuffix}
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="text-[#18181B] shrink-0">•</span>
+              <span>{r.note}</span>
+            </li>
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
 
 function PersonSelect({ hunters, value, onChange, placeholder }: { hunters: string[]; value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
