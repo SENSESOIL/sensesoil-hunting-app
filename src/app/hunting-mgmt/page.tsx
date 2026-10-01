@@ -10,6 +10,7 @@ import HuntingTasksView, {
 } from "@/components/HuntingTasksView";
 import CommandCenter, { getCommandTabs } from "@/components/CommandCenter";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
+import LeaveForm, { LeaveFormRef } from "@/components/LeaveForm";
 import VersionGuard from "@/components/VersionGuard";
 import AnimatedTabs from "@/components/AnimatedTabs";
 import ProjectsPage, { PROJECT_TABS } from "@/components/pm/ProjectsPage";
@@ -671,16 +672,17 @@ export default function HuntingManagementPage() {
       ? `${ORG_CHART_BASE}?mode=editor`
       : `${ORG_CHART_BASE}?view=1`;
 
-  // 狩獵任務底下的三個面板永遠都在（位置固定），但「看得到哪幾個」要依權限決定。
+  // 狩獵任務底下的四個面板永遠都在（位置固定），但「看得到哪幾個」要依權限決定。
   // 分頁列與左右滑動手勢共用這一份，否則沒權限的人可以用滑的滑進去。
   // 注意：權限表上是「每周任務」（周），APP 顯示用「每週任務」（週）。
-  const HUNTING_SUB_PANELS = ["專案任務", "每週任務", "領款"];
+  const HUNTING_SUB_PANELS = ["專案任務", "每週任務", "領款", "請假"];
   const visibleSubTabs = (() => {
     if (isAdmin) return [...HUNTING_SUB_PANELS];
     const t: string[] = [];
     if (hasRole("專案任務")) t.push("專案任務");
     if (hasRole("每周任務")) t.push("每週任務");
     if (hasRole("領款")) t.push("領款");
+    if (hasRole("請假")) t.push("請假");
     return t.length > 0 ? t : ["每週任務"]; // 保底，避免整列空掉
   })();
 
@@ -759,6 +761,7 @@ export default function HuntingManagementPage() {
   const shareRefDesktop = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
+  const leaveFormRef = useRef<LeaveFormRef>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -1136,14 +1139,16 @@ export default function HuntingManagementPage() {
       return;
     }
 
-    if (tasksViewRef.current) {
+    // 請假：分享的是請假公告
+    const source = activeSubTab === "請假" ? leaveFormRef.current : tasksViewRef.current;
+    if (source) {
       try {
-        const text = tasksViewRef.current.getShareText();
+        const text = source.getShareText();
         navigator.clipboard
           .writeText(text)
           .then(() => {
             setIsShareOpen(false);
-            alert("已複製當週與下週的任務資料！");
+            alert(activeSubTab === "請假" ? "已複製請假公告！" : "已複製當週與下週的任務資料！");
           })
           .catch((err) => {
             console.error("Failed to copy text: ", err);
@@ -1162,9 +1167,10 @@ export default function HuntingManagementPage() {
       return;
     }
 
-    if (tasksViewRef.current) {
+    const source = activeSubTab === "請假" ? leaveFormRef.current : tasksViewRef.current;
+    if (source) {
       try {
-        const text = tasksViewRef.current.getShareText();
+        const text = source.getShareText();
         window.location.href = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
         setIsShareOpen(false);
       } catch (err: any) {
@@ -1652,7 +1658,7 @@ export default function HuntingManagementPage() {
           {/* Mobile Search Bar */}
           {/* 指揮中心不顯示這個搜尋列：它不搜尋任何東西，
               真正需要搜尋的制度／SOP 清單各自內建 */}
-          {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款")) &&
+          {!(activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款" || activeSubTab === "請假")) &&
             activeNav !== "command_center" &&
             activeNav !== "project_info" &&
             activeNav !== "tasks" && (
@@ -1677,9 +1683,9 @@ export default function HuntingManagementPage() {
             /* ============ Sliding Panel Container ============ */
             <div className="flex-1 overflow-hidden relative">
               <div
-                className="flex w-[300%] md:w-full h-full md:!transform-none"
+                className="flex w-[400%] md:w-full h-full md:!transform-none"
                 style={{
-                  // 三個面板永遠都在，位置固定；用面板順序算位移即可
+                  // 四個面板永遠都在，位置固定；用面板順序算位移即可
                   transform: `translateX(calc(${
                     (-100 / HUNTING_SUB_PANELS.length) *
                     Math.max(0, HUNTING_SUB_PANELS.indexOf(activeSubTab))
@@ -1691,7 +1697,7 @@ export default function HuntingManagementPage() {
               >
                 {/* Panel 1: 專案任務 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "專案任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/4 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "專案任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="flex-1 flex flex-col items-center justify-center min-h-[50vh]">
                     <span
@@ -1707,7 +1713,7 @@ export default function HuntingManagementPage() {
                 </div>
                 {/* Panel 2: 每週任務 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每週任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/4 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每週任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
@@ -1722,7 +1728,7 @@ export default function HuntingManagementPage() {
                 </div>
                 {/* Panel 3: 領款 */}
                 <div
-                  className={`w-1/3 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                  className={`w-1/4 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
                   <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
                     <div className="flex-1 max-w-3xl mx-auto w-full">
@@ -1730,7 +1736,16 @@ export default function HuntingManagementPage() {
                     </div>
                   </div>
                 </div>
-                {/* 簽收表單臨時入口 */}
+                {/* Panel 4: 請假 */}
+                <div
+                  className={`w-1/4 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "請假" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
+                >
+                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
+                    <div className="flex-1 max-w-3xl mx-auto w-full">
+                      <LeaveForm ref={leaveFormRef} />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ) : activeNav === "command_center" ? (
