@@ -84,10 +84,10 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
 
   return (
     <div className="w-full flex flex-col pt-0 pb-4 gap-4">
-      <LeaveRules />
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
         <div className="text-center mb-6 border-b border-gray-100 pb-4">
           <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">請假公告</h2>
+          <LeaveRules />
         </div>
 
         <div className="flex flex-col gap-5 text-[15px]">
@@ -167,12 +167,9 @@ LeaveForm.displayName = "LeaveForm";
 function LeaveRules() {
   const hl = "text-[#F39C12] font-medium";
   return (
-    <div className="px-1 text-[13px] leading-relaxed text-[#71717A]">
-      <p className="font-semibold text-[#52525B] mb-1">請假提出時間</p>
-      <p>
-        請假須提前申請並告知：長假<span className={hl}> 1 個月前</span>、事假<span className={hl}> 1 週前</span>、病假<span className={hl}>即時</span>。
-      </p>
-    </div>
+    <p className="mt-2 text-[12.5px] leading-relaxed text-[#71717A]">
+      請假須提前申請並告知：長假<span className={hl}> 1 個月前</span>、事假<span className={hl}> 1 週前</span>、病假<span className={hl}>即時</span>。
+    </p>
   );
 }
 
