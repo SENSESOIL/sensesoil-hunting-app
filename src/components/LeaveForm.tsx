@@ -40,11 +40,11 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
   const hunters: string[] = crm?.activeHunters || [];
 
   const [person, setPerson] = useState(me);
-  const [type, setType] = useState("事假");
+  const [type, setType] = useState("");
   const [range, setRange] = useState(false);
   const [start, setStart] = useState(todayISO());
   const [end, setEnd] = useState(todayISO());
-  const [period, setPeriod] = useState("整天");
+  const [period, setPeriod] = useState("");
   const [supervisor, setSupervisor] = useState("");
   const [handover, setHandover] = useState("");
 
@@ -62,7 +62,7 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
 
   useImperativeHandle(ref, () => ({
     getShareText: () => {
-      const missing = [!person && "請假人員", !supervisor && "通報主管", !handover && "任務交接"].filter(Boolean);
+      const missing = [!person && "請假人員", !type && "請假類別", !period && "影響時序", !supervisor && "通報主管", !handover && "任務交接"].filter(Boolean);
       if (missing.length) throw new Error(`請先選擇：${missing.join("、")}`);
       return [
         "【請假公告】",
@@ -80,7 +80,7 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
   const row = "flex items-center border-b border-gray-100 pb-2 min-h-[44px]";
   const label = "w-[100px] text-gray-500 shrink-0 whitespace-nowrap";
   const chip = (on: boolean) =>
-    `h-9 px-3.5 rounded-full text-[14px] transition-colors ${on ? "bg-[#18181B] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"}`;
+    `h-9 px-3.5 rounded-full text-[14px] transition-colors ${on ? "bg-[#F39C12] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"}`;
 
   return (
     <div className="w-full flex flex-col pt-0 pb-4 gap-4">
@@ -98,7 +98,7 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
 
           <div className={row}>
             <span className={label}>請假類別：</span>
-            <PersonSelect hunters={LEAVE_TYPES} value={type} onChange={(v) => v && setType(v)} placeholder="選擇假別" />
+            <PersonSelect hunters={LEAVE_TYPES} value={type} onChange={setType} placeholder="選擇假別" />
           </div>
 
           <div className="flex items-start border-b border-gray-100 pb-3">
@@ -132,16 +132,12 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
                   </>
                 )}
               </div>
-              <p className="text-[13px] text-gray-500">
-                {dateText}　{weekText}
-                {multi && `　共 ${days} 天`}
-              </p>
             </div>
           </div>
 
           <div className={row}>
             <span className={label}>影響時序：</span>
-            <PersonSelect hunters={PERIODS} value={period} onChange={(v) => v && setPeriod(v)} placeholder="選擇時段" />
+            <PersonSelect hunters={PERIODS} value={period} onChange={setPeriod} placeholder="選擇時段" />
           </div>
 
           <div className={row}>
@@ -168,7 +164,7 @@ function LeaveRules() {
   const hl = "text-[#F39C12] font-medium";
   return (
     <p className="mt-2 text-[12.5px] leading-relaxed text-[#71717A]">
-      請假須提前申請並告知：長假<span className={hl}> 1 個月前</span>、事假<span className={hl}> 1 週前</span>、病假<span className={hl}>即時</span>。
+      須提前申請並告知：長假<span className={hl}> 1 月前</span>、事假<span className={hl}> 1 週前</span>、病假<span className={hl}>即時</span>
     </p>
   );
 }
