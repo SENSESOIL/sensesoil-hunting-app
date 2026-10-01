@@ -170,8 +170,7 @@ function LeaveRules() {
     <div className="px-1 text-[13px] leading-relaxed text-[#71717A]">
       <p className="font-semibold text-[#52525B] mb-1">請假提出時間</p>
       <p>
-        長假須於離線日<span className={hl}> 1 個月前</span>、事假須於離線日<span className={hl}> 1 週前</span>提出申請並告知；
-        病假遇突發狀況須<span className={hl}>即時</span>提出申請並告知。
+        請假須提前申請並告知：長假<span className={hl}> 1 個月前</span>、事假<span className={hl}> 1 週前</span>、病假<span className={hl}>即時</span>。
       </p>
     </div>
   );
