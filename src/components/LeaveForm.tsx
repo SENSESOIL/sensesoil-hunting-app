@@ -164,7 +164,7 @@ function LeaveRules() {
   const hl = "text-[#F39C12] font-medium";
   return (
     <p className="mt-2 text-[12.5px] leading-relaxed text-[#71717A]">
-      須提前申請並告知：長假<span className={hl}> 1 月前</span>、事假<span className={hl}> 1 週前</span>、病假<span className={hl}>即時</span>
+      須提前申請：長假<span className={hl}> 1 月前</span>、事假<span className={hl}> 1 週前</span>、病假<span className={hl}>即時</span>
     </p>
   );
 }
