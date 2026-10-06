@@ -20,6 +20,7 @@ import { PhotoUpload } from "@/components/pm/PhotoUpload";
 import { ToastHost } from "@/components/pm/Sheet";
 import { disablePush, refreshPush } from "@/components/pm/push-client";
 import { isManagerRoles } from "@/lib/pm/model";
+import { canSeeFlows as canSeeFlowsOf, flowRoleFromRoles } from "@/lib/flow-role";
 
 const allNavItems = [
   { id: "project_info", label: "專案", icon: "home", permKeys: ["專案情報"] },
@@ -648,7 +649,10 @@ export default function HuntingManagementPage() {
   const canSeeFinance = roles["財務"] !== undefined ? hasRole("財務") : isAdmin;
 
   // 指揮中心的分頁：沒有財務權限就只有兩頁。分頁列與內容面板共用同一份清單。
-  const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance });
+  // 流程圖：權限表「流程」欄（沒有這欄時能進指揮中心就看得到；admin 可編輯、其他人唯讀）
+  const canSeeFlows = canSeeFlowsOf(roles);
+  const flowRole = flowRoleFromRoles(roles);
+  const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance, canSeeFlows });
 
   // 組織架構圖有三種模式，由權限表「組織圖」欄決定要載入哪一個網址：
   //
@@ -1753,6 +1757,8 @@ export default function HuntingManagementPage() {
               onOpenOrgChart={() => setShowOrgChart(true)}
               canSeeOperations={canSeeOperations}
               canSeeFinance={canSeeFinance}
+              canSeeFlows={canSeeFlows}
+              flowRole={flowRole}
               activeTab={commandTab}
               onTabChange={setCommandTab}
             />
