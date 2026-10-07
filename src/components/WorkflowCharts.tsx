@@ -155,17 +155,6 @@ function FlowViewer({ flow, flowRole, onClose }: { flow: FlowEntry | null; flowR
       role="dialog"
       aria-label={shown?.title ?? "流程圖"}
     >
-      {/* 細標題列：返回＋流程名稱（流程圖頁左上是自己的 logo，返回鍵不疊在上面） */}
-      <div className="shrink-0 flex items-center gap-1 px-2 bg-[#141519] border-b border-white/10" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <button onClick={onClose} aria-label="關閉流程圖" className="w-11 h-11 flex items-center justify-center rounded-full active:bg-white/10">
-          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="#D4D4D8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M15 5l-7 7 7 7" />
-          </svg>
-        </button>
-        <p className="flex-1 min-w-0 text-[15px] font-semibold text-[#F4F4F5] truncate">{shown?.title ?? ""}</p>
-        <div className="w-11" />
-      </div>
-
       <div className="relative flex-1 min-h-0">
         {mounted && shown && (
           <iframe
@@ -186,6 +175,19 @@ function FlowViewer({ flow, flowRole, onClose }: { flow: FlowEntry | null; flowR
           <span className="material-symbols-outlined text-[28px] text-[#F39C12] animate-spin">progress_activity</span>
           <span className="text-[13px] text-[#A1A1AA]">流程圖載入中…</span>
         </div>
+
+        {/* 懸浮返回鍵：與組織架構圖（hunting-mgmt 的「返回指揮中心」）同尺寸、同位置 ——
+            觸控區 44px，可見圓形 36px，落在距左上 16px 的基準線 */}
+        <button
+          onClick={onClose}
+          aria-label="關閉流程圖"
+          className="group absolute z-30 top-3 left-3 w-11 h-11 flex items-center justify-center bg-transparent border-none p-0 outline-none"
+        >
+          <span className="absolute w-9 h-9 rounded-full bg-[rgba(22,24,29,0.95)] border border-[rgba(243,156,18,0.4)] transition-colors group-active:bg-[#27272A]" />
+          <svg viewBox="0 0 24 24" className="relative w-3.5 h-3.5" fill="none" stroke="#B9BEC9" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
+        </button>
       </div>
     </div>,
     document.body

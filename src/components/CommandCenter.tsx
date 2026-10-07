@@ -7,6 +7,16 @@ import TeamPage from "@/components/team/TeamPage";
 import WorkflowCharts, { useFlows } from "@/components/WorkflowCharts";
 import type { FlowRole } from "@/lib/flow-role";
 import {
+  IconGavel,
+  IconRoute,
+  IconChecklist,
+  IconFileText,
+  IconReceipt2,
+  IconFolderDollar,
+  IconChartLine,
+  type Icon as TablerIcon,
+} from "@tabler/icons-react";
+import {
   getPolicies,
   getSops,
   FORMS,
@@ -128,14 +138,14 @@ function EmptyState({
 
 /* 清單列：項目多的內容用列表，比方格 icon 好掃讀 */
 function ListRow({
-  icon,
+  icon: Icon,
   title,
   desc,
   meta,
   onClick,
   last,
 }: {
-  icon: string;
+  icon: TablerIcon;
   title: string;
   desc?: string;
   meta?: string;
@@ -150,12 +160,8 @@ function ListRow({
       }`}
     >
       <div className="w-8 flex items-center justify-center shrink-0 text-[#A1A1AA]">
-        <span
-          className="material-symbols-outlined text-[24px] group-active:text-[#F39C12] transition-colors"
-          style={{ fontVariationSettings: "'wght' 200" }}
-        >
-          {icon}
-        </span>
+        {/* Tabler icon，線寬 1.25 對齊其他 Material Symbols（wght 200）的細線風格 */}
+        <Icon size={24} stroke={1.25} className="group-active:text-[#F39C12] transition-colors" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[15px] font-medium text-[#18181B]">{title}</p>
@@ -416,7 +422,7 @@ export default function CommandCenter({
             
             <Card>
               <ListRow
-                icon="gavel"
+                icon={IconGavel}
                 title="制度"
                 desc="薪酬福利、績效考核等規章"
                 meta={policies.length ? `${policies.length} 項` : "待建立"}
@@ -424,7 +430,7 @@ export default function CommandCenter({
               />
               {canSeeFlows && (
                 <ListRow
-                  icon="schema"
+                  icon={IconRoute}
                   title="流程"
                   desc="專案管理等工作流程圖"
                   meta={flows.length ? `${flows.length} 項` : "載入中"}
@@ -432,14 +438,14 @@ export default function CommandCenter({
                 />
               )}
               <ListRow
-                icon="lan"
+                icon={IconChecklist}
                 title="SOP"
                 desc="各項作業標準流程"
                 meta={sops.length ? `${sops.length} 項` : "待建立"}
                 onClick={() => setScreen("sops")}
               />
               <ListRow
-                icon="description"
+                icon={IconFileText}
                 title="表單"
                 desc="領款簽收單等可填寫表單"
                 meta={`${FORMS.length} 項`}
@@ -459,21 +465,21 @@ export default function CommandCenter({
               
               <Card>
                 <ListRow
-                  icon="receipt_long"
+                  icon={IconReceipt2}
                   title="收支記錄"
                   desc="記錄每一筆收入與支出"
                   meta="記帳"
                   onClick={() => setScreen("finance-ledger")}
                 />
                 <ListRow
-                  icon="folder_open"
+                  icon={IconFolderDollar}
                   title="專案財務"
                   desc="各專案的收支與結餘"
                   meta={projects.length ? `${projects.length} 案` : "—"}
                   onClick={() => setScreen("finance-projects")}
                 />
                 <ListRow
-                  icon="monitoring"
+                  icon={IconChartLine}
                   title="公司財務狀態"
                   desc="現金水位與整體趨勢"
                   onClick={() => setScreen("finance-company")}
