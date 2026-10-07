@@ -7,7 +7,7 @@ import type { FlowRole } from "@/lib/flow-role";
 
 /* ══════════════════════════════════════════════════════════
    指揮中心 → 營運 →「流程」
-   每一張流程圖一張卡片（專案管理流程，之後新增的也自動列在這裡）；點開是滿版的流程圖頁（iframe）。
+   每一張流程圖一排（與「制度」同樣的清單樣式）（專案管理流程，之後新增的也自動列在這裡）；點開是滿版的流程圖頁（iframe）。
    流程圖本身在獨立網站 https://sensesoil-workflow-chart.vercel.app（Claude Design 產出），
    APP 只負責：列出有哪些流程、把使用者角色交給它、代它存檔。
    規格：Sensesoil_Workflow_chart/Workflow-Chart_APP串接規格.md
@@ -29,16 +29,6 @@ export function useFlows(enabled = true): FlowEntry[] {
   return data?.flows ?? [];
 }
 
-/** 依流程名稱挑一個圖示，之後新增的流程也有合適的圖 */
-function iconFor(title: string): string {
-  if (/專案|工程|施工/.test(title)) return "account_tree";
-  if (/請款|財務|報帳|收款/.test(title)) return "payments";
-  if (/採購|廠商|材料/.test(title)) return "inventory_2";
-  if (/招募|人事|入職|離職/.test(title)) return "badge";
-  if (/行銷|業務|客戶/.test(title)) return "campaign";
-  return "schema";
-}
-
 export default function WorkflowCharts({ flowRole }: { flowRole: FlowRole }) {
   const { data, isLoading } = useSWR<{ flows: FlowEntry[] }>("/api/workflow-chart/list", fetcher, {
     revalidateOnFocus: true,
@@ -48,30 +38,27 @@ export default function WorkflowCharts({ flowRole }: { flowRole: FlowRole }) {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3">
-        {flows.map((f) => (
+      <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
+        {flows.map((f, i) => (
           <button
             key={f.id}
             onClick={() => setOpen(f)}
-            className="group bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
+            className={`w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#F4F4F5] transition-colors outline-none ${
+              i === flows.length - 1 ? "" : "border-b border-[#F4F4F5]"
+            }`}
           >
-            <div className="text-[#A1A1AA]">
-              <span
-                className="material-symbols-outlined text-[28px] group-active:text-[#F39C12] transition-colors"
-                style={{ fontVariationSettings: "'wght' 200" }}
-              >
-                {iconFor(f.title)}
-              </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[15px] font-medium text-[#18181B]">{f.title}</p>
+              <p className="text-[12px] text-[#A1A1AA] mt-0.5 truncate">
+                {f.en ? f.en.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : "流程圖"}
+              </p>
             </div>
-            <div className="min-w-0">
-              <p className="text-[15px] font-bold text-[#18181B] truncate">{f.title}</p>
-              <p className="text-[11px] text-[#A1A1AA] mt-0.5 truncate">{f.en ? f.en.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : "流程圖"}</p>
-            </div>
+            <span className="material-symbols-outlined text-[20px] text-[#D4D4D8]" style={{ fontVariationSettings: "'wght' 200" }}>
+              chevron_right
+            </span>
           </button>
         ))}
-        {isLoading && !flows.length && (
-          <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 h-[116px] animate-pulse" />
-        )}
+        {isLoading && !flows.length && <div className="h-[64px] animate-pulse bg-[#F4F4F5]" />}
       </div>
 
       <FlowViewer flow={open} flowRole={flowRole} onClose={() => setOpen(null)} />

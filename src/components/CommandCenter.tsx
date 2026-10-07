@@ -417,7 +417,7 @@ export default function CommandCenter({
             <Card>
               <ListRow
                 icon="gavel"
-                title="公司制度"
+                title="制度"
                 desc="薪酬福利、績效考核等規章"
                 meta={policies.length ? `${policies.length} 項` : "待建立"}
                 onClick={() => setScreen("policies")}
@@ -503,14 +503,14 @@ export default function CommandCenter({
 
       <SubScreen
         open={screen === "policies"}
-        title="公司制度"
+        title="制度"
         onClose={() => setScreen(null)}
       >
         <DocList docs={policies} onOpen={setOpenDoc} emptyIcon="gavel" />
       </SubScreen>
 
       <SubScreen open={screen === "flows"} title="流程" onClose={() => setScreen(null)}>
-        <div className="px-5 py-5 max-w-3xl mx-auto">
+        <div className="px-5 py-4 max-w-3xl mx-auto">
           <WorkflowCharts flowRole={flowRole} />
         </div>
       </SubScreen>
