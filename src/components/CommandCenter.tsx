@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useCallback } from "react";
 import useSWR from "swr";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 import TeamPage from "@/components/team/TeamPage";
-import WorkflowCharts from "@/components/WorkflowCharts";
+import WorkflowCharts, { useFlows } from "@/components/WorkflowCharts";
 import type { FlowRole } from "@/lib/flow-role";
 import {
   getPolicies,
@@ -18,7 +18,6 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json());
 export const COMMAND_TAB_OPERATIONS = "營運";
 export const COMMAND_TAB_FINANCE = "財務";
 export const COMMAND_TAB_TEAM = "團隊";
-export const COMMAND_TAB_FLOW = "流程";
 
 /**
  * 依權限算出實際的分頁清單。page.tsx 的分頁列與這裡的面板都用同一份，
@@ -28,13 +27,9 @@ export const COMMAND_TAB_FLOW = "流程";
 export function getCommandTabs(opts: {
   canSeeOperations: boolean;
   canSeeFinance: boolean;
-  canSeeFlows?: boolean;
 }): string[] {
-  // 流程：每一張流程圖一張卡片（專案管理流程…），權限表有「流程」欄就依那一欄
   // 團隊：內部職員卡牌、外部職員、協力廠商、聯盟品牌（能進指揮中心就看得到）
-  const tabs: string[] = ["定位定崗"];
-  if (opts.canSeeFlows !== false) tabs.push(COMMAND_TAB_FLOW);
-  tabs.push(COMMAND_TAB_TEAM);
+  const tabs: string[] = ["定位定崗", COMMAND_TAB_TEAM];
   if (opts.canSeeOperations) tabs.push(COMMAND_TAB_OPERATIONS);
   if (opts.canSeeFinance) tabs.push(COMMAND_TAB_FINANCE);
   return tabs;
@@ -46,7 +41,7 @@ interface CommandCenterProps {
   /** 對應權限表的「營運」「財務」欄，沒權限就不顯示該分頁 */
   canSeeOperations: boolean;
   canSeeFinance: boolean;
-  /** 權限表「流程」欄（沒有這欄時能進指揮中心就看得到） */
+  /** 權限表「營運 → 流程」欄 */
   canSeeFlows: boolean;
   /** 交給流程圖頁的角色：admin／editor 可編輯，user／viewer 唯讀 */
   flowRole: FlowRole;
@@ -200,6 +195,7 @@ export default function CommandCenter({
     | null
     | "profile"
     | "policies"
+    | "flows"
     | "sops"
     | "forms"
     | "finance-ledger"
@@ -216,11 +212,13 @@ export default function CommandCenter({
 
   const policies = useMemo(() => getPolicies(), []);
   const sops = useMemo(() => getSops(), []);
+  // 流程圖目錄（營運 → 流程的項目數；點進去是每一張流程圖）
+  const flows = useFlows(canSeeOperations && canSeeFlows);
   const projects = crm?.projects ?? [];
 
   const tabs = useMemo(
-    () => getCommandTabs({ canSeeOperations, canSeeFinance, canSeeFlows }),
-    [canSeeOperations, canSeeFinance, canSeeFlows]
+    () => getCommandTabs({ canSeeOperations, canSeeFinance }),
+    [canSeeOperations, canSeeFinance]
   );
   const activeIdx = Math.max(0, tabs.indexOf(activeTab));
   // 團隊頁第一次打開才載入（照片比較大），之後保留，切回來不用重抓
@@ -400,16 +398,6 @@ export default function CommandCenter({
             </div>
           </section>
 
-          {/* ── 分頁：流程（每一張流程圖一張卡片，點開是滿版流程圖） ── */}
-          {canSeeFlows && (
-            <section
-              className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
-              style={{ width: panelW || `${100 / tabs.length}%` }}
-            >
-              <WorkflowCharts flowRole={flowRole} />
-            </section>
-          )}
-
           {/* ── 分頁：團隊 ─────────────────────────────────── */}
           {/* 團隊頁很長：不在這一頁時把高度收起來，其他分頁才不會多出一大段空白可以捲 */}
           <section
@@ -434,6 +422,15 @@ export default function CommandCenter({
                 meta={policies.length ? `${policies.length} 項` : "待建立"}
                 onClick={() => setScreen("policies")}
               />
+              {canSeeFlows && (
+                <ListRow
+                  icon="schema"
+                  title="流程"
+                  desc="專案管理等工作流程圖"
+                  meta={flows.length ? `${flows.length} 項` : "載入中"}
+                  onClick={() => setScreen("flows")}
+                />
+              )}
               <ListRow
                 icon="lan"
                 title="SOP"
@@ -510,6 +507,12 @@ export default function CommandCenter({
         onClose={() => setScreen(null)}
       >
         <DocList docs={policies} onOpen={setOpenDoc} emptyIcon="gavel" />
+      </SubScreen>
+
+      <SubScreen open={screen === "flows"} title="流程" onClose={() => setScreen(null)}>
+        <div className="px-5 py-5 max-w-3xl mx-auto">
+          <WorkflowCharts flowRole={flowRole} />
+        </div>
       </SubScreen>
 
       <SubScreen open={screen === "sops"} title="SOP" onClose={() => setScreen(null)}>

@@ -648,11 +648,11 @@ export default function HuntingManagementPage() {
   const canSeeOperations = roles["營運"] !== undefined ? hasRole("營運") : isAdmin;
   const canSeeFinance = roles["財務"] !== undefined ? hasRole("財務") : isAdmin;
 
-  // 指揮中心的分頁：沒有財務權限就只有兩頁。分頁列與內容面板共用同一份清單。
+  // 流程圖：權限表「營運 → 流程」欄決定看不看得到（在營運裡）與角色（Admin/Editor 可編輯，User/Viewer 唯讀）
   // 流程圖：權限表「流程」欄（沒有這欄時能進指揮中心就看得到；admin 可編輯、其他人唯讀）
   const canSeeFlows = canSeeFlowsOf(roles);
   const flowRole = flowRoleFromRoles(roles);
-  const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance, canSeeFlows });
+  const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance });
 
   // 組織架構圖有三種模式，由權限表「組織圖」欄決定要載入哪一個網址：
   //

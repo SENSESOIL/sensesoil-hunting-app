@@ -6,8 +6,8 @@ import useSWR from "swr";
 import type { FlowRole } from "@/lib/flow-role";
 
 /* ══════════════════════════════════════════════════════════
-   指揮中心 →「流程」分頁
-   每一張流程圖一張卡片（像定位定崗的組織圖、職務說明）；點開是滿版的流程圖頁（iframe）。
+   指揮中心 → 營運 →「流程」
+   每一張流程圖一張卡片（專案管理流程，之後新增的也自動列在這裡）；點開是滿版的流程圖頁（iframe）。
    流程圖本身在獨立網站 https://sensesoil-workflow-chart.vercel.app（Claude Design 產出），
    APP 只負責：列出有哪些流程、把使用者角色交給它、代它存檔。
    規格：Sensesoil_Workflow_chart/Workflow-Chart_APP串接規格.md
@@ -22,6 +22,12 @@ interface FlowEntry {
 }
 
 const fetcher = (url: string) => fetch(url).then((r) => (r.ok ? r.json() : { flows: [] }));
+
+/** 流程圖目錄（營運 →「流程」的項目數與清單共用同一份快取） */
+export function useFlows(enabled = true): FlowEntry[] {
+  const { data } = useSWR<{ flows: FlowEntry[] }>(enabled ? "/api/workflow-chart/list" : null, fetcher, { revalidateOnFocus: true });
+  return data?.flows ?? [];
+}
 
 /** 依流程名稱挑一個圖示，之後新增的流程也有合適的圖 */
 function iconFor(title: string): string {
@@ -166,7 +172,7 @@ function FlowViewer({ flow, flowRole, onClose }: { flow: FlowEntry | null; flowR
     >
       {/* 細標題列：返回＋流程名稱（流程圖頁左上是自己的 logo，返回鍵不疊在上面） */}
       <div className="shrink-0 flex items-center gap-1 px-2 bg-[#141519] border-b border-white/10" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-        <button onClick={onClose} aria-label="關閉流程圖，返回指揮中心" className="w-11 h-11 flex items-center justify-center rounded-full active:bg-white/10">
+        <button onClick={onClose} aria-label="關閉流程圖" className="w-11 h-11 flex items-center justify-center rounded-full active:bg-white/10">
           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="#D4D4D8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 5l-7 7 7 7" />
           </svg>
