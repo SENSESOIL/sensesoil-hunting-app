@@ -142,7 +142,9 @@ function FlowViewer({ flow, flowRole, onClose }: { flow: FlowEntry | null; flowR
   }, [mounted, flowRole]);
 
   if (typeof document === "undefined") return null;
-  const src = shown ? `${FLOW_ORIGIN}/?flow=${encodeURIComponent(shown.id)}` : "";
+  // role 也放進網址當備援：流程圖頁若沒認出自己嵌在 APP 裡，會改用網址參數（預設是 editor）。
+  // 這只影響畫面上能不能按；真正能不能寫入由 /api/workflow-chart/save 依權限表把關。
+  const src = shown ? `${FLOW_ORIGIN}/?flow=${encodeURIComponent(shown.id)}&role=${flowRole}` : "";
 
   return createPortal(
     <div

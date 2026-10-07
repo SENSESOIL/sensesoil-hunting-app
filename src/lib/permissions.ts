@@ -135,10 +135,10 @@ async function fetchPermissionsFromSheet(): Promise<string[][]> {
   }
 
   try {
-    // A:Z —— 權限表已經長到 R 欄，舊版寫死 A:M 會把「請假／組織圖／職務說明／營運／財務」整批讀不到
-    let rows = await readSheet(spreadsheetId, "Permission!A:Z").catch(() => null);
+    // 讀到 BZ 欄：權限表往右新增欄位時不用改程式（標題樹與 email 欄都是自動偵測）
+    let rows = await readSheet(spreadsheetId, "Permission!A:BZ").catch(() => null);
     if (!rows) {
-      rows = await readSheet(spreadsheetId, "A:Z");
+      rows = await readSheet(spreadsheetId, "A:BZ");
     }
 
     if (rows && rows.length > 0) {

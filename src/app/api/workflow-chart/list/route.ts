@@ -40,6 +40,26 @@ export async function GET() {
       console.error("[workflow-chart/list]", e);
     }
   }
+  // 目錄只記 id／title，英文副標存在各流程自己的文件裡 —— 一次撈回來補上（流程圖頁改了標題也以這裡為準）
+  if (url && key && flows.length) {
+    try {
+      const ids = flows.map((f) => `"${f.id.replace(/"/g, "")}"`).join(",");
+      const r = await fetch(
+        `${url}/rest/v1/workflow_doc?id=in.(${encodeURIComponent(ids)})&select=id,title:payload->>title,en:payload->>en`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" }
+      );
+      if (r.ok) {
+        const docs = (await r.json()) as { id: string; title?: string | null; en?: string | null }[];
+        const byId = new Map(docs.map((d) => [d.id, d]));
+        flows = flows.map((f) => {
+          const d = byId.get(f.id);
+          return { ...f, title: d?.title?.trim() || f.title, en: d?.en?.trim() || f.en };
+        });
+      }
+    } catch (e) {
+      console.error("[workflow-chart/list] 讀取流程副標失敗", e);
+    }
+  }
   for (const d of DEFAULT_FLOWS) if (!flows.some((f) => f.id === d.id)) flows.unshift(d);
   return NextResponse.json({ flows }, { headers: { "Cache-Control": "no-store" } });
 }
