@@ -32,7 +32,7 @@ import { useTeam } from "./useTeam";
    四個分類共用同一套：
      一列 = 頭像＋名稱＋說明，右側電話鍵 → 跳出「撥打／取消」
      點一列 → 個人卡（聯絡方式、編輯）
-     名字右側的鉛筆 → 編輯（內部職員寫回拾壤CRM「員工CRM」）
+     電話左側的鉛筆 → 編輯（內部職員、協力廠商寫回拾壤CRM「員工CRM」「廠商CRM」）
      新增 → 清單最後一列「＋ 新增…」
      權限：權限表「團隊」欄 Admin 可新增、編輯、刪除；Editor 可新增、編輯；其他人唯讀
      搜尋 → 頂部的放大鏡，一次搜四個分類：電腦在標題列直接展開輸入；手機跳出輸入欄，背景模糊
@@ -191,7 +191,7 @@ export default function TeamPage({
   const shown = trade ? inCat.filter((e) => e.contact?.title === trade) : inCat;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 pt-1">
       {/* 手機：點頂部放大鏡跳出輸入欄，背景模糊；結果直接列在輸入欄下方 */}
       <SearchOverlay open={searchOpen} query={query} onQuery={(v) => onQuery?.(v)} onClose={() => onSearchClose?.()}>
         {keyword ? <SearchResults entries={results} keyword={query.trim()} onOpen={setView} onCall={setCall} onEdit={(e) => (editable(e) ? openEdit : undefined)} /> : null}
@@ -216,8 +216,8 @@ export default function TeamPage({
                   role="tab"
                   aria-selected={on}
                   onClick={() => setCat(c.key)}
-                  className={`h-[84px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#F39C12]/50 ${
-                    on ? "bg-[#FFF4E5] ring-1 ring-[#F39C12]/35" : "bg-white shadow-card active:bg-[#F4F4F5]"
+                  className={`h-[84px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F39C12]/50 ${
+                    on ? "bg-[#FFF4E5] ring-1 ring-inset ring-[#F39C12]/35" : "bg-white shadow-card active:bg-[#F4F4F5]"
                   }`}
                 >
                   <Ico size={22} stroke={1.4} className={on ? "text-[#E08A00]" : "text-[#A1A1AA]"} />
@@ -282,10 +282,6 @@ export default function TeamPage({
             );
           })()}
 
-          {cat === "internal" && canManageStaff && <p className="px-4 -mt-2 text-[13px] leading-[20px] text-[#A1A1AA]">{meta.hint}，在這裡改的會同步回試算表</p>}
-          {cat === "vendor" && inCat.some((e) => e.contact?.fromCrm) && (
-            <p className="px-4 -mt-2 text-[13px] leading-[20px] text-[#A1A1AA]">協力廠商來自拾壤CRM 的廠商CRM，在這裡改的會同步回試算表；統編、匯款帳號不會顯示在 APP。</p>
-          )}
         </div>
       )}
 
@@ -358,8 +354,7 @@ function ListCard({ children }: { children: React.ReactNode }) {
 /** 一列：頭像＋名稱＋說明，右側電話鍵（四個分類都一樣） */
 function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => void; onCall: (e: Entry) => void; onEdit?: (e: Entry) => void }) {
   return (
-    <div className="relative flex items-center">
-      {/* 整列可點（看個人卡）；鉛筆疊在名字右側，是獨立的按鈕 */}
+    <div className="flex items-center">
       <button
         onClick={() => onOpen(e)}
         className="flex-1 min-w-0 flex items-center gap-3.5 pl-4 py-3 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
@@ -368,8 +363,6 @@ function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => vo
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-1.5 min-w-0">
             <span className="text-[16px] leading-[22px] font-medium text-[#18181B] truncate">{e.name}</span>
-            {/* 鉛筆的位置（實際按鈕疊在上面） */}
-            {onEdit && <span data-pin-slot className="w-7 h-[22px] shrink-0 -ml-0.5" aria-hidden />}
             {e.me && <span className="text-[13px] text-[#A1A1AA] shrink-0">你</span>}
             {e.tag && (
               <span className="shrink-0 h-[20px] px-2 rounded-full bg-[#F4F4F5] text-[12px] text-[#71717A] leading-[20px]">{e.tag}</span>
@@ -378,7 +371,15 @@ function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => vo
           {e.sub && <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5 truncate">{e.sub}</span>}
         </span>
       </button>
-      {onEdit && <EditPin e={e} onEdit={onEdit} />}
+      {onEdit && (
+        <button
+          onClick={() => onEdit(e)}
+          className="w-11 h-11 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F4F4F5] active:text-[#18181B] outline-none focus-visible:bg-[#F4F4F5] shrink-0"
+          aria-label={`編輯 ${e.name}`}
+        >
+          <IconPencil size={19} stroke={1.5} />
+        </button>
+      )}
       {e.phones.length ? (
         <button
           onClick={() => onCall(e)}
@@ -391,38 +392,6 @@ function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => vo
         <span className="w-11 mr-2 shrink-0" aria-hidden />
       )}
     </div>
-  );
-}
-
-/** 名字右側的鉛筆：疊在預留的位置上（列本身是按鈕，按鈕不能包按鈕） */
-function EditPin({ e, onEdit }: { e: Entry; onEdit: (e: Entry) => void }) {
-  const ref = useRef<HTMLButtonElement>(null);
-  const [left, setLeft] = useState<number | null>(null);
-  useEffect(() => {
-    const btn = ref.current;
-    const row = btn?.parentElement;
-    const slot = row?.querySelector<HTMLElement>("[data-pin-slot]");
-    if (!btn || !row || !slot) return;
-    const place = () => {
-      const r = row.getBoundingClientRect();
-      const n = slot.getBoundingClientRect();
-      setLeft(n.left - r.left + (n.width - 32) / 2);
-    };
-    place();
-    const ro = new ResizeObserver(place);
-    ro.observe(row);
-    return () => ro.disconnect();
-  }, [e.name]);
-  return (
-    <button
-      ref={ref}
-      onClick={() => onEdit(e)}
-      className="absolute top-[7px] w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F4F4F5] active:text-[#18181B] outline-none focus-visible:bg-[#F4F4F5]"
-      style={{ left: left ?? -9999 }}
-      aria-label={`編輯 ${e.name}`}
-    >
-      <IconPencil size={17} stroke={1.5} />
-    </button>
   );
 }
 

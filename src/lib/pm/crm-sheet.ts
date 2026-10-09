@@ -19,7 +19,7 @@ export interface CrmTable<F extends string> {
   primary: F;
   /** 刪除時要清空的標題（沒列到的，例如公式欄，不動） */
   clearOnDelete: string[];
-  /** 內容要當文字存（電話開頭的 0 才不會被吃掉） */
+  /** 內容一律當文字存（電話、帳號、證號：開頭的 0 不會不見，長數字也不會變成科學記號） */
   textFields?: F[];
 }
 
@@ -115,7 +115,7 @@ export async function saveCrm<F extends string>(t: CrmTable<F>, seq: string | un
     if (val === undefined) continue;
     const c = s.header.indexOf(t.fields[k]);
     if (c < 0) continue;
-    const cell = t.textFields?.includes(k) && /^0/.test(val) ? `'${val}` : val;
+    const cell = t.textFields?.includes(k) && val ? `'${val}` : val;
     data.push({ range: `${t.tab}!${colLetter(c)}${target.rowNumber}`, values: [[cell]] });
   }
   await batchWriteSheet(CRM_ID, data);

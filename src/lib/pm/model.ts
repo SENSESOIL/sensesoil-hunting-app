@@ -406,6 +406,11 @@ export interface StaffInfo {
   gmail?: string;
   joined?: string;
   left?: string;
+  /** 以下只回給權限表「團隊」欄 Admin／Editor */
+  birthday?: string;
+  idNo?: string;
+  address?: string;
+  bank?: string;
 }
 
 /** 權限表「團隊」欄：admin 可新增、編輯、刪除；editor 可新增、編輯；其他人只能看 */
@@ -444,6 +449,11 @@ export interface VendorInfo {
   contact2: string;
   phone2: string;
   note: string;
+  /** 以下只回給權限表「團隊」欄 Admin／Editor */
+  taxId?: string;
+  bankBranch?: string;
+  branch?: string;
+  account?: string;
 }
 
 export interface TeamData {

@@ -3,8 +3,15 @@ import { readSheet } from "@/lib/google-sheets";
 import { explainDbError, getPmUser, listPeople, pmDbConfigured, rpc } from "@/lib/pm/server";
 import { rowToContact, type Contact, type ContactKind, type TeamData, type TeamMember, type TeamRole } from "@/lib/pm/model";
 import { checkPermissions } from "@/lib/permissions";
-import { deleteStaff, listStaff, saveStaff, type StaffRecord } from "@/lib/pm/staff-crm";
-import { deleteVendor, listVendors, saveVendor } from "@/lib/pm/vendor-crm";
+import { deleteStaff, listStaff, saveStaff, STAFF_PRIVATE, type StaffRecord } from "@/lib/pm/staff-crm";
+import { deleteVendor, listVendors, saveVendor, VENDOR_PRIVATE } from "@/lib/pm/vendor-crm";
+
+/** 拿掉個資／帳務欄位（給非 Admin／Editor） */
+function omit<T extends object>(o: T, keys: readonly string[]): T {
+  const c = { ...o } as Record<string, unknown>;
+  for (const k of keys) delete c[k];
+  return c as T;
+}
 import { CrmError } from "@/lib/pm/crm-sheet";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +24,7 @@ export const dynamic = "force-dynamic";
  *
  * 內部職員、協力廠商直接讀寫拾壤CRM「員工CRM」「廠商CRM」（src/lib/pm/staff-crm.ts、vendor-crm.ts）。
  * 新增／編輯／刪除依權限表「團隊」欄：Admin 全部；Editor 新增、編輯；其他人唯讀。
- * 試算表只取需要的欄位；身分證、生日、地址、匯款帳號、統編一律不讀出。
+ * 身分證、生日、地址、匯款帳號、統編等個資只回給「團隊」欄 Admin／Editor，其他人的回應裡不會有。
  */
 
 const CRM = "11IiXZbVxFAMzd8wEjU2Z9-W3CqoRa6aW1vQ50dJtrDk";
@@ -122,6 +129,8 @@ export async function GET(req: Request) {
       (e) => ({ ok: false as const, e: e instanceof Error ? e.message : String(e) })
     ),
   ]);
+  // 個資（身分證、生日、地址、帳號）只給 Admin／Editor
+  const canSeePrivate = teamRole === "admin" || teamRole === "editor";
   const data: TeamData = {
     me: { email: user.email, name: user.name, role: user.role, teamRole },
     configured: pmDbConfigured(),
@@ -169,7 +178,7 @@ export async function GET(req: Request) {
         phone: r.phone,
         ...prof,
         sort: prof.sort ?? i,
-        staff: { ...r },
+        staff: canSeePrivate ? { ...r } : omit(r, STAFF_PRIVATE),
       };
     });
   } else {
@@ -182,7 +191,7 @@ export async function GET(req: Request) {
       ...profileOf(p.email),
     }));
   }
-  data.contacts = [...contacts, ...vendors];
+  data.contacts = [...contacts, ...vendors.map((c) => (c.vendor && !canSeePrivate ? { ...c, vendor: omit(c.vendor, VENDOR_PRIVATE) } : c))];
   return json(data);
 }
 

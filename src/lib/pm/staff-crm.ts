@@ -2,8 +2,8 @@
  * 拾壤CRM「員工CRM」：內部職員的名冊（伺服器端）
  *
  * 指揮中心 → 團隊 → 內部職員 直接讀寫這一頁（讀寫細節見 crm-sheet.ts）。
- *   APP 讀寫：序列、姓名、等級、聯絡電話、Gmail、登入參戰日、離線登出日
- *   生日、身分證字號、地址、富邦匯款帳號：APP 不讀出、不顯示、不提供編輯，只在刪除時一併清空。
+ *   APP 讀寫：序列、姓名、等級、聯絡電話、Gmail、登入參戰日、離線登出日、生日、身分證字號、地址、富邦匯款帳號
+ *   後四欄是個資：只有權限表「團隊」欄 Admin／Editor 拿得到（由 /api/pm/team 過濾）。
  */
 
 import { clean, CrmError, deleteCrm, listCrm, saveCrm, type CrmTable } from "./crm-sheet";
@@ -18,16 +18,34 @@ export interface StaffRecord {
   joined?: string;
   /** 離線登出日（有填 = 已離職） */
   left?: string;
+  birthday?: string;
+  idNo?: string;
+  address?: string;
+  bank?: string;
 }
 
-type F = "name" | "level" | "phone" | "gmail" | "joined" | "left";
+type F = "name" | "level" | "phone" | "gmail" | "joined" | "left" | "birthday" | "idNo" | "address" | "bank";
+
+/** 個資欄位：只給 Admin／Editor */
+export const STAFF_PRIVATE = ["birthday", "idNo", "address", "bank"] as const;
 
 const STAFF: CrmTable<F> = {
   tab: "員工CRM",
-  fields: { name: "姓名", level: "等級", phone: "聯絡電話", gmail: "Gmail", joined: "登入參戰日", left: "離線登出日" },
+  fields: {
+    name: "姓名",
+    level: "等級",
+    phone: "聯絡電話",
+    gmail: "Gmail",
+    joined: "登入參戰日",
+    left: "離線登出日",
+    birthday: "生日",
+    idNo: "身分證字號",
+    address: "地址",
+    bank: "富邦匯款帳號",
+  },
   primary: "name",
   clearOnDelete: ["姓名", "登入參戰日", "離線登出日", "等級", "生日", "聯絡電話", "身分證字號", "Gmail", "地址", "富邦匯款帳號"],
-  textFields: ["phone"],
+  textFields: ["phone", "idNo", "bank", "birthday"],
 };
 
 export { CrmError as StaffError };
@@ -48,6 +66,10 @@ export async function listStaff(): Promise<StaffRecord[]> {
       gmail: opt(r.v.gmail.toLowerCase()),
       joined: opt(r.v.joined),
       left: opt(r.v.left),
+      birthday: opt(r.v.birthday),
+      idNo: opt(r.v.idNo),
+      address: opt(r.v.address),
+      bank: opt(r.v.bank),
     }));
 }
 
@@ -59,6 +81,10 @@ export async function saveStaff(seq: string | undefined, input: Partial<Record<F
     gmail: clean(input.gmail, 80)?.toLowerCase(),
     joined: clean(input.joined, 20),
     left: clean(input.left, 20),
+    birthday: clean(input.birthday, 20),
+    idNo: clean(input.idNo, 20)?.toUpperCase(),
+    address: clean(input.address, 120),
+    bank: clean(input.bank, 40),
   };
   if ((seq === undefined || v.name !== undefined) && !v.name) throw new CrmError("姓名必填");
   if (v.gmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.gmail)) throw new CrmError("Gmail 格式不正確");

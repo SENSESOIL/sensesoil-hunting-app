@@ -11,7 +11,7 @@ import { teamPost } from "./useTeam";
 /* ══════════════════════════════════════════════════════════
    內部職員：新增／編輯（寫回拾壤CRM「員工CRM」）
    Admin、Editor 可新增、編輯；只有 Admin 看得到「刪除」。
-   身分證、生日、地址、匯款帳號不在 APP 編輯（請在試算表）。
+   個資（生日、身分證、地址、帳號）只有 Admin、Editor 拿得到，這張表也只有他們打得開。
    ══════════════════════════════════════════════════════════ */
 
 const LEVELS = ["S", "A", "B", "C", "D", "E"];
@@ -62,6 +62,10 @@ export function StaffSheet({
     gmail: staff?.gmail ?? "",
     joined: staff?.joined ?? "",
     left: staff?.left ?? "",
+    birthday: staff?.birthday ?? "",
+    idNo: staff?.idNo ?? "",
+    address: staff?.address ?? "",
+    bank: staff?.bank ?? "",
   };
   const [d, setD] = useState<Form>(initial);
   const [saving, setSaving] = useState(false);
@@ -110,7 +114,6 @@ export function StaffSheet({
     <Sheet
       open={open}
       title={staff ? "編輯內部職員" : "新增內部職員"}
-      subtitle="會同步到拾壤CRM 的員工CRM"
       onClose={() => !saving && onClose()}
       dirty={dirty && !saving}
       footer={
@@ -194,7 +197,12 @@ export function StaffSheet({
           <DateField label="離線登出日" value={d.left} onChange={(v) => set("left", v)} hint="填了就視為離職：名單不再顯示，也無法登入 APP" />
         </FieldGroup>
 
-        <p className="px-5 mt-3 text-[12px] leading-relaxed text-[#A1A1AA]">生日、身分證字號、地址、匯款帳號請直接在試算表填寫，APP 不顯示這些資料。</p>
+        <FieldGroup title="個人資料">
+          <TextField label="生日" value={d.birthday} onChange={(v) => set("birthday", v)} placeholder="例：60/09/01" />
+          <TextField label="身分證字號" value={d.idNo} onChange={(v) => set("idNo", v)} placeholder="例：A123456789" />
+          <TextField label="地址" value={d.address} onChange={(v) => set("address", v)} />
+          <TextField label="富邦匯款帳號" value={d.bank} onChange={(v) => set("bank", v)} />
+        </FieldGroup>
       </div>
     </Sheet>
   );

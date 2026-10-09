@@ -11,12 +11,26 @@ import { teamPost } from "./useTeam";
 /* ══════════════════════════════════════════════════════════
    協力廠商：新增／編輯（寫回拾壤CRM「廠商CRM」）
    Admin、Editor 可新增、編輯；只有 Admin 看得到「刪除」。
-   統編、銀行、匯款帳號不在 APP 編輯（請在試算表）。
+   帳務資料（統編、銀行、匯款帳號）只有 Admin、Editor 拿得到，這張表也只有他們打得開。
    ══════════════════════════════════════════════════════════ */
 
 type Form = Omit<VendorInfo, "seq">;
 
-const EMPTY: Form = { trade: "", level: "", fullName: "", short: "", contact1: "", phone1: "", contact2: "", phone2: "", note: "" };
+const EMPTY: Form = {
+  trade: "",
+  level: "",
+  fullName: "",
+  short: "",
+  contact1: "",
+  phone1: "",
+  contact2: "",
+  phone2: "",
+  note: "",
+  taxId: "",
+  bankBranch: "",
+  branch: "",
+  account: "",
+};
 
 export function VendorSheet({
   vendor,
@@ -54,7 +68,7 @@ export function VendorSheet({
   const dirty = JSON.stringify(d) !== JSON.stringify(initial);
 
   const save = async () => {
-    if (!d.fullName.trim()) {
+    if (!d.fullName?.trim()) {
       toast("請輸入公司名稱", { tone: "error" });
       return;
     }
@@ -84,7 +98,6 @@ export function VendorSheet({
     <Sheet
       open={open}
       title={vendor ? "編輯協力廠商" : "新增協力廠商"}
-      subtitle="會同步到拾壤CRM 的廠商CRM"
       onClose={() => !saving && onClose()}
       dirty={dirty && !saving}
       footer={
@@ -144,7 +157,12 @@ export function VendorSheet({
           <TextField label="備註" value={d.note} onChange={(v) => set("note", v)} multiline />
         </FieldGroup>
 
-        <p className="px-5 mt-3 text-[12px] leading-relaxed text-[#A1A1AA]">統編、銀行分行、匯款帳號請直接在試算表填寫，APP 不顯示這些資料。</p>
+        <FieldGroup title="帳務">
+          <TextField label="統編" value={d.taxId} onChange={(v) => set("taxId", v)} />
+          <TextField label="銀行分行" value={d.bankBranch} onChange={(v) => set("bankBranch", v)} />
+          <TextField label="分行" value={d.branch} onChange={(v) => set("branch", v)} />
+          <TextField label="匯款帳號" value={d.account} onChange={(v) => set("account", v)} />
+        </FieldGroup>
       </div>
     </Sheet>
   );
