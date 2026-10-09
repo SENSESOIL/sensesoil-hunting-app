@@ -8,7 +8,7 @@ import { mutate } from "swr";
 import HuntingTasksView, {
   HuntingTasksViewRef,
 } from "@/components/HuntingTasksView";
-import CommandCenter, { getCommandTabs } from "@/components/CommandCenter";
+import CommandCenter, { getCommandTabs, COMMAND_TAB_OPERATIONS } from "@/components/CommandCenter";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 import LeaveForm, { LeaveFormRef } from "@/components/LeaveForm";
 import VersionGuard from "@/components/VersionGuard";
@@ -647,12 +647,22 @@ export default function HuntingManagementPage() {
   // 權限表有「營運」「財務」欄就以它為準；表上還沒有該欄時退回 admin-only（保守）
   const canSeeOperations = roles["營運"] !== undefined ? hasRole("營運") : isAdmin;
   const canSeeFinance = roles["財務"] !== undefined ? hasRole("財務") : isAdmin;
+  // 團隊：權限表「團隊」欄；表上還沒有這欄時能進指揮中心就看得到（原本就是基本頁）
+  const canSeeTeam = roles["團隊"] !== undefined ? hasRole("團隊") : true;
 
-  // 流程圖：權限表「營運 → 流程」欄決定看不看得到（在營運裡）與角色（Admin/Editor 可編輯，User/Viewer 唯讀）
-  // 流程圖：權限表「流程」欄（沒有這欄時能進指揮中心就看得到；admin 可編輯、其他人唯讀）
-  const canSeeFlows = canSeeFlowsOf(roles);
+  // 營運底下每一項各看權限表「營運」下自己那一欄；表上沒有那一欄 → 能進營運就看得到。
+  // 流程另外決定角色（Admin/Editor 可編輯，User/Viewer 唯讀）。
+  const canSeeOpsItem = (key: string) => !(key in roles) || hasRole(key);
+  const opsAccess = {
+    orgChart: canSeeOpsItem("組織圖"),
+    jobDesc: canSeeOpsItem("職務說明"),
+    policies: canSeeOpsItem("制度"),
+    flows: canSeeFlowsOf(roles),
+    sops: canSeeOpsItem("sop"),
+    forms: canSeeOpsItem("表單"),
+  };
   const flowRole = flowRoleFromRoles(roles);
-  const commandTabs = getCommandTabs({ canSeeOperations, canSeeFinance });
+  const commandTabs = getCommandTabs({ canSeeOperations, canSeeTeam, canSeeFinance });
 
   // 組織架構圖有三種模式，由權限表「組織圖」欄決定要載入哪一個網址：
   //
@@ -714,7 +724,11 @@ export default function HuntingManagementPage() {
       setActiveSubTab(visibleSubTabs[0]);
     }
   }, [visibleSubTabs, activeSubTab]);
-  const [commandTab, setCommandTab] = useState("定位定崗");
+  const [commandTab, setCommandTab] = useState(COMMAND_TAB_OPERATIONS);
+  // 停在沒有權限（或已不存在）的分頁時，退回第一個看得到的分頁
+  useEffect(() => {
+    if (commandTabs.length && !commandTabs.includes(commandTab)) setCommandTab(commandTabs[0]);
+  }, [commandTabs, commandTab]);
   const [intelTab, setIntelTab] = useState(PROJECT_TABS[0]);
   const TASK_TABS = isPmManager ? TASK_TABS_MANAGER : TASK_TABS_MEMBER;
   const [scheduleTab, setScheduleTab] = useState(TASK_TABS_MANAGER[0]);
@@ -1756,8 +1770,9 @@ export default function HuntingManagementPage() {
             <CommandCenter
               onOpenOrgChart={() => setShowOrgChart(true)}
               canSeeOperations={canSeeOperations}
+              canSeeTeam={canSeeTeam}
               canSeeFinance={canSeeFinance}
-              canSeeFlows={canSeeFlows}
+              opsAccess={opsAccess}
               flowRole={flowRole}
               activeTab={commandTab}
               onTabChange={setCommandTab}

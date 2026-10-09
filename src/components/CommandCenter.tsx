@@ -14,6 +14,8 @@ import {
   IconReceipt2,
   IconFolderDollar,
   IconChartLine,
+  IconSitemap,
+  IconId,
   type Icon as TablerIcon,
 } from "@tabler/icons-react";
 import {
@@ -32,17 +34,28 @@ export const COMMAND_TAB_TEAM = "團隊";
 /**
  * 依權限算出實際的分頁清單。page.tsx 的分頁列與這裡的面板都用同一份，
  * 避免出現「有標籤但點進去沒內容」或「沒權限卻看得到」的狀況。
- * 定位定崗是基本頁（能進指揮中心就看得到），營運與財務各自對應權限表的欄位。
+ * 營運、團隊、財務各自對應權限表的欄位。
  */
 export function getCommandTabs(opts: {
   canSeeOperations: boolean;
+  canSeeTeam: boolean;
   canSeeFinance: boolean;
 }): string[] {
-  // 團隊：內部職員卡牌、外部職員、協力廠商、聯盟品牌（能進指揮中心就看得到）
-  const tabs: string[] = ["定位定崗", COMMAND_TAB_TEAM];
+  // 順序：營運 → 團隊（內部職員卡牌、外部職員、協力廠商、聯盟品牌）→ 財務，與權限表欄位順序一致
+  const tabs: string[] = [];
   if (opts.canSeeOperations) tabs.push(COMMAND_TAB_OPERATIONS);
+  if (opts.canSeeTeam) tabs.push(COMMAND_TAB_TEAM);
   if (opts.canSeeFinance) tabs.push(COMMAND_TAB_FINANCE);
   return tabs;
+}
+
+export interface OpsAccess {
+  orgChart: boolean;
+  jobDesc: boolean;
+  policies: boolean;
+  flows: boolean;
+  sops: boolean;
+  forms: boolean;
 }
 
 interface CommandCenterProps {
@@ -50,9 +63,10 @@ interface CommandCenterProps {
   onOpenOrgChart: () => void;
   /** 對應權限表的「營運」「財務」欄，沒權限就不顯示該分頁 */
   canSeeOperations: boolean;
+  canSeeTeam: boolean;
   canSeeFinance: boolean;
-  /** 權限表「營運 → 流程」欄 */
-  canSeeFlows: boolean;
+  /** 營運底下每一項各自對應權限表「營運」下的子欄位（組織圖、職務說明、制度、流程、SOP、表單） */
+  opsAccess: OpsAccess;
   /** 交給流程圖頁的角色：admin／editor 可編輯，user／viewer 唯讀 */
   flowRole: FlowRole;
   activeTab: string;
@@ -191,8 +205,9 @@ function Card({ children }: { children: React.ReactNode }) {
 export default function CommandCenter({
   onOpenOrgChart,
   canSeeOperations,
+  canSeeTeam,
   canSeeFinance,
-  canSeeFlows,
+  opsAccess,
   flowRole,
   activeTab,
   onTabChange,
@@ -219,12 +234,12 @@ export default function CommandCenter({
   const policies = useMemo(() => getPolicies(), []);
   const sops = useMemo(() => getSops(), []);
   // 流程圖目錄（營運 → 流程的項目數；點進去是每一張流程圖）
-  const flows = useFlows(canSeeOperations && canSeeFlows);
+  const flows = useFlows(canSeeOperations && opsAccess.flows);
   const projects = crm?.projects ?? [];
 
   const tabs = useMemo(
-    () => getCommandTabs({ canSeeOperations, canSeeFinance }),
-    [canSeeOperations, canSeeFinance]
+    () => getCommandTabs({ canSeeOperations, canSeeTeam, canSeeFinance }),
+    [canSeeOperations, canSeeTeam, canSeeFinance]
   );
   const activeIdx = Math.max(0, tabs.indexOf(activeTab));
   // 團隊頁第一次打開才載入（照片比較大），之後保留，切回來不用重抓
@@ -335,6 +350,9 @@ export default function CommandCenter({
     setSwiping(false);
   }, [swiping, activeIdx, tabs, onTabChange]);
 
+  // 營運、團隊、財務三欄都沒有權限
+  if (!tabs.length) return <EmptyState icon="lock" title="尚未開放指揮中心的任何分頁" hint="請洽管理者在權限表開通" />;
+
   return (
     <>
       <div
@@ -359,61 +377,7 @@ export default function CommandCenter({
               : "transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1)",
           }}
         >
-          {/* ── 分頁 1：定位定崗 ───────────────────────────── */}
-          <section
-            className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
-            style={{ width: panelW || `${100 / tabs.length}%` }}
-          >
-            
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={onOpenOrgChart}
-                className="group bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
-              >
-                <div className="text-[#A1A1AA]">
-                  <span
-                    className="material-symbols-outlined text-[28px] group-active:text-[#F39C12] transition-colors"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    account_tree
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[15px] font-bold text-[#18181B]">組織圖</p>
-                  <p className="text-[11px] text-[#A1A1AA] mt-0.5">全公司架構</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setScreen("profile")}
-                className="group bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-4 h-[116px] flex flex-col justify-between text-left active:scale-[0.98] transition-transform outline-none"
-              >
-                <div className="text-[#A1A1AA]">
-                  <span
-                    className="material-symbols-outlined text-[28px] group-active:text-[#F39C12] transition-colors"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    badge
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[15px] font-bold text-[#18181B]">職務說明</p>
-                  <p className="text-[11px] text-[#A1A1AA] mt-0.5">內容待建立</p>
-                </div>
-              </button>
-            </div>
-          </section>
-
-          {/* ── 分頁：團隊 ─────────────────────────────────── */}
-          {/* 團隊頁很長：不在這一頁時把高度收起來，其他分頁才不會多出一大段空白可以捲 */}
-          <section
-            className={`shrink-0 px-6 lg:px-10 pt-0 ${tabs[activeIdx] === COMMAND_TAB_TEAM ? "pb-28" : "h-0 overflow-hidden"}`}
-            style={{ width: panelW || `${100 / tabs.length}%` }}
-          >
-            {teamSeen && <TeamPage />}
-          </section>
-
-          {/* ── 分頁 2：營運 ───────────────────────────────── */}
+          {/* ── 分頁：營運 ───────────────────────────────── */}
           {canSeeOperations && (
           <section
             className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
@@ -421,42 +385,58 @@ export default function CommandCenter({
           >
             
             <Card>
-              <ListRow
-                icon={IconGavel}
-                title="制度"
-                desc="薪酬福利、績效考核等規章"
-                meta={policies.length ? `${policies.length} 項` : "待建立"}
-                onClick={() => setScreen("policies")}
-              />
-              {canSeeFlows && (
-                <ListRow
-                  icon={IconRoute}
-                  title="流程"
-                  desc="專案管理等工作流程圖"
-                  meta={flows.length ? `${flows.length} 項` : "載入中"}
-                  onClick={() => setScreen("flows")}
-                />
-              )}
-              <ListRow
-                icon={IconChecklist}
-                title="SOP"
-                desc="各項作業標準流程"
-                meta={sops.length ? `${sops.length} 項` : "待建立"}
-                onClick={() => setScreen("sops")}
-              />
-              <ListRow
-                icon={IconFileText}
-                title="表單"
-                desc="領款簽收單等可填寫表單"
-                meta={`${FORMS.length} 項`}
-                onClick={() => setScreen("forms")}
-                last
-              />
+              {[
+                opsAccess.orgChart && { icon: IconSitemap, title: "組織圖", desc: "全公司架構", onClick: onOpenOrgChart },
+                opsAccess.jobDesc && { icon: IconId, title: "職務說明", desc: "各職位的工作內容", meta: "待建立", onClick: () => setScreen("profile") },
+                opsAccess.policies && {
+                  icon: IconGavel,
+                  title: "制度",
+                  desc: "薪酬福利、績效考核等規章",
+                  meta: policies.length ? `${policies.length} 項` : "待建立",
+                  onClick: () => setScreen("policies"),
+                },
+                opsAccess.flows && {
+                  icon: IconRoute,
+                  title: "流程",
+                  desc: "專案管理等工作流程圖",
+                  meta: flows.length ? `${flows.length} 項` : "載入中",
+                  onClick: () => setScreen("flows"),
+                },
+                opsAccess.sops && {
+                  icon: IconChecklist,
+                  title: "SOP",
+                  desc: "各項作業標準流程",
+                  meta: sops.length ? `${sops.length} 項` : "待建立",
+                  onClick: () => setScreen("sops"),
+                },
+                opsAccess.forms && {
+                  icon: IconFileText,
+                  title: "表單",
+                  desc: "領款簽收單等可填寫表單",
+                  meta: `${FORMS.length} 項`,
+                  onClick: () => setScreen("forms"),
+                },
+              ]
+                .filter((r): r is Exclude<typeof r, false> => !!r)
+                .map((r, i, arr) => (
+                  <ListRow key={r.title} {...r} last={i === arr.length - 1} />
+                ))}
             </Card>
           </section>
           )}
 
-          {/* ── 分頁 3：財務（管理層）───────────────────────── */}
+          {/* ── 分頁：團隊 ─────────────────────────────────── */}
+          {/* 團隊頁很長：不在這一頁時把高度收起來，其他分頁才不會多出一大段空白可以捲 */}
+          {canSeeTeam && (
+          <section
+            className={`shrink-0 px-6 lg:px-10 pt-0 ${tabs[activeIdx] === COMMAND_TAB_TEAM ? "pb-28" : "h-0 overflow-hidden"}`}
+            style={{ width: panelW || `${100 / tabs.length}%` }}
+          >
+            {teamSeen && <TeamPage />}
+          </section>
+          )}
+
+          {/* ── 分頁：財務（管理層）───────────────────────── */}
           {canSeeFinance && (
             <section
               className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
