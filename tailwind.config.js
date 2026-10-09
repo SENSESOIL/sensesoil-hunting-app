@@ -82,6 +82,11 @@ module.exports = {
         unit: "4px",
         gutter: "16px",
       },
+      // 內容卡片的唯一層次：只用陰影、不加邊框（邊框＋陰影會變成「鬼影卡」）。
+      // 近處一層小陰影定出邊緣，遠處一層柔和陰影給浮起感；在 #FAFAFA 底上不靠邊框也分得出卡片。
+      boxShadow: {
+        card: "0 1px 2px rgba(24,24,27,0.04), 0 6px 20px rgba(24,24,27,0.06)",
+      },
       borderRadius: {
         DEFAULT: "0px",
         lg: "0px",

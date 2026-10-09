@@ -84,7 +84,7 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
 
   return (
     <div className="w-full flex flex-col pt-0 pb-4 gap-4">
-      <div className="bg-white rounded-[24px] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-6 flex flex-col">
+      <div className="bg-white rounded-[24px] shadow-card p-6 flex flex-col">
         <div className="text-center mb-6 border-b border-gray-100 pb-4">
           <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">請假公告</h2>
           <LeaveRules />

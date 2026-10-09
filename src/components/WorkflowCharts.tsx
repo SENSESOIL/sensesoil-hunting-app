@@ -43,7 +43,7 @@ export default function WorkflowCharts({ flowRole }: { flowRole: FlowRole }) {
           <button
             key={f.id}
             onClick={() => setOpen(f)}
-            className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#F4F4F5] transition-colors outline-none"
+            className="bg-[#FFFFFF] rounded-[18px] shadow-card overflow-hidden w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#F4F4F5] transition-colors outline-none"
           >
             <p className="flex-1 min-w-0 text-[15px] font-medium text-[#18181B] truncate">
               {f.title}

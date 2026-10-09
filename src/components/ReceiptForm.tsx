@@ -110,7 +110,7 @@ const ReceiptForm = forwardRef<ReceiptFormRef>((props, ref) => {
       {/* Receipt View that will be captured */}
       <div 
         ref={formRef}
-        className="bg-white rounded-[24px] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-6 flex flex-col relative"
+        className="bg-white rounded-[24px] shadow-card p-6 flex flex-col relative"
       >
         <div className="text-center mb-6 border-b border-gray-100 pb-4">
           <h2 className="text-[20px] font-bold tracking-widest text-[#18181B]">領款簽收單</h2>

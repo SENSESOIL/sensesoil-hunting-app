@@ -197,7 +197,7 @@ function ListRow({
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
+    <div className="bg-[#FFFFFF] rounded-[18px] shadow-card overflow-hidden">
       {children}
     </div>
   );
@@ -426,13 +426,13 @@ export default function CommandCenter({
                   },
                   opsAccess.flows && {
                     icon: IconRoute,
-                    title: "流程",
+                    title: "流程 FLOW",
                     meta: flows.length ? `${flows.length} 項` : undefined,
                     onClick: () => setScreen("flows"),
                   },
                   opsAccess.sops && {
                     icon: IconChecklist,
-                    title: "SOP",
+                    title: "步驟 SOP",
                     meta: sops.length ? `${sops.length} 項` : "待建立",
                     pending: !sops.length,
                     onClick: () => setScreen("sops"),
@@ -529,13 +529,13 @@ export default function CommandCenter({
         <DocList docs={policies} onOpen={setOpenDoc} emptyIcon="gavel" />
       </SubScreen>
 
-      <SubScreen open={screen === "flows"} title="流程" onClose={() => setScreen(null)}>
+      <SubScreen open={screen === "flows"} title="流程 FLOW" onClose={() => setScreen(null)}>
         <div className="px-5 py-4 max-w-3xl mx-auto">
           <WorkflowCharts flowRole={flowRole} />
         </div>
       </SubScreen>
 
-      <SubScreen open={screen === "sops"} title="SOP" onClose={() => setScreen(null)}>
+      <SubScreen open={screen === "sops"} title="步驟 SOP" onClose={() => setScreen(null)}>
         <DocList docs={sops} onOpen={setOpenDoc} emptyIcon="lan" />
       </SubScreen>
 

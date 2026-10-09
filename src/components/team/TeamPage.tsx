@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { cardBg, type Contact, type ContactKind, type TeamMember } from "@/lib/pm/model";
+import React, { useMemo, useState } from "react";
+import { type Contact, type ContactKind, type TeamMember } from "@/lib/pm/model";
 import { Icon } from "@/components/pm/ui";
 import { Avatar, Empty, Group, ORANGE, Spinner } from "@/components/pm/kit";
+import { Sheet } from "@/components/pm/Sheet";
+import { IconCamera, IconChevronRight, IconPhone } from "@tabler/icons-react";
 import { MemberCard } from "./MemberCard";
 import { PortraitSheet } from "./PortraitSheet";
 import { ContactSheet } from "./ContactSheet";
@@ -11,7 +13,8 @@ import { cardUrl, useTeam } from "./useTeam";
 
 /* ══════════════════════════════════════════════════════════
    指揮中心 → 團隊
-   內部職員：員工卡牌橫向滑動（中間放大、兩側縮小變暗），每個人都穿公司制服
+   與「營運」同一套清單語彙：白色卡片、一人一列、灰色組名。
+   內部職員：頭像＋姓名＋職稱，右側直接撥號；點一下看個人卡（含人像）
    外部職員／協力廠商／聯盟品牌：名片清單
    ══════════════════════════════════════════════════════════ */
 
@@ -22,12 +25,14 @@ const SEGMENTS: { key: "internal" | ContactKind; label: string }[] = [
   { key: "brand", label: "聯盟品牌" },
 ];
 
-/** 卡牌的觸控不要傳給指揮中心外層的「左右滑換分頁」 */
+/** 橫向捲動的觸控不要傳給指揮中心外層的「左右滑換分頁」 */
 const stop = {
   onTouchStart: (e: React.TouchEvent) => e.stopPropagation(),
   onTouchMove: (e: React.TouchEvent) => e.stopPropagation(),
   onTouchEnd: (e: React.TouchEvent) => e.stopPropagation(),
 };
+
+const tel = (p?: string) => p?.replace(/[^\d+]/g, "");
 
 export default function TeamPage() {
   const { data, error, isLoading, mutate } = useTeam();
@@ -41,27 +46,40 @@ export default function TeamPage() {
     );
   }
   const isManager = data.me.role === "manager";
+  const count = (k: (typeof SEGMENTS)[number]["key"]) =>
+    k === "internal" ? data.members.length : data.contacts.filter((c) => c.kind === k).length;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div role="tablist" aria-label="團隊分類" className="grid grid-cols-4 p-[3px] rounded-[12px] bg-[#EEEEF0]">
-        {SEGMENTS.map((s) => (
-          <button
-            key={s.key}
-            role="tab"
-            aria-selected={seg === s.key}
-            onClick={() => setSeg(s.key)}
-            className={`h-9 rounded-[9px] text-[13.5px] font-semibold whitespace-nowrap transition-all ${
-              seg === s.key ? "bg-white text-[#18181B] shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-[#71717A]"
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
+    <div className="flex flex-col gap-5">
+      {/* 第二層分類：文字分頁＋橘色底線，和上一層「營運／團隊／財務」的白色膠囊分出層級 */}
+      <div role="tablist" aria-label="團隊分類" className="flex gap-6 overflow-x-auto scrollbar-hide px-1 -mb-1" {...stop}>
+        {SEGMENTS.map((s) => {
+          const on = seg === s.key;
+          const n = count(s.key);
+          return (
+            <button
+              key={s.key}
+              role="tab"
+              aria-selected={on}
+              onClick={() => setSeg(s.key)}
+              className={`relative shrink-0 h-10 flex items-center gap-1 text-[15px] whitespace-nowrap outline-none transition-colors focus-visible:text-[#18181B] ${
+                on ? "font-medium text-[#18181B]" : "text-[#A1A1AA] active:text-[#71717A]"
+              }`}
+            >
+              {s.label}
+              {n > 0 && <span className={`text-[12px] tabular-nums ${on ? "text-[#71717A]" : "text-[#C4C4C8]"}`}>{n}</span>}
+              <span
+                className={`absolute left-0 right-0 bottom-0 h-[2px] rounded-full transition-opacity ${on ? "opacity-100" : "opacity-0"}`}
+                style={{ background: ORANGE }}
+                aria-hidden
+              />
+            </button>
+          );
+        })}
       </div>
 
       {(!data.configured || data.dbError) && (
-        <p className="rounded-[12px] px-3.5 py-3 text-[13px] leading-relaxed bg-[#FFF6E8] text-[#8A5A00]">
+        <p className="rounded-[14px] px-4 py-3 text-[13px] leading-relaxed bg-[#FFF6E8] text-[#8A5A00]">
           {data.dbError ?? "資料庫尚未設定：照片、職稱與聯絡人要等 Supabase 設定好才能儲存（見 docs/工程管理資料架構.md）。"}
         </p>
       )}
@@ -75,7 +93,7 @@ export default function TeamPage() {
   );
 }
 
-/* ── 內部職員：卡牌輪播 ─────────────────────────────────── */
+/* ── 內部職員：清單＋個人卡 ─────────────────────────────── */
 
 function Internal({
   members,
@@ -92,169 +110,149 @@ function Internal({
   onChanged: () => void;
   aiReady?: boolean;
 }) {
-  // 順序固定（權限表順序，管理者在前）；上傳照片後卡片不會跳位置
+  // 順序固定（權限表順序）；上傳照片後不會跳位置
   const list = useMemo(() => [...members].sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999)), [members]);
-  const scroller = useRef<HTMLDivElement>(null);
-  const cards = useRef<(HTMLDivElement | null)[]>([]);
-  const [focus, setFocus] = useState(0);
+  const [view, setView] = useState<TeamMember | null>(null);
   const [edit, setEdit] = useState<TeamMember | null>(null);
-  const raf = useRef(0);
-
-  // 依卡片離中心的距離：縮放、變暗、模糊（直接改 style，不經過 React 重繪）
-  const paint = useCallback(() => {
-    const el = scroller.current;
-    if (!el) return;
-    const mid = el.scrollLeft + el.clientWidth / 2;
-    let best = 0;
-    let bestD = Infinity;
-    cards.current.forEach((c, i) => {
-      if (!c) return;
-      const center = c.offsetLeft + c.offsetWidth / 2;
-      const d = (center - mid) / c.offsetWidth; // 以卡寬為單位
-      const t = Math.min(1, Math.abs(d));
-      c.style.transform = `scale(${1 - 0.16 * t})`;
-      c.style.opacity = String(1 - 0.5 * t);
-      c.style.filter = t > 0.02 ? `blur(${(t * 2.2).toFixed(2)}px) brightness(${1 - 0.25 * t})` : "none";
-      c.style.zIndex = String(100 - Math.round(t * 50));
-      if (Math.abs(d) < bestD) {
-        bestD = Math.abs(d);
-        best = i;
-      }
-    });
-    setFocus((f) => (f === best ? f : best));
-  }, []);
-
-  const onScroll = () => {
-    cancelAnimationFrame(raf.current);
-    raf.current = requestAnimationFrame(paint);
-  };
-  useLayoutEffect(() => {
-    paint();
-    const ro = new ResizeObserver(paint);
-    if (scroller.current) ro.observe(scroller.current);
-    return () => ro.disconnect();
-    // 名單內容更新（例如剛換了照片）也要重算一次，否則「目前這一位」會停在舊的
-  }, [paint, list]);
-
-  // 一進來先停在自己的卡片
-  const didInit = useRef(false);
-  useEffect(() => {
-    if (didInit.current || !list.length) return;
-    didInit.current = true;
-    const i = list.findIndex((m) => m.email === me);
-    if (i > 0) requestAnimationFrame(() => goTo(i, "auto"));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [list.length]);
-
-  const goTo = (i: number, behavior: ScrollBehavior = "smooth") => {
-    const el = scroller.current;
-    const c = cards.current[i];
-    if (!el || !c) return;
-    const left = c.offsetLeft + c.offsetWidth / 2 - el.clientWidth / 2;
-    el.scrollTo({ left, behavior });
-    // 有些瀏覽器（省電模式、背景分頁）不跑平滑捲動：沒動就直接跳過去
-    setTimeout(() => {
-      if (Math.abs(el.scrollLeft - Math.max(0, Math.min(left, el.scrollWidth - el.clientWidth))) > 4) el.scrollLeft = left;
-    }, 450);
-  };
 
   if (!list.length) return <Empty icon="groups" title="權限表上還沒有人員" />;
-  const cur = list[Math.min(focus, list.length - 1)];
-  const [a, b] = cardBg(cur.cardBg, cur.email);
-  const canEdit = canSave && (cur.email === me || isManager);
   const mine = list.find((m) => m.email === me);
+  const canEdit = (m: TeamMember) => canSave && (m.email === me || isManager);
+  const groups = [
+    { name: "管理", rows: list.filter((m) => m.manager) },
+    { name: "狩獵者", rows: list.filter((m) => !m.manager) },
+  ].filter((g) => g.rows.length);
 
   return (
     <>
+      {/* 自己還沒有照片：放在最上面，一列就好，不搶整頁 */}
       {mine && !mine.hasCard && canSave && (
         <button
           onClick={() => setEdit(mine)}
-          className="rounded-[16px] px-4 py-3 flex items-center gap-3 text-left active:opacity-80"
-          style={{ background: "#FFF6E8" }}
+          className="w-full bg-white rounded-[18px] shadow-card flex items-center gap-3.5 pl-4 pr-3 py-3.5 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
         >
-          <Icon name="add_a_photo" weight={400} className="text-[24px] shrink-0" style={{ color: ORANGE }} />
-          <span className="flex-1 min-w-0">
-            <span className="block text-[14px] font-semibold text-[#18181B]">上傳你的大頭照</span>
-            <span className="block text-[12.5px] text-[#71717A]">{aiReady ? "AI 生成穿公司制服的人像" : "自動去背、穿上公司制服"}；任務指派也會顯示你的照片</span>
+          <span className="w-11 h-11 rounded-full border-[1.5px] border-dashed border-[#F39C12]/60 flex items-center justify-center shrink-0 text-[#F39C12]">
+            <IconCamera size={20} stroke={1.5} />
           </span>
-          <Icon name="chevron_right" className="text-[20px] text-[#C7C7CC]" />
+          <span className="flex-1 min-w-0">
+            <span className="block text-[16px] leading-[22px] font-medium text-[#18181B]">上傳你的大頭照</span>
+            <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5 truncate">
+              {aiReady ? "AI 換上公司制服，任務指派也會顯示" : "任務指派和頭像都會顯示這張照片"}
+            </span>
+          </span>
+          <IconChevronRight size={20} stroke={1.5} className="text-[#D4D4D8] shrink-0" />
         </button>
       )}
 
-      <section className="relative rounded-[26px] bg-[#0E0E11] overflow-hidden pt-6 pb-5">
-        {/* 背景光暈跟著目前的卡片換色 */}
-        <div
-          className="absolute inset-0 opacity-45 blur-3xl transition-[background] duration-500 pointer-events-none"
-          style={{ background: `radial-gradient(40% 55% at 50% 42%, ${a}, transparent 70%), radial-gradient(30% 40% at 62% 55%, ${b}, transparent 70%)` }}
-          aria-hidden
-        />
-        <div
-          ref={scroller}
-          onScroll={onScroll}
-          {...stop}
-          className="relative flex overflow-x-auto scrollbar-hide snap-x snap-mandatory py-4"
-          style={{ paddingInline: "calc(50% - min(29vw, 115px))", scrollPaddingInline: "calc(50% - min(29vw, 115px))" }}
-          aria-roledescription="輪播"
-          aria-label="內部職員卡牌"
-        >
-          {list.map((m, i) => (
-            <div
-              key={m.email}
-              ref={(el) => {
-                cards.current[i] = el;
-              }}
-              className="snap-center shrink-0 w-[min(58vw,230px)] -mx-[3%] transition-[transform,opacity,filter] duration-150 ease-out will-change-transform"
-              style={{ transformOrigin: "50% 60%" }}
-            >
-              <MemberCard member={m} src={cardUrl(m)} active={i === focus} onClick={() => (i === focus ? canSave && (m.email === me || isManager) && setEdit(m) : goTo(i))} />
-            </div>
-          ))}
-        </div>
-
-        {/* 目前這一位 */}
-        <div className="relative px-5 text-center">
-          {cur.bio && <p className="text-[13px] text-white/70 mt-1 line-clamp-2">{cur.bio}</p>}
-          <div className="flex items-center justify-center gap-2 mt-3">
-            {cur.phone && (
-              <a href={`tel:${cur.phone.replace(/[^\d+]/g, "")}`} className="h-10 px-4 rounded-full bg-white/10 text-white text-[14px] font-medium inline-flex items-center gap-1.5 active:bg-white/20" {...stop}>
-                <Icon name="call" weight={400} className="text-[18px]" />
-                {cur.phone}
-              </a>
-            )}
-            {canEdit && (
-              <button onClick={() => setEdit(cur)} className="h-10 px-4 rounded-full bg-white text-[#18181B] text-[14px] font-semibold inline-flex items-center gap-1.5 active:opacity-85">
-                <Icon name="photo_camera" weight={400} className="text-[18px]" />
-                {cur.hasCard ? "更換照片" : "上傳照片"}
-              </button>
-            )}
-          </div>
-          {/* 位置點 */}
-          <div className="flex justify-center gap-1.5 mt-4" aria-hidden>
-            {list.map((m, i) => (
-              <span key={m.email} className="h-1.5 rounded-full transition-all duration-300" style={{ width: i === focus ? 18 : 6, background: i === focus ? "#fff" : "rgba(255,255,255,0.28)" }} />
+      {groups.map((g) => (
+        <div key={g.name}>
+          <p className="px-4 mb-2 text-[13px] leading-[18px] text-[#A1A1AA] tracking-[0.04em]">
+            {g.name}
+            <span className="ml-1.5 tabular-nums">{g.rows.length}</span>
+          </p>
+          <div className="bg-white rounded-[18px] shadow-card overflow-hidden">
+            {g.rows.map((m, i) => (
+              <div key={m.email} className={`flex items-center ${i === g.rows.length - 1 ? "" : "border-b border-[#F4F4F5]"}`}>
+                <button
+                  onClick={() => setView(m)}
+                  className="flex-1 min-w-0 flex items-center gap-3.5 pl-4 py-3 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
+                >
+                  <Avatar name={m.name} email={m.email} size={44} />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[16px] leading-[22px] font-medium text-[#18181B] truncate">
+                      {m.name}
+                      {m.email === me && <span className="ml-1.5 text-[13px] font-normal text-[#A1A1AA]">你</span>}
+                    </span>
+                    <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5 truncate">
+                      {m.title || (m.manager ? "管理" : "狩獵者")}
+                    </span>
+                  </span>
+                </button>
+                {m.phone ? (
+                  <a
+                    href={`tel:${tel(m.phone)}`}
+                    className="w-11 h-11 mr-2 rounded-full flex items-center justify-center text-[#F39C12] active:bg-[#FFF4E5] outline-none focus-visible:bg-[#FFF4E5]"
+                    aria-label={`撥電話給 ${m.name}`}
+                  >
+                    <IconPhone size={20} stroke={1.5} />
+                  </a>
+                ) : (
+                  <span className="w-11 mr-2" aria-hidden />
+                )}
+              </div>
             ))}
           </div>
         </div>
-      </section>
+      ))}
 
-      {/* 全部成員：點頭像跳到那張卡 */}
-      <Group className="p-3">
-        <div className="grid grid-cols-5 sm:grid-cols-8 gap-y-3">
-          {list.map((m, i) => (
-            <button key={m.email} onClick={() => goTo(i)} className="flex flex-col items-center gap-1 min-w-0 active:scale-95 transition-transform">
-              <span className="rounded-full p-[2px]" style={{ background: i === focus ? ORANGE : "transparent" }}>
-                <span className="block rounded-full ring-2 ring-white">
-                  <Avatar name={m.name} email={m.email} size={44} />
-                </span>
-              </span>
-              <span className={`text-[12px] truncate max-w-full ${i === focus ? "font-bold text-[#18181B]" : "text-[#52525B]"}`}>{m.name}</span>
-            </button>
-          ))}
-        </div>
-      </Group>
-
+      <MemberSheet
+        member={view}
+        isMe={view?.email === me}
+        canEdit={!!view && canEdit(view)}
+        onClose={() => setView(null)}
+        onEdit={() => {
+          const m = view;
+          setView(null);
+          if (m) setEdit(m);
+        }}
+      />
       <PortraitSheet member={edit} open={!!edit} onClose={() => setEdit(null)} onSaved={onChanged} aiReady={aiReady} />
     </>
+  );
+}
+
+/** 個人卡：有人像就放卡牌，沒有就放大頭像，不再用剪影充數 */
+function MemberSheet({
+  member,
+  isMe,
+  canEdit,
+  onClose,
+  onEdit,
+}: {
+  member: TeamMember | null;
+  isMe: boolean;
+  canEdit: boolean;
+  onClose: () => void;
+  onEdit: () => void;
+}) {
+  const m = member;
+  return (
+    <Sheet open={!!m} title={m?.name ?? ""} subtitle={m ? m.title || (m.manager ? "管理" : "狩獵者") : undefined} onClose={onClose}>
+      {m && (
+        <div className="flex flex-col items-center pb-2">
+          {m.hasCard ? (
+            <div className="w-[min(64vw,240px)]">
+              <MemberCard member={m} src={cardUrl(m)} active />
+            </div>
+          ) : (
+            <div className="py-4">
+              <Avatar name={m.name} email={m.email} size={112} />
+            </div>
+          )}
+          {m.bio && <p className="mt-5 max-w-[34ch] text-center text-[15px] leading-[24px] text-[#3F3F46]">{m.bio}</p>}
+          <div className="mt-6 w-full flex flex-col gap-2.5">
+            {m.phone && (
+              <a
+                href={`tel:${tel(m.phone)}`}
+                className="h-12 rounded-full bg-[#F39C12] text-white text-[16px] font-medium inline-flex items-center justify-center gap-2 active:opacity-85"
+              >
+                <IconPhone size={20} stroke={1.75} />
+                <span className="tabular-nums">{m.phone}</span>
+              </a>
+            )}
+            {canEdit && (
+              <button
+                onClick={onEdit}
+                className="h-12 rounded-full bg-[#F4F4F5] text-[#18181B] text-[16px] font-medium inline-flex items-center justify-center gap-2 active:bg-[#E4E4E7]"
+              >
+                <IconCamera size={20} stroke={1.5} />
+                {m.hasCard ? "更換照片" : isMe ? "上傳我的照片" : "上傳照片"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </Sheet>
   );
 }
 
@@ -340,9 +338,8 @@ function Contacts({ kind, contacts, isManager, onChanged }: { kind: ContactKind;
 }
 
 function ContactCard({ c, onEdit }: { c: Contact; onEdit?: () => void }) {
-  const tel = (p?: string) => p?.replace(/[^\d+]/g, "");
   return (
-    <div className="bg-white rounded-[16px] border border-[#EBEBED] p-3.5 flex items-start gap-3">
+    <div className="bg-white rounded-[18px] shadow-card p-4 flex items-start gap-3.5">
       <Avatar name={c.name} email={c.id} src={c.avatar} size={48} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">

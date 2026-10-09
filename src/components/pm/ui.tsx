@@ -83,7 +83,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`bg-[#FFFFFF] rounded-[18px] border border-[#E4E4E7]/60 shadow-[0_2px_10px_rgba(0,0,0,0.03)] ${className}`}
+      className={`bg-[#FFFFFF] rounded-[18px] shadow-card ${className}`}
     >
       {children}
     </div>

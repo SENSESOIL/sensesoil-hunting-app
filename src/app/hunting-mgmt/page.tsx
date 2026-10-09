@@ -23,9 +23,9 @@ import { isManagerRoles } from "@/lib/pm/model";
 import { canSeeFlows as canSeeFlowsOf, flowRoleFromRoles } from "@/lib/flow-role";
 
 const allNavItems = [
-  { id: "project_info", label: "專案", icon: "home", permKeys: ["專案情報"] },
+  { id: "project_info", label: "專案情報", icon: "home", permKeys: ["專案情報"] },
   // 任務：每個人都有（看指派給自己的）；管理者另外看得到全部與工作量
-  { id: "tasks", label: "任務", icon: "checklist", permKeys: [] as string[] },
+  { id: "tasks", label: "任務追蹤", icon: "checklist", permKeys: [] as string[] },
   {
     id: "hunting_tasks",
     label: "狩獵任務",
@@ -58,14 +58,14 @@ const HUNTING_MGMT_PERM_KEYS = [
 
 const ManualCards = () => (
   <>
-    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-3xl shadow-card overflow-hidden flex flex-col h-full">
       <div className="p-4 px-6 bg-white text-center">
         <h2 className="text-[17px] font-bold text-[#18181B]">子任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl p-3.5 shadow-card">
           
 
           {/* Task 1 */}
@@ -188,14 +188,14 @@ const ManualCards = () => (
     </div>
 
     {/* 第三張卡片：主任務操作說明 */}
-    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-3xl shadow-card overflow-hidden flex flex-col h-full">
       <div className="p-4 px-6 bg-white text-center">
         <h2 className="text-[17px] font-bold text-[#18181B]">主任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl p-3.5 shadow-card">
           
 
           {/* Task 5 (Dimmed) */}
@@ -330,14 +330,14 @@ const ManualCards = () => (
     </div>
 
     {/* 第三張卡片：複製前週任務操作說明 */}
-    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-3xl shadow-card overflow-hidden flex flex-col h-full">
       <div className="p-4 px-6 bg-white text-center">
         <h2 className="text-[17px] font-bold text-[#18181B]">複製任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl p-3.5 shadow-card">
           
 
           {/* Tasks 4 to 5 */}
@@ -490,14 +490,14 @@ const ManualCards = () => (
     <div className="flex flex-col gap-4 h-full">
 
     {/* 第二張卡片：移動子任務操作說明 */}
-    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-3xl shadow-card overflow-hidden flex flex-col">
       <div className="p-4 px-6 bg-white text-center">
         <h2 className="text-[17px] font-bold text-[#18181B]">移動子任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl p-3.5 shadow-card">
           {/* Task 1 */}
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-3">
@@ -573,14 +573,14 @@ const ManualCards = () => (
       </div>
     </div>
     {/* 第五張卡片：發送操作說明 */}
-    <div className="bg-white rounded-3xl border border-[#E4E4E7] shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-3xl shadow-card overflow-hidden flex flex-col">
       <div className="p-4 px-6 bg-white text-center">
         <h2 className="text-[17px] font-bold text-[#18181B]">匯出任務</h2>
       </div>
       <hr className="border-[#E4E4E7] m-0" />
       {/* 上層：截圖說明區域 (Mock UI) */}
       <div className="p-4 bg-[#FAFAFA]/50 flex flex-col items-center">
-        <div className="w-full max-w-[280px] bg-white rounded-2xl border border-[#E4E4E7] p-3.5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+        <div className="w-full max-w-[280px] bg-white rounded-2xl p-3.5 shadow-card">
           <div className="flex flex-col gap-3">
             <div className="w-full flex items-center justify-center gap-3 bg-[#FAFAFA] text-[#18181B] rounded-2xl py-2.5 border border-[#E4E4E7]">
               <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 300" }}>content_copy</span>
