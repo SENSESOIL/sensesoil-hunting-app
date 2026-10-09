@@ -154,7 +154,6 @@ function EmptyState({
 function ListRow({
   icon: Icon,
   title,
-  desc,
   meta,
   pending,
   onClick,
@@ -162,7 +161,6 @@ function ListRow({
 }: {
   icon: TablerIcon;
   title: string;
-  desc?: string;
   meta?: string;
   /** 還沒有內容：icon 與標題退成淡灰，有內容的項目才用品牌橘，一眼分得出哪些點進去有東西 */
   pending?: boolean;
@@ -181,9 +179,8 @@ function ListRow({
         <Icon size={22} stroke={1.4} />
       </div>
       <div className="flex-1 min-w-0">
-        {/* 字級只有兩階：標題 16／說明 13（中文 12px 在手機上太小），用字重與灰階分出層次 */}
+        {/* 只留標題：16px，右側數量 13px，用字重與灰階分出層次 */}
         <p className={`text-[16px] leading-[22px] font-medium ${pending ? "text-[#71717A]" : "text-[#18181B]"}`}>{title}</p>
-        {desc && <p className="text-[13px] leading-[18px] text-[#A1A1AA] mt-1 truncate">{desc}</p>}
       </div>
       {meta && (
         <span className={`text-[13px] tabular-nums shrink-0 ${pending ? "text-[#C4C4C8]" : "text-[#71717A]"}`}>{meta}</span>
@@ -405,14 +402,12 @@ export default function CommandCenter({
                   opsAccess.orgChart && {
                     icon: IconSitemap,
                     title: "組織圖",
-                    desc: "各部門與負責人",
                     meta: orgSummary?.divisions ? `${orgSummary.divisions} 部門` : undefined,
                     onClick: onOpenOrgChart,
                   },
                   opsAccess.jobDesc && {
                     icon: IconId,
                     title: "職務說明",
-                    desc: "每個職位負責的工作",
                     meta: "待建立",
                     pending: true,
                     onClick: () => setScreen("profile"),
@@ -425,7 +420,6 @@ export default function CommandCenter({
                   opsAccess.policies && {
                     icon: IconGavel,
                     title: "制度",
-                    desc: "薪酬福利、績效考核",
                     meta: policies.length ? `${policies.length} 項` : "待建立",
                     pending: !policies.length,
                     onClick: () => setScreen("policies"),
@@ -433,14 +427,12 @@ export default function CommandCenter({
                   opsAccess.flows && {
                     icon: IconRoute,
                     title: "流程",
-                    desc: "跨部門的工作流程圖",
                     meta: flows.length ? `${flows.length} 項` : undefined,
                     onClick: () => setScreen("flows"),
                   },
                   opsAccess.sops && {
                     icon: IconChecklist,
                     title: "SOP",
-                    desc: "單項作業的標準做法",
                     meta: sops.length ? `${sops.length} 項` : "待建立",
                     pending: !sops.length,
                     onClick: () => setScreen("sops"),
@@ -448,7 +440,6 @@ export default function CommandCenter({
                   opsAccess.forms && {
                     icon: IconFileText,
                     title: "表單",
-                    desc: "領款簽收等線上表單",
                     meta: `${FORMS.length} 項`,
                     onClick: () => setScreen("forms"),
                   },
@@ -493,21 +484,18 @@ export default function CommandCenter({
                 <ListRow
                   icon={IconReceipt2}
                   title="收支記錄"
-                  desc="記錄每一筆收入與支出"
                   meta="記帳"
                   onClick={() => setScreen("finance-ledger")}
                 />
                 <ListRow
                   icon={IconFolderDollar}
                   title="專案財務"
-                  desc="各專案的收支與結餘"
                   meta={projects.length ? `${projects.length} 案` : "—"}
                   onClick={() => setScreen("finance-projects")}
                 />
                 <ListRow
                   icon={IconChartLine}
                   title="公司財務狀態"
-                  desc="現金水位與整體趨勢"
                   onClick={() => setScreen("finance-company")}
                   last
                 />
