@@ -69,9 +69,12 @@ async function staffPhones(): Promise<Map<string, string>> {
 
 /** 廠商CRM → 協力廠商（唯讀） */
 /** 廠商CRM → 協力廠商（名稱用簡稱，下方顯示全名；工項當分類標籤） */
+/** 自己的公司：在廠商CRM 上有一列（開發票、內部調度用），但不是協力廠商，不列出 */
+const OWN_COMPANIES = new Set(["拾壤室內裝修股份有限公司", "峻岸工程行"]);
+
 async function crmVendors(): Promise<Contact[]> {
   try {
-    const rows = await listVendors();
+    const rows = (await listVendors()).filter((v) => !OWN_COMPANIES.has(v.fullName));
     return rows.map((v) => ({
       id: `crm-${v.seq}`,
       kind: "vendor" as const,

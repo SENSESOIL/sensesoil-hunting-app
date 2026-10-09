@@ -216,8 +216,10 @@ export default function TeamPage({
                   role="tab"
                   aria-selected={on}
                   onClick={() => setCat(c.key)}
-                  className={`h-[84px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#F39C12]/50 ${
-                    on ? "bg-[#FFF4E5] ring-1 ring-inset ring-[#F39C12]/35" : "bg-white shadow-card active:bg-[#F4F4F5]"
+                  // 外框用真的 border（不用 ring）：ring 和卡片陰影共用 box-shadow，切換時會互相蓋掉；
+                  // 每個方塊都有 1px 邊框，選中才變橘色，大小不會因選取而跳動
+                  className={`h-[84px] rounded-[16px] border flex flex-col items-center justify-center gap-1.5 outline-none transition-[background-color] focus-visible:border-[#F39C12] ${
+                    on ? "bg-[#FFF4E5] border-[#F39C12]/45" : "bg-white border-transparent shadow-card active:bg-[#F4F4F5]"
                   }`}
                 >
                   <Ico size={22} stroke={1.4} className={on ? "text-[#E08A00]" : "text-[#A1A1AA]"} />

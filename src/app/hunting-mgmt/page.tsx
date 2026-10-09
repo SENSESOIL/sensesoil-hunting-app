@@ -727,11 +727,14 @@ export default function HuntingManagementPage() {
   const [commandTab, setCommandTab] = useState(COMMAND_TAB_OPERATIONS);
   const [teamSearchOpen, setTeamSearchOpen] = useState(false);
   const [teamQuery, setTeamQuery] = useState("");
+  const [deskSearchOpen, setDeskSearchOpen] = useState(false);
+  const deskSearchRef = useRef<HTMLInputElement>(null);
   // 離開團隊分頁就收起搜尋、清掉搜尋字
   useEffect(() => {
     if (activeNav !== "command_center" || commandTab !== COMMAND_TAB_TEAM) {
       setTeamSearchOpen(false);
       setTeamQuery("");
+      setDeskSearchOpen(false);
     }
   }, [activeNav, commandTab]);
   // 停在沒有權限（或已不存在）的分頁時，退回第一個看得到的分頁。
@@ -1549,33 +1552,61 @@ export default function HuntingManagementPage() {
                       search
                     </span>
                   </button>
-                  <label
-                    className={`hidden md:flex group relative items-center h-9 rounded-full focus-within:bg-white focus-within:ring-2 focus-within:ring-[#F39C12]/40 transition-[width,background-color] duration-200 focus-within:w-[280px] ${
-                      teamQuery ? "w-[280px] bg-white ring-1 ring-[#E4E4E7]" : "w-[180px] bg-[#F4F4F5]"
+                  {/* 電腦：平常只是放大鏡；點下才展開成輸入框，清空後點別處就收回 */}
+                  <div
+                    className={`hidden md:flex relative items-center h-9 rounded-full overflow-hidden transition-[width,background-color,box-shadow] duration-200 ${
+                      deskSearchOpen || teamQuery ? "w-[280px] bg-white ring-1 ring-[#E4E4E7] focus-within:ring-2 focus-within:ring-[#F39C12]/40" : "w-9 hover:bg-[#F4F4F5]"
                     }`}
                   >
-                    <span className="material-symbols-outlined absolute left-2.5 text-[20px] text-[#71717A] pointer-events-none" style={{ fontVariationSettings: "'wght' 200" }}>
-                      search
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDeskSearchOpen(true);
+                        deskSearchRef.current?.focus();
+                      }}
+                      className="absolute left-0 top-0 w-9 h-9 flex items-center justify-center text-[#71717A] shrink-0"
+                      title="搜尋"
+                      aria-label="搜尋團隊"
+                      tabIndex={deskSearchOpen || teamQuery ? -1 : 0}
+                    >
+                      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
+                        search
+                      </span>
+                    </button>
                     <input
+                      ref={deskSearchRef}
                       value={teamQuery}
                       onChange={(e) => setTeamQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Escape" && (setTeamQuery(""), (e.target as HTMLInputElement).blur())}
+                      onBlur={() => !teamQuery && setDeskSearchOpen(false)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setTeamQuery("");
+                          setDeskSearchOpen(false);
+                          (e.target as HTMLInputElement).blur();
+                        }
+                      }}
                       placeholder="搜尋姓名、工項、電話"
                       aria-label="搜尋團隊"
-                      className="w-full h-full bg-transparent pl-9 pr-8 text-[14px] text-[#18181B] outline-none placeholder:text-[#A1A1AA]"
+                      tabIndex={deskSearchOpen || teamQuery ? 0 : -1}
+                      className={`h-full bg-transparent pl-9 pr-8 text-[14px] text-[#18181B] outline-none placeholder:text-[#A1A1AA] transition-opacity ${
+                        deskSearchOpen || teamQuery ? "w-full opacity-100" : "w-0 opacity-0 pointer-events-none"
+                      }`}
                     />
                     {teamQuery && (
                       <button
                         type="button"
-                        onClick={() => setTeamQuery("")}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setTeamQuery("");
+                          deskSearchRef.current?.focus();
+                        }}
                         aria-label="清除搜尋"
                         className="absolute right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[#A1A1AA] hover:bg-[#E4E4E7]"
                       >
                         <span className="material-symbols-outlined text-[16px]">close</span>
                       </button>
                     )}
-                  </label>
+                  </div>
                 </>
               )}
               {/* Mobile Share Button (Hidden on Desktop) */}
