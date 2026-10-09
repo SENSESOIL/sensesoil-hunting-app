@@ -5,7 +5,7 @@ import type { TeamMember } from "@/lib/pm/model";
 import { Sheet, toast } from "@/components/pm/Sheet";
 import { Avatar, ORANGE, Spinner } from "@/components/pm/kit";
 import { IconCamera, IconPhoto } from "@tabler/icons-react";
-import { teamPost } from "./useTeam";
+import { removeAvatar, teamPost } from "./useTeam";
 
 /* ══════════════════════════════════════════════════════════
    大頭照：拍照／選照片 → 拖曳、縮放對準 → 裁成統一規格的圓形大頭照
@@ -46,6 +46,7 @@ export function PortraitSheet({
   const [bio, setBio] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const cam = useRef<HTMLInputElement>(null);
   const lib = useRef<HTMLInputElement>(null);
   const cropper = useRef<CropperApi>(null);
@@ -56,6 +57,7 @@ export function PortraitSheet({
     setTitle(member.title ?? "");
     setBio(member.bio ?? "");
     setError(null);
+    setConfirmRemove(false);
   }, [open, member]);
 
   // 換照片或關閉時釋放上一張的 object URL
@@ -112,6 +114,23 @@ export function PortraitSheet({
     onClose();
   };
 
+  const dropPhoto = async () => {
+    if (!confirmRemove) {
+      setConfirmRemove(true);
+      return;
+    }
+    setSaving(true);
+    const r = await removeAvatar(member.email);
+    setSaving(false);
+    if (!r.ok) {
+      toast(r.error || "移除失敗", { tone: "error" });
+      return;
+    }
+    toast("已移除大頭照");
+    onSaved();
+    onClose();
+  };
+
   return (
     <Sheet
       open={open}
@@ -146,6 +165,18 @@ export function PortraitSheet({
             <p className="text-[13px] leading-[20px] text-[#A1A1AA] text-center max-w-[30ch]">
               選一張正面照，下一步可以拖曳、縮放，對準臉部後裁成圓形
             </p>
+            {member.avatar && (
+              <button
+                type="button"
+                onClick={dropPhoto}
+                disabled={saving}
+                className={`h-8 px-3 rounded-full text-[13px] transition-colors disabled:opacity-50 ${
+                  confirmRemove ? "bg-[#FDECEC] text-[#B42318]" : "text-[#A1A1AA] active:bg-[#F4F4F5]"
+                }`}
+              >
+                {confirmRemove ? "確定移除照片？" : "移除照片"}
+              </button>
+            )}
           </div>
         )}
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { Contact, ContactKind, TeamMember, VendorInfo } from "@/lib/pm/model";
+import { tradeColor, type Contact, type ContactKind, type TeamMember, type VendorInfo } from "@/lib/pm/model";
 import { Avatar, Empty, Spinner } from "@/components/pm/kit";
 import { Sheet } from "@/components/pm/Sheet";
 import {
@@ -70,6 +70,8 @@ interface Entry {
   phones: { label?: string; number: string }[];
   /** 名字右側的分類標籤（協力廠商的工項） */
   tag?: string;
+  /** 頭像底色與標籤顏色（協力廠商依工項） */
+  color?: string;
   me?: boolean;
   member?: TeamMember;
   contact?: Contact;
@@ -103,6 +105,7 @@ function fromContact(c: Contact): Entry {
       ...(c.phone2 ? [{ label: c.contact2, number: c.phone2 }] : []),
     ],
     tag: c.kind === "vendor" ? c.title : undefined,
+    color: c.kind === "vendor" ? tradeColor(c.title) : undefined,
     contact: c,
   };
 }
@@ -361,13 +364,18 @@ function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => vo
         onClick={() => onOpen(e)}
         className="flex-1 min-w-0 flex items-center gap-3.5 pl-4 py-3 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
       >
-        <Avatar name={e.name} email={e.avatarKey} src={e.avatar} size={44} />
+        <Avatar name={e.name} email={e.avatarKey} src={e.avatar} size={44} color={e.color} />
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-1.5 min-w-0">
             <span className="text-[16px] leading-[22px] font-medium text-[#18181B] truncate">{e.name}</span>
             {e.me && <span className="text-[13px] text-[#A1A1AA] shrink-0">你</span>}
             {e.tag && (
-              <span className="shrink-0 h-[20px] px-2 rounded-full bg-[#F4F4F5] text-[12px] text-[#71717A] leading-[20px]">{e.tag}</span>
+              <span
+                className="shrink-0 h-[20px] px-2 rounded-full text-[12px] leading-[20px]"
+                style={e.color ? { color: e.color, background: `${e.color}14` } : { color: "#71717A", background: "#F4F4F5" }}
+              >
+                {e.tag}
+              </span>
             )}
           </span>
           {e.sub && <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5 truncate">{e.sub}</span>}
@@ -549,7 +557,7 @@ function ProfileSheet({
       {e && (
         <div className="flex flex-col items-center px-4 pb-4">
           <div className="py-4">
-            <Avatar name={e.name} email={e.avatarKey} src={e.avatar} size={120} />
+            <Avatar name={e.name} email={e.avatarKey} src={e.avatar} size={120} color={e.color} />
           </div>
           {lines.map((l) => (
             <p key={l} className="max-w-[34ch] text-center text-[15px] leading-[24px] text-[#3F3F46]">

@@ -23,6 +23,13 @@ export async function teamPost(body: Record<string, unknown>): Promise<{ ok: boo
   }
 }
 
+/** 移除某人的大頭照；成功後全 APP 的頭像立刻改回姓名縮寫 */
+export async function removeAvatar(email: string): Promise<{ ok: boolean; error?: string }> {
+  const r = await teamPost({ op: "profile.save", email, patch: { avatar: null, card: null } });
+  if (r.ok) setAvatarDirectory([{ email, avatar: undefined }]);
+  return { ok: r.ok, error: r.data.error };
+}
+
 export function cardUrl(m: TeamMember): string | undefined {
   return m.hasCard ? `${TEAM_KEY}?card=${encodeURIComponent(m.email)}&v=${encodeURIComponent(m.cardVersion ?? "")}` : undefined;
 }

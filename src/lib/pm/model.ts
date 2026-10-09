@@ -377,6 +377,37 @@ export function personColor(key?: string): string {
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
 
+/**
+ * 協力廠商的顏色：依「工項」決定，同一個工項永遠同一色（頭像底色、工項標籤）。
+ * 工項有三十幾種，相近的歸成 10 個色系＋「其他」灰；色系之間一般視覺 ΔE ≥ 8.5，白字都讀得清楚。
+ * 色弱時少數色系會接近，所以列上一定同時顯示工項文字標籤，不只靠顏色。
+ * 不在表上的新工項：依名稱固定落到其中一色（不會每次不同）。
+ */
+const TRADE_FAMILIES: { color: string; trades: string[] }[] = [
+  { color: "#B45309", trades: ["建材", "石材", "混凝土", "鋼筋", "模板", "鋼網牆"] }, // 材料：琥珀
+  { color: "#EA580C", trades: ["室裝"] }, // 室內裝修：橘
+  { color: "#92400E", trades: ["木作", "系統櫃", "輕隔間", "地板"] }, // 木作類：咖啡
+  { color: "#0E7490", trades: ["泥作", "防水"] }, // 泥作防水：青
+  { color: "#BE185D", trades: ["漆料"] }, // 塗裝：桃紅
+  { color: "#475569", trades: ["鐵工", "鋁窗", "玻璃"] }, // 金屬門窗：鐵灰
+  { color: "#1D4ED8", trades: ["水電", "弱電", "冷氣", "燈具"] }, // 機電：藍
+  { color: "#7E22CE", trades: ["傢飾", "衛浴"] }, // 軟裝衛浴：紫
+  { color: "#27272A", trades: ["鷹架", "打除", "清運", "搬運", "重機"] }, // 拆除運輸：炭黑
+  { color: "#15803D", trades: ["景觀", "清潔"] }, // 環境：綠
+];
+const TRADE_COLOR = new Map(TRADE_FAMILIES.flatMap((f) => f.trades.map((t) => [t, f.color] as const)));
+const OTHER_TRADE = "#71717A";
+
+export function tradeColor(trade?: string): string {
+  const t = trade?.trim();
+  if (!t || t === "其他") return OTHER_TRADE;
+  const hit = TRADE_COLOR.get(t);
+  if (hit) return hit;
+  let h = 0;
+  for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return TRADE_FAMILIES[h % TRADE_FAMILIES.length].color;
+}
+
 /* ══════════════════════════════════════════════════════════
    團隊（指揮中心 → 團隊）
    ══════════════════════════════════════════════════════════ */

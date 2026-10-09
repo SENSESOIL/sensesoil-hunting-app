@@ -6,7 +6,7 @@ import { Sheet, SheetActions, toast } from "@/components/pm/Sheet";
 import { FieldGroup, Row, TextField } from "@/components/pm/fields";
 import { Icon } from "@/components/pm/ui";
 import { Avatar, RED } from "@/components/pm/kit";
-import { teamPost } from "./useTeam";
+import { removeAvatar, teamPost } from "./useTeam";
 
 /* ══════════════════════════════════════════════════════════
    內部職員：新增／編輯（寫回拾壤CRM「員工CRM」）
@@ -70,11 +70,17 @@ export function StaffSheet({
   const [d, setD] = useState<Form>(initial);
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
+  // 大頭照：移除後在這張表上立刻改回縮寫（資料重新載入前 member 還是舊的）
+  const [photoGone, setPhotoGone] = useState(false);
+  const [confirmPhoto, setConfirmPhoto] = useState(false);
+  const [removingPhoto, setRemovingPhoto] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setD(initial);
     setConfirmDel(false);
+    setPhotoGone(false);
+    setConfirmPhoto(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, member]);
 
@@ -97,6 +103,22 @@ export function StaffSheet({
     toast(staff ? "已更新員工CRM" : `已新增「${d.name}」到員工CRM`);
     onSaved();
     onClose();
+  };
+
+  const dropPhoto = async () => {
+    if (!member) return;
+    if (!confirmPhoto) {
+      setConfirmPhoto(true);
+      return;
+    }
+    setRemovingPhoto(true);
+    const r = await removeAvatar(member.email);
+    setRemovingPhoto(false);
+    setConfirmPhoto(false);
+    if (!r.ok) return toast(r.error || "移除失敗", { tone: "error" });
+    setPhotoGone(true);
+    toast("已移除大頭照");
+    onSaved();
   };
 
   const remove = async () => {
@@ -152,11 +174,24 @@ export function StaffSheet({
         {member && (
           <div className="flex flex-col items-center pt-5 gap-2">
             <button type="button" onClick={() => onEditPhoto(member)} className="relative rounded-full active:opacity-80" aria-label="更換大頭照">
-              <Avatar name={member.name} email={member.email} src={member.avatar} size={84} />
+              {/* 移除時已同步清掉全域頭像目錄，這裡不會再退回舊照片 */}
+              <Avatar name={member.name} email={member.email} src={photoGone ? undefined : member.avatar} size={84} />
               <span className="absolute -right-1 -bottom-1 w-8 h-8 rounded-full bg-[#18181B] border-2 border-white flex items-center justify-center">
                 <Icon name="photo_camera" weight={400} className="text-[16px] text-white" />
               </span>
             </button>
+            {member.avatar && !photoGone && (
+              <button
+                type="button"
+                onClick={dropPhoto}
+                disabled={removingPhoto}
+                className={`h-8 px-3 rounded-full text-[13px] transition-colors disabled:opacity-50 ${
+                  confirmPhoto ? "bg-[#FDECEC] text-[#B42318]" : "text-[#A1A1AA] active:bg-[#F4F4F5]"
+                }`}
+              >
+                {removingPhoto ? "移除中…" : confirmPhoto ? "確定移除照片？" : "移除照片"}
+              </button>
+            )}
           </div>
         )}
 

@@ -56,12 +56,15 @@ export function Avatar({
   size = 24,
   ring,
   src,
+  color,
 }: {
   name?: string;
   email?: string;
   size?: number;
   ring?: boolean;
   src?: string;
+  /** 指定底色（例如協力廠商依工項上色）；不給就依姓名／信箱固定一色 */
+  color?: string;
 }) {
   const photo = useAvatarSrc(email);
   const img = src ?? photo;
@@ -85,7 +88,7 @@ export function Avatar({
       className={`inline-flex items-center justify-center rounded-full text-white font-semibold shrink-0 select-none ${ring ? "ring-2 ring-white" : ""}`}
       style={{
         ...style,
-        background: email || name ? personColor(email || name) : "#D4D4D8",
+        background: color ?? (email || name ? personColor(email || name) : "#D4D4D8"),
         fontSize: Math.max(9, Math.round(size * (label.length > 1 ? 0.36 : 0.46))),
         letterSpacing: label.length > 1 ? "-0.02em" : undefined,
       }}
