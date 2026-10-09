@@ -437,8 +437,8 @@ export interface StaffInfo {
   gmail?: string;
   joined?: string;
   left?: string;
-  /** 以下只回給權限表「團隊」欄 Admin／Editor */
   birthday?: string;
+  /** 以下只回給權限表「團隊」欄 Admin／Editor */
   idNo?: string;
   address?: string;
   bank?: string;

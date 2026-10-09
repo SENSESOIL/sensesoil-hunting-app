@@ -42,8 +42,6 @@ export function PortraitSheet({
   onSaved: () => void;
 }) {
   const [crop, setCrop] = useState<Crop | null>(null);
-  const [title, setTitle] = useState("");
-  const [bio, setBio] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -54,8 +52,6 @@ export function PortraitSheet({
   useEffect(() => {
     if (!open || !member) return;
     setCrop(null);
-    setTitle(member.title ?? "");
-    setBio(member.bio ?? "");
     setError(null);
     setConfirmRemove(false);
   }, [open, member]);
@@ -88,28 +84,25 @@ export function PortraitSheet({
     img.src = url;
   };
 
-  const changed = !!crop || title !== (member.title ?? "") || bio !== (member.bio ?? "");
+  const changed = !!crop;
 
   const save = async () => {
     setSaving(true);
-    const patch: Record<string, unknown> = { title: title.trim() || null, bio: bio.trim() || null };
-    if (crop) {
-      const avatar = cropper.current?.export();
-      if (!avatar) {
-        setSaving(false);
-        toast("照片處理失敗，請換一張", { tone: "error" });
-        return;
-      }
-      patch.avatar = avatar;
-      patch.card = null; // 舊的卡牌人像一併清掉，全 APP 只剩圓形大頭照
+    const avatar = cropper.current?.export();
+    if (!avatar) {
+      setSaving(false);
+      toast("照片處理失敗，請換一張", { tone: "error" });
+      return;
     }
+    // 舊的卡牌人像一併清掉，全 APP 只剩圓形大頭照
+    const patch = { avatar, card: null };
     const r = await teamPost({ op: "profile.save", email: member.email, patch });
     setSaving(false);
     if (!r.ok) {
       toast(r.data.error || "儲存失敗", { tone: "error" });
       return;
     }
-    toast(crop ? "大頭照已更新" : "已更新");
+    toast("大頭照已更新");
     onSaved();
     onClose();
   };
@@ -203,27 +196,6 @@ export function PortraitSheet({
           </button>
           <input ref={cam} type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
           <input ref={lib} type="file" accept="image/*" className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
-        </div>
-
-        <div className="bg-white rounded-[18px] shadow-card divide-y divide-[#F4F4F5]">
-          <label className="flex items-center gap-3 px-4 min-h-[52px]">
-            <span className="w-12 text-[15px] text-[#71717A] shrink-0">職稱</span>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value.slice(0, 30))}
-              placeholder="例：工地主任、泥作師傅"
-              className="flex-1 min-w-0 h-11 bg-transparent outline-none text-[16px] text-[#18181B] placeholder:text-[#C4C4C8]"
-            />
-          </label>
-          <label className="flex items-center gap-3 px-4 min-h-[52px]">
-            <span className="w-12 text-[15px] text-[#71717A] shrink-0">專長</span>
-            <input
-              value={bio}
-              onChange={(e) => setBio(e.target.value.slice(0, 200))}
-              placeholder="一句話，例：灰泥、磨石子十年"
-              className="flex-1 min-w-0 h-11 bg-transparent outline-none text-[16px] text-[#18181B] placeholder:text-[#C4C4C8]"
-            />
-          </label>
         </div>
       </div>
     </Sheet>

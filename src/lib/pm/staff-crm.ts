@@ -3,7 +3,7 @@
  *
  * 指揮中心 → 團隊 → 內部職員 直接讀寫這一頁（讀寫細節見 crm-sheet.ts）。
  *   APP 讀寫：序列、姓名、等級、聯絡電話、Gmail、登入參戰日、離線登出日、生日、身分證字號、地址、富邦匯款帳號
- *   後四欄是個資：只有權限表「團隊」欄 Admin／Editor 拿得到（由 /api/pm/team 過濾）。
+ *   身分證字號、地址、富邦匯款帳號是個資：只有權限表「團隊」欄 Admin／Editor 拿得到（由 /api/pm/team 過濾）；生日所有人都看得到。
  */
 
 import { clean, CrmError, deleteCrm, listCrm, saveCrm, type CrmTable } from "./crm-sheet";
@@ -26,8 +26,8 @@ export interface StaffRecord {
 
 type F = "name" | "level" | "phone" | "gmail" | "joined" | "left" | "birthday" | "idNo" | "address" | "bank";
 
-/** 個資欄位：只給 Admin／Editor */
-export const STAFF_PRIVATE = ["birthday", "idNo", "address", "bank"] as const;
+/** 個資欄位：只給 Admin／Editor（生日不算，一般成員也看得到） */
+export const STAFF_PRIVATE = ["idNo", "address", "bank"] as const;
 
 const STAFF: CrmTable<F> = {
   tab: "員工CRM",

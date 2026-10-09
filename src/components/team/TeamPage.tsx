@@ -8,7 +8,6 @@ import { Sheet } from "@/components/pm/Sheet";
 import {
   IconCamera,
   IconHeartHandshake,
-  IconMail,
   IconPencil,
   IconPhone,
   IconPlus,
@@ -16,7 +15,6 @@ import {
   IconTool,
   IconUsers,
   IconUserShare,
-  IconWorld,
   IconX,
   type Icon as TablerIcon,
 } from "@tabler/icons-react";
@@ -292,22 +290,13 @@ export default function TeamPage({
 
       <ProfileSheet
         e={view}
+        full={canEdit}
+        canEditPhoto={!!view?.member && canSave && view.member.email === data.me.email}
         onClose={() => setView(null)}
-        onCall={(e) => {
-          setView(null);
-          setCall(e);
-        }}
-        canEditPhoto={!!view?.member && canSave && view.member.email === data.me.email && !(view && editable(view))}
-        canEditContact={!!view && editable(view)}
         onEditPhoto={() => {
           const m = view?.member;
           setView(null);
           if (m) setPortrait(m);
-        }}
-        onEditContact={() => {
-          const e = view;
-          setView(null);
-          if (e) openEdit(e);
         }}
       />
       <CallSheet e={call} onClose={() => setCall(null)} />
@@ -532,90 +521,89 @@ function CallSheet({ e, onClose }: { e: Entry | null; onClose: () => void }) {
   );
 }
 
-/** 個人卡：四個分類共用 */
+/** 詳情：點名單跳出來看資料。打電話、編輯在列的右側，這裡不重複。
+ *  Admin／Editor 看全部；其他人只看基本資料（電話、Email、生日）。
+ *  個資本來就只有 Admin／Editor 會從伺服器拿到，這裡再依權限決定顯示哪些列。 */
 function ProfileSheet({
   e,
-  onClose,
-  onCall,
+  full,
   canEditPhoto,
-  canEditContact,
+  onClose,
   onEditPhoto,
-  onEditContact,
 }: {
   e: Entry | null;
-  onClose: () => void;
-  onCall: (e: Entry) => void;
+  full: boolean;
+  /** 自己的大頭照：點頭像換照片 */
   canEditPhoto: boolean;
-  canEditContact: boolean;
+  onClose: () => void;
   onEditPhoto: () => void;
-  onEditContact: () => void;
 }) {
-  const c = e?.contact;
-  const lines = e ? [e.member?.bio, c?.note, c?.contact2 && !c.phone2 ? `聯絡人：${c.contact2}` : undefined].filter((x): x is string => !!x) : [];
+  const rows: { label: string; value?: string }[] = [];
+  if (e?.member) {
+    const s = e.member.staff;
+    rows.push({ label: "電話", value: e.member.phone }, { label: "Email", value: s?.gmail ?? (e.member.email.includes("@") ? e.member.email : undefined) }, { label: "生日", value: s?.birthday });
+    if (full)
+      rows.push(
+        { label: "等級", value: s?.level },
+        { label: "登入參戰日", value: s?.joined },
+        { label: "身分證字號", value: s?.idNo },
+        { label: "地址", value: s?.address },
+        { label: "富邦匯款帳號", value: s?.bank }
+      );
+  } else if (e?.contact) {
+    const c = e.contact;
+    const v = c.vendor;
+    if (v) {
+      rows.push(
+        { label: v.contact1 ? `聯絡人　${v.contact1}` : "電話", value: v.phone1 },
+        ...(v.contact2 || v.phone2 ? [{ label: v.contact2 ? `聯絡人　${v.contact2}` : "電話 2", value: v.phone2 }] : [])
+      );
+      if (full)
+        rows.push(
+          { label: "工項", value: v.trade },
+          { label: "等級", value: v.level },
+          { label: "統編", value: v.taxId },
+          { label: "銀行分行", value: [v.bankBranch, v.branch].filter(Boolean).join(" ") },
+          { label: "匯款帳號", value: v.account },
+          { label: "備註", value: v.note }
+        );
+    } else {
+      rows.push({ label: "電話", value: c.phone }, ...(c.phone2 ? [{ label: c.contact2 ? `電話（${c.contact2}）` : "電話 2", value: c.phone2 }] : []), { label: "Email", value: c.email });
+      if (full) rows.push({ label: "網站", value: c.website }, { label: "備註", value: c.note });
+    }
+  }
+  if (full && e?.member?.bio) rows.push({ label: "專長", value: e.member.bio });
+  const shown = rows.filter((r) => r.value);
+
   return (
     <Sheet open={!!e} title={e?.name ?? ""} subtitle={e?.sub || undefined} onClose={onClose}>
       {e && (
-        <div className="flex flex-col items-center px-4 pb-4">
+        <div className="flex flex-col items-center px-4 pb-6">
           <div className="py-4">
-            <Avatar name={e.name} email={e.avatarKey} src={e.avatar} size={120} color={e.color} />
+            {canEditPhoto ? (
+              <button type="button" onClick={onEditPhoto} className="relative rounded-full active:opacity-80" aria-label="更換我的大頭照">
+                <Avatar name={e.name} email={e.avatarKey} src={e.avatar} size={96} color={e.color} />
+                <span className="absolute right-0 bottom-0 w-8 h-8 rounded-full bg-[#18181B] border-2 border-white flex items-center justify-center text-white">
+                  <IconCamera size={16} stroke={1.75} />
+                </span>
+              </button>
+            ) : (
+              <Avatar name={e.name} email={e.avatarKey} src={e.avatar} size={96} color={e.color} />
+            )}
           </div>
-          {lines.map((l) => (
-            <p key={l} className="max-w-[34ch] text-center text-[15px] leading-[24px] text-[#3F3F46]">
-              {l}
-            </p>
-          ))}
 
-          {(c?.email || c?.website) && (
-            <div className="mt-4 w-full bg-white rounded-[18px] shadow-card overflow-hidden [&>*+*]:border-t [&>*+*]:border-[#F4F4F5]">
-              {c?.email && (
-                <a href={`mailto:${c.email}`} className="flex items-center gap-3 px-4 h-[52px] active:bg-[#F4F4F5]">
-                  <IconMail size={20} stroke={1.5} className="text-[#A1A1AA]" />
-                  <span className="flex-1 min-w-0 text-[15px] text-[#18181B] truncate">{c.email}</span>
-                </a>
-              )}
-              {c?.website && (
-                <a
-                  href={/^https?:/.test(c.website) ? c.website : `https://${c.website}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 px-4 h-[52px] active:bg-[#F4F4F5]"
-                >
-                  <IconWorld size={20} stroke={1.5} className="text-[#A1A1AA]" />
-                  <span className="flex-1 min-w-0 text-[15px] text-[#18181B] truncate">{c.website.replace(/^https?:\/\//, "")}</span>
-                </a>
-              )}
-            </div>
+          {shown.length ? (
+            <dl className="w-full bg-white rounded-[18px] shadow-card overflow-hidden [&>*+*]:border-t [&>*+*]:border-[#F4F4F5]">
+              {shown.map((r) => (
+                <div key={r.label} className="flex items-start gap-4 px-4 py-3.5">
+                  <dt className="w-[92px] shrink-0 text-[14px] leading-[22px] text-[#A1A1AA]">{r.label}</dt>
+                  <dd className="flex-1 min-w-0 text-[15px] leading-[22px] text-[#18181B] break-words tabular-nums select-text">{r.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="text-[14px] text-[#A1A1AA]">還沒有聯絡資料</p>
           )}
-
-          <div className="mt-5 w-full flex flex-col gap-2.5">
-            {e.phones.length > 0 && (
-              <button
-                onClick={() => onCall(e)}
-                className="h-12 rounded-full bg-[#F39C12] text-white text-[16px] font-medium inline-flex items-center justify-center gap-2 active:opacity-85"
-              >
-                <IconPhone size={20} stroke={1.75} />
-                打電話
-              </button>
-            )}
-            {canEditPhoto && (
-              <button
-                onClick={onEditPhoto}
-                className="h-12 rounded-full bg-[#F4F4F5] text-[#18181B] text-[16px] font-medium inline-flex items-center justify-center gap-2 active:bg-[#E4E4E7]"
-              >
-                <IconCamera size={20} stroke={1.5} />
-                {e.avatar ? "更換大頭照" : e.me ? "上傳我的大頭照" : "上傳大頭照"}
-              </button>
-            )}
-            {canEditContact && (
-              <button
-                onClick={onEditContact}
-                className="h-12 rounded-full bg-[#F4F4F5] text-[#18181B] text-[16px] font-medium inline-flex items-center justify-center gap-2 active:bg-[#E4E4E7]"
-              >
-                <IconPencil size={20} stroke={1.5} />
-                編輯
-              </button>
-            )}
-          </div>
         </div>
       )}
     </Sheet>
