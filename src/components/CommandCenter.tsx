@@ -71,6 +71,9 @@ interface CommandCenterProps {
   flowRole: FlowRole;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  /** 頂部放大鏡打開的團隊搜尋 */
+  teamSearchOpen?: boolean;
+  onTeamSearchClose?: () => void;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -214,6 +217,8 @@ export default function CommandCenter({
   flowRole,
   activeTab,
   onTabChange,
+  teamSearchOpen,
+  onTeamSearchClose,
 }: CommandCenterProps) {
   type ScreenId =
     | null
@@ -469,7 +474,7 @@ export default function CommandCenter({
             className={`shrink-0 px-6 lg:px-10 pt-0 ${tabs[activeIdx] === COMMAND_TAB_TEAM ? "pb-28" : "h-0 overflow-hidden"}`}
             style={{ width: panelW || `${100 / tabs.length}%` }}
           >
-            {teamSeen && <TeamPage />}
+            {teamSeen && <TeamPage searchOpen={teamSearchOpen} onSearchClose={onTeamSearchClose} />}
           </section>
           )}
 

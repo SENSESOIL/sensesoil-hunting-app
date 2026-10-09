@@ -8,7 +8,7 @@ import { mutate } from "swr";
 import HuntingTasksView, {
   HuntingTasksViewRef,
 } from "@/components/HuntingTasksView";
-import CommandCenter, { getCommandTabs, COMMAND_TAB_OPERATIONS } from "@/components/CommandCenter";
+import CommandCenter, { getCommandTabs, COMMAND_TAB_OPERATIONS, COMMAND_TAB_TEAM } from "@/components/CommandCenter";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 import LeaveForm, { LeaveFormRef } from "@/components/LeaveForm";
 import VersionGuard from "@/components/VersionGuard";
@@ -725,6 +725,11 @@ export default function HuntingManagementPage() {
     }
   }, [visibleSubTabs, activeSubTab]);
   const [commandTab, setCommandTab] = useState(COMMAND_TAB_OPERATIONS);
+  const [teamSearchOpen, setTeamSearchOpen] = useState(false);
+  // 離開團隊分頁就收起搜尋
+  useEffect(() => {
+    if (activeNav !== "command_center" || commandTab !== COMMAND_TAB_TEAM) setTeamSearchOpen(false);
+  }, [activeNav, commandTab]);
   // 停在沒有權限（或已不存在）的分頁時，退回第一個看得到的分頁。
   // 要等權限載入完：載入中 roles 是空的，算出來只剩「團隊」，會把預設的「營運」蓋掉。
   useEffect(() => {
@@ -1517,6 +1522,20 @@ export default function HuntingManagementPage() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1 md:gap-3 translate-y-[5px]">
+              {/* 團隊：搜尋（分享鍵左邊），一次搜內部職員、外部職員、協力廠商、聯盟品牌 */}
+              {activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM && (
+                <button
+                  onClick={() => setTeamSearchOpen((v) => !v)}
+                  className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${teamSearchOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
+                  title="搜尋"
+                  aria-label="搜尋團隊"
+                  aria-pressed={teamSearchOpen}
+                >
+                  <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
+                    search
+                  </span>
+                </button>
+              )}
               {/* Mobile Share Button (Hidden on Desktop) */}
               <div className="relative md:hidden" ref={shareRefMobile}>
                 <button
@@ -1778,6 +1797,8 @@ export default function HuntingManagementPage() {
               flowRole={flowRole}
               activeTab={commandTab}
               onTabChange={setCommandTab}
+              teamSearchOpen={teamSearchOpen}
+              onTeamSearchClose={() => setTeamSearchOpen(false)}
             />
           ) : activeNav === "tasks" ? (
             <TasksPage
