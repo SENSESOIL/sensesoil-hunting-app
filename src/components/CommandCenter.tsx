@@ -172,20 +172,21 @@ function ListRow({
   return (
     <button
       onClick={onClick}
-      className={`group w-full flex items-center gap-3.5 px-4 py-3.5 text-left transition-colors outline-none active:bg-[#F4F4F5] ${
+      className={`group w-full flex items-center gap-3.5 pl-4 pr-3 py-4 text-left transition-colors outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5] ${
         last ? "" : "border-b border-[#F4F4F5]"
       }`}
     >
       <div className={`w-8 flex items-center justify-center shrink-0 ${pending ? "text-[#D4D4D8]" : "text-[#F39C12]"}`}>
         {/* Tabler icon，線寬 1.25 對齊其他 Material Symbols（wght 200）的細線風格 */}
-        <Icon size={24} stroke={1.25} />
+        <Icon size={22} stroke={1.4} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-[15px] font-medium ${pending ? "text-[#71717A]" : "text-[#18181B]"}`}>{title}</p>
-        {desc && <p className="text-[12px] text-[#A1A1AA] mt-0.5 truncate">{desc}</p>}
+        {/* 字級只有兩階：標題 16／說明 13（中文 12px 在手機上太小），用字重與灰階分出層次 */}
+        <p className={`text-[16px] leading-[22px] font-medium ${pending ? "text-[#71717A]" : "text-[#18181B]"}`}>{title}</p>
+        {desc && <p className="text-[13px] leading-[18px] text-[#A1A1AA] mt-1 truncate">{desc}</p>}
       </div>
       {meta && (
-        <span className={`text-[12px] tabular-nums shrink-0 ${pending ? "text-[#D4D4D8]" : "text-[#71717A]"}`}>{meta}</span>
+        <span className={`text-[13px] tabular-nums shrink-0 ${pending ? "text-[#C4C4C8]" : "text-[#71717A]"}`}>{meta}</span>
       )}
       <span
         className="material-symbols-outlined text-[20px] text-[#D4D4D8] shrink-0"
@@ -457,8 +458,8 @@ export default function CommandCenter({
               const rows = group.rows.filter((r): r is Exclude<typeof r, false> => !!r);
               if (!rows.length) return null;
               return (
-                <div key={group.name} className="mb-6 last:mb-0">
-                  <p className="px-1 mb-2 text-[13px] font-medium text-[#71717A]">{group.name}</p>
+                <div key={group.name} className="mt-8 first:mt-1">
+                  <p className="px-4 mb-2 text-[13px] leading-[18px] text-[#A1A1AA] tracking-[0.04em]">{group.name}</p>
                   <Card>
                     {rows.map((r, i) => (
                       <ListRow key={r.title} {...r} last={i === rows.length - 1} />

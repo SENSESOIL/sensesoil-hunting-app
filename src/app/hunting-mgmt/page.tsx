@@ -725,10 +725,12 @@ export default function HuntingManagementPage() {
     }
   }, [visibleSubTabs, activeSubTab]);
   const [commandTab, setCommandTab] = useState(COMMAND_TAB_OPERATIONS);
-  // 停在沒有權限（或已不存在）的分頁時，退回第一個看得到的分頁
+  // 停在沒有權限（或已不存在）的分頁時，退回第一個看得到的分頁。
+  // 要等權限載入完：載入中 roles 是空的，算出來只剩「團隊」，會把預設的「營運」蓋掉。
   useEffect(() => {
+    if (permsLoading) return;
     if (commandTabs.length && !commandTabs.includes(commandTab)) setCommandTab(commandTabs[0]);
-  }, [commandTabs, commandTab]);
+  }, [permsLoading, commandTabs, commandTab]);
   const [intelTab, setIntelTab] = useState(PROJECT_TABS[0]);
   const TASK_TABS = isPmManager ? TASK_TABS_MANAGER : TASK_TABS_MEMBER;
   const [scheduleTab, setScheduleTab] = useState(TASK_TABS_MANAGER[0]);
