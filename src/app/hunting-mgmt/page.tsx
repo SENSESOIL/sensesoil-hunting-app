@@ -726,9 +726,13 @@ export default function HuntingManagementPage() {
   }, [visibleSubTabs, activeSubTab]);
   const [commandTab, setCommandTab] = useState(COMMAND_TAB_OPERATIONS);
   const [teamSearchOpen, setTeamSearchOpen] = useState(false);
-  // 離開團隊分頁就收起搜尋
+  const [teamQuery, setTeamQuery] = useState("");
+  // 離開團隊分頁就收起搜尋、清掉搜尋字
   useEffect(() => {
-    if (activeNav !== "command_center" || commandTab !== COMMAND_TAB_TEAM) setTeamSearchOpen(false);
+    if (activeNav !== "command_center" || commandTab !== COMMAND_TAB_TEAM) {
+      setTeamSearchOpen(false);
+      setTeamQuery("");
+    }
   }, [activeNav, commandTab]);
   // 停在沒有權限（或已不存在）的分頁時，退回第一個看得到的分頁。
   // 要等權限載入完：載入中 roles 是空的，算出來只剩「團隊」，會把預設的「營運」蓋掉。
@@ -1522,19 +1526,57 @@ export default function HuntingManagementPage() {
 
             {/* Right: Actions */}
             <div className="flex items-center gap-1 md:gap-3 translate-y-[5px]">
-              {/* 團隊：搜尋（分享鍵左邊），一次搜內部職員、外部職員、協力廠商、聯盟品牌 */}
+              {/* 團隊：搜尋（分享鍵左邊），一次搜內部職員、外部職員、協力廠商、聯盟品牌
+                  手機：放大鏡 → 跳出輸入欄（背景模糊，見 TeamPage 的 SearchOverlay）
+                  電腦：標題列直接展開成輸入框，結果取代清單 */}
               {activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM && (
-                <button
-                  onClick={() => setTeamSearchOpen((v) => !v)}
-                  className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${teamSearchOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
-                  title="搜尋"
-                  aria-label="搜尋團隊"
-                  aria-pressed={teamSearchOpen}
-                >
-                  <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
-                    search
-                  </span>
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      const tmp = document.createElement("input");
+                      tmp.setAttribute("aria-hidden", "true");
+                      tmp.style.cssText = "position:fixed;top:0;left:0;opacity:0;height:0;font-size:16px;";
+                      document.body.appendChild(tmp);
+                      tmp.focus();
+                      setTimeout(() => tmp.remove(), 1000);
+                      setTeamSearchOpen(true);
+                    }}
+                    className="md:hidden w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[#F4F4F5] text-[#71717A]"
+                    title="搜尋"
+                    aria-label="搜尋團隊"
+                  >
+                    <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
+                      search
+                    </span>
+                  </button>
+                  <label
+                    className={`hidden md:flex group relative items-center h-9 rounded-full focus-within:bg-white focus-within:ring-2 focus-within:ring-[#F39C12]/40 transition-[width,background-color] duration-200 focus-within:w-[280px] ${
+                      teamQuery ? "w-[280px] bg-white ring-1 ring-[#E4E4E7]" : "w-[180px] bg-[#F4F4F5]"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined absolute left-2.5 text-[20px] text-[#71717A] pointer-events-none" style={{ fontVariationSettings: "'wght' 200" }}>
+                      search
+                    </span>
+                    <input
+                      value={teamQuery}
+                      onChange={(e) => setTeamQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Escape" && (setTeamQuery(""), (e.target as HTMLInputElement).blur())}
+                      placeholder="搜尋姓名、工項、電話"
+                      aria-label="搜尋團隊"
+                      className="w-full h-full bg-transparent pl-9 pr-8 text-[14px] text-[#18181B] outline-none placeholder:text-[#A1A1AA]"
+                    />
+                    {teamQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setTeamQuery("")}
+                        aria-label="清除搜尋"
+                        className="absolute right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[#A1A1AA] hover:bg-[#E4E4E7]"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">close</span>
+                      </button>
+                    )}
+                  </label>
+                </>
               )}
               {/* Mobile Share Button (Hidden on Desktop) */}
               <div className="relative md:hidden" ref={shareRefMobile}>
@@ -1797,8 +1839,13 @@ export default function HuntingManagementPage() {
               flowRole={flowRole}
               activeTab={commandTab}
               onTabChange={setCommandTab}
+              teamQuery={teamQuery}
+              onTeamQuery={setTeamQuery}
               teamSearchOpen={teamSearchOpen}
-              onTeamSearchClose={() => setTeamSearchOpen(false)}
+              onTeamSearchClose={() => {
+                setTeamSearchOpen(false);
+                setTeamQuery("");
+              }}
             />
           ) : activeNav === "tasks" ? (
             <TasksPage

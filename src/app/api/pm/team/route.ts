@@ -3,7 +3,9 @@ import { readSheet } from "@/lib/google-sheets";
 import { explainDbError, getPmUser, listPeople, pmDbConfigured, rpc } from "@/lib/pm/server";
 import { rowToContact, type Contact, type ContactKind, type TeamData, type TeamMember, type TeamRole } from "@/lib/pm/model";
 import { checkPermissions } from "@/lib/permissions";
-import { deleteStaff, listStaff, saveStaff, StaffError, type StaffRecord } from "@/lib/pm/staff-crm";
+import { deleteStaff, listStaff, saveStaff, type StaffRecord } from "@/lib/pm/staff-crm";
+import { deleteVendor, listVendors, saveVendor } from "@/lib/pm/vendor-crm";
+import { CrmError } from "@/lib/pm/crm-sheet";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +13,9 @@ export const dynamic = "force-dynamic";
  * 團隊（指揮中心 → 團隊）
  *   GET  /api/pm/team                 內部職員（權限表＋員工CRM 電話＋APP 內的照片職稱）、聯絡人、協力廠商
  *   GET  /api/pm/team?card=email&v=…  某人的卡牌人像（圖片；帶版本號可長期快取）
- *   POST /api/pm/team {op:"profile.save"|"staff.save"|"staff.delete"|"contact.save"|"contact.delete", …}
+ *   POST /api/pm/team {op:"profile.save"|"staff.save"|"staff.delete"|"vendor.save"|"vendor.delete"|"contact.save"|"contact.delete", …}
  *
- * 內部職員的名冊直接讀寫拾壤CRM「員工CRM」（src/lib/pm/staff-crm.ts）。
+ * 內部職員、協力廠商直接讀寫拾壤CRM「員工CRM」「廠商CRM」（src/lib/pm/staff-crm.ts、vendor-crm.ts）。
  * 新增／編輯／刪除依權限表「團隊」欄：Admin 全部；Editor 新增、編輯；其他人唯讀。
  * 試算表只取需要的欄位；身分證、生日、地址、匯款帳號、統編一律不讀出。
  */
@@ -23,7 +25,6 @@ const json = (body: unknown, status = 200) => NextResponse.json(body, { status, 
 
 type Cache<T> = { at: number; data: T } | null;
 let phoneCache: Cache<Map<string, string>> = null;
-let vendorCache: Cache<Contact[]> = null;
 const TTL = 5 * 60 * 1000;
 
 function headerIndex(rows: string[][], mustHave: string): { row: number; col: (name: string) => number } | null {
@@ -60,41 +61,27 @@ async function staffPhones(): Promise<Map<string, string>> {
 }
 
 /** 廠商CRM → 協力廠商（唯讀） */
+/** 廠商CRM → 協力廠商（名稱用簡稱，下方顯示全名；工項當分類標籤） */
 async function crmVendors(): Promise<Contact[]> {
-  if (vendorCache && Date.now() - vendorCache.at < TTL) return vendorCache.data;
-  const out: Contact[] = [];
   try {
-    const rows = (await readSheet(CRM, "廠商CRM!A1:O400")) as string[][];
-    const h = headerIndex(rows, "姓名/公司");
-    if (h) {
-      const c = {
-        seq: h.col("序列"), trade: h.col("工項"), name: h.col("姓名/公司"), short: h.col("簡稱"),
-        c1: h.col("聯絡人1"), p1: h.col("聯絡電話1"), c2: h.col("聯絡人2"), p2: h.col("聯絡電話2"),
-      };
-      const get = (r: string[], i: number) => (i >= 0 ? String(r[i] ?? "").trim() : "");
-      for (const r of rows.slice(h.row + 1)) {
-        const name = get(r, c.name);
-        if (!name) continue;
-        const short = get(r, c.short);
-        out.push({
-          id: `crm-${get(r, c.seq) || out.length}`,
-          kind: "vendor",
-          name: short || name,
-          company: short && short !== name ? name : undefined,
-          title: get(r, c.trade) || undefined,
-          note: get(r, c.c1) || undefined,
-          phone: get(r, c.p1) || undefined,
-          contact2: get(r, c.c2) || undefined,
-          phone2: get(r, c.p2) || undefined,
-          fromCrm: true,
-        });
-      }
-    }
-    vendorCache = { at: Date.now(), data: out };
+    const rows = await listVendors();
+    return rows.map((v) => ({
+      id: `crm-${v.seq}`,
+      kind: "vendor" as const,
+      name: v.short || v.fullName,
+      company: v.short && v.short !== v.fullName ? v.fullName : undefined,
+      title: v.trade || undefined,
+      note: v.contact1 || undefined,
+      phone: v.phone1 || undefined,
+      contact2: v.contact2 || undefined,
+      phone2: v.phone2 || undefined,
+      fromCrm: true,
+      vendor: v,
+    }));
   } catch (e) {
     console.error("[team] 讀不到廠商CRM", e);
+    return [];
   }
-  return out;
 }
 
 /** 權限表「團隊」欄；表上沒有這欄時：管理者 = admin，其他人唯讀 */
@@ -211,8 +198,9 @@ export async function POST(req: Request) {
   } catch {
     return json({ error: "資料太大或格式錯誤" }, 400);
   }
-  // 員工CRM 寫在試算表，不需要資料庫；其他（照片、聯絡人）要
-  if (!String(b.op).startsWith("staff.") && !pmDbConfigured()) return json({ error: "資料庫尚未設定" }, 503);
+  // 員工CRM／廠商CRM 寫在試算表，不需要資料庫；其他（照片、聯絡人）要
+  const sheetOp = /^(staff|vendor)\./.test(String(b.op));
+  if (!sheetOp && !pmDbConfigured()) return json({ error: "資料庫尚未設定" }, 503);
   const teamRole = await teamRoleOf(user.email, user.role === "manager");
   const canEdit = teamRole === "admin" || teamRole === "editor";
   // 權限由這支 API 依權限表把關；通過後以管理者身分呼叫資料庫
@@ -227,6 +215,17 @@ export async function POST(req: Request) {
     if (b.op === "staff.delete") {
       if (teamRole !== "admin") return json({ error: "只有 Admin 可以刪除" }, 403);
       await deleteStaff(String(b.seq ?? ""));
+      return json({ status: "ok" });
+    }
+    if (b.op === "vendor.save") {
+      if (!canEdit) return json({ error: "沒有編輯權限（權限表「團隊」欄需為 Admin 或 Editor）" }, 403);
+      const seq = b.seq === undefined || b.seq === null ? undefined : String(b.seq);
+      const saved = await saveVendor(seq, (b.fields ?? {}) as Record<string, unknown>);
+      return json({ status: "ok", seq: saved });
+    }
+    if (b.op === "vendor.delete") {
+      if (teamRole !== "admin") return json({ error: "只有 Admin 可以刪除" }, 403);
+      await deleteVendor(String(b.seq ?? ""));
       return json({ status: "ok" });
     }
     if (b.op === "profile.save") {
@@ -256,11 +255,11 @@ export async function POST(req: Request) {
     }
     return json({ error: "未知的操作" }, 400);
   } catch (e) {
-    if (e instanceof StaffError) return json({ error: e.message }, 400);
+    if (e instanceof CrmError) return json({ error: e.message }, 400);
     console.error("[api/pm/team]", b.op, e);
-    if (String(b.op).startsWith("staff.")) {
+    if (sheetOp) {
       const msg = e instanceof Error ? e.message : String(e);
-      return json({ error: /permission|403|PERMISSION_DENIED/i.test(msg) ? "APP 沒有寫入拾壤CRM 的權限，請把服務帳號加為試算表編輯者" : `寫入員工CRM 失敗：${msg}` }, 500);
+      return json({ error: /permission|403|PERMISSION_DENIED/i.test(msg) ? "APP 沒有寫入拾壤CRM 的權限，請把服務帳號加為試算表編輯者" : `寫入拾壤CRM 失敗：${msg}` }, 500);
     }
     return json({ error: explainDbError(e) }, 500);
   }

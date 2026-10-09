@@ -429,6 +429,21 @@ export interface Contact {
   /** 廠商CRM 的第二位聯絡人 */
   contact2?: string;
   phone2?: string;
+  /** 廠商CRM 的那一列（可在 APP 編輯，寫回試算表） */
+  vendor?: VendorInfo;
+}
+
+export interface VendorInfo {
+  seq: string;
+  trade: string;
+  level: string;
+  fullName: string;
+  short: string;
+  contact1: string;
+  phone1: string;
+  contact2: string;
+  phone2: string;
+  note: string;
 }
 
 export interface TeamData {

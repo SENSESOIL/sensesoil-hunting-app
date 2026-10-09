@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import type { Contact, ContactKind, TeamMember } from "@/lib/pm/model";
+import { createPortal } from "react-dom";
+import type { Contact, ContactKind, TeamMember, VendorInfo } from "@/lib/pm/model";
 import { Avatar, Empty, Spinner } from "@/components/pm/kit";
 import { Sheet } from "@/components/pm/Sheet";
 import {
@@ -22,6 +23,7 @@ import {
 import { PortraitSheet } from "./PortraitSheet";
 import { ContactSheet } from "./ContactSheet";
 import { StaffSheet } from "./StaffSheet";
+import { VendorSheet } from "./VendorSheet";
 import { useTeam } from "./useTeam";
 
 /* ══════════════════════════════════════════════════════════
@@ -33,7 +35,7 @@ import { useTeam } from "./useTeam";
      名字右側的鉛筆 → 編輯（內部職員寫回拾壤CRM「員工CRM」）
      新增 → 清單最後一列「＋ 新增…」
      權限：權限表「團隊」欄 Admin 可新增、編輯、刪除；Editor 可新增、編輯；其他人唯讀
-     搜尋 → 頂部分享鍵左邊的放大鏡，一次搜四個分類
+     搜尋 → 頂部的放大鏡，一次搜四個分類：電腦在標題列直接展開輸入；手機跳出輸入欄，背景模糊
    ══════════════════════════════════════════════════════════ */
 
 type Cat = "internal" | ContactKind;
@@ -66,7 +68,8 @@ interface Entry {
   avatar?: string;
   avatarKey: string;
   phones: { label?: string; number: string }[];
-  badge?: string;
+  /** 名字右側的分類標籤（協力廠商的工項） */
+  tag?: string;
   me?: boolean;
   member?: TeamMember;
   contact?: Contact;
@@ -91,22 +94,34 @@ function fromContact(c: Contact): Entry {
     key: c.id,
     cat: c.kind,
     name: c.name,
-    sub: [c.title, c.company].filter(Boolean).join("、"),
+    // 協力廠商：工項放標籤，名字下方只放公司全名
+    sub: c.kind === "vendor" ? c.company ?? "" : [c.title, c.company].filter(Boolean).join("、"),
     avatar: c.avatar,
     avatarKey: c.id,
     phones: [
       ...(c.phone ? [{ label: c.contact2 ? c.name : undefined, number: c.phone }] : []),
       ...(c.phone2 ? [{ label: c.contact2, number: c.phone2 }] : []),
     ],
-    badge: c.fromCrm ? "CRM" : undefined,
+    tag: c.kind === "vendor" ? c.title : undefined,
     contact: c,
   };
 }
 
-export default function TeamPage({ searchOpen = false, onSearchClose }: { searchOpen?: boolean; onSearchClose?: () => void }) {
+export default function TeamPage({
+  query = "",
+  onQuery,
+  searchOpen = false,
+  onSearchClose,
+}: {
+  /** 搜尋字（電腦在標題列輸入；手機在跳出的輸入欄） */
+  query?: string;
+  onQuery?: (q: string) => void;
+  /** 手機：跳出搜尋輸入欄 */
+  searchOpen?: boolean;
+  onSearchClose?: () => void;
+}) {
   const { data, error, isLoading, mutate } = useTeam();
   const [cat, setCat] = useState<Cat>("internal");
-  const [q, setQ] = useState("");
   const [trade, setTrade] = useState<string | null>(null);
   const [view, setView] = useState<Entry | null>(null);
   const [call, setCall] = useState<Entry | null>(null);
@@ -114,12 +129,7 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
   const [editContact, setEditContact] = useState<{ kind: ContactKind; contact: Contact | null } | null>(null);
   // undefined = 關閉；null = 新增
   const [editStaff, setEditStaff] = useState<TeamMember | null | undefined>(undefined);
-  const input = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (searchOpen) requestAnimationFrame(() => input.current?.focus());
-    else setQ("");
-  }, [searchOpen]);
+  const [editVendor, setEditVendor] = useState<VendorInfo | null | undefined>(undefined);
   useEffect(() => setTrade(null), [cat]);
 
   const entries = useMemo(() => {
@@ -146,20 +156,30 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
   const canManageContacts = canEdit && canSave;
   // 內部職員寫在員工CRM（試算表），不需要資料庫；讀不到員工CRM 時不能編輯
   const canManageStaff = canEdit && !data.staffError;
-  const editable = (e: Entry) => (e.member ? canManageStaff && !!e.member.staff : !!e.contact && canManageContacts && !e.contact.fromCrm);
+  // 協力廠商寫在廠商CRM（試算表），也不需要資料庫
+  const canManageVendors = canEdit;
+  const editable = (e: Entry) =>
+    e.member
+      ? canManageStaff && !!e.member.staff
+      : e.contact?.vendor
+        ? canManageVendors
+        : !!e.contact && canManageContacts && !e.contact.fromCrm;
   const openEdit = (e: Entry) => {
     if (e.member) setEditStaff(e.member);
+    else if (e.contact?.vendor) setEditVendor(e.contact.vendor);
     else if (e.contact) setEditContact({ kind: e.contact.kind, contact: e.contact });
   };
   const count = (k: Cat) => entries.filter((e) => e.cat === k).length;
   const meta = CATS.find((c) => c.key === cat)!;
 
-  const keyword = q.trim().toLowerCase();
-  const searching = searchOpen && !!keyword;
+  const keyword = query.trim().toLowerCase();
   const matches = (e: Entry) =>
-    `${e.name} ${e.sub} ${e.phones.map((p) => p.number).join(" ")} ${e.contact?.note ?? ""} ${e.contact?.contact2 ?? ""} ${e.member?.bio ?? ""}`
+    `${e.name} ${e.sub} ${e.tag ?? ""} ${e.phones.map((p) => p.number).join(" ")} ${e.contact?.note ?? ""} ${e.contact?.contact2 ?? ""} ${e.member?.bio ?? ""}`
       .toLowerCase()
       .includes(keyword);
+  const results = keyword ? entries.filter(matches) : [];
+  const vendorEntries = entries.filter((e) => e.contact?.vendor);
+  const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))];
 
   const inCat = entries.filter((e) => e.cat === cat);
   const trades =
@@ -172,39 +192,19 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
 
   return (
     <div className="flex flex-col gap-5">
-      {/* 搜尋列：由頂部的放大鏡打開，一次搜四個分類 */}
-      {searchOpen && (
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 min-w-0">
-            <IconSearch size={18} stroke={1.5} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA] pointer-events-none" />
-            <input
-              ref={input}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="搜尋姓名、工項、電話"
-              enterKeyHint="search"
-              className="w-full h-11 rounded-full bg-white shadow-card pl-10 pr-9 text-[16px] text-[#18181B] outline-none placeholder:text-[#A1A1AA] focus:ring-2 focus:ring-[#F39C12]/40"
-            />
-            {q && (
-              <button
-                onClick={() => setQ("")}
-                aria-label="清除"
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F4F4F5]"
-              >
-                <IconX size={16} stroke={1.75} />
-              </button>
-            )}
-          </div>
-          <button onClick={onSearchClose} className="h-11 px-1 text-[15px] text-[#71717A] active:text-[#18181B] shrink-0">
-            取消
-          </button>
+      {/* 手機：點頂部放大鏡跳出輸入欄，背景模糊；結果直接列在輸入欄下方 */}
+      <SearchOverlay open={searchOpen} query={query} onQuery={(v) => onQuery?.(v)} onClose={() => onSearchClose?.()}>
+        {keyword ? <SearchResults entries={results} keyword={query.trim()} onOpen={setView} onCall={setCall} onEdit={(e) => (editable(e) ? openEdit : undefined)} /> : null}
+      </SearchOverlay>
+
+      {/* 電腦：標題列輸入，結果直接取代清單 */}
+      {keyword && (
+        <div className="hidden md:flex flex-col gap-5">
+          <SearchResults entries={results} keyword={query.trim()} onOpen={setView} onCall={setCall} onEdit={(e) => (editable(e) ? openEdit : undefined)} />
         </div>
       )}
-
-      {searching ? (
-        <SearchResults entries={entries.filter(matches)} keyword={q.trim()} onOpen={setView} onCall={setCall} />
-      ) : (
-        <>
+      {(
+        <div className={`flex flex-col gap-5 ${keyword ? "md:hidden" : ""}`}>
           {/* 分類：四個圖示方塊（篩選器），和上方的文字分頁在形狀上就分得開 */}
           <div role="tablist" aria-label="團隊分類" className="grid grid-cols-4 gap-2" {...stop}>
             {CATS.map((c) => {
@@ -246,7 +246,7 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
                   key={t ?? "all"}
                   onClick={() => setTrade(t)}
                   className={`h-8 px-3.5 rounded-full text-[13px] whitespace-nowrap shrink-0 transition-colors ${
-                    trade === t ? "bg-[#18181B] text-white" : "bg-white shadow-card text-[#52525B] active:bg-[#F4F4F5]"
+                    trade === t ? "bg-[#F39C12] text-white" : "bg-white shadow-card text-[#52525B] active:bg-[#F4F4F5]"
                   }`}
                 >
                   {t ?? "全部"}
@@ -256,7 +256,7 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
           )}
 
           {(() => {
-            const canAdd = cat === "internal" ? canManageStaff : canManageContacts;
+            const canAdd = cat === "internal" ? canManageStaff : cat === "vendor" ? canManageVendors : canManageContacts;
             return (
             <ListCard>
               {shown.length === 0 && !canAdd ? (
@@ -267,7 +267,9 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
               {/* 新增：四個分類同一個位置、同一個樣子 */}
               {canAdd && meta.add && (
                 <button
-                  onClick={() => (cat === "internal" ? setEditStaff(null) : setEditContact({ kind: cat as ContactKind, contact: null }))}
+                  onClick={() =>
+                    cat === "internal" ? setEditStaff(null) : cat === "vendor" ? setEditVendor(null) : setEditContact({ kind: cat as ContactKind, contact: null })
+                  }
                   className="w-full flex items-center gap-3.5 pl-4 pr-3 py-3 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
                 >
                   <span className="w-11 h-11 rounded-full border-[1.5px] border-dashed border-[#D4D4D8] flex items-center justify-center shrink-0 text-[#A1A1AA]">
@@ -282,9 +284,9 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
 
           {cat === "internal" && canManageStaff && <p className="px-4 -mt-2 text-[13px] leading-[20px] text-[#A1A1AA]">{meta.hint}，在這裡改的會同步回試算表</p>}
           {cat === "vendor" && inCat.some((e) => e.contact?.fromCrm) && (
-            <p className="px-4 -mt-2 text-[13px] leading-[20px] text-[#A1A1AA]">標示 CRM 的廠商來自拾壤CRM，請在試算表修改；匯款帳號等資料不會顯示在 APP。</p>
+            <p className="px-4 -mt-2 text-[13px] leading-[20px] text-[#A1A1AA]">協力廠商來自拾壤CRM 的廠商CRM，在這裡改的會同步回試算表；統編、匯款帳號不會顯示在 APP。</p>
           )}
-        </>
+        </div>
       )}
 
       <ProfileSheet
@@ -316,6 +318,15 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
         onClose={() => setEditContact(null)}
         onSaved={() => mutate()}
         canDelete={canDelete}
+      />
+      <VendorSheet
+        vendor={editVendor ?? null}
+        open={editVendor !== undefined}
+        canDelete={canDelete}
+        trades={uniq(vendorEntries.map((e) => e.contact?.vendor?.trade ?? ""))}
+        levels={uniq(vendorEntries.map((e) => e.contact?.vendor?.level ?? ""))}
+        onClose={() => setEditVendor(undefined)}
+        onSaved={() => mutate()}
       />
       <StaffSheet
         member={editStaff ?? null}
@@ -360,8 +371,8 @@ function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => vo
             {/* 鉛筆的位置（實際按鈕疊在上面） */}
             {onEdit && <span data-pin-slot className="w-7 h-[22px] shrink-0 -ml-0.5" aria-hidden />}
             {e.me && <span className="text-[13px] text-[#A1A1AA] shrink-0">你</span>}
-            {e.badge && (
-              <span className="shrink-0 h-[18px] px-1.5 rounded-[5px] bg-[#F4F4F5] text-[11px] font-medium text-[#A1A1AA] leading-[18px]">{e.badge}</span>
+            {e.tag && (
+              <span className="shrink-0 h-[20px] px-2 rounded-full bg-[#F4F4F5] text-[12px] text-[#71717A] leading-[20px]">{e.tag}</span>
             )}
           </span>
           {e.sub && <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5 truncate">{e.sub}</span>}
@@ -415,16 +426,84 @@ function EditPin({ e, onEdit }: { e: Entry; onEdit: (e: Entry) => void }) {
   );
 }
 
+/** 手機搜尋：頂部輸入欄＋模糊背景，結果列在下方；電腦版不用（標題列直接輸入） */
+function SearchOverlay({
+  open,
+  query,
+  onQuery,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  query: string;
+  onQuery: (q: string) => void;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
+  // 只在打開那一刻聚焦（之後每打一個字都會重繪，不要重複搶焦點）
+  useEffect(() => {
+    if (!open) return;
+    input.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close.current();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+  if (!open || typeof document === "undefined") return null;
+  return createPortal(
+    <div className="md:hidden fixed inset-0 z-[140] flex flex-col bg-[#FAFAFA]/70 backdrop-blur-xl" role="dialog" aria-label="搜尋團隊">
+      <div className="shrink-0 px-4 pb-3 flex items-center gap-2" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
+        <div className="relative flex-1 min-w-0">
+          <IconSearch size={18} stroke={1.5} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA] pointer-events-none" />
+          <input
+            ref={input}
+            value={query}
+            onChange={(e) => onQuery(e.target.value)}
+            placeholder="搜尋姓名、工項、電話"
+            enterKeyHint="search"
+            className="w-full h-11 rounded-full bg-white shadow-card pl-10 pr-9 text-[16px] text-[#18181B] outline-none placeholder:text-[#A1A1AA] focus:ring-2 focus:ring-[#F39C12]/40"
+          />
+          {query && (
+            <button
+              onClick={() => {
+                onQuery("");
+                input.current?.focus();
+              }}
+              aria-label="清除"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F4F4F5]"
+            >
+              <IconX size={16} stroke={1.75} />
+            </button>
+          )}
+        </div>
+        <button onClick={onClose} className="h-11 px-1 text-[15px] text-[#3F3F46] active:text-[#18181B] shrink-0">
+          取消
+        </button>
+      </div>
+      {/* 點空白處關閉；有結果時可捲動 */}
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-10" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="flex flex-col gap-5">{children}</div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function SearchResults({
   entries,
   keyword,
   onOpen,
   onCall,
+  onEdit,
 }: {
   entries: Entry[];
   keyword: string;
   onOpen: (e: Entry) => void;
   onCall: (e: Entry) => void;
+  /** 這一筆可以編輯就回傳編輯函式 */
+  onEdit?: (e: Entry) => ((e: Entry) => void) | undefined;
 }) {
   if (!entries.length) return <Empty icon="search_off" title={`找不到「${keyword}」`} hint="試試姓名、工項或電話的一部分" />;
   return (
@@ -437,7 +516,7 @@ function SearchResults({
             <GroupLabel name={c.label} n={rows.length} />
             <ListCard>
               {rows.map((e) => (
-                <Row key={e.key} e={e} onOpen={onOpen} onCall={onCall} />
+                <Row key={e.key} e={e} onOpen={onOpen} onCall={onCall} onEdit={onEdit?.(e)} />
               ))}
             </ListCard>
           </section>

@@ -45,6 +45,16 @@ export async function writeSheet(
   });
 }
 
+/** 一次寫多個範圍（一個請求），例如同一列不相鄰的幾格 */
+export async function batchWriteSheet(spreadsheetId: string, data: { range: string; values: string[][] }[]) {
+  if (!data.length) return;
+  const sheets = getSheetsClient();
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId,
+    requestBody: { valueInputOption: "USER_ENTERED", data },
+  });
+}
+
 // ─── APPEND ─────────────────────────────────────────────────────────────────
 
 export async function appendSheet(
