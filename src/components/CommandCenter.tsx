@@ -156,6 +156,7 @@ function ListRow({
   title,
   desc,
   meta,
+  pending,
   onClick,
   last,
 }: {
@@ -163,6 +164,8 @@ function ListRow({
   title: string;
   desc?: string;
   meta?: string;
+  /** 還沒有內容：icon 與標題退成淡灰，有內容的項目才用品牌橘，一眼分得出哪些點進去有東西 */
+  pending?: boolean;
   onClick?: () => void;
   last?: boolean;
 }) {
@@ -173,15 +176,17 @@ function ListRow({
         last ? "" : "border-b border-[#F4F4F5]"
       }`}
     >
-      <div className="w-8 flex items-center justify-center shrink-0 text-[#A1A1AA]">
+      <div className={`w-8 flex items-center justify-center shrink-0 ${pending ? "text-[#D4D4D8]" : "text-[#F39C12]"}`}>
         {/* Tabler icon，線寬 1.25 對齊其他 Material Symbols（wght 200）的細線風格 */}
-        <Icon size={24} stroke={1.25} className="group-active:text-[#F39C12] transition-colors" />
+        <Icon size={24} stroke={1.25} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[15px] font-medium text-[#18181B]">{title}</p>
+        <p className={`text-[15px] font-medium ${pending ? "text-[#71717A]" : "text-[#18181B]"}`}>{title}</p>
         {desc && <p className="text-[12px] text-[#A1A1AA] mt-0.5 truncate">{desc}</p>}
       </div>
-      {meta && <span className="text-[12px] text-[#A1A1AA] tabular-nums shrink-0">{meta}</span>}
+      {meta && (
+        <span className={`text-[12px] tabular-nums shrink-0 ${pending ? "text-[#D4D4D8]" : "text-[#71717A]"}`}>{meta}</span>
+      )}
       <span
         className="material-symbols-outlined text-[20px] text-[#D4D4D8] shrink-0"
         style={{ fontVariationSettings: "'wght' 200" }}
@@ -235,6 +240,12 @@ export default function CommandCenter({
   const sops = useMemo(() => getSops(), []);
   // 流程圖目錄（營運 → 流程的項目數；點進去是每一張流程圖）
   const flows = useFlows(canSeeOperations && opsAccess.flows);
+  // 組織圖右側的數量（幾個部門），讀組織圖本身的資料，不寫死
+  const { data: orgSummary } = useSWR<{ divisions: number | null }>(
+    canSeeOperations && opsAccess.orgChart ? "/api/org-chart/summary" : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
   const projects = crm?.projects ?? [];
 
   const tabs = useMemo(
@@ -384,44 +395,78 @@ export default function CommandCenter({
             style={{ width: panelW || `${100 / tabs.length}%` }}
           >
             
-            <Card>
-              {[
-                opsAccess.orgChart && { icon: IconSitemap, title: "組織圖", desc: "全公司架構", onClick: onOpenOrgChart },
-                opsAccess.jobDesc && { icon: IconId, title: "職務說明", desc: "各職位的工作內容", meta: "待建立", onClick: () => setScreen("profile") },
-                opsAccess.policies && {
-                  icon: IconGavel,
-                  title: "制度",
-                  desc: "薪酬福利、績效考核等規章",
-                  meta: policies.length ? `${policies.length} 項` : "待建立",
-                  onClick: () => setScreen("policies"),
-                },
-                opsAccess.flows && {
-                  icon: IconRoute,
-                  title: "流程",
-                  desc: "專案管理等工作流程圖",
-                  meta: flows.length ? `${flows.length} 項` : "載入中",
-                  onClick: () => setScreen("flows"),
-                },
-                opsAccess.sops && {
-                  icon: IconChecklist,
-                  title: "SOP",
-                  desc: "各項作業標準流程",
-                  meta: sops.length ? `${sops.length} 項` : "待建立",
-                  onClick: () => setScreen("sops"),
-                },
-                opsAccess.forms && {
-                  icon: IconFileText,
-                  title: "表單",
-                  desc: "領款簽收單等可填寫表單",
-                  meta: `${FORMS.length} 項`,
-                  onClick: () => setScreen("forms"),
-                },
-              ]
-                .filter((r): r is Exclude<typeof r, false> => !!r)
-                .map((r, i, arr) => (
-                  <ListRow key={r.title} {...r} last={i === arr.length - 1} />
-                ))}
-            </Card>
+            {/* 兩組：「組織」是人與職位，「規範」是做事的規則與工具。
+                沒權限的項目不出現；整組都沒有就連組名一起收掉。 */}
+            {[
+              {
+                name: "組織",
+                rows: [
+                  opsAccess.orgChart && {
+                    icon: IconSitemap,
+                    title: "組織圖",
+                    desc: "各部門與負責人",
+                    meta: orgSummary?.divisions ? `${orgSummary.divisions} 部門` : undefined,
+                    onClick: onOpenOrgChart,
+                  },
+                  opsAccess.jobDesc && {
+                    icon: IconId,
+                    title: "職務說明",
+                    desc: "每個職位負責的工作",
+                    meta: "待建立",
+                    pending: true,
+                    onClick: () => setScreen("profile"),
+                  },
+                ],
+              },
+              {
+                name: "規範",
+                rows: [
+                  opsAccess.policies && {
+                    icon: IconGavel,
+                    title: "制度",
+                    desc: "薪酬福利、績效考核",
+                    meta: policies.length ? `${policies.length} 項` : "待建立",
+                    pending: !policies.length,
+                    onClick: () => setScreen("policies"),
+                  },
+                  opsAccess.flows && {
+                    icon: IconRoute,
+                    title: "流程",
+                    desc: "跨部門的工作流程圖",
+                    meta: flows.length ? `${flows.length} 項` : undefined,
+                    onClick: () => setScreen("flows"),
+                  },
+                  opsAccess.sops && {
+                    icon: IconChecklist,
+                    title: "SOP",
+                    desc: "單項作業的標準做法",
+                    meta: sops.length ? `${sops.length} 項` : "待建立",
+                    pending: !sops.length,
+                    onClick: () => setScreen("sops"),
+                  },
+                  opsAccess.forms && {
+                    icon: IconFileText,
+                    title: "表單",
+                    desc: "領款簽收等線上表單",
+                    meta: `${FORMS.length} 項`,
+                    onClick: () => setScreen("forms"),
+                  },
+                ],
+              },
+            ].map((group) => {
+              const rows = group.rows.filter((r): r is Exclude<typeof r, false> => !!r);
+              if (!rows.length) return null;
+              return (
+                <div key={group.name} className="mb-6 last:mb-0">
+                  <p className="px-1 mb-2 text-[13px] font-medium text-[#71717A]">{group.name}</p>
+                  <Card>
+                    {rows.map((r, i) => (
+                      <ListRow key={r.title} {...r} last={i === rows.length - 1} />
+                    ))}
+                  </Card>
+                </div>
+              );
+            })}
           </section>
           )}
 
