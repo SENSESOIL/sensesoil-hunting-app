@@ -564,8 +564,10 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="flex flex-col h-full overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto px-0 pb-10 scrollbar-hide">
+      {/* 捲動容器會把超出邊界的陰影切掉：左右各外推 12px、內部再補回來，
+          卡片位置不變，shadow-card 才有空間完整畫出來 */}
+      <div className="flex flex-col h-full overflow-hidden -mx-3">
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 pt-1 pb-10 scrollbar-hide">
           <div className="w-full h-full">
             <div className="flex flex-col md:flex-row gap-6 md:h-[calc(100vh-220px)]">
               {/* Left Card */}

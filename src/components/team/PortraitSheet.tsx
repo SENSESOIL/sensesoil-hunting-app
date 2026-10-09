@@ -1,113 +1,105 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { CARD_BG_KEYS, cardBg, type TeamMember } from "@/lib/pm/model";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import type { TeamMember } from "@/lib/pm/model";
 import { Sheet, toast } from "@/components/pm/Sheet";
-import { Icon } from "@/components/pm/ui";
-import { ORANGE, Spinner } from "@/components/pm/kit";
-import { avatarFromUrl, makeAiPortrait, makePortrait, PortraitError, preloadVision } from "./portrait";
-import { MemberCard } from "./MemberCard";
-import { cardUrl, teamPost } from "./useTeam";
+import { Avatar, ORANGE, Spinner } from "@/components/pm/kit";
+import { IconCamera, IconPhoto } from "@tabler/icons-react";
+import { teamPost } from "./useTeam";
 
 /* ══════════════════════════════════════════════════════════
-   更換大頭照：拍照／選照片 →
-     有 AI（aiReady）：AI 重新生成「同一個人、真的穿著公司連帽上衣」的寫實人像 → 對齊、去背
-     沒有 AI：快速模式（去背＋向量制服）
-   → 選背景色 → 儲存。同時產生全 APP 共用的圓形大頭照（任務指派、參與者頭像）
+   大頭照：拍照／選照片 → 拖曳、縮放對準 → 裁成統一規格的圓形大頭照
+   全 APP 共用（團隊、任務指派、參與者頭像）。
+   輸出固定 320×320 JPEG（正方形存檔，顯示一律裁成圓形），大小控制在伺服器上限 60KB 內。
+   不再做卡牌與 AI 生成：想要更好看的大頭貼，先用 Gemini 做好再上傳。
    ══════════════════════════════════════════════════════════ */
+
+const OUT = 320;
+const MAX_LEN = 58000; // 伺服器上限 60000 字元（data URL），留一點餘裕
+const MAX_ZOOM = 4;
+
+/** 觸控不要傳給外層（抽屜下拉關閉、指揮中心左右滑換分頁） */
+const stop = {
+  onTouchStart: (e: React.TouchEvent) => e.stopPropagation(),
+  onTouchMove: (e: React.TouchEvent) => e.stopPropagation(),
+  onTouchEnd: (e: React.TouchEvent) => e.stopPropagation(),
+};
+
+interface Crop {
+  img: HTMLImageElement;
+  url: string;
+}
 
 export function PortraitSheet({
   member,
   open,
   onClose,
   onSaved,
-  aiReady,
 }: {
-  aiReady?: boolean;
   member: TeamMember | null;
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [card, setCard] = useState<string | undefined>();
-  const [avatar, setAvatar] = useState<string | undefined>();
-  const [bg, setBg] = useState<string>("peach");
+  const [crop, setCrop] = useState<Crop | null>(null);
   const [title, setTitle] = useState("");
   const [bio, setBio] = useState("");
-  const [stage, setStage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  // 保留這次選的照片：AI 結果不滿意可以「重新生成」
-  const [source, setSource] = useState<File | null>(null);
-  const [aiFailed, setAiFailed] = useState(false);
   const cam = useRef<HTMLInputElement>(null);
   const lib = useRef<HTMLInputElement>(null);
+  const cropper = useRef<CropperApi>(null);
 
   useEffect(() => {
     if (!open || !member) return;
-    setCard(undefined);
-    setAvatar(undefined);
-    setBg(member.cardBg && CARD_BG_KEYS.includes(member.cardBg) ? member.cardBg : CARD_BG_KEYS[0]);
+    setCrop(null);
     setTitle(member.title ?? "");
     setBio(member.bio ?? "");
-    setStage(null);
     setError(null);
-    setSource(null);
-    setAiFailed(false);
-    // 先在背景載入模型，選好照片時通常已經準備好
-    preloadVision().catch(() => {});
   }, [open, member]);
 
+  // 換照片或關閉時釋放上一張的 object URL
+  useEffect(
+    () => () => {
+      if (crop) URL.revokeObjectURL(crop.url);
+    },
+    [crop]
+  );
+
   if (!member) return null;
-  const colors = cardBg(bg, member.email);
 
-  const run = async (f: File, useAi: boolean) => {
-    setError(null);
-    try {
-      const r = useAi
-        ? await makeAiPortrait(
-            f,
-            colors,
-            async (photo) => {
-              const res = await teamPost({ op: "avatar.generate", email: member.email, photo });
-              const img = res.data.image;
-              if (!res.ok || typeof img !== "string") throw new PortraitError(res.data.error || "AI 生成失敗，請再試一次");
-              return img;
-            },
-            setStage
-          )
-        : await makePortrait(f, colors, setStage);
-      setCard(r.card);
-      setAvatar(r.avatar);
-      setStage(null);
-      setAiFailed(false);
-    } catch (e) {
-      setStage(null);
-      if (useAi) setAiFailed(true);
-      setError(e instanceof PortraitError ? e.message : "處理失敗，請換一張照片或稍後再試（需要網路）");
-      console.error("[portrait]", e);
-    }
-  };
-
-  const pick = async (files: FileList | null) => {
+  const pick = (files: FileList | null) => {
     const f = files?.[0];
     if (!f) return;
-    setSource(f);
-    await run(f, !!aiReady);
+    if (!f.type.startsWith("image/")) {
+      setError("請選擇照片檔（JPG、PNG）");
+      return;
+    }
+    setError(null);
+    const url = URL.createObjectURL(f);
+    const img = new Image();
+    img.onload = () => setCrop({ img, url });
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      setError("這張照片讀不出來，請換一張（iPhone 的 HEIC 請先轉成 JPG）");
+    };
+    img.src = url;
   };
 
-  const changed = !!card || bg !== (member.cardBg ?? CARD_BG_KEYS[0]) || title !== (member.title ?? "") || bio !== (member.bio ?? "");
+  const changed = !!crop || title !== (member.title ?? "") || bio !== (member.bio ?? "");
 
   const save = async () => {
     setSaving(true);
-    const patch: Record<string, unknown> = { title: title.trim() || null, bio: bio.trim() || null, card_bg: bg };
-    if (card && avatar) {
-      patch.card = card;
-      // 頭像的背景色以最後選的為準
-      patch.avatar = await avatarFromUrl(card, colors).catch(() => avatar);
-    } else if (member.hasCard && bg !== member.cardBg) {
-      const url = cardUrl(member);
-      if (url) patch.avatar = await avatarFromUrl(url, colors).catch(() => undefined);
+    const patch: Record<string, unknown> = { title: title.trim() || null, bio: bio.trim() || null };
+    if (crop) {
+      const avatar = cropper.current?.export();
+      if (!avatar) {
+        setSaving(false);
+        toast("照片處理失敗，請換一張", { tone: "error" });
+        return;
+      }
+      patch.avatar = avatar;
+      patch.card = null; // 舊的卡牌人像一併清掉，全 APP 只剩圓形大頭照
     }
     const r = await teamPost({ op: "profile.save", email: member.email, patch });
     setSaving(false);
@@ -115,25 +107,23 @@ export function PortraitSheet({
       toast(r.data.error || "儲存失敗", { tone: "error" });
       return;
     }
-    toast("已更新，任務指派的頭像也會一起換");
+    toast(crop ? "大頭照已更新" : "已更新");
     onSaved();
     onClose();
   };
 
-  const preview: TeamMember = { ...member, title: title || member.title, cardBg: bg };
-
   return (
     <Sheet
       open={open}
-      title={member.hasCard || card ? "更換大頭照" : "上傳大頭照"}
+      title={member.avatar ? "更換大頭照" : "上傳大頭照"}
       subtitle={member.name}
-      onClose={() => !stage && !saving && onClose()}
+      onClose={() => !saving && onClose()}
       dirty={changed && !saving}
       footer={
         <button
           onClick={save}
-          disabled={!changed || !!stage || saving}
-          className="w-full h-12 rounded-[14px] text-white text-[15px] font-semibold disabled:opacity-35 inline-flex items-center justify-center gap-2"
+          disabled={!changed || saving}
+          className="w-full h-12 rounded-full text-white text-[16px] font-medium disabled:opacity-35 inline-flex items-center justify-center gap-2"
           style={{ background: ORANGE }}
         >
           {saving && <Spinner size={16} color="#fff" />}
@@ -141,91 +131,206 @@ export function PortraitSheet({
         </button>
       }
     >
-      <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
-        <div className="rounded-[20px] bg-[#0E0E11] py-5 flex justify-center relative overflow-hidden">
-          <div className="absolute inset-0 opacity-40 blur-3xl" style={{ background: `radial-gradient(circle at 50% 60%, ${colors[0]}, transparent 60%)` }} />
-          <div className="relative w-[200px]">
-            <MemberCard member={preview} src={card ?? cardUrl(member)} active />
-            {stage && (
-              <div className="absolute inset-0 rounded-[22px] bg-black/55 flex flex-col items-center justify-center gap-3 px-4 text-center">
-                <Spinner size={28} color="#fff" />
-                <p className="text-[13px] text-white leading-snug">{stage}</p>
-              </div>
+      <div className="px-4 pt-2 pb-6 flex flex-col gap-5">
+        {crop ? (
+          <Cropper key={crop.url} ref={cropper} img={crop.img} />
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-4">
+            {member.avatar ? (
+              <Avatar name={member.name} email={member.email} src={member.avatar} size={128} />
+            ) : (
+              <span className="w-32 h-32 rounded-full border-[1.5px] border-dashed border-[#D4D4D8] flex items-center justify-center text-[#A1A1AA]">
+                <IconCamera size={32} stroke={1.25} />
+              </span>
             )}
+            <p className="text-[13px] leading-[20px] text-[#A1A1AA] text-center max-w-[30ch]">
+              選一張正面照，下一步可以拖曳、縮放，對準臉部後裁成圓形
+            </p>
           </div>
-        </div>
+        )}
 
         {error && (
-          <p className="rounded-[12px] px-3 py-2.5 text-[13px] leading-relaxed" style={{ background: "#FDECEC", color: "#B42318" }}>
-            {error}
-          </p>
+          <p className="rounded-[12px] px-3.5 py-2.5 text-[13px] leading-relaxed bg-[#FDECEC] text-[#B42318]">{error}</p>
         )}
 
-        {source && !stage && (aiReady || aiFailed) && (
-          <div className="flex gap-2 -mt-1">
-            {aiReady && (
-              <button type="button" onClick={() => run(source, true)} className="flex-1 h-11 rounded-[12px] bg-white border border-[#E4E4E7] text-[14px] font-semibold text-[#18181B] inline-flex items-center justify-center gap-1.5 active:bg-[#F4F4F5]">
-                <Icon name="auto_awesome" weight={400} className="text-[18px]" style={{ color: ORANGE }} />
-                {card ? "不像？重新生成" : "再試一次"}
-              </button>
-            )}
-            {aiFailed && (
-              <button type="button" onClick={() => run(source, false)} className="flex-1 h-11 rounded-[12px] bg-white border border-[#E4E4E7] text-[14px] font-semibold text-[#3F3F46] active:bg-[#F4F4F5]">
-                改用快速模式
-              </button>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-2">
-          <button type="button" disabled={!!stage} onClick={() => cam.current?.click()} className="h-12 rounded-[14px] bg-[#18181B] text-white text-[15px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40">
-            <Icon name="photo_camera" weight={400} className="text-[20px]" />
-            自拍
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            onClick={() => cam.current?.click()}
+            className="h-12 rounded-full bg-[#F4F4F5] text-[#18181B] text-[15px] font-medium inline-flex items-center justify-center gap-2 active:bg-[#E4E4E7]"
+          >
+            <IconCamera size={20} stroke={1.5} />
+            拍照
           </button>
-          <button type="button" disabled={!!stage} onClick={() => lib.current?.click()} className="h-12 rounded-[14px] bg-white border border-[#E4E4E7] text-[#18181B] text-[15px] font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-40">
-            <Icon name="photo_library" weight={400} className="text-[20px]" />
-            從相簿選
+          <button
+            type="button"
+            onClick={() => lib.current?.click()}
+            className="h-12 rounded-full bg-[#F4F4F5] text-[#18181B] text-[15px] font-medium inline-flex items-center justify-center gap-2 active:bg-[#E4E4E7]"
+          >
+            <IconPhoto size={20} stroke={1.5} />
+            {crop ? "換一張" : "從相簿選"}
           </button>
           <input ref={cam} type="file" accept="image/*" capture="user" className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
           <input ref={lib} type="file" accept="image/*" className="hidden" onChange={(e) => { pick(e.target.files); e.target.value = ""; }} />
         </div>
-        <p className="text-[12px] text-[#8E8E93] leading-relaxed -mt-1">
-          {aiReady
-            ? "正面、臉清楚的照片效果最好。照片會交給 AI（Google Gemini）重新生成：同一個人、穿上公司連帽上衣的攝影棚人像，約 10–40 秒；APP 不保存原始照片。"
-            : "目前是快速模式：自動去背、對齊，套上向量制服（照片只在這支手機處理）。管理者設定 AI 金鑰（GEMINI_API_KEY）後，會改成 AI 重新生成穿制服的寫實人像。"}
-        </p>
 
-        <div className="bg-white rounded-[16px] border border-[#EBEBED] px-4 py-3">
-          <p className="text-[13px] text-[#3F3F46] mb-2">卡牌背景</p>
-          <div className="flex flex-wrap gap-2.5">
-            {CARD_BG_KEYS.map((k) => {
-              const [a, b] = cardBg(k, "");
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setBg(k)}
-                  aria-pressed={bg === k}
-                  aria-label={`背景 ${k}`}
-                  className="w-10 h-10 rounded-full transition-transform active:scale-90"
-                  style={{ background: `linear-gradient(135deg, ${a}, ${b})`, boxShadow: bg === k ? `0 0 0 3px #fff, 0 0 0 5px ${ORANGE}` : undefined }}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-[16px] border border-[#EBEBED] divide-y divide-[#F2F2F4]">
+        <div className="bg-white rounded-[18px] shadow-card divide-y divide-[#F4F4F5]">
           <label className="flex items-center gap-3 px-4 min-h-[52px]">
-            <span className="w-14 text-[14px] text-[#8E8E93] shrink-0">職稱</span>
-            <input value={title} onChange={(e) => setTitle(e.target.value.slice(0, 30))} placeholder="例：工地主任、泥作師傅" className="flex-1 min-w-0 h-11 bg-transparent outline-none text-[16px] text-[#18181B] placeholder:text-[#C7C7CC]" />
+            <span className="w-12 text-[15px] text-[#71717A] shrink-0">職稱</span>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value.slice(0, 30))}
+              placeholder="例：工地主任、泥作師傅"
+              className="flex-1 min-w-0 h-11 bg-transparent outline-none text-[16px] text-[#18181B] placeholder:text-[#C4C4C8]"
+            />
           </label>
           <label className="flex items-center gap-3 px-4 min-h-[52px]">
-            <span className="w-14 text-[14px] text-[#8E8E93] shrink-0">專長</span>
-            <input value={bio} onChange={(e) => setBio(e.target.value.slice(0, 200))} placeholder="一句話，例：灰泥、磨石子十年" className="flex-1 min-w-0 h-11 bg-transparent outline-none text-[16px] text-[#18181B] placeholder:text-[#C7C7CC]" />
+            <span className="w-12 text-[15px] text-[#71717A] shrink-0">專長</span>
+            <input
+              value={bio}
+              onChange={(e) => setBio(e.target.value.slice(0, 200))}
+              placeholder="一句話，例：灰泥、磨石子十年"
+              className="flex-1 min-w-0 h-11 bg-transparent outline-none text-[16px] text-[#18181B] placeholder:text-[#C4C4C8]"
+            />
           </label>
         </div>
       </div>
     </Sheet>
   );
 }
+
+/* ── 裁切：正方形取景框＋圓形遮罩，拖曳移動、雙指或滑桿縮放 ───────── */
+
+interface CropperApi {
+  export: () => string | null;
+}
+
+const Cropper = React.forwardRef<CropperApi, { img: HTMLImageElement }>(function Cropper({ img }, ref) {
+  const box = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState(280); // 取景框邊長（CSS px）
+  const [zoom, setZoom] = useState(1);
+  const [pos, setPos] = useState({ x: 0, y: 0 }); // 圖片中心相對取景框中心的位移（CSS px）
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; zoom: number } | null>(null);
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setSize(el.clientWidth));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // 縮放 1 = 短邊剛好填滿取景框
+  const base = size / Math.min(img.naturalWidth, img.naturalHeight);
+  const scale = base * zoom;
+  const w = img.naturalWidth * scale;
+  const h = img.naturalHeight * scale;
+
+  // 圖片永遠蓋滿取景框，不露出空白
+  const clamp = useCallback(
+    (p: { x: number; y: number }, z = zoom) => {
+      const s = base * z;
+      const mx = Math.max(0, (img.naturalWidth * s - size) / 2);
+      const my = Math.max(0, (img.naturalHeight * s - size) / 2);
+      return { x: Math.min(mx, Math.max(-mx, p.x)), y: Math.min(my, Math.max(-my, p.y)) };
+    },
+    [base, img, size, zoom]
+  );
+
+  const setZoomClamped = (z: number) => {
+    const nz = Math.min(MAX_ZOOM, Math.max(1, z));
+    setZoom(nz);
+    setPos((p) => clamp({ x: (p.x * nz) / zoom, y: (p.y * nz) / zoom }, nz));
+  };
+
+  const onDown = (e: React.PointerEvent) => {
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.values()];
+      pinch.current = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom };
+    }
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const prev = pointers.current.get(e.pointerId);
+    if (!prev) return;
+    const cur = { x: e.clientX, y: e.clientY };
+    pointers.current.set(e.pointerId, cur);
+    if (pointers.current.size >= 2 && pinch.current) {
+      const [a, b] = [...pointers.current.values()];
+      setZoomClamped((pinch.current.zoom * Math.hypot(a.x - b.x, a.y - b.y)) / pinch.current.dist);
+    } else {
+      setPos((p) => clamp({ x: p.x + cur.x - prev.x, y: p.y + cur.y - prev.y }));
+    }
+  };
+  const onUp = (e: React.PointerEvent) => {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinch.current = null;
+  };
+
+  React.useImperativeHandle(ref, () => ({
+    export: () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = OUT;
+      canvas.height = OUT;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, OUT, OUT);
+      // 取景框在原圖上的範圍
+      const k = 1 / scale;
+      const sx = (img.naturalWidth * scale - size) / 2 - pos.x;
+      const sy = (img.naturalHeight * scale - size) / 2 - pos.y;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, sx * k, sy * k, size * k, size * k, 0, 0, OUT, OUT);
+      for (const q of [0.88, 0.8, 0.7, 0.6, 0.5]) {
+        const url = canvas.toDataURL("image/jpeg", q);
+        if (url.length <= MAX_LEN) return url;
+      }
+      return null;
+    },
+  }));
+
+  return (
+    <div className="flex flex-col items-center gap-4" {...stop}>
+      <div
+        ref={box}
+        className="relative w-[min(78vw,300px)] aspect-square rounded-[20px] overflow-hidden bg-[#18181B] touch-none select-none cursor-grab active:cursor-grabbing"
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        onWheel={(e) => setZoomClamped(zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08))}
+        aria-label="拖曳調整位置，雙指縮放"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={img.src}
+          alt=""
+          draggable={false}
+          className="absolute left-1/2 top-1/2 max-w-none pointer-events-none"
+          style={{ width: w, height: h, transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px))` }}
+        />
+        {/* 圓形取景：圓外壓暗，就是最後會顯示的樣子 */}
+        <div
+          className="absolute inset-0 rounded-full pointer-events-none ring-1 ring-white/70"
+          style={{ boxShadow: "0 0 0 999px rgba(24,24,27,0.55)" }}
+          aria-hidden
+        />
+      </div>
+      <label className="w-[min(78vw,300px)] flex items-center gap-3">
+        <span className="text-[13px] text-[#A1A1AA] shrink-0">縮放</span>
+        <input
+          type="range"
+          min={1}
+          max={MAX_ZOOM}
+          step={0.01}
+          value={zoom}
+          onChange={(e) => setZoomClamped(Number(e.target.value))}
+          className="flex-1 accent-[#F39C12]"
+        />
+      </label>
+    </div>
+  );
+});

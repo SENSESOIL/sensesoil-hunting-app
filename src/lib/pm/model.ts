@@ -419,8 +419,6 @@ export interface Contact {
 export interface TeamData {
   me: { email: string; name: string; role: Role };
   configured: boolean;
-  /** AI 重新生成人像已設定（GEMINI_API_KEY 等） */
-  aiReady?: boolean;
   dbError?: string;
   members: TeamMember[];
   contacts: Contact[];

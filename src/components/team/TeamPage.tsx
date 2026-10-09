@@ -6,15 +6,14 @@ import { Icon } from "@/components/pm/ui";
 import { Avatar, Empty, Group, ORANGE, Spinner } from "@/components/pm/kit";
 import { Sheet } from "@/components/pm/Sheet";
 import { IconCamera, IconChevronRight, IconPhone } from "@tabler/icons-react";
-import { MemberCard } from "./MemberCard";
 import { PortraitSheet } from "./PortraitSheet";
 import { ContactSheet } from "./ContactSheet";
-import { cardUrl, useTeam } from "./useTeam";
+import { useTeam } from "./useTeam";
 
 /* ══════════════════════════════════════════════════════════
    指揮中心 → 團隊
    與「營運」同一套清單語彙：白色卡片、一人一列、灰色組名。
-   內部職員：頭像＋姓名＋職稱，右側直接撥號；點一下看個人卡（含人像）
+   內部職員：圓形大頭照＋姓名＋職稱，右側直接撥號；點一下看個人卡
    外部職員／協力廠商／聯盟品牌：名片清單
    ══════════════════════════════════════════════════════════ */
 
@@ -85,7 +84,7 @@ export default function TeamPage() {
       )}
 
       {seg === "internal" ? (
-        <Internal members={data.members} me={data.me.email} isManager={isManager} canSave={data.configured && !data.dbError} onChanged={() => mutate()} aiReady={data.aiReady} />
+        <Internal members={data.members} me={data.me.email} isManager={isManager} canSave={data.configured && !data.dbError} onChanged={() => mutate()} />
       ) : (
         <Contacts kind={seg} contacts={data.contacts.filter((c) => c.kind === seg)} isManager={isManager && data.configured && !data.dbError} onChanged={() => mutate()} />
       )}
@@ -101,14 +100,12 @@ function Internal({
   isManager,
   canSave,
   onChanged,
-  aiReady,
 }: {
   members: TeamMember[];
   me: string;
   isManager: boolean;
   canSave: boolean;
   onChanged: () => void;
-  aiReady?: boolean;
 }) {
   // 順序固定（權限表順序）；上傳照片後不會跳位置
   const list = useMemo(() => [...members].sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999)), [members]);
@@ -126,7 +123,7 @@ function Internal({
   return (
     <>
       {/* 自己還沒有照片：放在最上面，一列就好，不搶整頁 */}
-      {mine && !mine.hasCard && canSave && (
+      {mine && !mine.avatar && canSave && (
         <button
           onClick={() => setEdit(mine)}
           className="w-full bg-white rounded-[18px] shadow-card flex items-center gap-3.5 pl-4 pr-3 py-3.5 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
@@ -137,7 +134,7 @@ function Internal({
           <span className="flex-1 min-w-0">
             <span className="block text-[16px] leading-[22px] font-medium text-[#18181B]">上傳你的大頭照</span>
             <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5 truncate">
-              {aiReady ? "AI 換上公司制服，任務指派也會顯示" : "任務指派和頭像都會顯示這張照片"}
+              任務指派和參與者頭像都會顯示
             </span>
           </span>
           <IconChevronRight size={20} stroke={1.5} className="text-[#D4D4D8] shrink-0" />
@@ -157,7 +154,7 @@ function Internal({
                   onClick={() => setView(m)}
                   className="flex-1 min-w-0 flex items-center gap-3.5 pl-4 py-3 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
                 >
-                  <Avatar name={m.name} email={m.email} size={44} />
+                  <Avatar name={m.name} email={m.email} src={m.avatar} size={44} />
                   <span className="flex-1 min-w-0">
                     <span className="block text-[16px] leading-[22px] font-medium text-[#18181B] truncate">
                       {m.name}
@@ -196,12 +193,12 @@ function Internal({
           if (m) setEdit(m);
         }}
       />
-      <PortraitSheet member={edit} open={!!edit} onClose={() => setEdit(null)} onSaved={onChanged} aiReady={aiReady} />
+      <PortraitSheet member={edit} open={!!edit} onClose={() => setEdit(null)} onSaved={onChanged} />
     </>
   );
 }
 
-/** 個人卡：有人像就放卡牌，沒有就放大頭像，不再用剪影充數 */
+/** 個人卡：圓形大頭照＋聯絡方式 */
 function MemberSheet({
   member,
   isMe,
@@ -220,15 +217,9 @@ function MemberSheet({
     <Sheet open={!!m} title={m?.name ?? ""} subtitle={m ? m.title || (m.manager ? "管理" : "狩獵者") : undefined} onClose={onClose}>
       {m && (
         <div className="flex flex-col items-center pb-2">
-          {m.hasCard ? (
-            <div className="w-[min(64vw,240px)]">
-              <MemberCard member={m} src={cardUrl(m)} active />
-            </div>
-          ) : (
-            <div className="py-4">
-              <Avatar name={m.name} email={m.email} size={112} />
-            </div>
-          )}
+          <div className="py-4">
+            <Avatar name={m.name} email={m.email} src={m.avatar} size={120} />
+          </div>
           {m.bio && <p className="mt-5 max-w-[34ch] text-center text-[15px] leading-[24px] text-[#3F3F46]">{m.bio}</p>}
           <div className="mt-6 w-full flex flex-col gap-2.5">
             {m.phone && (
@@ -246,7 +237,7 @@ function MemberSheet({
                 className="h-12 rounded-full bg-[#F4F4F5] text-[#18181B] text-[16px] font-medium inline-flex items-center justify-center gap-2 active:bg-[#E4E4E7]"
               >
                 <IconCamera size={20} stroke={1.5} />
-                {m.hasCard ? "更換照片" : isMe ? "上傳我的照片" : "上傳照片"}
+                {m.avatar ? "更換大頭照" : isMe ? "上傳我的大頭照" : "上傳大頭照"}
               </button>
             )}
           </div>

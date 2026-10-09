@@ -655,10 +655,10 @@ export default function HuntingManagementPage() {
   const canSeeOpsItem = (key: string) => !(key in roles) || hasRole(key);
   const opsAccess = {
     orgChart: canSeeOpsItem("組織圖"),
-    jobDesc: canSeeOpsItem("職務說明"),
+    jobDesc: canSeeOpsItem("職務表"),
     policies: canSeeOpsItem("制度"),
     flows: canSeeFlowsOf(roles),
-    sops: canSeeOpsItem("sop"),
+    sops: canSeeOpsItem("標準"),
     forms: canSeeOpsItem("表單"),
   };
   const flowRole = flowRoleFromRoles(roles);

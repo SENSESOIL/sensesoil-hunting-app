@@ -65,7 +65,7 @@ interface CommandCenterProps {
   canSeeOperations: boolean;
   canSeeTeam: boolean;
   canSeeFinance: boolean;
-  /** 營運底下每一項各自對應權限表「營運」下的子欄位（組織圖、職務說明、制度、流程、SOP、表單） */
+  /** 營運底下每一項各自對應權限表「營運」下的子欄位（組織圖、職務表、制度、流程、標準、表單） */
   opsAccess: OpsAccess;
   /** 交給流程圖頁的角色：admin／editor 可編輯，user／viewer 唯讀 */
   flowRole: FlowRole;
@@ -407,7 +407,7 @@ export default function CommandCenter({
                   },
                   opsAccess.jobDesc && {
                     icon: IconId,
-                    title: "職務說明",
+                    title: "職務表",
                     meta: "待建立",
                     pending: true,
                     onClick: () => setScreen("profile"),
@@ -509,14 +509,14 @@ export default function CommandCenter({
 
       <SubScreen
         open={screen === "profile"}
-        title="職務說明"
+        title="職務表"
         onClose={() => setScreen(null)}
       >
         {/* 原本這裡接員工CRM，顯示姓名、部門與個人欄位 —— 那是「員工資料」，
-            不是職務說明。內容待建立前先留空，不放不相干的資料充數。 */}
+            不是職務表。內容待建立前先留空，不放不相干的資料充數。 */}
         <EmptyState
           icon="badge"
-          title="職務說明尚未建立"
+          title="職務表尚未建立"
           hint="這裡會放各職務的權責範圍與產出目標，內容確定後再接上。"
         />
       </SubScreen>
