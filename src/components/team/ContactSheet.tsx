@@ -39,12 +39,15 @@ export function ContactSheet({
   open,
   onClose,
   onSaved,
+  canDelete = false,
 }: {
   kind: ContactKind;
   contact: Contact | null;
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
+  /** 只有權限表「團隊」欄為 Admin 才能刪除 */
+  canDelete?: boolean;
 }) {
   const L = LABELS[kind];
   const [d, setD] = useState<Partial<Contact>>({});
@@ -103,7 +106,7 @@ export function ContactSheet({
             disabled={!dirty}
             saveLabel={contact ? "儲存" : "新增"}
             extra={
-              contact ? (
+              contact && canDelete ? (
                 <button onClick={() => setConfirmDel(true)} className="w-12 h-12 rounded-[14px] bg-white border border-[#E4E4E7] flex items-center justify-center" style={{ color: RED }} aria-label="刪除">
                   <Icon name="delete" className="text-[22px]" />
                 </button>

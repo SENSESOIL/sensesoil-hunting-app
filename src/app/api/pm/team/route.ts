@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { readSheet } from "@/lib/google-sheets";
 import { explainDbError, getPmUser, listPeople, pmDbConfigured, rpc } from "@/lib/pm/server";
-import { rowToContact, type Contact, type ContactKind, type TeamData, type TeamMember } from "@/lib/pm/model";
+import { rowToContact, type Contact, type ContactKind, type TeamData, type TeamMember, type TeamRole } from "@/lib/pm/model";
+import { checkPermissions } from "@/lib/permissions";
+import { deleteStaff, listStaff, saveStaff, StaffError, type StaffRecord } from "@/lib/pm/staff-crm";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +11,11 @@ export const dynamic = "force-dynamic";
  * 團隊（指揮中心 → 團隊）
  *   GET  /api/pm/team                 內部職員（權限表＋員工CRM 電話＋APP 內的照片職稱）、聯絡人、協力廠商
  *   GET  /api/pm/team?card=email&v=…  某人的卡牌人像（圖片；帶版本號可長期快取）
- *   POST /api/pm/team {op:"profile.save"|"contact.save"|"contact.delete", …}
+ *   POST /api/pm/team {op:"profile.save"|"staff.save"|"staff.delete"|"contact.save"|"contact.delete", …}
  *
- * 試算表只取需要的欄位：員工CRM 的「聯絡電話」，廠商CRM 的工項／名稱／聯絡人／電話。
- * 身分證、生日、地址、匯款帳號、統編一律不讀出。
+ * 內部職員的名冊直接讀寫拾壤CRM「員工CRM」（src/lib/pm/staff-crm.ts）。
+ * 新增／編輯／刪除依權限表「團隊」欄：Admin 全部；Editor 新增、編輯；其他人唯讀。
+ * 試算表只取需要的欄位；身分證、生日、地址、匯款帳號、統編一律不讀出。
  */
 
 const CRM = "11IiXZbVxFAMzd8wEjU2Z9-W3CqoRa6aW1vQ50dJtrDk";
@@ -94,6 +97,14 @@ async function crmVendors(): Promise<Contact[]> {
   return out;
 }
 
+/** 權限表「團隊」欄；表上沒有這欄時：管理者 = admin，其他人唯讀 */
+async function teamRoleOf(email: string, isManager: boolean): Promise<TeamRole> {
+  const perms = await checkPermissions(email).catch(() => null);
+  const r = perms?.roles?.["團隊"];
+  if (r === "admin" || r === "editor" || r === "user" || r === "viewer" || r === "none") return r;
+  return isManager ? "admin" : "user";
+}
+
 export async function GET(req: Request) {
   const user = await getPmUser();
   if (!user) return json({ error: "未登入或沒有權限" }, 401);
@@ -114,9 +125,18 @@ export async function GET(req: Request) {
     }
   }
 
-  const [people, phones, vendors] = await Promise.all([listPeople(), staffPhones(), crmVendors()]);
+  const [people, phones, vendors, teamRole, staff] = await Promise.all([
+    listPeople(),
+    staffPhones(),
+    crmVendors(),
+    teamRoleOf(user.email, user.role === "manager"),
+    listStaff().then(
+      (s) => ({ ok: true as const, s }),
+      (e) => ({ ok: false as const, e: e instanceof Error ? e.message : String(e) })
+    ),
+  ]);
   const data: TeamData = {
-    me: { email: user.email, name: user.name, role: user.role },
+    me: { email: user.email, name: user.name, role: user.role, teamRole },
     configured: pmDbConfigured(),
     members: [],
     contacts: [],
@@ -135,13 +155,9 @@ export async function GET(req: Request) {
   }
   const byEmail = new Map(profiles.map((p) => [String(p.email), p]));
   const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
-  data.members = people.map((p): TeamMember => {
-    const pr = byEmail.get(p.email);
+  const profileOf = (email: string) => {
+    const pr = byEmail.get(email);
     return {
-      email: p.email,
-      name: p.name,
-      manager: p.manager,
-      phone: phones.get(p.email) ?? phones.get(p.name),
       title: str(pr?.title),
       bio: str(pr?.bio),
       avatar: str(pr?.avatar),
@@ -150,7 +166,35 @@ export async function GET(req: Request) {
       cardVersion: str(pr?.updated_at),
       sort: typeof pr?.sort_order === "number" ? pr.sort_order : undefined,
     };
-  });
+  };
+  if (staff.ok) {
+    // 名冊以員工CRM 為準（在職、依序列排）；用 Gmail 或姓名對回權限表，拿管理者身分與登入信箱
+    const byMail = new Map(people.map((p) => [p.email, p]));
+    const byName = new Map(people.map((p) => [p.name, p]));
+    data.members = staff.s.map((r: StaffRecord, i): TeamMember => {
+      const p = (r.gmail && byMail.get(r.gmail)) || byName.get(r.name);
+      const email = p?.email ?? r.gmail ?? `staff-${r.seq}`;
+      const prof = profileOf(email);
+      return {
+        email,
+        name: r.name,
+        manager: p?.manager ?? false,
+        phone: r.phone,
+        ...prof,
+        sort: prof.sort ?? i,
+        staff: { ...r },
+      };
+    });
+  } else {
+    data.staffError = `讀不到員工CRM（${staff.e}），名單暫時改用權限表`;
+    data.members = people.map((p): TeamMember => ({
+      email: p.email,
+      name: p.name,
+      manager: p.manager,
+      phone: phones.get(p.email) ?? phones.get(p.name),
+      ...profileOf(p.email),
+    }));
+  }
   data.contacts = [...contacts, ...vendors];
   return json(data);
 }
@@ -161,18 +205,33 @@ const isImg = (v: unknown, max: number) => v === null || v === undefined || (typ
 export async function POST(req: Request) {
   const user = await getPmUser();
   if (!user) return json({ error: "未登入或沒有權限" }, 401);
-  if (!pmDbConfigured()) return json({ error: "資料庫尚未設定" }, 503);
   let b: Record<string, unknown>;
   try {
     b = await req.json();
   } catch {
     return json({ error: "資料太大或格式錯誤" }, 400);
   }
-  const actor = { actor: user.email, actor_name: user.name, role: user.role };
+  // 員工CRM 寫在試算表，不需要資料庫；其他（照片、聯絡人）要
+  if (!String(b.op).startsWith("staff.") && !pmDbConfigured()) return json({ error: "資料庫尚未設定" }, 503);
+  const teamRole = await teamRoleOf(user.email, user.role === "manager");
+  const canEdit = teamRole === "admin" || teamRole === "editor";
+  // 權限由這支 API 依權限表把關；通過後以管理者身分呼叫資料庫
+  const actor = { actor: user.email, actor_name: user.name, role: canEdit ? "manager" : user.role };
   try {
+    if (b.op === "staff.save") {
+      if (!canEdit) return json({ error: "沒有編輯權限（權限表「團隊」欄需為 Admin 或 Editor）" }, 403);
+      const seq = b.seq === undefined || b.seq === null ? undefined : String(b.seq);
+      const saved = await saveStaff(seq, (b.fields ?? {}) as Record<string, unknown>);
+      return json({ status: "ok", seq: saved });
+    }
+    if (b.op === "staff.delete") {
+      if (teamRole !== "admin") return json({ error: "只有 Admin 可以刪除" }, 403);
+      await deleteStaff(String(b.seq ?? ""));
+      return json({ status: "ok" });
+    }
     if (b.op === "profile.save") {
       const email = String(b.email ?? "").toLowerCase();
-      if (email !== user.email && user.role !== "manager") return json({ error: "只能修改自己的照片" }, 403);
+      if (email !== user.email && !canEdit) return json({ error: "只能修改自己的照片" }, 403);
       const patch = (b.patch ?? {}) as Record<string, unknown>;
       if (!isImg(patch.avatar, 60000) || !isImg(patch.card, 700000)) return json({ error: "圖片格式或大小不正確" }, 400);
       if (patch.title !== undefined && patch.title !== null && (typeof patch.title !== "string" || patch.title.length > 30)) return json({ error: "職稱太長" }, 400);
@@ -183,7 +242,7 @@ export async function POST(req: Request) {
       return json(r, r.status === "forbidden" ? 403 : 200);
     }
     if (b.op === "contact.save") {
-      if (user.role !== "manager") return json({ error: "只有管理者可以編輯" }, 403);
+      if (!canEdit) return json({ error: "沒有編輯權限（權限表「團隊」欄需為 Admin 或 Editor）" }, 403);
       const c = (b.contact ?? {}) as Partial<Contact>;
       if (!c.id || !c.name?.trim() || !KINDS.includes(c.kind as ContactKind)) return json({ error: "名稱必填" }, 400);
       if (String(c.id).startsWith("crm-")) return json({ error: "廠商CRM 的資料請在試算表修改" }, 400);
@@ -192,12 +251,17 @@ export async function POST(req: Request) {
       return json({ status: r.status, contact: r.contact ? rowToContact(r.contact) : undefined });
     }
     if (b.op === "contact.delete") {
-      if (user.role !== "manager") return json({ error: "只有管理者可以刪除" }, 403);
+      if (teamRole !== "admin") return json({ error: "只有 Admin 可以刪除" }, 403);
       return json(await rpc("pm_contact_delete", { ...actor, id: String(b.id ?? "") }));
     }
     return json({ error: "未知的操作" }, 400);
   } catch (e) {
+    if (e instanceof StaffError) return json({ error: e.message }, 400);
     console.error("[api/pm/team]", b.op, e);
+    if (String(b.op).startsWith("staff.")) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return json({ error: /permission|403|PERMISSION_DENIED/i.test(msg) ? "APP 沒有寫入拾壤CRM 的權限，請把服務帳號加為試算表編輯者" : `寫入員工CRM 失敗：${msg}` }, 500);
+    }
     return json({ error: explainDbError(e) }, 500);
   }
 }

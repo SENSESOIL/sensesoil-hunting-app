@@ -6,7 +6,6 @@ import { Avatar, Empty, Spinner } from "@/components/pm/kit";
 import { Sheet } from "@/components/pm/Sheet";
 import {
   IconCamera,
-  IconChevronRight,
   IconHeartHandshake,
   IconMail,
   IconPencil,
@@ -22,6 +21,7 @@ import {
 } from "@tabler/icons-react";
 import { PortraitSheet } from "./PortraitSheet";
 import { ContactSheet } from "./ContactSheet";
+import { StaffSheet } from "./StaffSheet";
 import { useTeam } from "./useTeam";
 
 /* ══════════════════════════════════════════════════════════
@@ -30,14 +30,16 @@ import { useTeam } from "./useTeam";
    四個分類共用同一套：
      一列 = 頭像＋名稱＋說明，右側電話鍵 → 跳出「撥打／取消」
      點一列 → 個人卡（聯絡方式、編輯）
-     新增 → 清單最後一列「＋ 新增…」（管理者）
+     名字右側的鉛筆 → 編輯（內部職員寫回拾壤CRM「員工CRM」）
+     新增 → 清單最後一列「＋ 新增…」
+     權限：權限表「團隊」欄 Admin 可新增、編輯、刪除；Editor 可新增、編輯；其他人唯讀
      搜尋 → 頂部分享鍵左邊的放大鏡，一次搜四個分類
    ══════════════════════════════════════════════════════════ */
 
 type Cat = "internal" | ContactKind;
 
 const CATS: { key: Cat; label: string; icon: TablerIcon; add?: string; empty: string; hint: string }[] = [
-  { key: "internal", label: "內部職員", icon: IconUsers, empty: "權限表上還沒有人員", hint: "名單來自權限表，新增人員請在權限表加一列" },
+  { key: "internal", label: "內部職員", icon: IconUsers, add: "新增內部職員", empty: "員工CRM 還沒有在職人員", hint: "名單來自拾壤CRM 的員工CRM" },
   { key: "external", label: "外部職員", icon: IconUserShare, add: "新增外部職員", empty: "還沒有外部職員", hint: "臨時工、外聘設計師、顧問" },
   { key: "vendor", label: "協力廠商", icon: IconTool, add: "新增協力廠商", empty: "還沒有協力廠商", hint: "廠商CRM 的資料會自動列在這裡" },
   { key: "brand", label: "聯盟品牌", icon: IconHeartHandshake, add: "新增聯盟品牌", empty: "還沒有聯盟品牌", hint: "合作的品牌、設計公司、通路" },
@@ -51,6 +53,9 @@ const stop = {
 };
 
 const tel = (p: string) => p.replace(/[^\d+]/g, "");
+
+/** 公司共用帳號（拾壤）：在權限表上有一列，但不是人，不列在內部職員 */
+const COMPANY_ACCOUNTS = new Set(["sensesoil.tw@gmail.com"]);
 
 /** 清單與個人卡共用的「一個人／一家廠商」 */
 interface Entry {
@@ -107,6 +112,8 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
   const [call, setCall] = useState<Entry | null>(null);
   const [portrait, setPortrait] = useState<TeamMember | null>(null);
   const [editContact, setEditContact] = useState<{ kind: ContactKind; contact: Contact | null } | null>(null);
+  // undefined = 關閉；null = 新增
+  const [editStaff, setEditStaff] = useState<TeamMember | null | undefined>(undefined);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -117,7 +124,10 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
 
   const entries = useMemo(() => {
     if (!data) return [] as Entry[];
-    const members = [...data.members].sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999)).map((m) => fromMember(m, data.me.email));
+    const members = data.members
+      .filter((m) => !COMPANY_ACCOUNTS.has(m.email.toLowerCase()))
+      .sort((a, b) => (a.sort ?? 999) - (b.sort ?? 999))
+      .map((m) => fromMember(m, data.me.email));
     return [...members, ...data.contacts.map(fromContact)];
   }, [data]);
 
@@ -129,10 +139,18 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
     );
   }
 
-  const isManager = data.me.role === "manager";
+  const teamRole = data.me.teamRole;
+  const canEdit = teamRole === "admin" || teamRole === "editor";
+  const canDelete = teamRole === "admin";
   const canSave = data.configured && !data.dbError;
-  const canManageContacts = isManager && canSave;
-  const me = data.members.find((m) => m.email === data.me.email);
+  const canManageContacts = canEdit && canSave;
+  // 內部職員寫在員工CRM（試算表），不需要資料庫；讀不到員工CRM 時不能編輯
+  const canManageStaff = canEdit && !data.staffError;
+  const editable = (e: Entry) => (e.member ? canManageStaff && !!e.member.staff : !!e.contact && canManageContacts && !e.contact.fromCrm);
+  const openEdit = (e: Entry) => {
+    if (e.member) setEditStaff(e.member);
+    else if (e.contact) setEditContact({ kind: e.contact.kind, contact: e.contact });
+  };
   const count = (k: Cat) => entries.filter((e) => e.cat === k).length;
   const meta = CATS.find((c) => c.key === cat)!;
 
@@ -210,27 +228,14 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
             })}
           </div>
 
-          {!canSave && (
+          {cat === "internal" && data.staffError && (
+            <p className="rounded-[14px] px-4 py-3 text-[13px] leading-relaxed bg-[#FFF6E8] text-[#8A5A00]">{data.staffError}</p>
+          )}
+
+          {cat !== "internal" && !canSave && (
             <p className="rounded-[14px] px-4 py-3 text-[13px] leading-relaxed bg-[#FFF6E8] text-[#8A5A00]">
               {data.dbError ?? "資料庫尚未設定：大頭照、職稱與聯絡人要等 Supabase 設定好才能儲存。"}
             </p>
-          )}
-
-          {/* 自己還沒有大頭照：只在內部職員出現，一列就好 */}
-          {cat === "internal" && me && !me.avatar && canSave && (
-            <button
-              onClick={() => setPortrait(me)}
-              className="w-full bg-white rounded-[18px] shadow-card flex items-center gap-3.5 pl-4 pr-3 py-3.5 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
-            >
-              <span className="w-11 h-11 rounded-full border-[1.5px] border-dashed border-[#F39C12]/60 flex items-center justify-center shrink-0 text-[#F39C12]">
-                <IconCamera size={20} stroke={1.5} />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block text-[16px] leading-[22px] font-medium text-[#18181B]">上傳你的大頭照</span>
-                <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5 truncate">任務指派和參與者頭像都會顯示</span>
-              </span>
-              <IconChevronRight size={20} stroke={1.5} className="text-[#D4D4D8] shrink-0" />
-            </button>
           )}
 
           {/* 協力廠商：依工項篩選 */}
@@ -250,33 +255,19 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
             </div>
           )}
 
-          {cat === "internal" ? (
-            [
-              { name: "管理", rows: shown.filter((e) => e.member?.manager) },
-              { name: "狩獵者", rows: shown.filter((e) => !e.member?.manager) },
-            ]
-              .filter((g) => g.rows.length)
-              .map((g) => (
-                <section key={g.name}>
-                  <GroupLabel name={g.name} n={g.rows.length} />
-                  <ListCard>
-                    {g.rows.map((e) => (
-                      <Row key={e.key} e={e} onOpen={setView} onCall={setCall} />
-                    ))}
-                  </ListCard>
-                </section>
-              ))
-          ) : (
+          {(() => {
+            const canAdd = cat === "internal" ? canManageStaff : canManageContacts;
+            return (
             <ListCard>
-              {shown.length === 0 && !canManageContacts ? (
+              {shown.length === 0 && !canAdd ? (
                 <Empty icon="group" title={trade ? "這個工項沒有廠商" : meta.empty} hint={meta.hint} />
               ) : (
-                shown.map((e) => <Row key={e.key} e={e} onOpen={setView} onCall={setCall} />)
+                shown.map((e) => <Row key={e.key} e={e} onOpen={setView} onCall={setCall} onEdit={editable(e) ? openEdit : undefined} />)
               )}
-              {/* 新增：三個分類同一個位置、同一個樣子 */}
-              {canManageContacts && meta.add && (
+              {/* 新增：四個分類同一個位置、同一個樣子 */}
+              {canAdd && meta.add && (
                 <button
-                  onClick={() => setEditContact({ kind: cat as ContactKind, contact: null })}
+                  onClick={() => (cat === "internal" ? setEditStaff(null) : setEditContact({ kind: cat as ContactKind, contact: null }))}
                   className="w-full flex items-center gap-3.5 pl-4 pr-3 py-3 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
                 >
                   <span className="w-11 h-11 rounded-full border-[1.5px] border-dashed border-[#D4D4D8] flex items-center justify-center shrink-0 text-[#A1A1AA]">
@@ -286,9 +277,10 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
                 </button>
               )}
             </ListCard>
-          )}
+            );
+          })()}
 
-          {cat === "internal" && isManager && <p className="px-4 -mt-2 text-[13px] leading-[20px] text-[#A1A1AA]">{meta.hint}</p>}
+          {cat === "internal" && canManageStaff && <p className="px-4 -mt-2 text-[13px] leading-[20px] text-[#A1A1AA]">{meta.hint}，在這裡改的會同步回試算表</p>}
           {cat === "vendor" && inCat.some((e) => e.contact?.fromCrm) && (
             <p className="px-4 -mt-2 text-[13px] leading-[20px] text-[#A1A1AA]">標示 CRM 的廠商來自拾壤CRM，請在試算表修改；匯款帳號等資料不會顯示在 APP。</p>
           )}
@@ -302,17 +294,17 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
           setView(null);
           setCall(e);
         }}
-        canEditPhoto={!!view?.member && canSave && (view.member.email === data.me.email || isManager)}
-        canEditContact={!!view?.contact && canManageContacts && !view.contact.fromCrm}
+        canEditPhoto={!!view?.member && canSave && view.member.email === data.me.email && !(view && editable(view))}
+        canEditContact={!!view && editable(view)}
         onEditPhoto={() => {
           const m = view?.member;
           setView(null);
           if (m) setPortrait(m);
         }}
         onEditContact={() => {
-          const c = view?.contact;
+          const e = view;
           setView(null);
-          if (c) setEditContact({ kind: c.kind, contact: c });
+          if (e) openEdit(e);
         }}
       />
       <CallSheet e={call} onClose={() => setCall(null)} />
@@ -323,6 +315,15 @@ export default function TeamPage({ searchOpen = false, onSearchClose }: { search
         open={!!editContact}
         onClose={() => setEditContact(null)}
         onSaved={() => mutate()}
+        canDelete={canDelete}
+      />
+      <StaffSheet
+        member={editStaff ?? null}
+        open={editStaff !== undefined}
+        canDelete={canDelete}
+        onClose={() => setEditStaff(undefined)}
+        onSaved={() => mutate()}
+        onEditPhoto={(m) => setPortrait(m)}
       />
     </div>
   );
@@ -344,9 +345,10 @@ function ListCard({ children }: { children: React.ReactNode }) {
 }
 
 /** 一列：頭像＋名稱＋說明，右側電話鍵（四個分類都一樣） */
-function Row({ e, onOpen, onCall }: { e: Entry; onOpen: (e: Entry) => void; onCall: (e: Entry) => void }) {
+function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => void; onCall: (e: Entry) => void; onEdit?: (e: Entry) => void }) {
   return (
-    <div className="flex items-center">
+    <div className="relative flex items-center">
+      {/* 整列可點（看個人卡）；鉛筆疊在名字右側，是獨立的按鈕 */}
       <button
         onClick={() => onOpen(e)}
         className="flex-1 min-w-0 flex items-center gap-3.5 pl-4 py-3 text-left outline-none active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5]"
@@ -355,6 +357,8 @@ function Row({ e, onOpen, onCall }: { e: Entry; onOpen: (e: Entry) => void; onCa
         <span className="flex-1 min-w-0">
           <span className="flex items-center gap-1.5 min-w-0">
             <span className="text-[16px] leading-[22px] font-medium text-[#18181B] truncate">{e.name}</span>
+            {/* 鉛筆的位置（實際按鈕疊在上面） */}
+            {onEdit && <span data-pin-slot className="w-7 h-[22px] shrink-0 -ml-0.5" aria-hidden />}
             {e.me && <span className="text-[13px] text-[#A1A1AA] shrink-0">你</span>}
             {e.badge && (
               <span className="shrink-0 h-[18px] px-1.5 rounded-[5px] bg-[#F4F4F5] text-[11px] font-medium text-[#A1A1AA] leading-[18px]">{e.badge}</span>
@@ -363,6 +367,7 @@ function Row({ e, onOpen, onCall }: { e: Entry; onOpen: (e: Entry) => void; onCa
           {e.sub && <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5 truncate">{e.sub}</span>}
         </span>
       </button>
+      {onEdit && <EditPin e={e} onEdit={onEdit} />}
       {e.phones.length ? (
         <button
           onClick={() => onCall(e)}
@@ -375,6 +380,38 @@ function Row({ e, onOpen, onCall }: { e: Entry; onOpen: (e: Entry) => void; onCa
         <span className="w-11 mr-2 shrink-0" aria-hidden />
       )}
     </div>
+  );
+}
+
+/** 名字右側的鉛筆：疊在預留的位置上（列本身是按鈕，按鈕不能包按鈕） */
+function EditPin({ e, onEdit }: { e: Entry; onEdit: (e: Entry) => void }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const [left, setLeft] = useState<number | null>(null);
+  useEffect(() => {
+    const btn = ref.current;
+    const row = btn?.parentElement;
+    const slot = row?.querySelector<HTMLElement>("[data-pin-slot]");
+    if (!btn || !row || !slot) return;
+    const place = () => {
+      const r = row.getBoundingClientRect();
+      const n = slot.getBoundingClientRect();
+      setLeft(n.left - r.left + (n.width - 32) / 2);
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(row);
+    return () => ro.disconnect();
+  }, [e.name]);
+  return (
+    <button
+      ref={ref}
+      onClick={() => onEdit(e)}
+      className="absolute top-[7px] w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F4F4F5] active:text-[#18181B] outline-none focus-visible:bg-[#F4F4F5]"
+      style={{ left: left ?? -9999 }}
+      aria-label={`編輯 ${e.name}`}
+    >
+      <IconPencil size={17} stroke={1.5} />
+    </button>
   );
 }
 

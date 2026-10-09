@@ -394,7 +394,22 @@ export interface TeamMember {
   cardVersion?: string;
   manager: boolean;
   sort?: number;
+  /** 員工CRM 的那一列（內部職員的名冊來源） */
+  staff?: StaffInfo;
 }
+
+export interface StaffInfo {
+  seq: string;
+  name: string;
+  level?: string;
+  phone?: string;
+  gmail?: string;
+  joined?: string;
+  left?: string;
+}
+
+/** 權限表「團隊」欄：admin 可新增、編輯、刪除；editor 可新增、編輯；其他人只能看 */
+export type TeamRole = "admin" | "editor" | "user" | "viewer" | "none";
 
 export type ContactKind = "external" | "vendor" | "brand";
 
@@ -417,8 +432,10 @@ export interface Contact {
 }
 
 export interface TeamData {
-  me: { email: string; name: string; role: Role };
+  me: { email: string; name: string; role: Role; teamRole: TeamRole };
   configured: boolean;
+  /** 員工CRM 讀取失敗時的說明（名單改用權限表） */
+  staffError?: string;
   dbError?: string;
   members: TeamMember[];
   contacts: Contact[];
