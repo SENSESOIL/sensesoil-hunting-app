@@ -3,6 +3,7 @@ import { Orbitron } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import VersionGuard from "@/components/VersionGuard";
+import { ACCENT_BOOT_SCRIPT } from "@/lib/theme-boot";
 
 const orbitron = Orbitron({ 
   subsets: ["latin"],
@@ -41,6 +42,8 @@ export default function RootLayout({
             需要切換的頁面只改它的值。
             預設 #FAFAFA 與主頁標題列同色；子頁會自行切成白色。 */}
         <meta name="theme-color" content="#FAFAFA" />
+        {/* 使用者選的主題色：開頁前先套用（頭像 → 設定 → 外觀） */}
+        <script dangerouslySetInnerHTML={{ __html: ACCENT_BOOT_SCRIPT }} />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet" />
         <style>{`
           .material-symbols-outlined {

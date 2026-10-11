@@ -136,7 +136,7 @@ function HeatStrip({ values, max }: { values: number[]; max: number }) {
             key={i}
             className={`${CELL} ${wide(i)} h-[22px] rounded-[4px] items-center justify-center text-[10px] font-semibold tabular-nums`}
             style={{
-              background: v === 0 ? "#F2F2F4" : v >= 3 ? `rgba(229,72,77,${a})` : `rgba(243,156,18,${a})`,
+              background: v === 0 ? "#F2F2F4" : v >= 3 ? `rgba(229,72,77,${a})` : `color-mix(in srgb, var(--accent) ${Math.round(a * 100)}%, transparent)`,
               color: a > 0.6 ? "#fff" : "#8E8E93",
             }}
           >

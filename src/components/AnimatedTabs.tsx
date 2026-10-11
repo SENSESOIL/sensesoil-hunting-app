@@ -92,7 +92,7 @@ export default function AnimatedTabs({
             onClick={() => select(tab)}
             // 視覺維持 26px 高；::before 上下各延伸 9px，點擊範圍約 44px（手指點得到）
             // 焦點：globals.css 清掉了 outline／box-shadow，改用 ::after 畫一圈橘色細框
-            className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap cursor-pointer transition-colors duration-300 before:absolute before:inset-x-0 before:-inset-y-[9px] before:content-[''] after:absolute after:inset-0 after:rounded-[8px] after:border after:border-transparent after:pointer-events-none after:content-[''] focus-visible:after:border-[#F39C12] ${
+            className={`relative z-10 px-4 h-[26px] flex items-center justify-center text-[13px] font-semibold tracking-wide whitespace-nowrap cursor-pointer transition-colors duration-300 before:absolute before:inset-x-0 before:-inset-y-[9px] before:content-[''] after:absolute after:inset-0 after:rounded-[8px] after:border after:border-transparent after:pointer-events-none after:content-[''] focus-visible:after:border-[var(--accent)] ${
               selected ? "text-[#18181B]" : "text-[#71717A] [@media(hover:hover)]:hover:text-[#3F3F46]"
             }`}
           >

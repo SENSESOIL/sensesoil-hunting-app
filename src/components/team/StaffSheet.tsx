@@ -26,7 +26,7 @@ const toInput = (v?: string) => {
 const toSheet = (v: string) => v.replace(/-/g, "/");
 
 const inputCls =
-  "w-full h-11 rounded-[12px] border border-[#E4E4E7] bg-[#FCFCFC] px-3 text-[16px] text-[#18181B] outline-none focus:border-[#F39C12] focus:ring-1 focus:ring-[#F39C12] [color-scheme:light]";
+  "w-full h-11 rounded-[12px] border border-[#E4E4E7] bg-[#FCFCFC] px-3 text-[16px] text-[#18181B] outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] [color-scheme:light]";
 
 function DateField({ label, value, onChange, hint }: { label: string; value?: string; onChange: (v: string) => void; hint?: string }) {
   const id = useId();
@@ -212,7 +212,7 @@ export function StaffSheet({
                   onClick={() => set("level", d.level === l ? "" : l)}
                   aria-pressed={d.level === l}
                   className={`w-11 h-10 rounded-[10px] text-[15px] font-medium transition-colors ${
-                    d.level === l ? "bg-[#F39C12] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"
+                    d.level === l ? "bg-[var(--accent)] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"
                   }`}
                 >
                   {l}

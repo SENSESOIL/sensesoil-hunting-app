@@ -343,7 +343,7 @@ export default function Gantt({
               >
                 {/* 鍵盤焦點：globals.css 清掉了 outline，改用名稱欄變底色＋左側橘色細條 */}
                 <div
-                  className="sticky left-0 z-[4] bg-white shrink-0 border-r border-[#F0F0F2] border-b border-b-[#F4F4F5] flex flex-col justify-center px-3 group-hover:bg-[#FAFAFA] group-focus-visible:bg-[#F4F4F5] transition-colors before:absolute before:left-0 before:inset-y-0 before:w-[3px] before:content-[''] group-focus-visible:before:bg-[#F39C12]"
+                  className="sticky left-0 z-[4] bg-white shrink-0 border-r border-[#F0F0F2] border-b border-b-[#F4F4F5] flex flex-col justify-center px-3 group-hover:bg-[#FAFAFA] group-focus-visible:bg-[#F4F4F5] transition-colors before:absolute before:left-0 before:inset-y-0 before:w-[3px] before:content-[''] group-focus-visible:before:bg-[var(--accent)]"
                   style={{ width: labelWidth }}
                 >
                   <span className="text-[13px] font-semibold text-[#18181B] truncate leading-tight">{row.label}</span>

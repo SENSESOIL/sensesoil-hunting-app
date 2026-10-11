@@ -2,9 +2,25 @@
 @config "../../tailwind.config.js";
 
 :root {
+  /* 強調色：頭像 → 設定 → 外觀 可以換（見 src/lib/theme.ts）。衍生色調跟著主色走 */
+  --accent: #F39C12;
+  --accent-soft: color-mix(in srgb, var(--accent) 11%, white);
+  --accent-soft-2: color-mix(in srgb, var(--accent) 20%, white);
+  --accent-strong: color-mix(in srgb, var(--accent) 80%, black);
+  --accent-ink: color-mix(in srgb, var(--accent) 52%, black);
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 0, 0, 0;
   --background-end-rgb: 0, 0, 0;
+}
+
+/* 舊版瀏覽器不支援 color-mix：衍生色調退回預設橘的固定色（主題色本身仍會換） */
+@supports not (color: color-mix(in srgb, red 50%, white)) {
+  :root {
+    --accent-soft: #FFF4E5;
+    --accent-soft-2: #FDE7C5;
+    --accent-strong: #C27C0E;
+    --accent-ink: #7A4E09;
+  }
 }
 
 body {

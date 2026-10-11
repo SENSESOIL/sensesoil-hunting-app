@@ -80,7 +80,7 @@ const LeaveForm = forwardRef<LeaveFormRef>((_props, ref) => {
   const row = "flex items-center border-b border-gray-100 pb-2 min-h-[44px]";
   const label = "w-[100px] text-gray-500 shrink-0 whitespace-nowrap";
   const chip = (on: boolean) =>
-    `h-9 px-3.5 rounded-full text-[14px] transition-colors ${on ? "bg-[#F39C12] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"}`;
+    `h-9 px-3.5 rounded-full text-[14px] transition-colors ${on ? "bg-[var(--accent)] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"}`;
 
   return (
     <div className="w-full flex flex-col pt-0 pb-4 gap-4">
@@ -161,7 +161,7 @@ LeaveForm.displayName = "LeaveForm";
 /* 請假規則提醒（表單上方，直接寫在背景上，像說明文字） */
 
 function LeaveRules() {
-  const hl = "text-[#F39C12] font-medium";
+  const hl = "text-[var(--accent)] font-medium";
   return (
     <p className="mt-2 text-[12.5px] leading-relaxed text-[#71717A]">
       須提前申請：長假<span className={hl}> 1 月前</span>、事假<span className={hl}> 1 週前</span>、病假<span className={hl}>即時</span>

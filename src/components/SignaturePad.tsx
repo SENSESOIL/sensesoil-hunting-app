@@ -96,7 +96,7 @@ export default function SignaturePad({ onConfirm, onCancel }: SignaturePadProps)
             </button>
             <button
               onClick={confirm}
-              className="w-10 h-10 rounded-full bg-[#F39C12] shadow-md text-white flex items-center justify-center text-[24px]"
+              className="w-10 h-10 rounded-full bg-[var(--accent)] shadow-md text-white flex items-center justify-center text-[24px]"
             >
               <span className="material-symbols-outlined">check</span>
             </button>

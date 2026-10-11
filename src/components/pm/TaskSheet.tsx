@@ -183,7 +183,7 @@ export function TaskSheet({
       <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
         {/* 被指派的人：先確認收到 */}
         {task && mine && !task.ackAt && task.assignedBy && task.assignedBy !== me && task.status !== "done" && (
-          <div className="rounded-[16px] p-4 flex items-center gap-3" style={{ background: "#FFF6E8" }}>
+          <div className="rounded-[16px] p-4 flex items-center gap-3" style={{ background: "var(--accent-soft)" }}>
             <Avatar name={task.assignedByName} email={task.assignedBy} size={36} />
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-semibold text-[#18181B]">{task.assignedByName ?? "管理者"} 指派給你</p>
@@ -615,7 +615,7 @@ export function ProjectPicker({ pm, value, onPick }: { pm: Pm; value?: string; o
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="搜尋代碼或名稱"
-          className="w-full h-10 rounded-[10px] bg-white border border-[#E4E4E7] pl-9 pr-3 text-[16px] text-[#18181B] outline-none focus:border-[#F39C12]"
+          className="w-full h-10 rounded-[10px] bg-white border border-[#E4E4E7] pl-9 pr-3 text-[16px] text-[#18181B] outline-none focus:border-[var(--accent)]"
         />
       </div>
       <div className="max-h-[260px] overflow-y-auto overscroll-contain rounded-[10px] bg-white border border-[#EBEBED] divide-y divide-[#F2F2F4]">
@@ -624,7 +624,7 @@ export function ProjectPicker({ pm, value, onPick }: { pm: Pm; value?: string; o
             key={p.code}
             type="button"
             onClick={() => onPick(p.code)}
-            className={`w-full flex items-center gap-3 px-3 h-12 text-left active:bg-[#F4F4F5] ${value === p.code ? "bg-[#FFF6E8]" : ""}`}
+            className={`w-full flex items-center gap-3 px-3 h-12 text-left active:bg-[#F4F4F5] ${value === p.code ? "bg-[var(--accent-soft)]" : ""}`}
           >
             <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: personColor(p.code) }} />
             <span className="text-[12px] text-[#8E8E93] w-9 shrink-0 tabular-nums">{p.code}</span>

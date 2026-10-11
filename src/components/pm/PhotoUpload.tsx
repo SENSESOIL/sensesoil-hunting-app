@@ -186,7 +186,7 @@ export function PhotoUpload({ open, onClose, presetCode }: { open: boolean; onCl
     >
       <div className="px-4 pt-3 pb-6 flex flex-col gap-4">
         {!ready && (
-          <p className="rounded-[12px] px-3 py-2.5 text-[13px] leading-relaxed" style={{ background: "#FFF6E8", color: "#8A5A00" }}>
+          <p className="rounded-[12px] px-3 py-2.5 text-[13px] leading-relaxed" style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }}>
             工程照上傳還沒設定（需要部署 Google Apps Script）。管理者請看 apps-script/工程照上傳.gs 的說明。
           </p>
         )}
@@ -291,7 +291,7 @@ export function PhotoUpload({ open, onClose, presetCode }: { open: boolean; onCl
                   }}
                   maxLength={30}
                   placeholder="自訂說明，例：二樓浴室防水"
-                  className="flex-1 min-w-0 h-10 rounded-[10px] border border-[#E4E4E7] bg-[#FCFCFC] px-3 text-[16px] text-[#18181B] outline-none focus:border-[#F39C12]"
+                  className="flex-1 min-w-0 h-10 rounded-[10px] border border-[#E4E4E7] bg-[#FCFCFC] px-3 text-[16px] text-[#18181B] outline-none focus:border-[var(--accent)]"
                 />
                 <button type="button" disabled={!custom.trim() || running} onClick={() => applyCaption(custom.trim())} className="h-10 px-4 rounded-[10px] bg-[#18181B] text-white text-[14px] font-semibold disabled:opacity-30">
                   套用

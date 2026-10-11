@@ -179,7 +179,7 @@ function ListRow({
         last ? "" : "border-b border-[#F4F4F5]"
       }`}
     >
-      <div className={`w-8 flex items-center justify-center shrink-0 ${pending ? "text-[#D4D4D8]" : "text-[#F39C12]"}`}>
+      <div className={`w-8 flex items-center justify-center shrink-0 ${pending ? "text-[#D4D4D8]" : "text-[var(--accent)]"}`}>
         {/* Tabler icon，線寬 1.25 對齊其他 Material Symbols（wght 200）的細線風格 */}
         <Icon size={22} stroke={1.4} />
       </div>
@@ -561,7 +561,7 @@ export default function CommandCenter({
               >
                 <div className="w-8 flex items-center justify-center shrink-0 text-[#A1A1AA]">
                   <span
-                    className="material-symbols-outlined text-[24px] group-active:text-[#F39C12] transition-colors"
+                    className="material-symbols-outlined text-[24px] group-active:text-[var(--accent)] transition-colors"
                     style={{ fontVariationSettings: "'wght' 200" }}
                   >
                     edit_document
@@ -721,7 +721,7 @@ function DocList({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="搜尋"
-            className="w-full bg-[#FFFFFF] border border-[#E4E4E7] focus:border-[#F39C12] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-colors placeholder:text-[#A1A1AA]"
+            className="w-full bg-[#FFFFFF] border border-[#E4E4E7] focus:border-[var(--accent)] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-colors placeholder:text-[#A1A1AA]"
           />
         </div>
       )}

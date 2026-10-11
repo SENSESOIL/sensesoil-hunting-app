@@ -147,7 +147,7 @@ export function TaskList({
       {sections.map((s, si) => (
         <section key={s.key}>
           <div className={`flex items-baseline justify-between px-1 pb-1.5 ${hideSingleHeader && sections.length === 1 ? "hidden" : ""}`}>
-            <h3 className="text-[15px] font-bold flex items-center gap-2" style={{ color: s.color ?? "#18181B" }}>
+            <h3 className="text-[14px] font-semibold flex items-center gap-2" style={{ color: s.color ?? "#52525B" }}>
               {s.dot && <span className="w-2.5 h-2.5 rounded-full" style={{ background: s.dot }} aria-hidden />}
               {s.title}
             </h3>
@@ -278,7 +278,7 @@ export function TaskRow({
 
   return (
     <div
-      className={`group relative flex items-start gap-3 pl-4 pr-3 py-3 cursor-pointer active:bg-[#F7F7F8] transition-opacity ${
+      className={`group relative flex items-start gap-3 pl-4 pr-3 py-3.5 cursor-pointer active:bg-[#F7F7F8] transition-opacity ${
         linger.has(t.id) ? "opacity-60" : ""
       }`}
       onClick={() => onOpen(t)}
@@ -288,6 +288,8 @@ export function TaskRow({
         if (e.key === "Enter") onOpen(t);
       }}
     >
+      {/* 專案色條：一眼看出是哪個案子的事（同一個專案永遠同一色，和專案情報的代碼頭像一致） */}
+      <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: done ? "#E4E4E7" : personColor(t.code) }} aria-hidden />
       <div className="pt-[1px]">
         <CheckCircle
           checked={done}

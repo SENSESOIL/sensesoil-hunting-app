@@ -69,7 +69,7 @@ export function Row({
 }
 
 const inputCls =
-  "w-full h-11 rounded-[12px] border border-[#E4E4E7] bg-[#FCFCFC] px-3 text-[16px] text-[#18181B] outline-none focus:border-[#F39C12] focus:ring-1 focus:ring-[#F39C12] placeholder:text-[#C4C4CC]";
+  "w-full h-11 rounded-[12px] border border-[#E4E4E7] bg-[#FCFCFC] px-3 text-[16px] text-[#18181B] outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] placeholder:text-[#C4C4CC]";
 
 export function TextField({
   label,

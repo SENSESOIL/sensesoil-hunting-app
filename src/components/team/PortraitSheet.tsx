@@ -331,7 +331,7 @@ const Cropper = React.forwardRef<CropperApi, { img: HTMLImageElement }>(function
           step={0.01}
           value={zoom}
           onChange={(e) => setZoomClamped(Number(e.target.value))}
-          className="flex-1 accent-[#F39C12]"
+          className="flex-1 accent-[var(--accent)]"
         />
       </label>
     </div>

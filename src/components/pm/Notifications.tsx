@@ -220,7 +220,7 @@ export function PushCard({ compact }: { compact?: boolean }) {
     );
   }
   return (
-    <div className="rounded-[14px] px-4 py-3 flex gap-3 items-start" style={{ background: "#FFF6E8" }}>
+    <div className="rounded-[14px] px-4 py-3 flex gap-3 items-start" style={{ background: "var(--accent-soft)" }}>
       <Icon name="notifications_active" weight={400} className="text-[22px] mt-0.5 shrink-0" style={{ color: ORANGE }} />
       <div className="flex-1 min-w-0">{body}</div>
       {compact && (

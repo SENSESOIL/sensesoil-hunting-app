@@ -309,7 +309,7 @@ export function ToastHost() {
               msg.action!.run();
               setMsg(null);
             }}
-            className="h-9 px-3 rounded-[10px] text-[13.5px] font-semibold text-[#F39C12] active:bg-white/10 shrink-0"
+            className="h-9 px-3 rounded-[10px] text-[13.5px] font-semibold text-[var(--accent)] active:bg-white/10 shrink-0"
           >
             {msg.action.label}
           </button>

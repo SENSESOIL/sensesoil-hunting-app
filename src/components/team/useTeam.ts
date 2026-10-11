@@ -34,8 +34,8 @@ export function cardUrl(m: TeamMember): string | undefined {
   return m.hasCard ? `${TEAM_KEY}?card=${encodeURIComponent(m.email)}&v=${encodeURIComponent(m.cardVersion ?? "")}` : undefined;
 }
 
-export function useTeam() {
-  const swr = useSWR<TeamData>(TEAM_KEY, fetcher, { revalidateOnFocus: true, dedupingInterval: 3000, keepPreviousData: true });
+export function useTeam(enabled = true) {
+  const swr = useSWR<TeamData>(enabled ? TEAM_KEY : null, fetcher, { revalidateOnFocus: true, dedupingInterval: 3000, keepPreviousData: true });
   const members = swr.data?.members;
   useEffect(() => {
     if (members) setAvatarDirectory(members);

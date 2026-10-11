@@ -172,7 +172,7 @@ function FlowViewer({ flow, flowRole, onClose }: { flow: FlowEntry | null; flowR
             loaded ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >
-          <span className="material-symbols-outlined text-[28px] text-[#F39C12] animate-spin">progress_activity</span>
+          <span className="material-symbols-outlined text-[28px] text-[var(--accent)] animate-spin">progress_activity</span>
           <span className="text-[13px] text-[#A1A1AA]">流程圖載入中…</span>
         </div>
 
@@ -183,7 +183,7 @@ function FlowViewer({ flow, flowRole, onClose }: { flow: FlowEntry | null; flowR
           aria-label="關閉流程圖"
           className="group absolute z-30 top-3 left-3 w-11 h-11 flex items-center justify-center bg-transparent border-none p-0 outline-none"
         >
-          <span className="absolute w-9 h-9 rounded-full bg-[rgba(22,24,29,0.95)] border border-[rgba(243,156,18,0.4)] transition-colors group-active:bg-[#27272A]" />
+          <span className="absolute w-9 h-9 rounded-full bg-[rgba(22,24,29,0.95)] border border-[color-mix(in_srgb,var(--accent)_40%,transparent)] transition-colors group-active:bg-[#27272A]" />
           <svg viewBox="0 0 24 24" className="relative w-3.5 h-3.5" fill="none" stroke="#B9BEC9" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 5l-7 7 7 7" />
           </svg>

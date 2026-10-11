@@ -8,7 +8,7 @@ import type { Health, Stage, WorkStatus } from "@/lib/project-ops";
    視覺語彙沿用指揮中心：白卡、#E4E4E7 細框、Material Symbols 細線圖示。
 
    顏色分工（刻意的）：
-     品牌橘 #F39C12  → 只用在互動（選取、按鈕）與甘特圖的「今天」基準線
+     強調色 var(--accent)（預設品牌橘 #F39C12，可在設定換）→ 只用在互動（選取、按鈕）與甘特圖的「今天」基準線
      狀態色          → 只用在健康度，永遠搭配圖示＋文字，不單靠顏色
      進度條          → 墨色；落後／逾期才換成狀態色
    品牌橘跟「注意／落後」色相太近，進度條若也用橘色會讓人分不清是進度還是警告。
@@ -21,7 +21,7 @@ export const MUTED = "#A1A1AA";
 export const TEXT_3 = "#71717A";
 export const LINE = "#E4E4E7";
 export const TRACK = "#F0F0F2";
-export const ACCENT = "#F39C12";
+export const ACCENT = "var(--accent)";
 
 /** 狀態色：取自經過色覺辨識驗證的狀態色票（good / warning / serious / critical） */
 export const STATUS = {
@@ -223,7 +223,7 @@ export function Chip({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`relative h-10 px-3.5 rounded-full border text-[13px] font-semibold whitespace-nowrap transition-colors after:absolute after:inset-0 after:rounded-full after:border after:border-transparent after:pointer-events-none focus-visible:border-[#F39C12] focus-visible:after:border-[#F39C12] ${
+      className={`relative h-10 px-3.5 rounded-full border text-[13px] font-semibold whitespace-nowrap transition-colors after:absolute after:inset-0 after:rounded-full after:border after:border-transparent after:pointer-events-none focus-visible:border-[var(--accent)] focus-visible:after:border-[var(--accent)] ${
         active
           ? "bg-[#18181B] border-[#18181B] text-white"
           : "bg-white text-[#52525B] border-[#E4E4E7] active:bg-[#F4F4F5] [@media(hover:hover)]:hover:bg-[#FAFAFA]"

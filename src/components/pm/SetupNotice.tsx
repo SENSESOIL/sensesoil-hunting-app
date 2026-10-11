@@ -28,7 +28,7 @@ export function SetupNotice({ pm }: { pm: Pm }) {
   }
 
   return (
-    <div className="rounded-[14px] bg-white border px-4 py-4" style={{ borderColor: d.dbError ? `${RED}55` : `${ORANGE}66` }}>
+    <div className="rounded-[14px] bg-white border px-4 py-4" style={{ borderColor: d.dbError ? `${RED}55` : `color-mix(in srgb, ${ORANGE} 40%, transparent)` }}>
       <div className="flex gap-3">
         <Icon name={d.dbError ? "error" : "database"} weight={400} className="text-[24px] shrink-0" style={{ color: d.dbError ? RED : ORANGE }} />
         <div className="flex-1 min-w-0">

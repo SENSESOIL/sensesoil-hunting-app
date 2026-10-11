@@ -18,6 +18,8 @@ import TasksPage, { TASK_TABS_MANAGER, TASK_TABS_MEMBER } from "@/components/pm/
 import { NotificationBell } from "@/components/pm/Notifications";
 import { PhotoUpload } from "@/components/pm/PhotoUpload";
 import { ToastHost } from "@/components/pm/Sheet";
+import { Avatar } from "@/components/pm/kit";
+import { SettingsSheet, START_NAV_KEY } from "@/components/SettingsSheet";
 import { disablePush, refreshPush } from "@/components/pm/push-client";
 import { isManagerRoles } from "@/lib/pm/model";
 import { canSeeFlows as canSeeFlowsOf, flowRoleFromRoles } from "@/lib/flow-role";
@@ -79,8 +81,8 @@ const ManualCards = () => (
             </div>
             {/* Add Subtask Button - Highlighted */}
             <div className="relative">
-              <div className="absolute inset-0 bg-[#F39C12] rounded-full animate-ping opacity-20"></div>
-              <button className="w-8 h-8 rounded-full border-2 border-[#F39C12] text-[#F39C12] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+              <div className="absolute inset-0 bg-[var(--accent)] rounded-full animate-ping opacity-20"></div>
+              <button className="w-8 h-8 rounded-full border-2 border-[var(--accent)] text-[var(--accent)] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_20%,transparent)]">
                 <span
                   className="material-symbols-outlined text-[16px]"
                   style={{ fontVariationSettings: "'wght' 300" }}
@@ -102,8 +104,8 @@ const ManualCards = () => (
             </div>
             {/* Delete Subtask Button - Highlighted */}
             <div className="relative">
-              <div className="absolute inset-0 bg-[#F39C12] rounded-full animate-ping opacity-20"></div>
-              <button className="w-8 h-8 rounded-full border-2 border-[#F39C12] text-[#F39C12] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+              <div className="absolute inset-0 bg-[var(--accent)] rounded-full animate-ping opacity-20"></div>
+              <button className="w-8 h-8 rounded-full border-2 border-[var(--accent)] text-[var(--accent)] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_20%,transparent)]">
                 <span
                   className="material-symbols-outlined text-[16px]"
                   style={{ fontVariationSettings: "'wght' 300" }}
@@ -148,7 +150,7 @@ const ManualCards = () => (
               </strong>
               <br />
               點擊主任務右側的
-              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] relative -top-[1px]">
                 <span
                   className="material-symbols-outlined"
                   style={{
@@ -169,7 +171,7 @@ const ManualCards = () => (
               </strong>
               <br />
               點擊子任務右側的
-              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] relative -top-[1px]">
                 <span
                   className="material-symbols-outlined"
                   style={{
@@ -236,8 +238,8 @@ const ManualCards = () => (
                 </span>
               </button>
               <div className="relative">
-                <div className="absolute inset-0 bg-[#F39C12] rounded-full animate-ping opacity-20"></div>
-                <button className="w-8 h-8 rounded-full border-2 border-[#F39C12] text-[#F39C12] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+                <div className="absolute inset-0 bg-[var(--accent)] rounded-full animate-ping opacity-20"></div>
+                <button className="w-8 h-8 rounded-full border-2 border-[var(--accent)] text-[var(--accent)] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_20%,transparent)]">
                   <span
                     className="material-symbols-outlined text-[16px]"
                     style={{ fontVariationSettings: "'wght' 300" }}
@@ -253,15 +255,15 @@ const ManualCards = () => (
           <div className="relative mt-2">
             <style>{`
                       @keyframes ping-shadow-orange {
-                        0% { box-shadow: 0 0 0 0 rgba(243,156,18,0.3); }
-                        75%, 100% { box-shadow: 0 0 0 16px rgba(243,156,18,0); }
+                        0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 30%, transparent); }
+                        75%, 100% { box-shadow: 0 0 0 16px color-mix(in srgb, var(--accent) 0%, transparent); }
                       }
                       .animate-ping-shadow {
                         animation: ping-shadow-orange 1s cubic-bezier(0, 0, 0.2, 1) infinite;
                       }
                     `}</style>
             <div className="absolute inset-0 rounded-2xl animate-ping-shadow"></div>
-            <button className="w-full py-3.5 border-2 border-[#F39C12] border-dashed rounded-2xl flex items-center justify-center gap-2 text-[#F39C12] transition-colors relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+            <button className="w-full py-3.5 border-2 border-[var(--accent)] border-dashed rounded-2xl flex items-center justify-center gap-2 text-[var(--accent)] transition-colors relative z-10 bg-white shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_20%,transparent)]">
               <span
                 className="material-symbols-outlined text-[16px]"
                 style={{ fontVariationSettings: "'wght' 300" }}
@@ -289,7 +291,7 @@ const ManualCards = () => (
               </strong>
               <br />
               點擊清單最下方的
-              <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-dashed border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
+              <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-dashed border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
                 <span
                   className="material-symbols-outlined"
                   style={{
@@ -311,7 +313,7 @@ const ManualCards = () => (
               </strong>
               <br />
               點擊主任務右側的
-              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] relative -top-[1px]">
                 <span
                   className="material-symbols-outlined"
                   style={{
@@ -383,7 +385,7 @@ const ManualCards = () => (
           <div className="flex items-center justify-between">
             <div className="flex gap-2 text-[11px] font-medium">
               <div className="flex items-center gap-1">
-                <span className="text-[#F39C12] text-[13px] font-bold">0</span>{" "}
+                <span className="text-[var(--accent)] text-[13px] font-bold">0</span>{" "}
                 <span className="text-[#A1A1AA]">完成</span>
               </div>
               <div className="flex items-center gap-1">
@@ -401,8 +403,8 @@ const ManualCards = () => (
             </div>
             {/* Copy Button - Highlighted */}
             <div className="relative shrink-0 ml-2">
-              <div className="absolute inset-0 bg-[#F39C12] rounded-full animate-ping opacity-20"></div>
-              <button className="w-8 h-8 rounded-full border-2 border-[#F39C12] text-[#F39C12] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
+              <div className="absolute inset-0 bg-[var(--accent)] rounded-full animate-ping opacity-20"></div>
+              <button className="w-8 h-8 rounded-full border-2 border-[var(--accent)] text-[var(--accent)] flex items-center justify-center relative z-10 bg-white shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_20%,transparent)]">
                 <span
                   className="material-symbols-outlined text-[15px]"
                   style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}
@@ -428,7 +430,7 @@ const ManualCards = () => (
               </strong>
               <br />
               點擊卡片右下角的
-              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-full border-[1.2px] border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] relative -top-[1px]">
                 <span
                   className="material-symbols-outlined text-[15px] scale-50"
                   style={{ fontVariationSettings: "'wght' 200, 'FILL' 0" }}
@@ -446,7 +448,7 @@ const ManualCards = () => (
               </strong>
               <br />
               點選選單中的
-              <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-solid border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
+              <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-solid border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
                 <span
                   className="material-symbols-outlined"
                   style={{
@@ -468,7 +470,7 @@ const ManualCards = () => (
               </strong>
               <br />
               點選選單中的
-              <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-solid border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
+              <span className="inline-flex items-center justify-center h-[18px] px-1.5 rounded-[4px] border-[1.2px] border-solid border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] text-[11px] font-bold gap-0.5 relative -top-[1px]">
                 <span
                   className="material-symbols-outlined"
                   style={{
@@ -514,9 +516,9 @@ const ManualCards = () => (
           <div className="flex items-center justify-between mb-3 pl-1">
             <div className="flex items-center gap-3">
               <div className="relative flex items-center justify-center w-7 h-7 rounded-[8px]">
-                <div className="absolute inset-0 bg-[#F39C12] rounded-[8px] animate-ping opacity-20"></div>
-                <div className="relative z-10 w-full h-full flex items-center justify-center border-2 border-[#F39C12] rounded-[8px] bg-white shadow-[0_0_12px_rgba(243,156,18,0.2)]">
-                  <span className="material-symbols-outlined text-[18px] text-[#F39C12]">drag_indicator</span>
+                <div className="absolute inset-0 bg-[var(--accent)] rounded-[8px] animate-ping opacity-20"></div>
+                <div className="relative z-10 w-full h-full flex items-center justify-center border-2 border-[var(--accent)] rounded-[8px] bg-white shadow-[0_0_12px_color-mix(in_srgb,var(--accent)_20%,transparent)]">
+                  <span className="material-symbols-outlined text-[18px] text-[var(--accent)]">drag_indicator</span>
                 </div>
               </div>
               <div className="w-[18px] h-[18px] rounded-full border-[1.5px] border-[#E4E4E7]"></div>
@@ -563,7 +565,7 @@ const ManualCards = () => (
             <p>
               <strong className="text-[#18181B] font-semibold text-[14px]">移動排序</strong><br />
               按住子任務左側的
-              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-[4px] border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+              <span className="inline-flex items-center justify-center w-[16px] h-[16px] rounded-[4px] border-[1.2px] border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] relative -top-[1px]">
                 <span className="material-symbols-outlined" style={{ fontSize: "12px", fontVariationSettings: "'wght' 500" }}>drag_indicator</span>
               </span>
               圖示，即可上下拖曳調整順序。
@@ -609,7 +611,7 @@ const ManualCards = () => (
             <p>
               <strong className="text-[#18181B] font-semibold text-[14px]">複製與分享</strong><br />
               點擊視窗右上角的分享
-              <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full border-[1.2px] border-[#F39C12] text-[#F39C12] align-middle mx-1 bg-white shadow-[0_0_4px_rgba(243,156,18,0.15)] relative -top-[1px]">
+              <span className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full border-[1.2px] border-[var(--accent)] text-[var(--accent)] align-middle mx-1 bg-white shadow-[0_0_4px_color-mix(in_srgb,var(--accent)_15%,transparent)] relative -top-[1px]">
                 <span className="material-symbols-outlined" style={{ fontSize: "14px", fontVariationSettings: "'wght' 200" }}>ios_share</span>
               </span>
               圖示會跳出匯出選單，可選擇複製內容或直接LINE分享到群組。
@@ -631,9 +633,6 @@ export default function HuntingManagementPage() {
     session?.user?.name ||
     "System Admin";
   const userEmail = session?.user?.email || "admin@sensesoil.tw";
-  const userAvatar =
-    session?.user?.image ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=F39C12&color=FFFFFF`;
   const roles: Record<string, string> =
     permissions?.roles || (session?.user as any)?.roles || {};
 
@@ -788,6 +787,19 @@ export default function HuntingManagementPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  // 設定裡選的「開啟 APP 時先看」：權限載入完才套用一次（網址指定的頁面優先）
+  const startApplied = useRef(false);
+  useEffect(() => {
+    if (startApplied.current || permsLoading || !navItems.length) return;
+    startApplied.current = true;
+    if (new URLSearchParams(window.location.search).get("task")) return;
+    try {
+      const want = localStorage.getItem(START_NAV_KEY);
+      if (want && navItems.some((n) => n.id === want)) setActiveNav(want);
+    } catch {
+      /* 讀不到就用預設 */
+    }
+  }, [permsLoading, navItems]);
 
   const shareRefMobile = useRef<HTMLDivElement>(null);
   const shareRefDesktop = useRef<HTMLDivElement>(null);
@@ -1152,13 +1164,7 @@ export default function HuntingManagementPage() {
           setIsShareOpen(false);
         }
       }
-
-      if (
-        settingsRef.current &&
-        !settingsRef.current.contains(event.target as Node)
-      ) {
-        setIsSettingsOpen(false);
-      }
+      // 設定改成獨立的面板（有自己的關閉方式），不再用「點外面就關」
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -1213,7 +1219,7 @@ export default function HuntingManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[#F39C12]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[var(--accent)]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
       {/* 下拉更新指示器。
           基準點放在 header 分割線（118px）上，靜止時用負位移把自己藏到 header 底下
           （z-30 < header 的 z-40，所以被不透明的 header 蓋住），
@@ -1237,8 +1243,8 @@ export default function HuntingManagementPage() {
             isRefreshing ? "animate-spin" : ""
           }`}
           style={{
-            borderColor: "rgba(243,156,18,0.18)",
-            borderTopColor: "rgba(243,156,18,0.7)",
+            borderColor: "color-mix(in srgb, var(--accent) 18%, transparent)",
+            borderTopColor: "color-mix(in srgb, var(--accent) 70%, transparent)",
             // 轉圈動畫本身就吃 transform，所以更新中不要再自己設
             transform: isRefreshing ? undefined : `rotate(${overscrollY * 4}deg)`,
           }}
@@ -1358,7 +1364,7 @@ export default function HuntingManagementPage() {
             }}
           >
             <span
-              className="material-symbols-outlined absolute text-[13px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors duration-300 left-[19px] -translate-x-1/2"
+              className="material-symbols-outlined absolute text-[13px] text-[#A1A1AA] group-focus-within:text-[var(--accent)] transition-colors duration-300 left-[19px] -translate-x-1/2"
               style={{ fontVariationSettings: "'wght' 200" }}
             >
               search
@@ -1390,7 +1396,7 @@ export default function HuntingManagementPage() {
                 >
                   {/* Orange indicator on the divider line */}
                   {isActive && (
-                    <div className="absolute top-1/2 -translate-y-1/2 w-[2px] h-[18px] bg-[#F39C12] rounded-l-full shadow-[0_0_6px_rgba(243,156,18,0.4)] -right-[16px]"></div>
+                    <div className="absolute top-1/2 -translate-y-1/2 w-[2px] h-[18px] bg-[var(--accent)] rounded-l-full shadow-[0_0_6px_color-mix(in_srgb,var(--accent)_40%,transparent)] -right-[16px]"></div>
                   )}
                   <div className="w-[22px] h-[22px] flex items-center justify-center shrink-0">
                     <span
@@ -1419,7 +1425,7 @@ export default function HuntingManagementPage() {
         <div className="shrink-0 border-t border-[#E4E4E7]/60 py-4 px-4 relative w-full">
           <div className="relative w-full shrink-0" ref={settingsRef}>
             <div
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              onClick={() => setIsSettingsOpen(true)}
               className="flex items-center w-full rounded-[12px] py-1.5 transition-colors cursor-pointer outline-none hover:bg-[#F4F4F5] shrink-0"
               style={{
                 paddingLeft: isSidebarCollapsed ? "4px" : "3px",
@@ -1429,12 +1435,9 @@ export default function HuntingManagementPage() {
               role="button"
               tabIndex={0}
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 border border-[#E4E4E7]">
-                <img
-                  src={userAvatar}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0" aria-label="Avatar">
+                {/* 優先用團隊頁上傳的大頭照，其次 Google 帳號照片，都沒有就是主題色＋姓名縮寫 */}
+                <Avatar name={userName} email={userEmail} size={32} color="var(--accent)" fallbackSrc={session?.user?.image ?? undefined} />
               </div>
               <div
                 className={`flex flex-col min-w-0 transition-all duration-300 overflow-hidden whitespace-nowrap text-left ${isSidebarCollapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[150px] opacity-100 ml-0.5"}`}
@@ -1446,43 +1449,6 @@ export default function HuntingManagementPage() {
               </div>
             </div>
 
-            {isSettingsOpen && (
-              <div
-                className={`absolute bottom-full mb-2 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50 left-0 ${isSidebarCollapsed ? "w-48" : "w-[200px]"}`}
-              >
-                <div className="px-4 py-2 border-b border-[#E4E4E7]/60 mb-1">
-                  <p className="text-sm font-semibold text-[#18181B]">
-                    {userName}
-                  </p>
-                  <p className="text-[11px] text-[#A1A1AA]">{userEmail}</p>
-                </div>
-                <button className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]">
-                  <span
-                    className="material-symbols-outlined text-[13px] text-[#A1A1AA]"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    person
-                  </span>
-                  個人設定
-                </button>
-                <button
-                  onClick={async () => {
-                    // 登出前先取消這支手機的推播，才不會收到下一個人的任務通知
-                    await disablePush().catch(() => {});
-                    signOut({ callbackUrl: "/" });
-                  }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors outline-none focus-visible:bg-red-50"
-                >
-                  <span
-                    className="material-symbols-outlined text-[13px] text-red-500"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    logout
-                  </span>
-                  登出
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </aside>
@@ -1555,7 +1521,7 @@ export default function HuntingManagementPage() {
                   {/* 電腦：平常只是放大鏡；點下才展開成輸入框，清空後點別處就收回 */}
                   <div
                     className={`hidden md:flex relative items-center h-9 rounded-full overflow-hidden transition-[width,background-color,box-shadow] duration-200 ${
-                      deskSearchOpen || teamQuery ? "w-[280px] bg-white ring-1 ring-[#E4E4E7] focus-within:ring-2 focus-within:ring-[#F39C12]/40" : "w-9 hover:bg-[#F4F4F5]"
+                      deskSearchOpen || teamQuery ? "w-[280px] bg-white ring-1 ring-[#E4E4E7] focus-within:ring-2 focus-within:ring-[var(--accent)]/40" : "w-9 hover:bg-[#F4F4F5]"
                     }`}
                   >
                     <button
@@ -1637,16 +1603,14 @@ export default function HuntingManagementPage() {
               {/* Mobile Avatar */}
               <div className="relative md:hidden">
                 <div
-                  onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                  onClick={() => setIsSettingsOpen(true)}
                   className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center cursor-pointer ring-2 ring-transparent hover:ring-[#E4E4E7] outline-none transition-all"
                   role="button"
                   tabIndex={0}
                 >
-                  <img
-                    src={userAvatar}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
+                  <span aria-label="Avatar" className="contents">
+                    <Avatar name={userName} email={userEmail} size={36} color="var(--accent)" fallbackSrc={session?.user?.image ?? undefined} />
+                  </span>
                 </div>
               </div>
             </div>
@@ -1688,7 +1652,7 @@ export default function HuntingManagementPage() {
               {activeNav === "hunting_tasks" && activeSubTab === "每週任務" && (
                 <button
                   onClick={() => setShowManual(!showManual)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${showManual ? "text-[#F39C12] bg-[#F39C12]/10" : "text-[#71717A] hover:bg-[#F4F4F5]"}`}
+                  className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${showManual ? "text-[var(--accent)] bg-[var(--accent)]/10" : "text-[#71717A] hover:bg-[#F4F4F5]"}`}
                   title="如何操作"
                 >
                   <span
@@ -1777,7 +1741,7 @@ export default function HuntingManagementPage() {
             <div className="px-6 md:hidden">
               <div className="relative group w-full">
                 <span
-                  className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA] group-focus-within:text-[#F39C12] transition-colors"
+                  className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA] group-focus-within:text-[var(--accent)] transition-colors"
                   style={{ fontVariationSettings: "'wght' 200" }}
                 >
                   search
@@ -1785,7 +1749,7 @@ export default function HuntingManagementPage() {
                 <input
                   type="text"
                   placeholder=""
-                  className="w-full bg-[#FFFFFF] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] focus:border-[#F39C12] focus:ring-1 focus:ring-[#F39C12] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-all placeholder:text-[#A1A1AA]"
+                  className="w-full bg-[#FFFFFF] border border-[#E4E4E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] text-[#18181B] text-[14px] rounded-full pl-11 pr-4 h-11 outline-none transition-all placeholder:text-[#A1A1AA]"
                 />
               </div>
             </div>
@@ -1905,7 +1869,7 @@ export default function HuntingManagementPage() {
                 onClick={() => setActiveNav(item.id)}
                 className={`w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none ${
                   isActive
-                    ? "text-[#F39C12]"
+                    ? "text-[var(--accent)]"
                     : "text-[#A1A1AA] hover:text-[#18181B] hover:bg-[#F4F4F5]"
                 }`}
               >
@@ -2013,68 +1977,14 @@ export default function HuntingManagementPage() {
           </div>
         )}
 
-        {isSettingsOpen && (
-          <div className="fixed inset-0 z-[100] flex flex-col justify-end">
-            <div
-              className="absolute inset-0 bg-black/40 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsSettingsOpen(false);
-              }}
-            ></div>
-            <div
-              className="relative bg-white rounded-t-3xl shadow-xl flex flex-col p-6 pb-8 transform transition-transform"
-              style={{
-                animation:
-                  "slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-              }}
-            >
-              <div className="w-12 h-1.5 bg-[#E4E4E7] rounded-full mx-auto mb-6"></div>
-              <div className="flex flex-col items-center mb-6">
-                <div className="w-16 h-16 rounded-full overflow-hidden mb-3 border border-[#E4E4E7]">
-                  <img
-                    src={userAvatar}
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="text-lg font-semibold text-[#18181B]">
-                  {userName}
-                </h3>
-                <p className="text-[13px] text-[#A1A1AA]">{userEmail}</p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <button className="w-full flex items-center justify-center gap-3 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-[#18181B] rounded-2xl py-4 transition-colors font-medium text-base outline-none">
-                  <span
-                    className="material-symbols-outlined text-[22px]"
-                    style={{ fontVariationSettings: "'wght' 300" }}
-                  >
-                    person
-                  </span>
-                  個人設定
-                </button>
-
-                <button
-                  onClick={async () => {
-                    // 登出前先取消這支手機的推播，才不會收到下一個人的任務通知
-                    await disablePush().catch(() => {});
-                    signOut({ callbackUrl: "/" });
-                  }}
-                  className="w-full flex items-center justify-center gap-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl py-4 transition-colors font-medium text-base outline-none"
-                >
-                  <span
-                    className="material-symbols-outlined text-[22px]"
-                    style={{ fontVariationSettings: "'wght' 300" }}
-                  >
-                    logout
-                  </span>
-                  登出
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <SettingsSheet
+          open={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          name={userName}
+          email={userEmail}
+          role={isAdmin ? "管理者" : isPmManager ? "主管" : "狩獵者"}
+          pages={navItems.map((n) => ({ id: n.id, label: n.label }))}
+        />
       </div>
 
       {/* Mobile Weekly Tasks Manual Overlay */}
@@ -2147,7 +2057,7 @@ export default function HuntingManagementPage() {
           aria-label="返回指揮中心"
           className="group absolute z-30 top-3 left-3 w-11 h-11 flex items-center justify-center bg-transparent border-none p-0 outline-none"
         >
-          <span className="absolute w-9 h-9 rounded-full bg-[rgba(22,24,29,0.95)] border border-[rgba(243,156,18,0.4)] transition-colors group-active:bg-[#27272A]" />
+          <span className="absolute w-9 h-9 rounded-full bg-[rgba(22,24,29,0.95)] border border-[color-mix(in_srgb,var(--accent)_40%,transparent)] transition-colors group-active:bg-[#27272A]" />
           <svg
             viewBox="0 0 24 24"
             className="relative w-3.5 h-3.5"
@@ -2167,7 +2077,7 @@ export default function HuntingManagementPage() {
             orgFrameLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >
-          <span className="material-symbols-outlined text-[28px] text-[#F39C12] animate-spin">progress_activity</span>
+          <span className="material-symbols-outlined text-[28px] text-[var(--accent)] animate-spin">progress_activity</span>
           <span className="text-[13px] text-[#A1A1AA]">組織架構圖載入中…</span>
         </div>
 
@@ -2175,7 +2085,7 @@ export default function HuntingManagementPage() {
             標題列拿掉後，架構圖自己的工具列會上移到頂部，所以提示改放底部：
             夾在縮放列（左下，約佔 14–58px）與漢堡鈕（右下）之上。 */}
         <div
-          className={`absolute z-20 left-1/2 -translate-x-1/2 bottom-[76px] px-3.5 py-2 rounded-full bg-[#18181B]/85 border border-[#F39C12]/35 text-[12px] text-[#F2E9DC] whitespace-nowrap backdrop-blur-sm pointer-events-none transition-opacity duration-500 ${
+          className={`absolute z-20 left-1/2 -translate-x-1/2 bottom-[76px] px-3.5 py-2 rounded-full bg-[#18181B]/85 border border-[var(--accent)]/35 text-[12px] text-[#F2E9DC] whitespace-nowrap backdrop-blur-sm pointer-events-none transition-opacity duration-500 ${
             orgFrameLoaded ? "opacity-100" : "opacity-0"
           }`}
           style={{ animation: orgFrameLoaded ? "orgHintFade 1s ease 4s forwards" : undefined }}

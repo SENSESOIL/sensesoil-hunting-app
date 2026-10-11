@@ -12,21 +12,21 @@ const StatusIcon = ({ status, onClick }: { status: Status; onClick?: () => void 
   if (status === "done") {
     return (
       <div onClick={onClick} className={`${baseClasses} group`}>
-        <span className="material-symbols-outlined text-[20px] text-[#F39C12] group-hover:opacity-80" style={{ fontVariationSettings: "'FILL' 1, 'wght' 300" }}>check_circle</span>
+        <span className="material-symbols-outlined text-[20px] text-[var(--accent)] group-hover:opacity-80" style={{ fontVariationSettings: "'FILL' 1, 'wght' 300" }}>check_circle</span>
       </div>
     );
   }
   if (status === "partial") {
     return (
       <div onClick={onClick} className={`${baseClasses} group`}>
-        <span className="material-symbols-outlined text-[20px] text-[#F39C12] group-hover:opacity-80" style={{ fontVariationSettings: "'wght' 300" }}>change_history</span>
+        <span className="material-symbols-outlined text-[20px] text-[var(--accent)] group-hover:opacity-80" style={{ fontVariationSettings: "'wght' 300" }}>change_history</span>
       </div>
     );
   }
   if (status === "fail") {
     return (
       <div onClick={onClick} className={`${baseClasses} group`}>
-        <span className="material-symbols-outlined text-[20px] text-[#F39C12] group-hover:opacity-80" style={{ fontVariationSettings: "'wght' 300" }}>close</span>
+        <span className="material-symbols-outlined text-[20px] text-[var(--accent)] group-hover:opacity-80" style={{ fontVariationSettings: "'wght' 300" }}>close</span>
       </div>
     );
   }
@@ -299,7 +299,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
       <div className="bg-[#FFFFFF] p-4 md:p-6 rounded-[24px] shadow-card flex flex-col h-full relative">
         {isLoading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 rounded-[24px] flex items-center justify-center">
-             <div className="w-6 h-6 border-2 border-[#F39C12] border-t-transparent rounded-full animate-spin"></div>
+             <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
         <div className="flex items-center justify-between mb-6">
@@ -344,7 +344,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                       onChange={(e) => setEditingText(e.target.value)}
                       onBlur={saveEdit}
                       onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                      className="flex-1 bg-transparent text-[14px] font-semibold text-[#18181B] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] ml-1 pt-[2px] pb-[2px] pr-16 select-text"
+                      className="flex-1 bg-transparent text-[14px] font-semibold text-[#18181B] outline-none border-0 border-b border-[var(--accent)] focus:ring-0 focus:border-[var(--accent)] ml-1 pt-[2px] pb-[2px] pr-16 select-text"
                     />
                   ) : (
                     <div 
@@ -399,7 +399,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                               >
                                 <div 
                                   {...provided.dragHandleProps}
-                                  className="w-6 h-6 mr-1 opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 cursor-grab active:cursor-grabbing text-[#A1A1AA] hover:text-[#F39C12] transition-colors flex items-center justify-center shrink-0 mt-[1px]"
+                                  className="w-6 h-6 mr-1 opacity-100 md:opacity-0 md:group-hover/sub:opacity-100 cursor-grab active:cursor-grabbing text-[#A1A1AA] hover:text-[var(--accent)] transition-colors flex items-center justify-center shrink-0 mt-[1px]"
                                 >
                                   <span className="material-symbols-outlined text-[16px]">drag_indicator</span>
                                 </div>
@@ -413,7 +413,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
                                     onChange={(e) => setEditingText(e.target.value)}
                                     onBlur={saveEdit}
                                     onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
-                                    className="flex-1 bg-transparent text-[13px] font-normal text-[#71717A] outline-none border-0 border-b border-[#F39C12] focus:ring-0 focus:border-[#F39C12] p-0 pt-[4px] pb-[4px] pr-10 select-text"
+                                    className="flex-1 bg-transparent text-[13px] font-normal text-[#71717A] outline-none border-0 border-b border-[var(--accent)] focus:ring-0 focus:border-[var(--accent)] p-0 pt-[4px] pb-[4px] pr-10 select-text"
                                   />
                                 ) : (
                                   <div 
@@ -459,7 +459,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
         {/* Minimalist Summary Bar */}
         <div className="mt-6 pt-5 border-t border-[#E4E4E7]/60 flex items-center gap-5 pl-2">
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[13px] font-bold text-[#F39C12]">{totalDone}</span>
+            <span className="text-[13px] font-bold text-[var(--accent)]">{totalDone}</span>
             <span className="text-[10px] font-bold tracking-widest text-[#A1A1AA] uppercase whitespace-nowrap">完成</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">

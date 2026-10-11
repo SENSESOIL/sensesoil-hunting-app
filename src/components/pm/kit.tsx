@@ -10,7 +10,7 @@ import { Icon } from "./ui";
    ══════════════════════════════════════════════════════════ */
 
 export const RED = "#E5484D";
-export const ORANGE = "#F39C12";
+export const ORANGE = "var(--accent)";
 export const BLUE = "#2F7FD8";
 export const GREEN = "#30A46C";
 export const INK = "#18181B";
@@ -57,6 +57,7 @@ export function Avatar({
   ring,
   src,
   color,
+  fallbackSrc,
 }: {
   name?: string;
   email?: string;
@@ -65,9 +66,11 @@ export function Avatar({
   src?: string;
   /** 指定底色（例如協力廠商依工項上色）；不給就依姓名／信箱固定一色 */
   color?: string;
+  /** 沒有上傳大頭照時才用的圖（例如 Google 帳號照片） */
+  fallbackSrc?: string;
 }) {
   const photo = useAvatarSrc(email);
-  const img = src ?? photo;
+  const img = src ?? photo ?? fallbackSrc;
   const label = initials(name);
   const style: React.CSSProperties = { width: size, height: size };
   if (img) {
@@ -192,7 +195,7 @@ export function CheckCircle({
 
 /** 白底圓角分組（清單、表單都用） */
 export function Group({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`bg-white rounded-[14px] border border-[#EBEBED] overflow-hidden ${className}`}>{children}</div>;
+  return <div className={`bg-white rounded-[20px] shadow-card overflow-hidden ${className}`}>{children}</div>;
 }
 
 export function GroupTitle({ children, right, color }: { children: React.ReactNode; right?: React.ReactNode; color?: string }) {
@@ -219,7 +222,7 @@ export function SegmentedIcons<T extends string>({
   label: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex p-[3px] rounded-[10px] bg-[#EEEEF0]">
+    <div role="radiogroup" aria-label={label} className="inline-flex p-1 rounded-full bg-white shadow-card">
       {options.map((o) => {
         const on = o.value === value;
         return (
@@ -229,8 +232,8 @@ export function SegmentedIcons<T extends string>({
             role="radio"
             aria-checked={on}
             onClick={() => onChange(o.value)}
-            className={`h-9 px-3 rounded-[8px] flex items-center gap-1.5 text-[13px] font-semibold transition-all ${
-              on ? "bg-white text-[#18181B] shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-[#71717A]"
+            className={`h-9 px-3 rounded-full flex items-center gap-1.5 text-[13px] font-semibold transition-colors ${
+              on ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#A1A1AA] active:text-[#52525B]"
             }`}
           >
             <Icon name={o.icon} weight={on ? 500 : 300} className="text-[18px]" />
@@ -272,8 +275,8 @@ export function dateShortcuts(today: string): { label: string; value: string }[]
 export function Empty({ icon, title, hint, action }: { icon: string; title: string; hint?: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center text-center px-6 py-14">
-      <div className="w-14 h-14 rounded-full bg-[#F2F2F4] flex items-center justify-center mb-3">
-        <Icon name={icon} weight={300} className="text-[28px] text-[#A1A1AA]" />
+      <div className="w-14 h-14 rounded-full bg-[var(--accent-soft)] flex items-center justify-center mb-3">
+        <Icon name={icon} weight={300} className="text-[28px] text-[var(--accent-strong)]" />
       </div>
       <p className="text-[15px] font-semibold text-[#3F3F46]">{title}</p>
       {hint && <p className="text-[13px] text-[#8E8E93] mt-1 max-w-[300px] leading-relaxed">{hint}</p>}
@@ -300,7 +303,7 @@ export function Pill({
       aria-pressed={on}
       onClick={onClick}
       className={`h-9 px-3.5 rounded-full text-[13px] font-medium whitespace-nowrap inline-flex items-center gap-1.5 transition-colors shrink-0 ${
-        on ? "text-white" : "bg-white border border-[#E4E4E7] text-[#3F3F46] active:bg-[#F4F4F5]"
+        on ? "text-white" : "bg-white shadow-card text-[#3F3F46] active:bg-[#F4F4F5]"
       }`}
       style={on ? { background: color ?? INK } : undefined}
     >

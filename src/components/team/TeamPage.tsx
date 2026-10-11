@@ -219,24 +219,24 @@ export default function TeamPage({
                   onClick={() => setCat(c.key)}
                   // 外框用真的 border（不用 ring）：ring 和卡片陰影共用 box-shadow，切換時會互相蓋掉；
                   // 每個方塊都有 1px 邊框，選中才變橘色，大小不會因選取而跳動
-                  className={`h-[84px] rounded-[16px] border flex flex-col items-center justify-center gap-1.5 outline-none transition-[background-color] focus-visible:border-[#F39C12] ${
-                    on ? "bg-[#FFF4E5] border-[#F39C12]/45" : "bg-white border-transparent shadow-card active:bg-[#F4F4F5]"
+                  className={`h-[84px] rounded-[16px] border flex flex-col items-center justify-center gap-1.5 outline-none transition-[background-color] focus-visible:border-[var(--accent)] ${
+                    on ? "bg-[var(--accent-soft)] border-[var(--accent)]/45" : "bg-white border-transparent shadow-card active:bg-[#F4F4F5]"
                   }`}
                 >
-                  <Ico size={22} stroke={1.4} className={on ? "text-[#E08A00]" : "text-[#A1A1AA]"} />
+                  <Ico size={22} stroke={1.4} className={on ? "text-[var(--accent-strong)]" : "text-[#A1A1AA]"} />
                   <span className={`text-[13px] leading-[16px] whitespace-nowrap ${on ? "font-medium text-[#18181B]" : "text-[#71717A]"}`}>{c.label}</span>
-                  <span className={`text-[12px] leading-[14px] tabular-nums ${on ? "text-[#B86E00]" : "text-[#C4C4C8]"}`}>{count(c.key)}</span>
+                  <span className={`text-[12px] leading-[14px] tabular-nums ${on ? "text-[var(--accent-strong)]" : "text-[#C4C4C8]"}`}>{count(c.key)}</span>
                 </button>
               );
             })}
           </div>
 
           {cat === "internal" && data.staffError && (
-            <p className="rounded-[14px] px-4 py-3 text-[13px] leading-relaxed bg-[#FFF6E8] text-[#8A5A00]">{data.staffError}</p>
+            <p className="rounded-[14px] px-4 py-3 text-[13px] leading-relaxed bg-[var(--accent-soft)] text-[var(--accent-ink)]">{data.staffError}</p>
           )}
 
           {cat !== "internal" && !canSave && (
-            <p className="rounded-[14px] px-4 py-3 text-[13px] leading-relaxed bg-[#FFF6E8] text-[#8A5A00]">
+            <p className="rounded-[14px] px-4 py-3 text-[13px] leading-relaxed bg-[var(--accent-soft)] text-[var(--accent-ink)]">
               {data.dbError ?? "資料庫尚未設定：大頭照、職稱與聯絡人要等 Supabase 設定好才能儲存。"}
             </p>
           )}
@@ -249,7 +249,7 @@ export default function TeamPage({
                   key={t ?? "all"}
                   onClick={() => setTrade(t)}
                   className={`h-8 px-3.5 rounded-full text-[13px] whitespace-nowrap shrink-0 transition-colors ${
-                    trade === t ? "bg-[#F39C12] text-white" : "bg-white shadow-card text-[#52525B] active:bg-[#F4F4F5]"
+                    trade === t ? "bg-[var(--accent)] text-white" : "bg-white shadow-card text-[#52525B] active:bg-[#F4F4F5]"
                   }`}
                 >
                   {t ?? "全部"}
@@ -382,7 +382,7 @@ function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => vo
       {e.phones.length ? (
         <button
           onClick={() => onCall(e)}
-          className="w-11 h-11 mr-2 rounded-full flex items-center justify-center text-[#F39C12] active:bg-[#FFF4E5] outline-none focus-visible:bg-[#FFF4E5] shrink-0"
+          className="w-11 h-11 mr-2 rounded-full flex items-center justify-center text-[var(--accent)] active:bg-[var(--accent-soft)] outline-none focus-visible:bg-[var(--accent-soft)] shrink-0"
           aria-label={`打電話給 ${e.name}`}
         >
           <IconPhone size={20} stroke={1.5} />
@@ -431,7 +431,7 @@ function SearchOverlay({
             onChange={(e) => onQuery(e.target.value)}
             placeholder="搜尋姓名、工項、電話"
             enterKeyHint="search"
-            className="w-full h-11 rounded-full bg-white shadow-card pl-10 pr-9 text-[16px] text-[#18181B] outline-none placeholder:text-[#A1A1AA] focus:ring-2 focus:ring-[#F39C12]/40"
+            className="w-full h-11 rounded-full bg-white shadow-card pl-10 pr-9 text-[16px] text-[#18181B] outline-none placeholder:text-[#A1A1AA] focus:ring-2 focus:ring-[var(--accent)]/40"
           />
           {query && (
             <button
@@ -505,7 +505,7 @@ function CallSheet({ e, onClose }: { e: Entry | null; onClose: () => void }) {
               key={p.number}
               href={`tel:${tel(p.number)}`}
               onClick={() => setTimeout(onClose, 300)}
-              className="h-14 rounded-full bg-[#F39C12] text-white flex items-center justify-center gap-2.5 active:opacity-85"
+              className="h-14 rounded-full bg-[var(--accent)] text-white flex items-center justify-center gap-2.5 active:opacity-85"
             >
               <IconPhone size={20} stroke={1.75} />
               <span className="text-[17px] font-medium tabular-nums">{p.number}</span>
