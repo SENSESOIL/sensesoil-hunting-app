@@ -144,7 +144,8 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
           if (index === 4 && !isUnwritten) {
             const validateVisionText = (text: string) => {
               const hasAction = /[讀聽看練]/.test(text);
-              const hasRange = /[章頁集次篇堂首部%成半剩天]|p\.|分之|\d\/\d/i.test(text);
+              // 目標單位：頁、章、回（章回小說）、集、卷、冊、節、課、段、篇、遍、本…，或比例、時間
+              const hasRange = /[章頁回集卷冊節課段次篇遍堂首部本%成半剩天]|p\.|分之|\d\/\d|小時|分鐘/i.test(text);
               return hasAction && hasRange;
             };
 
@@ -171,7 +172,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
           if (actualCurrentWeekIndex !== currentWeekIndex) setCurrentWeekIndex(actualCurrentWeekIndex); 
           
           if (formatErrorIds.length > 0) {
-            throw new Error("下週第5項「格局」任務不完整！\n\n請確保任務明確包含：\n\n1. 行動 (讀 / 聽 / 看 / 練)\n2. 項目 \n3. 目標 (頁 / 集 / 章 / 次 / 天 / 比例)\n\n範例：讀《當責思維》第一章");
+            throw new Error("下週第5項「格局」任務不完整！\n\n請確保任務明確包含：\n\n1. 行動 (讀 / 聽 / 看 / 練)\n2. 項目 \n3. 目標 (頁 / 章 / 回 / 集 / 次 / 天 / 比例)\n\n範例：讀《當責思維》第一章");
           } else {
             throw new Error("下週任務尚有未填寫的項目，請填寫完畢後再進行匯出！");
           }
