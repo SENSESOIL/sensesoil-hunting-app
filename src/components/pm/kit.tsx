@@ -13,7 +13,7 @@ export const RED = "#E5484D";
 export const ORANGE = "var(--accent)";
 export const BLUE = "#2F7FD8";
 export const GREEN = "#30A46C";
-export const INK = "#18181B";
+export const INK = "var(--ink, #18181B)"; // 夜晚模式自動換成淺色字
 export const GRAY = "#8E8E93";
 
 /* ── 大頭照目錄：團隊頁上傳的照片，全 APP 的頭像共用 ───────── */

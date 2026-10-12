@@ -175,7 +175,7 @@ function Ring({
   return (
     <span className="relative inline-flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F0F0F2" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} style={{ stroke: "var(--track, #F0F0F2)" }} />
         <circle
           cx={size / 2}
           cy={size / 2}

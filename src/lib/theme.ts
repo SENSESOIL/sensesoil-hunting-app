@@ -1,58 +1,75 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { ACCENT_STORAGE_KEY } from "./theme-boot";
+import { BAR_DARK, BAR_LIGHT, THEME_STORAGE_KEY } from "./theme-boot";
 
 /* ══════════════════════════════════════════════════════════
-   主題色（頭像 → 設定 → 外觀）
-   全狩獵管理的強調色都讀 CSS 變數 --accent，衍生三個色調：
-     --accent-soft   淺底（選中的方塊、提示條）
-     --accent-strong 深一階（淺底上的圖示、數字）
-     --accent-ink    淺底上的文字
-   選擇存在這支裝置（localStorage），開頁前由 layout 的內嵌腳本先套用，不會閃一下橘色。
+   白天／夜晚模式（頭像 → 設定 → 外觀）
+   <html data-theme="light|dark">；夜晚的配色在 src/app/dark-mode.css，
+   只作用在狩獵管理（<html data-app="mgmt">），狩獵覺醒等頁面不受影響。
+   強調色固定是品牌橘（CSS 變數 --accent）。
+   選擇存在這支裝置（localStorage），開頁前由 layout 的內嵌腳本先套用。
    ══════════════════════════════════════════════════════════ */
 
-export interface AccentOption {
-  key: string;
-  label: string;
-  color: string;
-}
-
-export const ACCENTS: AccentOption[] = [
-  { key: "orange", label: "拾壤橘", color: "#F39C12" },
-  { key: "coral", label: "珊瑚", color: "#F2674A" },
-  { key: "rose", label: "玫瑰", color: "#E0457B" },
-  { key: "violet", label: "紫羅蘭", color: "#7C5CE0" },
-  { key: "blue", label: "海藍", color: "#2F7FD8" },
-  { key: "teal", label: "青綠", color: "#13A08A" },
-  { key: "green", label: "森林", color: "#3A9A4F" },
-  { key: "graphite", label: "石墨", color: "#4B5563" },
-];
+export type ThemeMode = "light" | "dark";
 
 const listeners = new Set<() => void>();
 
-function current(): string {
-  if (typeof document === "undefined") return ACCENTS[0].color;
-  return getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || ACCENTS[0].color;
+function current(): ThemeMode {
+  if (typeof document === "undefined") return "light";
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
-export function setAccent(color: string) {
-  document.documentElement.style.setProperty("--accent", color);
+export function setThemeMode(mode: ThemeMode) {
+  document.documentElement.dataset.theme = mode;
   try {
-    localStorage.setItem(ACCENT_STORAGE_KEY, color);
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
   } catch {
-    /* 私密瀏覽：這次有效，下次回到預設 */
+    /* 私密瀏覽：這次有效，下次回到白天 */
   }
+  syncStatusBar();
   listeners.forEach((f) => f());
 }
 
-export function useAccent(): string {
+export function useThemeMode(): ThemeMode {
   return useSyncExternalStore(
     (cb) => {
       listeners.add(cb);
       return () => listeners.delete(cb);
     },
     current,
-    () => ACCENTS[0].color
+    () => "light"
   );
+}
+
+/**
+ * 狀態列底色：各頁面會把 <meta name="theme-color"> 設成白天的 #FAFAFA／#FFFFFF；
+ * 夜晚模式時把它們換成深色（深色的覆蓋層，例如組織圖、流程圖，本來就是深色，不動）。
+ */
+function syncStatusBar() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  const v = (meta.getAttribute("content") ?? "").toUpperCase();
+  if (current() === "dark" && BAR_LIGHT.includes(v)) meta.setAttribute("content", BAR_DARK);
+  if (current() === "light" && v === BAR_DARK) meta.setAttribute("content", BAR_LIGHT[0]);
+}
+
+let watching = false;
+/** 狩獵管理掛載時呼叫：標記作用範圍，並盯著狀態列底色 */
+export function enableAppTheme(): () => void {
+  const root = document.documentElement;
+  root.dataset.app = "mgmt";
+  syncStatusBar();
+  let obs: MutationObserver | null = null;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta && !watching) {
+    watching = true;
+    obs = new MutationObserver(syncStatusBar);
+    obs.observe(meta, { attributes: true, attributeFilter: ["content"] });
+  }
+  return () => {
+    delete root.dataset.app;
+    obs?.disconnect();
+    watching = false;
+  };
 }

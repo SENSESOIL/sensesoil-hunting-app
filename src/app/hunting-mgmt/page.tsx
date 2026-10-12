@@ -20,6 +20,7 @@ import { PhotoUpload } from "@/components/pm/PhotoUpload";
 import { ToastHost } from "@/components/pm/Sheet";
 import { Avatar } from "@/components/pm/kit";
 import { SettingsSheet, START_NAV_KEY } from "@/components/SettingsSheet";
+import { enableAppTheme } from "@/lib/theme";
 import { disablePush, refreshPush } from "@/components/pm/push-client";
 import { isManagerRoles } from "@/lib/pm/model";
 import { canSeeFlows as canSeeFlowsOf, flowRoleFromRoles } from "@/lib/flow-role";
@@ -787,6 +788,8 @@ export default function HuntingManagementPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  // 夜晚模式只作用在狩獵管理：掛載時標記範圍，並讓狀態列底色跟著深色
+  useEffect(() => enableAppTheme(), []);
   // 設定裡選的「開啟 APP 時先看」：權限載入完才套用一次（網址指定的頁面優先）
   const startApplied = useRef(false);
   useEffect(() => {

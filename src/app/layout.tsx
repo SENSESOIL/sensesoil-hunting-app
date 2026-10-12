@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Orbitron } from "next/font/google";
 import "./globals.css";
+import "./dark-mode.css";
 import { Providers } from "@/components/Providers";
 import VersionGuard from "@/components/VersionGuard";
-import { ACCENT_BOOT_SCRIPT } from "@/lib/theme-boot";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme-boot";
 
 const orbitron = Orbitron({ 
   subsets: ["latin"],
@@ -35,15 +36,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-TW" className="dark scrollbar-hide">
+    // suppressHydrationWarning：開頁腳本會先在 <html> 加上 data-theme（白天／夜晚），和伺服器輸出的不同是預期的
+    <html lang="zh-TW" className="dark scrollbar-hide" suppressHydrationWarning>
       <head>
         {/* 狀態列底色。iOS 對「動態新建的 meta」反應很慢（實機要 2～4 秒或轉一次螢幕
             才變色），但對既有 meta 的 content 變更會立刻重畫 —— 所以這裡固定輸出一個，
             需要切換的頁面只改它的值。
             預設 #FAFAFA 與主頁標題列同色；子頁會自行切成白色。 */}
         <meta name="theme-color" content="#FAFAFA" />
-        {/* 使用者選的主題色：開頁前先套用（頭像 → 設定 → 外觀） */}
-        <script dangerouslySetInnerHTML={{ __html: ACCENT_BOOT_SCRIPT }} />
+        {/* 白天／夜晚模式：開頁前先套用（頭像 → 設定 → 外觀），不會先閃一下白色 */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block" rel="stylesheet" />
         <style>{`
           .material-symbols-outlined {

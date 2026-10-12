@@ -1,0 +1,109 @@
+/* ══════════════════════════════════════════════════════════
+   夜晚模式（頭像 → 設定 → 外觀）
+   狩獵管理的元件用的是寫死的淺色色碼（例如 bg-[#FFFFFF]、text-[#18181B]），
+   這裡在 <html data-theme="dark" data-app="mgmt"> 時把每個淺色換成對應的深色。
+   只作用在狩獵管理；狩獵覺醒等本來就是深色的頁面不受影響。
+   由 scripts/gen-dark-mode.py 產生的對照：頁面 #111113、卡片 #1C1C1F、淺填色 #26262A、線 #2E2E33。
+   新增元件時沿用既有色碼就會自動支援夜晚模式；用了新色碼請重跑腳本。
+   ══════════════════════════════════════════════════════════ */
+
+html[data-theme="dark"][data-app="mgmt"] {
+  color-scheme: dark;
+  --accent-soft: color-mix(in srgb, var(--accent) 20%, #1C1C1F);
+  --accent-soft-2: color-mix(in srgb, var(--accent) 30%, #1C1C1F);
+  --accent-strong: color-mix(in srgb, var(--accent) 85%, white);
+  --accent-ink: color-mix(in srgb, var(--accent) 55%, white);
+  --ink: #F2F2F4;
+  --ink-2: #D4D4D8;
+  --muted: #86868E;
+  --text-3: #A1A1AA;
+  --line: #2E2E33;
+  --track: #26262A;
+}
+html[data-theme="dark"][data-app="mgmt"] body { background: #111113; }
+
+/* 卡片陰影：深色底上改成細亮邊＋較深的投影 */
+html[data-theme="dark"][data-app="mgmt"] .shadow-card { box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 6px 20px rgba(0,0,0,0.35); }
+
+/* 專案情報的深色總覽卡：夜晚時比一般卡片再亮一階，才分得出主角 */
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#1C1C1F\] { background-color: #2A2A30; }
+
+/* 表單元件 */
+html[data-theme="dark"][data-app="mgmt"] input, html[data-theme="dark"][data-app="mgmt"] textarea, html[data-theme="dark"][data-app="mgmt"] select { color-scheme: dark; }
+
+html[data-theme="dark"][data-app="mgmt"] .\[\&\>\*\+\*\]\:border-\[\#F4F4F5\] > * + * { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .active\:bg-\[\#E4E4E7\]:active { background-color: #303035; }
+html[data-theme="dark"][data-app="mgmt"] .active\:bg-\[\#F4F4F5\]:active { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .active\:bg-\[\#F7F7F8\]:active { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .active\:bg-\[\#FAFAFA\]:active { background-color: #111113; }
+html[data-theme="dark"][data-app="mgmt"] .active\:bg-\[\#FDECEC\]:active { background-color: #3A2023; }
+html[data-theme="dark"][data-app="mgmt"] .active\:bg-\[\#FEF2F2\]:active { background-color: #3A2023; }
+html[data-theme="dark"][data-app="mgmt"] .active\:bg-white:active { background-color: #1C1C1F; }
+html[data-theme="dark"][data-app="mgmt"] .active\:text-\[\#18181B\]:active { color: #F2F2F4; }
+html[data-theme="dark"][data-app="mgmt"] .active\:text-\[\#52525B\]:active { color: #C4C4CA; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#18181B\] { background-color: #3A3A40; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#18181B\]\/85 { background-color: rgba(58,58,64,0.85); }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#E4E4E7\] { background-color: #303035; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#E4E4E7\]\/60 { background-color: rgba(48,48,53,0.6); }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#E8E8EC\] { background-color: #303035; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#EEEEF0\] { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#EFEFF1\] { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#F0F0F2\] { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#F2F2F4\] { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#F4F4F5\] { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#FAFAFA\] { background-color: #111113; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#FAFAFA\]\/50 { background-color: rgba(17,17,19,0.5); }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#FAFAFA\]\/70 { background-color: rgba(17,17,19,0.7); }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#FCFCFC\] { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#FDECEC\] { background-color: #3A2023; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#FFFAF2\] { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .bg-\[\#FFFFFF\] { background-color: #1C1C1F; }
+html[data-theme="dark"][data-app="mgmt"] .bg-white { background-color: #1C1C1F; }
+html[data-theme="dark"][data-app="mgmt"] .bg-white\/50 { background-color: rgba(28,28,31,0.5); }
+html[data-theme="dark"][data-app="mgmt"] .bg-white\/90 { background-color: rgba(28,28,31,0.9); }
+html[data-theme="dark"][data-app="mgmt"] .bg-white\/95 { background-color: rgba(28,28,31,0.95); }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#18181B\] { border-color: #F2F2F4; }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#C7C7CC\] { border-color: #46464D; }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#D4D4D8\] { border-color: #3E3E44; }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#E4E4E7\] { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#E4E4E7\]\/60 { border-color: rgba(46,46,51,0.6); }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#E4E4E7\]\/70 { border-color: rgba(46,46,51,0.7); }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#EBEBED\] { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#EFEFF1\] { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#F0F0F2\] { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#F2F2F4\] { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .border-\[\#F4F4F5\] { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .border-white { border-color: #1C1C1F; }
+html[data-theme="dark"][data-app="mgmt"] .border-white\/40 { border-color: rgba(28,28,31,0.4); }
+html[data-theme="dark"][data-app="mgmt"] .decoration-\[\#C7C7CC\] { text-decoration-color: #5E5E66; }
+html[data-theme="dark"][data-app="mgmt"] .divide-\[\#F2F2F4\] > :not(:last-child) { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .divide-\[\#F4F4F5\] > :not(:last-child) { border-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .focus-visible\:bg-\[\#F4F4F5\]:focus-visible { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .focus-visible\:bg-\[\#FAFAFA\]:focus-visible { background-color: #111113; }
+html[data-theme="dark"][data-app="mgmt"] .focus-within\:bg-white:focus-within { background-color: #1C1C1F; }
+html[data-theme="dark"][data-app="mgmt"] .focus\:text-\[\#18181B\]:focus { color: #F2F2F4; }
+html[data-theme="dark"][data-app="mgmt"] .group:active .group-active\:bg-\[\#27272A\] { background-color: #46464D; }
+html[data-theme="dark"][data-app="mgmt"] .hover\:bg-\[\#E4E4E7\]:hover { background-color: #303035; }
+html[data-theme="dark"][data-app="mgmt"] .hover\:bg-\[\#F4F4F5\]:hover { background-color: #26262A; }
+html[data-theme="dark"][data-app="mgmt"] .hover\:bg-\[\#F4F4F5\]\/60:hover { background-color: rgba(38,38,42,0.6); }
+html[data-theme="dark"][data-app="mgmt"] .hover\:bg-\[\#FAFAFA\]:hover { background-color: #111113; }
+html[data-theme="dark"][data-app="mgmt"] .hover\:border-\[\#A1A1AA\]:hover { border-color: #5E5E66; }
+html[data-theme="dark"][data-app="mgmt"] .hover\:ring-\[\#E4E4E7\]:hover { --tw-ring-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .hover\:text-\[\#18181B\]:hover { color: #F2F2F4; }
+html[data-theme="dark"][data-app="mgmt"] .placeholder\:text-\[\#A1A1AA\]::placeholder { color: #86868E; }
+html[data-theme="dark"][data-app="mgmt"] .placeholder\:text-\[\#C7C7CC\]::placeholder { color: #5E5E66; }
+html[data-theme="dark"][data-app="mgmt"] .ring-\[\#E4E4E7\] { --tw-ring-color: #2E2E33; }
+html[data-theme="dark"][data-app="mgmt"] .ring-white { --tw-ring-color: #1C1C1F; }
+html[data-theme="dark"][data-app="mgmt"] .ring-white\/70 { --tw-ring-color: rgba(28,28,31,0.7); }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#18181B\] { color: #F2F2F4; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#3F3F46\] { color: #D4D4D8; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#52525B\] { color: #C4C4CA; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#71717A\] { color: #A1A1AA; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#8E8E93\] { color: #9A9AA2; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#A1A1AA\] { color: #86868E; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#B42318\] { color: #FF8A80; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#C4C4C8\] { color: #5E5E66; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#C7C7CC\] { color: #5E5E66; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#D4D4D8\] { color: #55555C; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#E4E4E7\] { color: #4A4A50; }
+html[data-theme="dark"][data-app="mgmt"] .text-\[\#d03b3b\] { color: #FF8A80; }

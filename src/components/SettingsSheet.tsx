@@ -8,12 +8,12 @@ import { Icon } from "@/components/pm/ui";
 import { disablePush, enablePush, pushState, type PushState } from "@/components/pm/push-client";
 import { PortraitSheet } from "@/components/team/PortraitSheet";
 import { useTeam } from "@/components/team/useTeam";
-import { ACCENTS, setAccent, useAccent } from "@/lib/theme";
+import { setThemeMode, useThemeMode, type ThemeMode } from "@/lib/theme";
 
 /* ══════════════════════════════════════════════════════════
    設定（右上角頭像）
    帳號：大頭照、姓名、信箱、身分
-   外觀：主題色（全 APP 的強調色）
+   外觀：白天／夜晚模式（強調色固定品牌橘）
    偏好：開啟 APP 先看哪一頁、任務的預設檢視
    通知：這支手機的推播
    登出
@@ -22,6 +22,11 @@ import { ACCENTS, setAccent, useAccent } from "@/lib/theme";
 
 export const START_NAV_KEY = "app:startNav";
 const TASK_VIEW_KEY = "pm:my:view";
+
+const MODES: { value: ThemeMode; label: string; icon: string; page: string; card: string; ink: string; sub: string }[] = [
+  { value: "light", label: "白天", icon: "light_mode", page: "#F2F2F4", card: "#FFFFFF", ink: "#3F3F46", sub: "#D4D4D8" },
+  { value: "dark", label: "夜晚", icon: "dark_mode", page: "#111113", card: "#26262A", ink: "#E4E4E7", sub: "#55555C" },
+];
 
 const TASK_VIEWS = [
   { value: "list", label: "清單", icon: "checklist" },
@@ -61,7 +66,7 @@ export function SettingsSheet({
   /** 可以設成「開啟時先看」的頁面（依權限） */
   pages: { id: string; label: string }[];
 }) {
-  const accent = useAccent();
+  const mode = useThemeMode();
   const team = useTeam(open);
   const me = team.data?.members.find((m) => m.email === email);
   const [portrait, setPortrait] = useState(false);
@@ -130,27 +135,37 @@ export function SettingsSheet({
             </div>
           </section>
 
-          {/* 外觀 */}
-          <Section title="主題色" hint="只改這支裝置">
-            <div className="grid grid-cols-4 gap-y-3 gap-x-2 p-4">
-              {ACCENTS.map((a) => {
-                const on = a.color.toLowerCase() === accent.toLowerCase();
+          {/* 外觀：白天／夜晚（強調色固定品牌橘） */}
+          <Section title="外觀" hint="只改這支裝置">
+            <div className="grid grid-cols-2 gap-3 p-4">
+              {MODES.map((m) => {
+                const on = mode === m.value;
                 return (
                   <button
-                    key={a.key}
+                    key={m.value}
                     type="button"
-                    onClick={() => setAccent(a.color)}
+                    onClick={() => setThemeMode(m.value)}
                     aria-pressed={on}
-                    aria-label={a.label}
-                    className="flex flex-col items-center gap-1.5"
+                    className={`rounded-[18px] p-2 pb-3 flex flex-col items-center gap-2.5 border-2 transition-colors ${on ? "border-[var(--accent)]" : "border-transparent bg-[#F4F4F5]"}`}
                   >
-                    <span
-                      className="w-11 h-11 rounded-full flex items-center justify-center transition-transform active:scale-90"
-                      style={{ background: a.color, boxShadow: on ? `0 0 0 3px #fff, 0 0 0 5px ${a.color}` : undefined }}
-                    >
-                      {on && <Icon name="check" weight={600} className="text-[22px] text-white" />}
+                    {/* 小預覽：固定色碼（不跟著夜晚模式換），才看得出兩種模式的差別 */}
+                    <span className="w-full aspect-[4/3] rounded-[12px] p-2.5 flex flex-col gap-1.5" style={{ background: m.page }}>
+                      <span className="rounded-[8px] p-2 flex items-center gap-1.5" style={{ background: m.card }}>
+                        <span className="w-4 h-4 rounded-full shrink-0" style={{ background: "#F39C12" }} />
+                        <span className="flex-1 flex flex-col gap-1">
+                          <span className="h-1.5 rounded-full w-4/5" style={{ background: m.ink }} />
+                          <span className="h-1.5 rounded-full w-1/2" style={{ background: m.sub }} />
+                        </span>
+                      </span>
+                      <span className="rounded-[8px] p-2 flex flex-col gap-1" style={{ background: m.card }}>
+                        <span className="h-1.5 rounded-full w-3/4" style={{ background: m.ink }} />
+                        <span className="h-1.5 rounded-full w-2/5" style={{ background: m.sub }} />
+                      </span>
                     </span>
-                    <span className={`text-[12px] ${on ? "font-medium text-[#18181B]" : "text-[#A1A1AA]"}`}>{a.label}</span>
+                    <span className="flex items-center gap-1.5">
+                      <Icon name={m.icon} weight={400} className={`text-[18px] ${on ? "text-[var(--accent)]" : "text-[#A1A1AA]"}`} />
+                      <span className={`text-[15px] ${on ? "font-semibold text-[#18181B]" : "text-[#71717A]"}`}>{m.label}</span>
+                    </span>
                   </button>
                 );
               })}

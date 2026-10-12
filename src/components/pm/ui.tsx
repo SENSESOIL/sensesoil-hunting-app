@@ -14,13 +14,13 @@ import type { Health, Stage, WorkStatus } from "@/lib/project-ops";
    品牌橘跟「注意／落後」色相太近，進度條若也用橘色會讓人分不清是進度還是警告。
    ══════════════════════════════════════════════════════════ */
 
-export const INK = "#18181B";
-export const INK_2 = "#3F3F46";
-export const MUTED = "#A1A1AA";
+export const INK = "var(--ink, #18181B)";
+export const INK_2 = "var(--ink-2, #3F3F46)";
+export const MUTED = "var(--muted, #A1A1AA)";
 /** 帶資訊的次要文字（白底 4.8:1）。#A1A1AA 只給圖示、placeholder、停用狀態 */
-export const TEXT_3 = "#71717A";
-export const LINE = "#E4E4E7";
-export const TRACK = "#F0F0F2";
+export const TEXT_3 = "var(--text-3, #71717A)";
+export const LINE = "var(--line, #E4E4E7)";
+export const TRACK = "var(--track, #F0F0F2)";
 export const ACCENT = "var(--accent)";
 
 /** 狀態色：取自經過色覺辨識驗證的狀態色票（good / warning / serious / critical） */

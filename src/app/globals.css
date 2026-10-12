@@ -2,7 +2,7 @@
 @config "../../tailwind.config.js";
 
 :root {
-  /* 強調色：頭像 → 設定 → 外觀 可以換（見 src/lib/theme.ts）。衍生色調跟著主色走 */
+  /* 強調色：固定品牌橘。衍生色調跟著主色走（夜晚模式的對應見 dark-mode.css） */
   --accent: #F39C12;
   --accent-soft: color-mix(in srgb, var(--accent) 11%, white);
   --accent-soft-2: color-mix(in srgb, var(--accent) 20%, white);
