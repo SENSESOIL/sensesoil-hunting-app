@@ -655,6 +655,8 @@ for (const f of files) {
     .replace(new RegExp(`<style id="${MARK}-style">[\\s\\S]*?</style>`), "")
     .replace(new RegExp(`<script id="${MARK}-script">[\\s\\S]*?</script>`), "")
     .replace(new RegExp(`<script type="application/json" id="${MARK}-details">[\\s\\S]*?</script>`), "");
+  // 用詞：風格名稱「訊號流」改叫「工作流」（風格選單、標題列標籤、介面字串）
+  html = html.split("訊號流").join("工作流").split('"viewer.preset.flow.short":"流動"').join('"viewer.preset.flow.short":"工作流"');
   html = html.replace("</head>", STYLE + "\n</head>");
   const details = DETAILS[f.split(/[\\/]/).pop()] || {};
   const json = JSON.stringify(details).replace(/</g, "\\u003c");
