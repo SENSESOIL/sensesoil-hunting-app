@@ -9,6 +9,8 @@
 | `pm-overview.build.mjs` | 產生上面 JSON 的腳本 |
 | `construction.build.mjs` | 工程承攬流程（沒有設計，拾壤是工程管理單位，泥作／土作由自有工班施作）。7 個階段、54 個步驟；釐清設計用「八工檢核法」，施工中用「監造八管」；附 12 張說明卡。超過 6 步的階段用上下兩排（yOffset） |
 | `construction.workflow.json` | 上面腳本產生的 Archify 輸入 |
+| `step-details.json` | 步驟的詳細說明（監造管理的「監造八管」、八工的每一工），依檔名與步驟 id 對應；收合狀態下點步驟的「詳細」顯示。改完重跑 `viewer-patch.mjs` 即可，不用重新產生圖 |
+| `viewer-patch.mjs` | 後處理：底框、手勢縮放、「收合／資訊」按鈕、透鏡單選、步驟詳細說明 |
 | `../../public/flows/*.html` | 產出的圖（自含 HTML，APP 用 iframe 顯示） |
 
 工程承攬流程 7 個階段放在同一張圖。整頁太高、過不了 Archify 的瀏覽器檢查，所以用 `deliver`（不跑 finalize）產生，版面靠後處理的縮放手勢與「收合」按鈕。

@@ -214,7 +214,7 @@ const legend = {
 
 const lanes = [
   { id: "s1", label: "接洽評估" },
-  { id: "s2", label: "釐清設計（八工檢核）" },
+  { id: "s2", label: "釐清設計" },
   { id: "s3", label: "估價簽約" },
   { id: "s4", label: "施工前準備" },
   { id: "s5", label: "施工中管理" },

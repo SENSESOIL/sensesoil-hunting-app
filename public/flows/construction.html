@@ -4868,6 +4868,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
     }
   </style>
+
+
 <style id="sensesoil-viewer-patch-style">
   /* 1. 底框 */
   .diagram-container,
@@ -4928,16 +4930,16 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .ss-outline .t { font-size: 1.05rem; font-weight: 700; }
   .ss-outline .c { margin-left: auto; font-size: 0.8rem; color: var(--text-faint, #8a8f98); white-space: nowrap; }
   .ss-outline .v { width: 0.5rem; height: 0.5rem; border-right: 2px solid var(--text-faint, #8a8f98); border-bottom: 2px solid var(--text-faint, #8a8f98); rotate: 45deg; translate: 0 -0.15rem; transition: rotate .2s; flex: none; }
-  .ss-stage[data-open] .v { rotate: 225deg; translate: 0 0.1rem; }
+  .ss-stage[data-open] > .ss-stage-head .v { rotate: 225deg; translate: 0 0.1rem; }
   .ss-steps { padding: 0 1rem 0.9rem; }
   .ss-steps ol { list-style: none; margin: 0; padding: 0; counter-reset: st; border-top: 1px solid var(--panel-border, #2a3140); }
   .ss-steps li {
-    counter-increment: st; display: grid; grid-template-columns: 1.6rem 0.55rem 1fr; column-gap: 0.55rem; row-gap: 0.1rem;
+    counter-increment: st; display: grid; grid-template-columns: 1.6rem 0.55rem 1fr auto; column-gap: 0.55rem; row-gap: 0.1rem;
     align-items: center; padding: 0.6rem 0; border-bottom: 1px solid color-mix(in srgb, var(--panel-border, #2a3140) 60%, transparent);
   }
   .ss-steps li::before { content: counter(st); grid-row: 1 / span 2; font: 600 0.85rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--text-faint, #8a8f98); }
   .ss-steps .d { width: 0.55rem; height: 0.55rem; border-radius: 50%; grid-row: 1; }
-  .ss-steps .l { font-size: 0.98rem; font-weight: 600; grid-row: 1; }
+  .ss-steps .l { font-size: 0.98rem; font-weight: 600; grid-row: 1; grid-column: 3; }
   /* 收合清單只列步驟名稱；部門與說明留在流程圖上 */
   .ss-steps .w, .ss-steps .f { display: none; }
   .ss-steps li { padding: 0.55rem 0; }
@@ -4948,6 +4950,41 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     font-size: 0.85rem; font-weight: 600; color: var(--frontend-stroke, #22d3ee);
     border: 1px solid color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent);
   }
+  /* 步驟詳細說明（監造八管、八工） */
+  .ss-steps li.has-detail .l { cursor: pointer; }
+  .ss-more {
+    all: unset; box-sizing: border-box; cursor: pointer; grid-column: 4; grid-row: 1; justify-self: end;
+    font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.6rem; border-radius: 999px;
+    color: var(--frontend-stroke, #22d3ee); border: 1px solid color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent);
+  }
+  .ss-steps li[data-open] .ss-more { background: color-mix(in srgb, var(--frontend-stroke, #22d3ee) 16%, transparent); }
+  .ss-detail {
+    grid-column: 1 / -1; margin-top: 0.6rem; padding: 0.85rem 0.9rem; border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--bg, #05070d) 60%, transparent); border: 1px solid var(--panel-border, #2a3140);
+    font-size: 0.86rem; line-height: 1.6; color: var(--text, #e5e7eb);
+  }
+  .ss-detail p { margin: 0.15rem 0 0.5rem; }
+  .ss-detail ul { margin: 0.15rem 0 0.5rem; padding-left: 1.1rem; }
+  .ss-detail ul li { display: list-item; padding: 0.1rem 0; border: 0; counter-increment: none; }
+  .ss-detail ul li::before { content: none; }
+  .ss-d-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .ss-d-intro { color: var(--text-muted, #a3a9b4); }
+  .ss-d-label { font-size: 0.75rem; font-weight: 700; color: var(--text-faint, #8a8f98); margin-top: 0.4rem; }
+  .ss-d-benefit { color: var(--backend-stroke, #34d399); }
+  .ss-d-rhythm { display: grid; gap: 0.3rem; margin: 0.4rem 0 0.7rem; }
+  .ss-d-rrow { display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.5rem; }
+  .ss-d-when { font-weight: 700; color: var(--frontend-stroke, #22d3ee); }
+  .ss-d-group { font-weight: 700; margin: 0.8rem 0 0.4rem; padding-top: 0.6rem; border-top: 1px solid var(--panel-border, #2a3140); }
+  .ss-d-item { border: 1px solid var(--panel-border, #2a3140); border-radius: 0.6rem; padding: 0.5rem 0.7rem; margin-bottom: 0.45rem; }
+  .ss-d-item[data-open] { border-color: color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent); }
+  .ss-d-head { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; display: flex; align-items: center; gap: 0.6rem; }
+  .ss-d-no { font: 700 0.95rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--frontend-stroke, #22d3ee); min-width: 1rem; }
+  .ss-d-name { font-weight: 700; flex: 1; }
+  .ss-d-name small { font-weight: 500; color: var(--text-faint, #8a8f98); margin-left: 0.4rem; }
+  .ss-d-item .v { width: 0.4rem; height: 0.4rem; border-right: 2px solid var(--text-faint, #8a8f98); border-bottom: 2px solid var(--text-faint, #8a8f98); rotate: 45deg; translate: 0 -0.1rem; flex: none; }
+  .ss-d-item[data-open] .v { rotate: 225deg; translate: 0 0.1rem; }
+  .ss-d-item .ss-d-benefit { margin: 0.3rem 0 0; font-size: 0.8rem; }
+  .ss-d-body { margin-top: 0.3rem; }
   /* 收合時「資訊」用不到，先藏起來；展開後才出現 */
   html[data-ss-outline="on"] #ss-info-toggle { display: none !important; }
   .card-header { cursor: pointer; }
@@ -5104,7 +5141,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text x="54" y="74" class="t-dim" font-size="10" font-weight="600">01 / 接洽評估</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-1" x="40" y="178" width="1046" height="218" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="200" class="t-dim" font-size="10" font-weight="600">02 / 釐清設計（八工檢核）</text>
+        <text x="54" y="200" class="t-dim" font-size="10" font-weight="600">02 / 釐清設計</text>
 
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-2" x="40" y="416" width="1046" height="106" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="438" class="t-dim" font-size="10" font-weight="600">03 / 估價簽約</text>
@@ -5258,8 +5295,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="1008" y="142" class="t-database" font-size="7" text-anchor="middle">→ 釐清設計</text>
         </g>
 
-        <g id="node-g-limit" data-node-id="g-limit" data-node-label="工限" tabindex="0" role="button" aria-label="聚焦工限，環境限制, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="環境限制" data-node-tag="動線、管委會、裝修審查" data-node-context="釐清設計（八工檢核）">
-          <title>工限 · 環境限制 · 釐清設計（八工檢核） · 動線、管委會、裝修審查</title>
+        <g id="node-g-limit" data-node-id="g-limit" data-node-label="工限" tabindex="0" role="button" aria-label="聚焦工限，環境限制, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="環境限制" data-node-tag="動線、管委會、裝修審查" data-node-context="釐清設計">
+          <title>工限 · 環境限制 · 釐清設計 · 動線、管委會、裝修審查</title>
           <rect x="48" y="212" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="48" y="212" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(54 218) scale(0.6875)">
@@ -5270,8 +5307,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="118" y="268" class="t-backend" font-size="7" text-anchor="middle">動線、管委會、裝修審查</text>
         </g>
 
-        <g id="node-g-audit" data-node-id="g-audit" data-node-label="工審" tabindex="0" role="button" aria-label="聚焦工審，圖面釋疑, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="圖面釋疑" data-node-tag="列疑義、書面釐清" data-node-context="釐清設計（八工檢核）">
-          <title>工審 · 圖面釋疑 · 釐清設計（八工檢核） · 列疑義、書面釐清</title>
+        <g id="node-g-audit" data-node-id="g-audit" data-node-label="工審" tabindex="0" role="button" aria-label="聚焦工審，圖面釋疑, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="圖面釋疑" data-node-tag="列疑義、書面釐清" data-node-context="釐清設計">
+          <title>工審 · 圖面釋疑 · 釐清設計 · 列疑義、書面釐清</title>
           <rect x="226" y="212" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="226" y="212" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(232 218) scale(0.6875)">
@@ -5282,8 +5319,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="296" y="268" class="t-backend" font-size="7" text-anchor="middle">列疑義、書面釐清</text>
         </g>
 
-        <g id="node-shop" data-node-id="shop" data-node-label="介面整合圖" tabindex="0" role="button" aria-label="聚焦介面整合圖，設計課, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="設計課" data-node-tag="→ 估價簽約" data-node-context="釐清設計（八工檢核）">
-          <title>介面整合圖 · 設計課 · 釐清設計（八工檢核） · → 估價簽約</title>
+        <g id="node-shop" data-node-id="shop" data-node-label="介面整合圖" tabindex="0" role="button" aria-label="聚焦介面整合圖，設計課, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="設計課" data-node-tag="→ 估價簽約" data-node-context="釐清設計">
+          <title>介面整合圖 · 設計課 · 釐清設計 · → 估價簽約</title>
           <rect x="226" y="324" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="226" y="324" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(232 330) scale(0.6875)">
@@ -5294,8 +5331,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="296" y="380" class="t-backend" font-size="7" text-anchor="middle">→ 估價簽約</text>
         </g>
 
-        <g id="node-clarify" data-node-id="clarify" data-node-label="澄清會議" tabindex="0" role="button" aria-label="聚焦澄清會議，業主、設計師, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="security" data-node-sublabel="業主、設計師" data-node-tag="確認／補圖" data-node-context="釐清設計（八工檢核）">
-          <title>澄清會議 · 業主、設計師 · 釐清設計（八工檢核） · 確認／補圖</title>
+        <g id="node-clarify" data-node-id="clarify" data-node-label="澄清會議" tabindex="0" role="button" aria-label="聚焦澄清會議，業主、設計師, 釐清設計" aria-pressed="false" data-node-kind="security" data-node-sublabel="業主、設計師" data-node-tag="確認／補圖" data-node-context="釐清設計">
+          <title>澄清會議 · 業主、設計師 · 釐清設計 · 確認／補圖</title>
           <rect x="404" y="324" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="404" y="324" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(410 330) scale(0.6875)">
@@ -5307,8 +5344,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="474" y="380" class="t-security" font-size="7" text-anchor="middle">確認／補圖</text>
         </g>
 
-        <g id="node-g-item" data-node-id="g-item" data-node-label="工項" tabindex="0" role="button" aria-label="聚焦工項，項目釐清, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="項目釐清" data-node-tag="設計圖翻成工程項目" data-node-context="釐清設計（八工檢核）">
-          <title>工項 · 項目釐清 · 釐清設計（八工檢核） · 設計圖翻成工程項目</title>
+        <g id="node-g-item" data-node-id="g-item" data-node-label="工項" tabindex="0" role="button" aria-label="聚焦工項，項目釐清, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="項目釐清" data-node-tag="設計圖翻成工程項目" data-node-context="釐清設計">
+          <title>工項 · 項目釐清 · 釐清設計 · 設計圖翻成工程項目</title>
           <rect x="404" y="212" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="404" y="212" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(410 218) scale(0.6875)">
@@ -5319,8 +5356,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="474" y="268" class="t-backend" font-size="7" text-anchor="middle">設計圖翻成工程項目</text>
         </g>
 
-        <g id="node-g-method" data-node-id="g-method" data-node-label="工法" tabindex="0" role="button" aria-label="聚焦工法，技術評估, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="技術評估" data-node-tag="畫得出是否做得出" data-node-context="釐清設計（八工檢核）">
-          <title>工法 · 技術評估 · 釐清設計（八工檢核） · 畫得出是否做得出</title>
+        <g id="node-g-method" data-node-id="g-method" data-node-label="工法" tabindex="0" role="button" aria-label="聚焦工法，技術評估, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="技術評估" data-node-tag="畫得出是否做得出" data-node-context="釐清設計">
+          <title>工法 · 技術評估 · 釐清設計 · 畫得出是否做得出</title>
           <rect x="582" y="212" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="582" y="212" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(588 218) scale(0.6875)">
@@ -5331,8 +5368,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="652" y="268" class="t-backend" font-size="7" text-anchor="middle">畫得出是否做得出</text>
         </g>
 
-        <g id="node-issues" data-node-id="issues" data-node-label="疑義清單" tabindex="0" role="button" aria-label="聚焦疑義清單，規劃課, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="規劃課" data-node-tag="編號、附照片" data-node-context="釐清設計（八工檢核）">
-          <title>疑義清單 · 規劃課 · 釐清設計（八工檢核） · 編號、附照片</title>
+        <g id="node-issues" data-node-id="issues" data-node-label="疑義清單" tabindex="0" role="button" aria-label="聚焦疑義清單，規劃課, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="規劃課" data-node-tag="編號、附照片" data-node-context="釐清設計">
+          <title>疑義清單 · 規劃課 · 釐清設計 · 編號、附照片</title>
           <rect x="582" y="324" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="582" y="324" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(588 330) scale(0.6875)">
@@ -5343,8 +5380,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="652" y="380" class="t-backend" font-size="7" text-anchor="middle">編號、附照片</text>
         </g>
 
-        <g id="node-g-duty" data-node-id="g-duty" data-node-label="工責" tabindex="0" role="button" aria-label="聚焦工責，邊界釐清, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="邊界釐清" data-node-tag="我們做／別人做" data-node-context="釐清設計（八工檢核）">
-          <title>工責 · 邊界釐清 · 釐清設計（八工檢核） · 我們做／別人做</title>
+        <g id="node-g-duty" data-node-id="g-duty" data-node-label="工責" tabindex="0" role="button" aria-label="聚焦工責，邊界釐清, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="邊界釐清" data-node-tag="我們做／別人做" data-node-context="釐清設計">
+          <title>工責 · 邊界釐清 · 釐清設計 · 我們做／別人做</title>
           <rect x="760" y="212" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="760" y="212" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(766 218) scale(0.6875)">
@@ -5355,8 +5392,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="830" y="268" class="t-backend" font-size="7" text-anchor="middle">我們做／別人做</text>
         </g>
 
-        <g id="node-g-time" data-node-id="g-time" data-node-label="工期" tabindex="0" role="button" aria-label="聚焦工期，時間排程, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="時間排程" data-node-tag="進退場節點" data-node-context="釐清設計（八工檢核）">
-          <title>工期 · 時間排程 · 釐清設計（八工檢核） · 進退場節點</title>
+        <g id="node-g-time" data-node-id="g-time" data-node-label="工期" tabindex="0" role="button" aria-label="聚焦工期，時間排程, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="時間排程" data-node-tag="進退場節點" data-node-context="釐清設計">
+          <title>工期 · 時間排程 · 釐清設計 · 進退場節點</title>
           <rect x="760" y="324" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="760" y="324" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(766 330) scale(0.6875)">
@@ -5367,8 +5404,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="830" y="380" class="t-backend" font-size="7" text-anchor="middle">進退場節點</text>
         </g>
 
-        <g id="node-g-mat" data-node-id="g-mat" data-node-label="工料" tabindex="0" role="button" aria-label="聚焦工料，資源盤點, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="資源盤點" data-node-tag="交期、工班、同等品" data-node-context="釐清設計（八工檢核）">
-          <title>工料 · 資源盤點 · 釐清設計（八工檢核） · 交期、工班、同等品</title>
+        <g id="node-g-mat" data-node-id="g-mat" data-node-label="工料" tabindex="0" role="button" aria-label="聚焦工料，資源盤點, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="資源盤點" data-node-tag="交期、工班、同等品" data-node-context="釐清設計">
+          <title>工料 · 資源盤點 · 釐清設計 · 交期、工班、同等品</title>
           <rect x="938" y="324" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="938" y="324" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 330) scale(0.6875)">
@@ -5379,8 +5416,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="1008" y="380" class="t-backend" font-size="7" text-anchor="middle">交期、工班、同等品</text>
         </g>
 
-        <g id="node-g-seq" data-node-id="g-seq" data-node-label="工序" tabindex="0" role="button" aria-label="聚焦工序，介面檢討, 釐清設計（八工檢核）" aria-pressed="false" data-node-kind="backend" data-node-sublabel="介面檢討" data-node-tag="異材質交接、機電衝突" data-node-context="釐清設計（八工檢核）">
-          <title>工序 · 介面檢討 · 釐清設計（八工檢核） · 異材質交接、機電衝突</title>
+        <g id="node-g-seq" data-node-id="g-seq" data-node-label="工序" tabindex="0" role="button" aria-label="聚焦工序，介面檢討, 釐清設計" aria-pressed="false" data-node-kind="backend" data-node-sublabel="介面檢討" data-node-tag="異材質交接、機電衝突" data-node-context="釐清設計">
+          <title>工序 · 介面檢討 · 釐清設計 · 異材質交接、機電衝突</title>
           <rect x="938" y="212" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="938" y="212" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 218) scale(0.6875)">
@@ -14658,6 +14695,11 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
     });
   </script>
+
+
+
+
+<script type="application/json" id="sensesoil-viewer-patch-details">{"supervise":{"title":"監造八管","intro":"監造管理的目的：讓現場照圖說、照標準、照時程施工，並且每件事都留下證據。八管依重要程度分三層：先守住底線，再掌握節奏，最後守住利潤與證據。","rhythm":[{"when":"每日","what":"安全巡查、品質查驗、進度比對、施工日誌與工程照"},{"when":"每週","what":"工務會議、工種交接確認、材料到貨追蹤、週進度表給業主"},{"when":"每月","what":"成本對照預算、廠商請款核對（每月 10 號付款前）"},{"when":"隨時","what":"變更一律先回專案經理，估價、簽認後才施作"}],"groups":[{"name":"① 守住底線　每天必管","items":[{"name":"管安全","sub":"工安防護","manage":"現場人員、公共區域、鄰戶與公安風險。","todo":["開工前架設施工圍籬、防護網、警示標示，備妥滅火器","每日開工巡查防護設施與用電（延長線、漏電斷路器）","合梯、施工架等高處作業與電動工具檢查","拆除、切割、動火等危險作業前，先告知管委會與鄰戶","收工斷電、關水、門禁上鎖"],"records":"每日安全巡查表、動火申請、事故通報單","benefit":"避免職災、公安意外與鄰損賠償，不因勞檢或管委會要求而停工。"},{"name":"管品質","sub":"施工標準","manage":"每道工序是否符合圖說、送審樣品與公司施工標準。","todo":["工序開工前確認基準：放樣線、水平高程、材料規格","水電配管、防水、結構補強等隱蔽工程，封板前查驗並拍照，合格才進下一工序","泥作：防水層試水 48 小時、磁磚敲擊檢查空心、確認洩水坡度","土作：先做樣板讓業主確認質感與色澤，養護時間不得縮短","發現缺失就開缺失改善單，限期改善、複驗後簽回"],"records":"自主檢查表、隱蔽工程照片、缺失改善單","benefit":"缺失在當下改，不留到驗收；保固期的報修也會變少。"}]},{"name":"② 掌握節奏　每週追蹤","items":[{"name":"管進度","sub":"工期節點","manage":"實際進度和工期表之間的差距。","todo":["每日對照工期表，回報各工項完成比例","進度落後就啟動調整：加派人力、調整工序，假日施工要先報備管委會","養護、試水、等料等等待期，提前排好下一個工種","每週工務會議更新進度表，同步給業主與設計師"],"records":"施工日誌、週進度表","benefit":"準時交付；進度也是業主請款節點的依據。"},{"name":"管介面","sub":"工種交接","manage":"不同工種、不同材質之間的交接點。","todo":["前一工種完成、經監造確認並拍照，下一工種才能進場","交接時確認收邊順序（例如泥作先做、木作後收、油漆最後）","確認預留管線、開孔位置、高程與完成面","交接問題由監造當場協調，不讓工班私下處理"],"records":"工種交接確認單（附照片）","benefit":"避免互相推諉、重工與拆除，責任分得清楚。"},{"name":"管材料","sub":"進場與保管","manage":"材料的規格、數量、交期與現場保管。","todo":["進場時對照送審樣品，核對品名、規格、色號、批號、數量","不符的當場退回並拍照","現場防潮、防壓、防盜存放","追蹤長交期材料的到貨日，提前通知相關工種","餘料登記，回收或退貨"],"records":"材料進場驗收單、退換貨紀錄","benefit":"避免用錯料、色差與浪費，不讓工班等料。"}]},{"name":"③ 守住利潤與證據　隨時留底","items":[{"name":"管變更","sub":"追加減","manage":"所有偏離合約與圖說的改動，不論來自業主、設計師或現場條件。","todo":["任何變更先回到專案經理，不讓工班直接照口頭指示施作","先評估對工期、成本、介面的影響，再估價","業主（或設計師）簽認追加減單後才施作","變更後同步更新圖說、工期表與預算"],"records":"變更申請單、簽認的追加減單、更新版圖說","benefit":"防止口頭變更變成無償施工，追加款有憑有據。"},{"name":"管成本","sub":"預算控管","manage":"發包金額、實際支出和預算之間的差距。","todo":["每次叫料、加工、點工都對照預算","支出超過預算就預警，說明原因並回報主管","臨時點工事前核准，不事後補單","每月廠商請款前，核對發包單與實際完成數量"],"records":"成本對照表、點工單、廠商請款核對表","benefit":"守住毛利；結案覆盤時知道錢花在哪裡。"},{"name":"管紀錄","sub":"證據與溝通","manage":"所有現場資訊的留存與傳遞。","todo":["每日施工日誌：天氣、出工人數、完成工項、遇到的問題","工程照用 APP 上傳，自動依日期、專案代碼、工項命名歸檔","工務會議紀錄寫明決議、負責人、期限，並請業主確認","與業主的重要溝通都用文字留底"],"records":"施工日誌、工程照、會議紀錄","benefit":"發生爭議時有證據；結案覆盤與案例紀錄也有素材。"}]}]},"g-limit":{"title":"1 工限（環境限制）","blocks":[{"label":"所屬階段","text":"第一階段：先看客觀條件與圖面盲區（排除不可控風險）"},{"label":"內容說明","text":"評估現場的場域限制與法規條件。"},{"label":"檢查重點","list":["進退料動線：電梯與樓梯尺寸、走道寬度、是否需要吊車","管委會規定：可施工時間、噪音時段、電梯保護、保證金","消防區劃與室內裝修審查是否需要申請","停車、卸貨與廢棄物暫置位置"]},{"label":"產出","text":"環境限制清單，列入報價的附加費用與工時折損"},{"label":"利於什麼","text":"掌握隱性成本與工時折損。只能假日施工或每日工時受限，出工成本會大幅提高；材料進不去要請吊車，也能提早納入報價。"}]},"g-audit":{"title":"2 工審（圖面釋疑）","blocks":[{"label":"所屬階段","text":"第一階段：先看客觀條件與圖面盲區（排除不可控風險）"},{"label":"內容說明","text":"針對圖面挑錯，列出疑義清單。"},{"label":"檢查重點","list":["圖面漏項：有畫沒寫材料、有寫沒畫位置","設計不合理或尺寸兜不攏：平面、立面、剖面互相矛盾","材料不適配：材質與使用場所不合（例如浴室用不耐水材料）","逐條編號、附照片或圖號，寫明需要的回覆期限"]},{"label":"產出","text":"疑義清單（給設計方／業主書面回覆）"},{"label":"利於什麼","text":"建立防禦性報價與免責聲明。報價前就書面釐清盲區，避免概括承受設計圖的錯誤，保障公司利潤。"}]},"g-item":{"title":"3 工項（項目釐清）","blocks":[{"label":"所屬階段","text":"第二階段：拆解執行細節與責任歸屬（確保做得出、不背鍋）"},{"label":"內容說明","text":"首要拆解圖說，把設計圖翻譯成實際的工程執行項目清單。"},{"label":"檢查重點","list":["每一區、每一面拆到工種與材料，例如天花板＝角材、矽酸鈣板、批土、油漆","標註對應圖號與數量單位","分出自有工班（泥作、土作）與要發包的工種","確認沒有漏項，再交給估價"]},{"label":"產出","text":"工程項目清單（估價與發包的依據）"},{"label":"利於什麼","text":"精準發包與成本初估，確保聯繫工班時沒有漏項，是所有估價與排程的最核心基石。"}]},"g-method":{"title":"4 工法（技術評估）","blocks":[{"label":"所屬階段","text":"第二階段：拆解執行細節與責任歸屬（確保做得出、不背鍋）"},{"label":"內容說明","text":"評估圖面設計的結構支撐、特殊造型與材質銜接的實際可行性：畫得出，是否做得出？"},{"label":"檢查重點","list":["結構與荷重：吊櫃、層板、石材牆面是否需要補強","特殊造型：弧形、懸空、無框等是否需要特殊工法或五金","泥作與土作的厚度、重量與養護期是否被設計忽略","做不到或成本過高時，提出替代工法給設計師確認"]},{"label":"產出","text":"工法評估與替代方案"},{"label":"利於什麼","text":"確保施工品質與預算精確度。需要特殊工法才能達成圖面效果時，及早把五金補強、特殊打底等隱形成本反映在報價。"}]},"g-duty":{"title":"5 工責（邊界釐清）","blocks":[{"label":"所屬階段","text":"第二階段：拆解執行細節與責任歸屬（確保做得出、不背鍋）"},{"label":"內容說明","text":"釐清合約與報價單上的責任分界。"},{"label":"檢查重點","list":["假設工程歸屬：保護工程、鷹架、臨時水電","廢棄物清運、粗清與細清由誰負責","哪些我們做、哪些業主自包工班做、哪些是甲供材料","介面交接點的責任（例如業主自包的系統櫃與我方泥作的收邊）"]},{"label":"產出","text":"責任分界表，寫進報價單的「含／不含」與合約"},{"label":"利於什麼","text":"消除灰色地帶，避免收尾時出現「這應該包含在你們報價裡吧？」的合約糾紛，防堵利潤破口。"}]},"g-seq":{"title":"6 工序（介面檢討）","blocks":[{"label":"所屬階段","text":"第三階段：收斂介面、資源與時間（排定最佳化作戰計畫）"},{"label":"內容說明","text":"預演施工順序，抓出異材質交接與機電設備的衝突點。"},{"label":"檢查重點","list":["異材質交接：木作與泥作收邊、磁磚分割與門檻","機電衝突：空調、排水與天花板高度，管線與木作櫃體","地坪洩水坡度、冷氣排水路徑","排出各工種的先後順序與交接檢查點"]},{"label":"產出","text":"工序表與衝突點清單"},{"label":"利於什麼","text":"預防重工與現場爭議。把衝突在紙上解決，避免工班進場後互相推諉或拆除重做。"}]},"g-mat":{"title":"7 工料（資源盤點）","blocks":[{"label":"所屬階段","text":"第三階段：收斂介面、資源與時間（排定最佳化作戰計畫）"},{"label":"內容說明","text":"盤點特殊建材的交期與庫存，以及技術工班的人力調度。"},{"label":"檢查重點","list":["進口磁磚、設備等長交期材料的到貨時間","特殊建材的庫存與停產風險","自有泥作、土作工班與協力廠商的檔期","缺料或缺工時，準備同等品或替代工班"]},{"label":"產出","text":"材料交期表、工班檔期表、同等品清單"},{"label":"利於什麼","text":"管控供應鏈風險，避免「工班在等料」或「材料到了沒人做」，不讓閒置等待的成本吃掉利潤。"}]},"g-time":{"title":"8 工期（時間排程）","blocks":[{"label":"所屬階段","text":"第三階段：收斂介面、資源與時間（排定最佳化作戰計畫）"},{"label":"內容說明","text":"綜合前七工，抓出各工種進退場的時間節點，排定整體施工進度表。"},{"label":"檢查重點","list":["把工限（可施工時段）、工序（先後）、工料（交期）都放進排程","標出養護、試水、等料等等待期","標出請款節點與業主確認節點","預留合理的緩衝時間"]},{"label":"產出","text":"整體施工進度表（甘特圖）"},{"label":"利於什麼","text":"承諾客戶交付時間，也是後續控管工程進度、發放工程款項的絕對基準。"}]}}</script>
 <script id="sensesoil-viewer-patch-script">
 (function () {
   var box = document.querySelector('.diagram-container');
@@ -14877,6 +14919,79 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     var ly = +label.getAttribute('y');
     return laneRects.filter(function (r) { var b = r.getBBox(); return ly >= b.y && ly <= b.y + b.height; })[0];
   }
+  // 步驟詳細說明（由 viewer-patch.mjs 依 step-details.json 嵌入）
+  var STEP_DETAILS = {};
+  try { STEP_DETAILS = JSON.parse((document.getElementById('sensesoil-viewer-patch-details') || {}).textContent || '{}'); } catch (_) {}
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function renderDetail(info) {
+    var box2 = el('div', 'ss-detail');
+    if (info.title) box2.appendChild(el('div', 'ss-d-title', info.title));
+    if (info.intro) box2.appendChild(el('p', 'ss-d-intro', info.intro));
+    if (info.rhythm && info.rhythm.length) {
+      var rh = el('div', 'ss-d-rhythm');
+      info.rhythm.forEach(function (r) {
+        var row = el('div', 'ss-d-rrow');
+        row.appendChild(el('span', 'ss-d-when', r.when));
+        row.appendChild(el('span', 'ss-d-what', r.what));
+        rh.appendChild(row);
+      });
+      box2.appendChild(rh);
+    }
+    // 簡單格式（八工的每一工）：一段一段「標籤＋文字或清單」
+    (info.blocks || []).forEach(function (b) {
+      box2.appendChild(el('div', 'ss-d-label', b.label));
+      if (b.list) {
+        var ul2 = el('ul');
+        b.list.forEach(function (t) { ul2.appendChild(el('li', null, t)); });
+        box2.appendChild(ul2);
+      } else box2.appendChild(el('p', b.label === '利於什麼' ? 'ss-d-benefit' : null, b.text));
+    });
+    var no = 0;
+    (info.groups || []).forEach(function (g) {
+      box2.appendChild(el('div', 'ss-d-group', g.name));
+      (g.items || []).forEach(function (it) {
+        no++;
+        // 每一管：預設只顯示名稱與「利於什麼」，點開看管什麼、要做的事、紀錄
+        var card = el('div', 'ss-d-item');
+        var head = el('button', 'ss-d-head');
+        head.type = 'button';
+        head.setAttribute('aria-expanded', 'false');
+        head.appendChild(el('span', 'ss-d-no', String(no)));
+        var nm = el('span', 'ss-d-name', it.name);
+        if (it.sub) nm.appendChild(el('small', null, it.sub));
+        head.appendChild(nm);
+        head.appendChild(el('span', 'v'));
+        card.appendChild(head);
+        if (it.benefit) card.appendChild(el('p', 'ss-d-benefit', '利於：' + it.benefit));
+        var body = el('div', 'ss-d-body');
+        body.hidden = true;
+        if (it.manage) { body.appendChild(el('div', 'ss-d-label', '管什麼')); body.appendChild(el('p', null, it.manage)); }
+        if (it.todo && it.todo.length) {
+          body.appendChild(el('div', 'ss-d-label', '要做的事'));
+          var ul = el('ul');
+          it.todo.forEach(function (t) { ul.appendChild(el('li', null, t)); });
+          body.appendChild(ul);
+        }
+        if (it.records) { body.appendChild(el('div', 'ss-d-label', '留下的紀錄')); body.appendChild(el('p', null, it.records)); }
+        card.appendChild(body);
+        head.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = body.hidden;
+          body.hidden = !open;
+          head.setAttribute('aria-expanded', open ? 'true' : 'false');
+          card.toggleAttribute('data-open', open);
+        });
+        box2.appendChild(card);
+      });
+    });
+    return box2;
+  }
+
   // 依箭頭順序排步驟（略過退回的虛線）；蛇形或上下兩排時才不會亂掉。
   // 同時可做的步驟依位置排：上排先、再左到右，所以兩條並行的線會一條一條列完。
   function flowOrder(steps) {
@@ -14966,6 +15081,28 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         li.querySelector('.l').textContent = st.label;
         li.querySelector('.w').textContent = st.who;
         li.querySelector('.f').textContent = st.note;
+        var info = STEP_DETAILS[st.id];
+        if (info) {
+          // 有詳細說明的步驟（例如監造管理）：名稱旁多一個「詳細」，點了在下面展開
+          li.classList.add('has-detail');
+          var more = document.createElement('button');
+          more.type = 'button';
+          more.className = 'ss-more';
+          more.setAttribute('aria-expanded', 'false');
+          more.textContent = '詳細';
+          var panel = renderDetail(info);
+          panel.hidden = true;
+          var flipDetail = function () {
+            var open = panel.hidden;
+            panel.hidden = !open;
+            more.setAttribute('aria-expanded', open ? 'true' : 'false');
+            li.toggleAttribute('data-open', open);
+          };
+          more.addEventListener('click', function (e) { e.stopPropagation(); flipDetail(); });
+          li.querySelector('.l').addEventListener('click', flipDetail);
+          li.appendChild(more);
+          li.appendChild(panel);
+        }
         ol.appendChild(li);
       });
       list.appendChild(ol);

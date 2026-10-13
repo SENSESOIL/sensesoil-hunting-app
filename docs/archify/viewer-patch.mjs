@@ -67,16 +67,16 @@ const STYLE = `<style id="${MARK}-style">
   .ss-outline .t { font-size: 1.05rem; font-weight: 700; }
   .ss-outline .c { margin-left: auto; font-size: 0.8rem; color: var(--text-faint, #8a8f98); white-space: nowrap; }
   .ss-outline .v { width: 0.5rem; height: 0.5rem; border-right: 2px solid var(--text-faint, #8a8f98); border-bottom: 2px solid var(--text-faint, #8a8f98); rotate: 45deg; translate: 0 -0.15rem; transition: rotate .2s; flex: none; }
-  .ss-stage[data-open] .v { rotate: 225deg; translate: 0 0.1rem; }
+  .ss-stage[data-open] > .ss-stage-head .v { rotate: 225deg; translate: 0 0.1rem; }
   .ss-steps { padding: 0 1rem 0.9rem; }
   .ss-steps ol { list-style: none; margin: 0; padding: 0; counter-reset: st; border-top: 1px solid var(--panel-border, #2a3140); }
   .ss-steps li {
-    counter-increment: st; display: grid; grid-template-columns: 1.6rem 0.55rem 1fr; column-gap: 0.55rem; row-gap: 0.1rem;
+    counter-increment: st; display: grid; grid-template-columns: 1.6rem 0.55rem 1fr auto; column-gap: 0.55rem; row-gap: 0.1rem;
     align-items: center; padding: 0.6rem 0; border-bottom: 1px solid color-mix(in srgb, var(--panel-border, #2a3140) 60%, transparent);
   }
   .ss-steps li::before { content: counter(st); grid-row: 1 / span 2; font: 600 0.85rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--text-faint, #8a8f98); }
   .ss-steps .d { width: 0.55rem; height: 0.55rem; border-radius: 50%; grid-row: 1; }
-  .ss-steps .l { font-size: 0.98rem; font-weight: 600; grid-row: 1; }
+  .ss-steps .l { font-size: 0.98rem; font-weight: 600; grid-row: 1; grid-column: 3; }
   /* 收合清單只列步驟名稱；部門與說明留在流程圖上 */
   .ss-steps .w, .ss-steps .f { display: none; }
   .ss-steps li { padding: 0.55rem 0; }
@@ -87,6 +87,41 @@ const STYLE = `<style id="${MARK}-style">
     font-size: 0.85rem; font-weight: 600; color: var(--frontend-stroke, #22d3ee);
     border: 1px solid color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent);
   }
+  /* 步驟詳細說明（監造八管、八工） */
+  .ss-steps li.has-detail .l { cursor: pointer; }
+  .ss-more {
+    all: unset; box-sizing: border-box; cursor: pointer; grid-column: 4; grid-row: 1; justify-self: end;
+    font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.6rem; border-radius: 999px;
+    color: var(--frontend-stroke, #22d3ee); border: 1px solid color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent);
+  }
+  .ss-steps li[data-open] .ss-more { background: color-mix(in srgb, var(--frontend-stroke, #22d3ee) 16%, transparent); }
+  .ss-detail {
+    grid-column: 1 / -1; margin-top: 0.6rem; padding: 0.85rem 0.9rem; border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--bg, #05070d) 60%, transparent); border: 1px solid var(--panel-border, #2a3140);
+    font-size: 0.86rem; line-height: 1.6; color: var(--text, #e5e7eb);
+  }
+  .ss-detail p { margin: 0.15rem 0 0.5rem; }
+  .ss-detail ul { margin: 0.15rem 0 0.5rem; padding-left: 1.1rem; }
+  .ss-detail ul li { display: list-item; padding: 0.1rem 0; border: 0; counter-increment: none; }
+  .ss-detail ul li::before { content: none; }
+  .ss-d-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .ss-d-intro { color: var(--text-muted, #a3a9b4); }
+  .ss-d-label { font-size: 0.75rem; font-weight: 700; color: var(--text-faint, #8a8f98); margin-top: 0.4rem; }
+  .ss-d-benefit { color: var(--backend-stroke, #34d399); }
+  .ss-d-rhythm { display: grid; gap: 0.3rem; margin: 0.4rem 0 0.7rem; }
+  .ss-d-rrow { display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.5rem; }
+  .ss-d-when { font-weight: 700; color: var(--frontend-stroke, #22d3ee); }
+  .ss-d-group { font-weight: 700; margin: 0.8rem 0 0.4rem; padding-top: 0.6rem; border-top: 1px solid var(--panel-border, #2a3140); }
+  .ss-d-item { border: 1px solid var(--panel-border, #2a3140); border-radius: 0.6rem; padding: 0.5rem 0.7rem; margin-bottom: 0.45rem; }
+  .ss-d-item[data-open] { border-color: color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent); }
+  .ss-d-head { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; display: flex; align-items: center; gap: 0.6rem; }
+  .ss-d-no { font: 700 0.95rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--frontend-stroke, #22d3ee); min-width: 1rem; }
+  .ss-d-name { font-weight: 700; flex: 1; }
+  .ss-d-name small { font-weight: 500; color: var(--text-faint, #8a8f98); margin-left: 0.4rem; }
+  .ss-d-item .v { width: 0.4rem; height: 0.4rem; border-right: 2px solid var(--text-faint, #8a8f98); border-bottom: 2px solid var(--text-faint, #8a8f98); rotate: 45deg; translate: 0 -0.1rem; flex: none; }
+  .ss-d-item[data-open] .v { rotate: 225deg; translate: 0 0.1rem; }
+  .ss-d-item .ss-d-benefit { margin: 0.3rem 0 0; font-size: 0.8rem; }
+  .ss-d-body { margin-top: 0.3rem; }
   /* 收合時「資訊」用不到，先藏起來；展開後才出現 */
   html[data-ss-outline="on"] #ss-info-toggle { display: none !important; }
   .card-header { cursor: pointer; }
@@ -314,6 +349,79 @@ const SCRIPT = `<script id="${MARK}-script">
     var ly = +label.getAttribute('y');
     return laneRects.filter(function (r) { var b = r.getBBox(); return ly >= b.y && ly <= b.y + b.height; })[0];
   }
+  // 步驟詳細說明（由 viewer-patch.mjs 依 step-details.json 嵌入）
+  var STEP_DETAILS = {};
+  try { STEP_DETAILS = JSON.parse((document.getElementById('sensesoil-viewer-patch-details') || {}).textContent || '{}'); } catch (_) {}
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function renderDetail(info) {
+    var box2 = el('div', 'ss-detail');
+    if (info.title) box2.appendChild(el('div', 'ss-d-title', info.title));
+    if (info.intro) box2.appendChild(el('p', 'ss-d-intro', info.intro));
+    if (info.rhythm && info.rhythm.length) {
+      var rh = el('div', 'ss-d-rhythm');
+      info.rhythm.forEach(function (r) {
+        var row = el('div', 'ss-d-rrow');
+        row.appendChild(el('span', 'ss-d-when', r.when));
+        row.appendChild(el('span', 'ss-d-what', r.what));
+        rh.appendChild(row);
+      });
+      box2.appendChild(rh);
+    }
+    // 簡單格式（八工的每一工）：一段一段「標籤＋文字或清單」
+    (info.blocks || []).forEach(function (b) {
+      box2.appendChild(el('div', 'ss-d-label', b.label));
+      if (b.list) {
+        var ul2 = el('ul');
+        b.list.forEach(function (t) { ul2.appendChild(el('li', null, t)); });
+        box2.appendChild(ul2);
+      } else box2.appendChild(el('p', b.label === '利於什麼' ? 'ss-d-benefit' : null, b.text));
+    });
+    var no = 0;
+    (info.groups || []).forEach(function (g) {
+      box2.appendChild(el('div', 'ss-d-group', g.name));
+      (g.items || []).forEach(function (it) {
+        no++;
+        // 每一管：預設只顯示名稱與「利於什麼」，點開看管什麼、要做的事、紀錄
+        var card = el('div', 'ss-d-item');
+        var head = el('button', 'ss-d-head');
+        head.type = 'button';
+        head.setAttribute('aria-expanded', 'false');
+        head.appendChild(el('span', 'ss-d-no', String(no)));
+        var nm = el('span', 'ss-d-name', it.name);
+        if (it.sub) nm.appendChild(el('small', null, it.sub));
+        head.appendChild(nm);
+        head.appendChild(el('span', 'v'));
+        card.appendChild(head);
+        if (it.benefit) card.appendChild(el('p', 'ss-d-benefit', '利於：' + it.benefit));
+        var body = el('div', 'ss-d-body');
+        body.hidden = true;
+        if (it.manage) { body.appendChild(el('div', 'ss-d-label', '管什麼')); body.appendChild(el('p', null, it.manage)); }
+        if (it.todo && it.todo.length) {
+          body.appendChild(el('div', 'ss-d-label', '要做的事'));
+          var ul = el('ul');
+          it.todo.forEach(function (t) { ul.appendChild(el('li', null, t)); });
+          body.appendChild(ul);
+        }
+        if (it.records) { body.appendChild(el('div', 'ss-d-label', '留下的紀錄')); body.appendChild(el('p', null, it.records)); }
+        card.appendChild(body);
+        head.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = body.hidden;
+          body.hidden = !open;
+          head.setAttribute('aria-expanded', open ? 'true' : 'false');
+          card.toggleAttribute('data-open', open);
+        });
+        box2.appendChild(card);
+      });
+    });
+    return box2;
+  }
+
   // 依箭頭順序排步驟（略過退回的虛線）；蛇形或上下兩排時才不會亂掉。
   // 同時可做的步驟依位置排：上排先、再左到右，所以兩條並行的線會一條一條列完。
   function flowOrder(steps) {
@@ -403,6 +511,28 @@ const SCRIPT = `<script id="${MARK}-script">
         li.querySelector('.l').textContent = st.label;
         li.querySelector('.w').textContent = st.who;
         li.querySelector('.f').textContent = st.note;
+        var info = STEP_DETAILS[st.id];
+        if (info) {
+          // 有詳細說明的步驟（例如監造管理）：名稱旁多一個「詳細」，點了在下面展開
+          li.classList.add('has-detail');
+          var more = document.createElement('button');
+          more.type = 'button';
+          more.className = 'ss-more';
+          more.setAttribute('aria-expanded', 'false');
+          more.textContent = '詳細';
+          var panel = renderDetail(info);
+          panel.hidden = true;
+          var flipDetail = function () {
+            var open = panel.hidden;
+            panel.hidden = !open;
+            more.setAttribute('aria-expanded', open ? 'true' : 'false');
+            li.toggleAttribute('data-open', open);
+          };
+          more.addEventListener('click', function (e) { e.stopPropagation(); flipDetail(); });
+          li.querySelector('.l').addEventListener('click', flipDetail);
+          li.appendChild(more);
+          li.appendChild(panel);
+        }
         ol.appendChild(li);
       });
       list.appendChild(ol);
@@ -514,13 +644,20 @@ if (!files.length) {
   console.error("用法：node docs/archify/viewer-patch.mjs <檔案.html>...");
   process.exit(1);
 }
+// 步驟的詳細說明（例如監造管理的「監造八管」），依檔名對應：docs/archify/step-details.json
+const DETAILS = JSON.parse(fs.readFileSync(new URL("./step-details.json", import.meta.url), "utf8"));
 for (const f of files) {
   let html = fs.readFileSync(f, "utf8");
   // 已經處理過就先拿掉舊的，再放新的
-  html = html.replace(new RegExp(`<style id="${MARK}-style">[\\s\\S]*?</style>`), "").replace(new RegExp(`<script id="${MARK}-script">[\\s\\S]*?</script>`), "");
+  html = html
+    .replace(new RegExp(`<style id="${MARK}-style">[\\s\\S]*?</style>`), "")
+    .replace(new RegExp(`<script id="${MARK}-script">[\\s\\S]*?</script>`), "")
+    .replace(new RegExp(`<script type="application/json" id="${MARK}-details">[\\s\\S]*?</script>`), "");
   html = html.replace("</head>", STYLE + "\n</head>");
+  const details = DETAILS[f.split(/[\\/]/).pop()] || {};
+  const json = JSON.stringify(details).replace(/</g, "\\u003c");
   const i = html.lastIndexOf("</body>");
-  html = html.slice(0, i) + SCRIPT + "\n" + html.slice(i);
+  html = html.slice(0, i) + `<script type="application/json" id="${MARK}-details">${json}</script>\n` + SCRIPT + "\n" + html.slice(i);
   fs.writeFileSync(f, html);
-  console.log("patched", f);
+  console.log("patched", f, Object.keys(details).length ? "（詳細說明：" + Object.keys(details).join("、") + "）" : "");
 }
