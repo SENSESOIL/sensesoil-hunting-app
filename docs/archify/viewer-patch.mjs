@@ -122,6 +122,8 @@ const STYLE = `<style id="${MARK}-style">
   .ss-d-item[data-open] .v { rotate: 225deg; translate: 0 0.1rem; }
   .ss-d-item .ss-d-benefit { margin: 0.3rem 0 0; font-size: 0.8rem; }
   .ss-d-body { margin-top: 0.3rem; }
+  /* 節點索引（Archify 在說明卡旁列出全部節點）與「要點與索引」開關：用收合清單取代，不顯示 */
+  #node-outline, .node-outline, #rail-reveal { display: none !important; }
   /* 收合時「資訊」用不到，先藏起來；展開後才出現 */
   html[data-ss-outline="on"] #ss-info-toggle { display: none !important; }
   .card-header { cursor: pointer; }
