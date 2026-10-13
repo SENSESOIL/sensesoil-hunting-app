@@ -18,6 +18,10 @@ const N = (id, lane, col, type, label, sublabel, tag, row) => ({
 });
 const UP = -1;
 const DOWN = 1;
+// 三排（施工中管理）
+const TOP = -2;
+const MID = 0.001; // 非 0，才會被當成堆疊的一排
+const BOTTOM = 2;
 
 const nodes = [
   // 1 接洽評估
@@ -57,28 +61,29 @@ const nodes = [
   N("procure", "s4", 4, "backend", "發包叫料", "規劃課", "依工期回推交期"),
   N("spend", "s4", 5, "security", "支出審核", "支出課", "核准／退回"),
 
-  // 5 施工中管理：上排現場施作，下排管理與請款（兩條並行）
-  N("protect", "s5", 0, "external", "保護", "工程課", "公共區域拍照存證", UP),
-  N("layout", "s5", 1, "external", "放樣", "工程課", "業主、設計師現場確認", UP),
-  N("masonry", "s5", 2, "backend", "自有泥作", "泥作課", "防水試水 48 小時", UP),
-  N("earth", "s5", 3, "backend", "自有土作", "土造課", "樣板與養護", UP),
-  N("subwork", "s5", 4, "backend", "分包工程", "工程課", "水電、木作、油漆", UP),
-  N("handoff", "s5", 5, "security", "交接介面處理", "工程課", "前工種確認才進場", UP),
-  N("safety", "s5", 0, "backend", "安全防護", "工程課", "講習、斷電、門禁", DOWN),
-  N("supervise", "s5", 1, "backend", "監造管理", "工程課、品質管理課", "監造八管", DOWN),
-  N("meeting", "s5", 2, "external", "工務會議", "工程課", "每週，業主、設計師", DOWN),
-  N("change", "s5", 3, "security", "變更設計", "規劃課、主管", "先估價簽認再施作", DOWN),
-  N("bill", "s5", 4, "database", "業主請款", "收入課", "依合約節點", DOWN),
-  N("payvendor", "s5", 5, "database", "廠商請款", "支出課", "每月 10 號", DOWN),
+  // 5 施工中管理：上排現場施作（滿 6 欄後接到中排的分包工程），下排監造與請款
+  N("safety", "s5", 0, "backend", "安全防護", "工程課", "圍籬、防護網、警示標示", TOP),
+  N("protect", "s5", 1, "external", "保護", "工程課", "公共區域拍照存證", TOP),
+  N("layout", "s5", 2, "external", "放樣", "工程課", "業主、設計師現場確認", TOP),
+  N("handoff", "s5", 3, "backend", "交接介面處理", "工程課", "工種交接、收邊順序", TOP),
+  N("masonry", "s5", 4, "backend", "自有泥作", "泥作課", "防水試水 48 小時", TOP),
+  N("earth", "s5", 5, "backend", "自有土作", "土造課", "樣板與養護", TOP),
+  N("subwork", "s5", 5, "backend", "分包工程", "工程課", "水電、木作、油漆", MID),
+  N("supervise", "s5", 0, "backend", "監造管理", "工程課、品質管理課", "監造八管", BOTTOM),
+  N("meeting", "s5", 1, "external", "工務會議", "工程課", "每週，業主、設計師", BOTTOM),
+  N("change", "s5", 2, "security", "變更設計", "規劃課、主管", "先估價簽認再施作", BOTTOM),
+  N("bill", "s5", 3, "database", "業主請款", "收入課", "依合約節點", BOTTOM),
+  N("payvendor", "s5", 4, "database", "廠商請款", "支出課", "每月 10 號", BOTTOM),
 
-  // 6 施工後交付
+  // 6 施工後交付（上排由左往右，下排由右往左）
   N("selfcheck", "s6", 0, "backend", "自主檢核", "工程課", "逐項對照報價", UP),
   N("qc", "s6", 1, "security", "品質驗收", "品質管理課", "通過／缺失", UP),
   N("joint", "s6", 2, "security", "聯合驗收", "業主、設計師", "通過／缺失", UP),
   N("asbuilt", "s6", 3, "external", "竣工資料", "工程課、客戶關係課", "竣工圖、保固書、使用說明", UP),
   N("final", "s6", 4, "database", "尾款請款", "收入課", "扣保留款", UP),
-  N("review", "s6", 5, "backend", "結案覆盤", "主管議會、會計課", "損益、時程、客訴", UP),
-  N("report", "s6", 5, "backend", "結案報告", "專案經理", "對內教育訓練", DOWN),
+  N("casebook", "s6", 5, "backend", "案例紀錄", "公共關係課", "完工照、施工前後對比", UP),
+  N("review", "s6", 5, "backend", "結案覆盤", "主管議會、會計課", "損益、時程、客訴", DOWN),
+  N("report", "s6", 4, "backend", "結案報告", "專案經理", "對內教育訓練", DOWN),
 
   // 7 保固售服
   N("visit", "s7", 0, "external", "保固回訪", "客戶關係課", "交屋後 1、6、12 月"),
@@ -111,14 +116,16 @@ const edges = [
   E("deposit", "insure"), E("insure", "permit"), E("permit", "material"),
   yes("material", "procure", "核可"), E("procure", "spend"), back("spend", "procure", "退回"),
   // 5 現場施作
-  E("protect", "layout"), E("layout", "masonry"), E("masonry", "earth"), E("earth", "subwork"), E("subwork", "handoff"),
-  // 5 管理與請款
-  E("safety", "supervise"), E("supervise", "meeting"), E("meeting", "change"),
+  E("safety", "protect"), E("protect", "layout"), E("layout", "handoff"), E("handoff", "masonry"), E("masonry", "earth"),
+  down("earth", "subwork"),
+  // 5 監造與請款
+  E("supervise", "meeting"), E("meeting", "change"),
   yes("change", "bill", "簽認"), E("bill", "payvendor"),
   // 6
   E("selfcheck", "qc"), yes("qc", "joint", "通過"), back("qc", "selfcheck", "缺失"),
   yes("joint", "asbuilt", "通過"), back("joint", "selfcheck", "缺失改善"),
-  E("asbuilt", "final"), E("final", "review"), down("review", "report"),
+  E("asbuilt", "final"), E("final", "casebook"), down("casebook", "review"),
+  E("review", "report", { fromSide: "left", toSide: "right" }),
   // 7
   E("visit", "repair"), E("repair", "fix"), E("fix", "retention"),
   E("retention", "satisfy"), E("satisfy", "referral"),
@@ -145,7 +152,7 @@ const cards = [
     "工期（時間排程）：綜合前七工，排出各工種進退場節點與總進度。利於承諾交期，也是控管進度與請款的基準",
   ] },
   { dot: "emerald", title: "監造八管　施工中每天要管的事", items: [
-    "管安全：開工講習、高處作業與電動工具檢查、收工斷電與門禁。利於避免職災與停工",
+    "管安全：施工圍籬、防護網、警示標示與消防器材每日巡查，高處作業與電動工具檢查，收工斷電與門禁。利於避免職災、公安意外與停工",
     "管品質：依送審樣品查驗；水電、防水等隱蔽工程封板前拍照查驗，合格才進下一工序。利於缺失當下改，不留到驗收",
     "管進度：每天對照工期表，落後就調人力或工序。利於準時交付，也是請款依據",
     "管介面：前一工種完成確認、下一工種簽收才進場。利於避免互相推諉與重工",
@@ -176,7 +183,7 @@ const cards = [
     "材質送審拖延、停產、交期長：送審附同等品，長交期材料優先下單；超預算由支出審核退回重議",
   ] },
   { dot: "emerald", title: "5 施工中管理：會遇到的問題", items: [
-    "保護不足造成公共區域損壞：開工前拍照存證，每日巡查保護是否破損",
+    "安全防護與保護不足：開工前先架設圍籬、防護網與警示標示，公共區域拍照存證，每日巡查是否破損",
     "放樣與設計不符：放樣後請業主、設計師到場確認再施工",
     "業主或設計師直接交代工班：一律回到專案經理與變更流程，先簽追加減單再做",
     "請款被拖延：依合約節點與監造紀錄請款，附照片與完成比例；廠商款每月 10 號統一付",
@@ -185,6 +192,7 @@ const cards = [
     "驗收標準與合約不同：依合約與送審核可的樣品驗收，現場不臨時加標準",
     "缺失改善反覆：缺失清單逐條編號、拍照，改善後複驗簽回",
     "竣工資料不齊：竣工圖說、保固書、使用說明書、材料清單、廠商聯絡表一起點交",
+    "案例紀錄：完工照、施工前後對比、特殊工法整理成案例，供業務與作品集使用",
     "結案覆盤看時程、成本、品質、客訴與介面問題；結案報告由專案經理對內分享，回寫成下一案的檢核項目",
   ] },
   { dot: "slate", title: "7 保固售服：會遇到的問題", items: [

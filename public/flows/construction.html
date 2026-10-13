@@ -4868,7 +4868,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
     }
   </style>
-
 <style id="sensesoil-viewer-patch-style">
   /* 1. 底框 */
   .diagram-container,
@@ -4939,9 +4938,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .ss-steps li::before { content: counter(st); grid-row: 1 / span 2; font: 600 0.85rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--text-faint, #8a8f98); }
   .ss-steps .d { width: 0.55rem; height: 0.55rem; border-radius: 50%; grid-row: 1; }
   .ss-steps .l { font-size: 0.98rem; font-weight: 600; grid-row: 1; }
-  .ss-steps .w, .ss-steps .f { grid-column: 3; font-size: 0.8rem; color: var(--text-faint, #8a8f98); }
-  .ss-steps .f { color: var(--text-muted, #a3a9b4); }
-  .ss-steps .f:empty, .ss-steps .w:empty { display: none; }
+  /* 收合清單只列步驟名稱；部門與說明留在流程圖上 */
+  .ss-steps .w, .ss-steps .f { display: none; }
+  .ss-steps li { padding: 0.55rem 0; }
+  .ss-steps li::before { grid-row: 1; }
   .ss-go {
     all: unset; box-sizing: border-box; cursor: pointer; margin-top: 0.75rem;
     display: inline-flex; align-items: center; padding: 0.45rem 0.9rem; border-radius: 999px;
@@ -5074,7 +5074,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / 圖版 04">
-      <svg viewBox="0 0 1102 1374" data-reader-fit="intrinsic-height" data-layout-contract="readable-v2" role="img" lang="zh-TW" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="standard">
+      <svg viewBox="0 0 1102 1486" data-reader-fit="intrinsic-height" data-layout-contract="readable-v2" role="img" lang="zh-TW" aria-labelledby="archify-diagram-title archify-diagram-description" data-preset="classic" data-quality-profile="standard">
         <title id="archify-diagram-title">工程承攬流程</title>
         <desc id="archify-diagram-description">由 Archify 生成的工作流圖。</desc>
         <!-- Definitions -->
@@ -5112,14 +5112,14 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-3" x="40" y="542" width="1046" height="106" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="564" class="t-dim" font-size="10" font-weight="600">04 / 施工前準備</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-4" x="40" y="668" width="1046" height="218" rx="10" class="c-lane" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-4" x="40" y="668" width="1046" height="330" rx="10" class="c-lane" stroke-width="1"/>
         <text x="54" y="690" class="t-dim" font-size="10" font-weight="600">05 / 施工中管理</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-5" x="40" y="906" width="1046" height="218" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="928" class="t-dim" font-size="10" font-weight="600">06 / 施工後交付</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-5" x="40" y="1018" width="1046" height="218" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="1040" class="t-dim" font-size="10" font-weight="600">06 / 施工後交付</text>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-6" x="40" y="1144" width="1046" height="106" rx="10" class="c-lane" stroke-width="1"/>
-        <text x="54" y="1166" class="t-dim" font-size="10" font-weight="600">07 / 保固售服</text>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="lane" data-composition-frame-id="lane-6" x="40" y="1256" width="1046" height="106" rx="10" class="c-lane" stroke-width="1"/>
+        <text x="54" y="1278" class="t-dim" font-size="10" font-weight="600">07 / 保固售服</text>
 
         <!-- Phase headers -->
 
@@ -5128,57 +5128,58 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 
         <!-- Edge paths -->
-        <path data-edge-from="asbuilt" data-edge-to="final" data-edge-key="0" data-edge-id="asbuilt-final" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,974;760,974" d="M 722 974 L 760 974" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="bill" data-edge-to="payvendor" data-edge-key="1" data-edge-id="bill-payvendor" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,848;938,848" d="M 900 848 L 938 848" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="change" data-edge-to="bill" data-edge-label="簽認" data-edge-key="2" data-edge-id="change-bill" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,848;760,848" d="M 722 848 L 760 848" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="clarify" data-edge-to="g-audit" data-edge-label="補圖" data-edge-key="3" data-edge-id="clarify-g-audit" data-edge-role="return" data-composition-points="474,324;474,308;385,308;385,196;296,196;296,212" d="M 474 324 L 474 308 L 385 308 L 385 196 L 296 196 L 296 212" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="clarify" data-edge-to="shop" data-edge-label="確認" data-edge-key="4" data-edge-id="clarify-shop" data-edge-role="" data-composition-points="404,358;366,358" d="M 404 358 L 366 358" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="deposit" data-edge-to="insure" data-edge-key="5" data-edge-id="deposit-insure" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,610;226,610" d="M 188 610 L 226 610" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="docs" data-edge-to="site" data-edge-key="6" data-edge-id="docs-site" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,120;404,120" d="M 366 120 L 404 120" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="earth" data-edge-to="subwork" data-edge-key="7" data-edge-id="earth-subwork" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,736;760,736" d="M 722 736 L 760 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="final" data-edge-to="review" data-edge-key="8" data-edge-id="final-review" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,974;938,974" d="M 900 974 L 938 974" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="fix" data-edge-to="retention" data-edge-key="9" data-edge-id="fix-retention" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,1212;582,1212" d="M 544 1212 L 582 1212" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="g-audit" data-edge-to="g-item" data-edge-key="10" data-edge-id="g-audit-g-item" data-edge-role="" data-composition-points="366,246;404,246" d="M 366 246 L 404 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="g-duty" data-edge-to="g-seq" data-edge-key="11" data-edge-id="g-duty-g-seq" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,246;938,246" d="M 900 246 L 938 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="g-item" data-edge-to="g-method" data-edge-key="12" data-edge-id="g-item-g-method" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,246;582,246" d="M 544 246 L 582 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="g-limit" data-edge-to="g-audit" data-edge-key="13" data-edge-id="g-limit-g-audit" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,246;226,246" d="M 188 246 L 226 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="g-mat" data-edge-to="g-time" data-edge-key="14" data-edge-id="g-mat-g-time" data-edge-role="" data-composition-points="938,358;900,358" d="M 938 358 L 900 358" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="g-method" data-edge-to="g-duty" data-edge-key="15" data-edge-id="g-method-g-duty" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,246;760,246" d="M 722 246 L 760 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="g-seq" data-edge-to="g-mat" data-edge-key="16" data-edge-id="g-seq-g-mat" data-edge-role="" data-composition-points="1008,280;1008,324" d="M 1008 280 L 1008 324" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="g-time" data-edge-to="issues" data-edge-key="17" data-edge-id="g-time-issues" data-edge-role="" data-composition-points="760,358;722,358" d="M 760 358 L 722 358" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="insure" data-edge-to="permit" data-edge-key="18" data-edge-id="insure-permit" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,610;404,610" d="M 366 610 L 404 610" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="issues" data-edge-to="clarify" data-edge-key="19" data-edge-id="issues-clarify" data-edge-role="" data-composition-points="582,358;544,358" d="M 582 358 L 544 358" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="joint" data-edge-to="asbuilt" data-edge-label="通過" data-edge-key="20" data-edge-id="joint-asbuilt" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,974;582,974" d="M 544 974 L 582 974" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="joint" data-edge-to="selfcheck" data-edge-label="缺失改善" data-edge-key="21" data-edge-id="joint-selfcheck" data-composition-routing="workflow-v2-auto" data-edge-role="return" data-composition-points="474,1008;474,1140;118,1140;118,1008" d="M 474 1008 L 474 1140 L 118 1140 L 118 1008" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="layout" data-edge-to="masonry" data-edge-key="22" data-edge-id="layout-masonry" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,736;404,736" d="M 366 736 L 404 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="lead" data-edge-to="docs" data-edge-key="23" data-edge-id="lead-docs" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,120;226,120" d="M 188 120 L 226 120" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="masonry" data-edge-to="earth" data-edge-key="24" data-edge-id="masonry-earth" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,736;582,736" d="M 544 736 L 582 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="material" data-edge-to="procure" data-edge-label="核可" data-edge-key="25" data-edge-id="material-procure" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,610;760,610" d="M 722 610 L 760 610" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="meeting" data-edge-to="change" data-edge-key="26" data-edge-id="meeting-change" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,848;582,848" d="M 544 848 L 582 848" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="nego" data-edge-to="contract" data-edge-label="確認" data-edge-key="27" data-edge-id="nego-contract" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,484;938,484" d="M 900 484 L 938 484" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="nego" data-edge-to="scope" data-edge-label="調整" data-edge-key="28" data-edge-id="nego-scope" data-composition-routing="workflow-v2-auto" data-edge-role="return" data-composition-points="760,477;722,477" d="M 760 477 L 722 477" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="permit" data-edge-to="material" data-edge-key="29" data-edge-id="permit-material" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,610;582,610" d="M 544 610 L 582 610" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="pm" data-edge-to="account" data-edge-key="30" data-edge-id="pm-account" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,120;938,120" d="M 900 120 L 938 120" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="procure" data-edge-to="spend" data-edge-key="31" data-edge-id="procure-spend" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,610;938,610" d="M 900 610 L 938 610" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="protect" data-edge-to="layout" data-edge-key="32" data-edge-id="protect-layout" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,736;226,736" d="M 188 736 L 226 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="qc" data-edge-to="joint" data-edge-label="通過" data-edge-key="33" data-edge-id="qc-joint" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,974;404,974" d="M 366 974 L 404 974" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="qc" data-edge-to="selfcheck" data-edge-label="缺失" data-edge-key="34" data-edge-id="qc-selfcheck" data-composition-routing="workflow-v2-auto" data-edge-role="return" data-composition-points="296,1008;296,1024;130,1024;130,1008" d="M 296 1008 L 296 1024 L 130 1024 L 130 1008" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="qty" data-edge-to="subquote" data-edge-key="35" data-edge-id="qty-subquote" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,484;226,484" d="M 188 484 L 226 484" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="repair" data-edge-to="fix" data-edge-key="36" data-edge-id="repair-fix" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,1212;404,1212" d="M 366 1212 L 404 1212" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="retention" data-edge-to="satisfy" data-edge-key="37" data-edge-id="retention-satisfy" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,1212;760,1212" d="M 722 1212 L 760 1212" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="review" data-edge-to="report" data-edge-key="38" data-edge-id="review-report" data-edge-role="" data-composition-points="1008,1008;1008,1052" d="M 1008 1008 L 1008 1052" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="safety" data-edge-to="supervise" data-edge-key="39" data-edge-id="safety-supervise" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,848;226,848" d="M 188 848 L 226 848" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="satisfy" data-edge-to="referral" data-edge-key="40" data-edge-id="satisfy-referral" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,1212;938,1212" d="M 900 1212 L 938 1212" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="scope" data-edge-to="nego" data-edge-key="41" data-edge-id="scope-nego" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,491;760,491" d="M 722 491 L 760 491" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="selfcheck" data-edge-to="qc" data-edge-key="42" data-edge-id="selfcheck-qc" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,974;226,974" d="M 188 974 L 226 974" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="selfcost" data-edge-to="scope" data-edge-key="43" data-edge-id="selfcost-scope" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,484;582,484" d="M 544 484 L 582 484" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="site" data-edge-to="take" data-edge-key="44" data-edge-id="site-take" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,120;582,120" d="M 544 120 L 582 120" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="spend" data-edge-to="procure" data-edge-label="退回" data-edge-key="45" data-edge-id="spend-procure" data-composition-routing="workflow-v2-auto" data-edge-role="return" data-composition-points="938,598;900,598" d="M 938 598 L 900 598" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="subquote" data-edge-to="selfcost" data-edge-key="46" data-edge-id="subquote-selfcost" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,484;404,484" d="M 366 484 L 404 484" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="subwork" data-edge-to="handoff" data-edge-key="47" data-edge-id="subwork-handoff" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,736;938,736" d="M 900 736 L 938 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="supervise" data-edge-to="meeting" data-edge-key="48" data-edge-id="supervise-meeting" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,848;404,848" d="M 366 848 L 404 848" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="take" data-edge-to="pm" data-edge-label="承接" data-edge-key="49" data-edge-id="take-pm" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,120;760,120" d="M 722 120 L 760 120" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="visit" data-edge-to="repair" data-edge-key="50" data-edge-id="visit-repair" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,1212;226,1212" d="M 188 1212 L 226 1212" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="asbuilt" data-edge-to="final" data-edge-key="0" data-edge-id="asbuilt-final" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,1086;760,1086" d="M 722 1086 L 760 1086" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="bill" data-edge-to="payvendor" data-edge-key="1" data-edge-id="bill-payvendor" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,960;760,960" d="M 722 960 L 760 960" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="casebook" data-edge-to="review" data-edge-key="2" data-edge-id="casebook-review" data-edge-role="" data-composition-points="1008,1120;1008,1164" d="M 1008 1120 L 1008 1164" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="change" data-edge-to="bill" data-edge-label="簽認" data-edge-key="3" data-edge-id="change-bill" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,960;582,960" d="M 544 960 L 582 960" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="clarify" data-edge-to="g-audit" data-edge-label="補圖" data-edge-key="4" data-edge-id="clarify-g-audit" data-edge-role="return" data-composition-points="474,324;474,308;385,308;385,196;296,196;296,212" d="M 474 324 L 474 308 L 385 308 L 385 196 L 296 196 L 296 212" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="clarify" data-edge-to="shop" data-edge-label="確認" data-edge-key="5" data-edge-id="clarify-shop" data-edge-role="" data-composition-points="404,358;366,358" d="M 404 358 L 366 358" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="deposit" data-edge-to="insure" data-edge-key="6" data-edge-id="deposit-insure" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,610;226,610" d="M 188 610 L 226 610" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="docs" data-edge-to="site" data-edge-key="7" data-edge-id="docs-site" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,120;404,120" d="M 366 120 L 404 120" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="earth" data-edge-to="subwork" data-edge-key="8" data-edge-id="earth-subwork" data-edge-role="" data-composition-points="1008,770;1008,814.056" d="M 1008 770 L 1008 814.056" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="final" data-edge-to="casebook" data-edge-key="9" data-edge-id="final-casebook" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,1086;938,1086" d="M 900 1086 L 938 1086" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="fix" data-edge-to="retention" data-edge-key="10" data-edge-id="fix-retention" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,1324;582,1324" d="M 544 1324 L 582 1324" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="g-audit" data-edge-to="g-item" data-edge-key="11" data-edge-id="g-audit-g-item" data-edge-role="" data-composition-points="366,246;404,246" d="M 366 246 L 404 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="g-duty" data-edge-to="g-seq" data-edge-key="12" data-edge-id="g-duty-g-seq" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,246;938,246" d="M 900 246 L 938 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="g-item" data-edge-to="g-method" data-edge-key="13" data-edge-id="g-item-g-method" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,246;582,246" d="M 544 246 L 582 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="g-limit" data-edge-to="g-audit" data-edge-key="14" data-edge-id="g-limit-g-audit" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,246;226,246" d="M 188 246 L 226 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="g-mat" data-edge-to="g-time" data-edge-key="15" data-edge-id="g-mat-g-time" data-edge-role="" data-composition-points="938,358;900,358" d="M 938 358 L 900 358" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="g-method" data-edge-to="g-duty" data-edge-key="16" data-edge-id="g-method-g-duty" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,246;760,246" d="M 722 246 L 760 246" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="g-seq" data-edge-to="g-mat" data-edge-key="17" data-edge-id="g-seq-g-mat" data-edge-role="" data-composition-points="1008,280;1008,324" d="M 1008 280 L 1008 324" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="g-time" data-edge-to="issues" data-edge-key="18" data-edge-id="g-time-issues" data-edge-role="" data-composition-points="760,358;722,358" d="M 760 358 L 722 358" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="handoff" data-edge-to="masonry" data-edge-key="19" data-edge-id="handoff-masonry" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,736;760,736" d="M 722 736 L 760 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="insure" data-edge-to="permit" data-edge-key="20" data-edge-id="insure-permit" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,610;404,610" d="M 366 610 L 404 610" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="issues" data-edge-to="clarify" data-edge-key="21" data-edge-id="issues-clarify" data-edge-role="" data-composition-points="582,358;544,358" d="M 582 358 L 544 358" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="joint" data-edge-to="asbuilt" data-edge-label="通過" data-edge-key="22" data-edge-id="joint-asbuilt" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,1086;582,1086" d="M 544 1086 L 582 1086" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="joint" data-edge-to="selfcheck" data-edge-label="缺失改善" data-edge-key="23" data-edge-id="joint-selfcheck" data-composition-routing="workflow-v2-auto" data-edge-role="return" data-composition-points="474,1120;474,1252;118,1252;118,1120" d="M 474 1120 L 474 1252 L 118 1252 L 118 1120" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="layout" data-edge-to="handoff" data-edge-key="24" data-edge-id="layout-handoff" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,736;582,736" d="M 544 736 L 582 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="lead" data-edge-to="docs" data-edge-key="25" data-edge-id="lead-docs" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,120;226,120" d="M 188 120 L 226 120" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="masonry" data-edge-to="earth" data-edge-key="26" data-edge-id="masonry-earth" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,736;938,736" d="M 900 736 L 938 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="material" data-edge-to="procure" data-edge-label="核可" data-edge-key="27" data-edge-id="material-procure" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,610;760,610" d="M 722 610 L 760 610" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="meeting" data-edge-to="change" data-edge-key="28" data-edge-id="meeting-change" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,960;404,960" d="M 366 960 L 404 960" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="nego" data-edge-to="contract" data-edge-label="確認" data-edge-key="29" data-edge-id="nego-contract" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,484;938,484" d="M 900 484 L 938 484" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="nego" data-edge-to="scope" data-edge-label="調整" data-edge-key="30" data-edge-id="nego-scope" data-composition-routing="workflow-v2-auto" data-edge-role="return" data-composition-points="760,477;722,477" d="M 760 477 L 722 477" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="permit" data-edge-to="material" data-edge-key="31" data-edge-id="permit-material" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,610;582,610" d="M 544 610 L 582 610" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="pm" data-edge-to="account" data-edge-key="32" data-edge-id="pm-account" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,120;938,120" d="M 900 120 L 938 120" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="procure" data-edge-to="spend" data-edge-key="33" data-edge-id="procure-spend" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,610;938,610" d="M 900 610 L 938 610" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="protect" data-edge-to="layout" data-edge-key="34" data-edge-id="protect-layout" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,736;404,736" d="M 366 736 L 404 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="qc" data-edge-to="joint" data-edge-label="通過" data-edge-key="35" data-edge-id="qc-joint" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,1086;404,1086" d="M 366 1086 L 404 1086" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="qc" data-edge-to="selfcheck" data-edge-label="缺失" data-edge-key="36" data-edge-id="qc-selfcheck" data-composition-routing="workflow-v2-auto" data-edge-role="return" data-composition-points="296,1120;296,1136;130,1136;130,1120" d="M 296 1120 L 296 1136 L 130 1136 L 130 1120" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="qty" data-edge-to="subquote" data-edge-key="37" data-edge-id="qty-subquote" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,484;226,484" d="M 188 484 L 226 484" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="repair" data-edge-to="fix" data-edge-key="38" data-edge-id="repair-fix" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,1324;404,1324" d="M 366 1324 L 404 1324" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="retention" data-edge-to="satisfy" data-edge-key="39" data-edge-id="retention-satisfy" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,1324;760,1324" d="M 722 1324 L 760 1324" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="review" data-edge-to="report" data-edge-key="40" data-edge-id="review-report" data-edge-role="" data-composition-points="938,1198;900,1198" d="M 938 1198 L 900 1198" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="safety" data-edge-to="protect" data-edge-key="41" data-edge-id="safety-protect" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,736;226,736" d="M 188 736 L 226 736" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="satisfy" data-edge-to="referral" data-edge-key="42" data-edge-id="satisfy-referral" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="900,1324;938,1324" d="M 900 1324 L 938 1324" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="scope" data-edge-to="nego" data-edge-key="43" data-edge-id="scope-nego" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,491;760,491" d="M 722 491 L 760 491" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="selfcheck" data-edge-to="qc" data-edge-key="44" data-edge-id="selfcheck-qc" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,1086;226,1086" d="M 188 1086 L 226 1086" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="selfcost" data-edge-to="scope" data-edge-key="45" data-edge-id="selfcost-scope" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,484;582,484" d="M 544 484 L 582 484" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="site" data-edge-to="take" data-edge-key="46" data-edge-id="site-take" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="544,120;582,120" d="M 544 120 L 582 120" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="spend" data-edge-to="procure" data-edge-label="退回" data-edge-key="47" data-edge-id="spend-procure" data-composition-routing="workflow-v2-auto" data-edge-role="return" data-composition-points="938,598;900,598" d="M 938 598 L 900 598" class="a-dashed" stroke-width="1.4" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="subquote" data-edge-to="selfcost" data-edge-key="48" data-edge-id="subquote-selfcost" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="366,484;404,484" d="M 366 484 L 404 484" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="supervise" data-edge-to="meeting" data-edge-key="49" data-edge-id="supervise-meeting" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,960;226,960" d="M 188 960 L 226 960" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="take" data-edge-to="pm" data-edge-label="承接" data-edge-key="50" data-edge-id="take-pm" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="722,120;760,120" d="M 722 120 L 760 120" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="visit" data-edge-to="repair" data-edge-key="51" data-edge-id="visit-repair" data-composition-routing="workflow-v2-auto" data-edge-role="" data-composition-points="188,1324;226,1324" d="M 188 1324 L 226 1324" class="a-default" stroke-width="1.4" marker-end="url(#arrowhead)"/>
 
         <!-- Nodes -->
         <g id="node-lead" data-node-id="lead" data-node-label="詢案受理" tabindex="0" role="button" aria-label="聚焦詢案受理，銷售課, 接洽評估" aria-pressed="false" data-node-kind="backend" data-node-sublabel="銷售課" data-node-tag="業主或設計師轉介" data-node-context="接洽評估">
@@ -5540,332 +5541,344 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="fine" x="1008" y="632" class="t-security" font-size="7" text-anchor="middle">核准／退回</text>
         </g>
 
-        <g id="node-protect" data-node-id="protect" data-node-label="保護" tabindex="0" role="button" aria-label="聚焦保護，工程課, 施工中管理" aria-pressed="false" data-node-kind="external" data-node-sublabel="工程課" data-node-tag="公共區域拍照存證" data-node-context="施工中管理">
-          <title>保護 · 工程課 · 施工中管理 · 公共區域拍照存證</title>
+        <g id="node-safety" data-node-id="safety" data-node-label="安全防護" tabindex="0" role="button" aria-label="聚焦安全防護，工程課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課" data-node-tag="圍籬、防護網、警示標示" data-node-context="施工中管理">
+          <title>安全防護 · 工程課 · 施工中管理 · 圍籬、防護網、警示標示</title>
           <rect x="48" y="702" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="48" y="702" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 708) scale(0.6875)">
+          <rect x="48" y="702" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(54 708) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="118" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">安全防護</text>
+          <text data-detail="context" x="118" y="740" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
+        <text data-detail="fine" x="118" y="758" class="t-backend" font-size="7" text-anchor="middle">圍籬、防護網、警示標示</text>
+        </g>
+
+        <g id="node-supervise" data-node-id="supervise" data-node-label="監造管理" tabindex="0" role="button" aria-label="聚焦監造管理，工程課、品質管理課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課、品質管理課" data-node-tag="監造八管" data-node-context="施工中管理">
+          <title>監造管理 · 工程課、品質管理課 · 施工中管理 · 監造八管</title>
+          <rect x="48" y="926" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="48" y="926" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(54 932) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="118" y="947" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">監造管理</text>
+          <text data-detail="context" x="118" y="964" class="t-muted" font-size="8" text-anchor="middle">工程課、品質管理課</text>
+        <text data-detail="fine" x="118" y="982" class="t-backend" font-size="7" text-anchor="middle">監造八管</text>
+        </g>
+
+        <g id="node-meeting" data-node-id="meeting" data-node-label="工務會議" tabindex="0" role="button" aria-label="聚焦工務會議，工程課, 施工中管理" aria-pressed="false" data-node-kind="external" data-node-sublabel="工程課" data-node-tag="每週，業主、設計師" data-node-context="施工中管理">
+          <title>工務會議 · 工程課 · 施工中管理 · 每週，業主、設計師</title>
+          <rect x="226" y="926" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="226" y="926" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(232 932) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="118" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">保護</text>
-          <text data-detail="context" x="118" y="740" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
-        <text data-detail="fine" x="118" y="758" class="t-external" font-size="7" text-anchor="middle">公共區域拍照存證</text>
+          <text data-node-label="" data-detail-anchor="" x="296" y="947" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">工務會議</text>
+          <text data-detail="context" x="296" y="964" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
+        <text data-detail="fine" x="296" y="982" class="t-external" font-size="7" text-anchor="middle">每週，業主、設計師</text>
         </g>
 
-        <g id="node-safety" data-node-id="safety" data-node-label="安全防護" tabindex="0" role="button" aria-label="聚焦安全防護，工程課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課" data-node-tag="講習、斷電、門禁" data-node-context="施工中管理">
-          <title>安全防護 · 工程課 · 施工中管理 · 講習、斷電、門禁</title>
-          <rect x="48" y="814" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="48" y="814" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(54 820) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="118" y="835" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">安全防護</text>
-          <text data-detail="context" x="118" y="852" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
-        <text data-detail="fine" x="118" y="870" class="t-backend" font-size="7" text-anchor="middle">講習、斷電、門禁</text>
-        </g>
-
-        <g id="node-layout" data-node-id="layout" data-node-label="放樣" tabindex="0" role="button" aria-label="聚焦放樣，工程課, 施工中管理" aria-pressed="false" data-node-kind="external" data-node-sublabel="工程課" data-node-tag="業主、設計師現場確認" data-node-context="施工中管理">
-          <title>放樣 · 工程課 · 施工中管理 · 業主、設計師現場確認</title>
+        <g id="node-protect" data-node-id="protect" data-node-label="保護" tabindex="0" role="button" aria-label="聚焦保護，工程課, 施工中管理" aria-pressed="false" data-node-kind="external" data-node-sublabel="工程課" data-node-tag="公共區域拍照存證" data-node-context="施工中管理">
+          <title>保護 · 工程課 · 施工中管理 · 公共區域拍照存證</title>
           <rect x="226" y="702" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="226" y="702" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(232 708) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="296" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">放樣</text>
+          <text data-node-label="" data-detail-anchor="" x="296" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">保護</text>
           <text data-detail="context" x="296" y="740" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
-        <text data-detail="fine" x="296" y="758" class="t-external" font-size="7" text-anchor="middle">業主、設計師現場確認</text>
-        </g>
-
-        <g id="node-supervise" data-node-id="supervise" data-node-label="監造管理" tabindex="0" role="button" aria-label="聚焦監造管理，工程課、品質管理課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課、品質管理課" data-node-tag="監造八管" data-node-context="施工中管理">
-          <title>監造管理 · 工程課、品質管理課 · 施工中管理 · 監造八管</title>
-          <rect x="226" y="814" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="226" y="814" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(232 820) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="296" y="835" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">監造管理</text>
-          <text data-detail="context" x="296" y="852" class="t-muted" font-size="8" text-anchor="middle">工程課、品質管理課</text>
-        <text data-detail="fine" x="296" y="870" class="t-backend" font-size="7" text-anchor="middle">監造八管</text>
-        </g>
-
-        <g id="node-masonry" data-node-id="masonry" data-node-label="自有泥作" tabindex="0" role="button" aria-label="聚焦自有泥作，泥作課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="泥作課" data-node-tag="防水試水 48 小時" data-node-context="施工中管理">
-          <title>自有泥作 · 泥作課 · 施工中管理 · 防水試水 48 小時</title>
-          <rect x="404" y="702" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="404" y="702" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(410 708) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="474" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">自有泥作</text>
-          <text data-detail="context" x="474" y="740" class="t-muted" font-size="8" text-anchor="middle">泥作課</text>
-        <text data-detail="fine" x="474" y="758" class="t-backend" font-size="7" text-anchor="middle">防水試水 48 小時</text>
-        </g>
-
-        <g id="node-meeting" data-node-id="meeting" data-node-label="工務會議" tabindex="0" role="button" aria-label="聚焦工務會議，工程課, 施工中管理" aria-pressed="false" data-node-kind="external" data-node-sublabel="工程課" data-node-tag="每週，業主、設計師" data-node-context="施工中管理">
-          <title>工務會議 · 工程課 · 施工中管理 · 每週，業主、設計師</title>
-          <rect x="404" y="814" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="404" y="814" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(410 820) scale(0.6875)">
-            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
-            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="474" y="835" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">工務會議</text>
-          <text data-detail="context" x="474" y="852" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
-        <text data-detail="fine" x="474" y="870" class="t-external" font-size="7" text-anchor="middle">每週，業主、設計師</text>
+        <text data-detail="fine" x="296" y="758" class="t-external" font-size="7" text-anchor="middle">公共區域拍照存證</text>
         </g>
 
         <g id="node-change" data-node-id="change" data-node-label="變更設計" tabindex="0" role="button" aria-label="聚焦變更設計，規劃課、主管, 施工中管理" aria-pressed="false" data-node-kind="security" data-node-sublabel="規劃課、主管" data-node-tag="先估價簽認再施作" data-node-context="施工中管理">
           <title>變更設計 · 規劃課、主管 · 施工中管理 · 先估價簽認再施作</title>
-          <rect x="582" y="814" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="582" y="814" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(588 820) scale(0.6875)">
+          <rect x="404" y="926" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="404" y="926" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(410 932) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="652" y="835" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">變更設計</text>
-          <text data-detail="context" x="652" y="852" class="t-muted" font-size="8" text-anchor="middle">規劃課、主管</text>
-        <text data-detail="fine" x="652" y="870" class="t-security" font-size="7" text-anchor="middle">先估價簽認再施作</text>
+          <text data-node-label="" data-detail-anchor="" x="474" y="947" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">變更設計</text>
+          <text data-detail="context" x="474" y="964" class="t-muted" font-size="8" text-anchor="middle">規劃課、主管</text>
+        <text data-detail="fine" x="474" y="982" class="t-security" font-size="7" text-anchor="middle">先估價簽認再施作</text>
         </g>
 
-        <g id="node-earth" data-node-id="earth" data-node-label="自有土作" tabindex="0" role="button" aria-label="聚焦自有土作，土造課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="土造課" data-node-tag="樣板與養護" data-node-context="施工中管理">
-          <title>自有土作 · 土造課 · 施工中管理 · 樣板與養護</title>
+        <g id="node-layout" data-node-id="layout" data-node-label="放樣" tabindex="0" role="button" aria-label="聚焦放樣，工程課, 施工中管理" aria-pressed="false" data-node-kind="external" data-node-sublabel="工程課" data-node-tag="業主、設計師現場確認" data-node-context="施工中管理">
+          <title>放樣 · 工程課 · 施工中管理 · 業主、設計師現場確認</title>
+          <rect x="404" y="702" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="404" y="702" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(410 708) scale(0.6875)">
+            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
+            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="474" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">放樣</text>
+          <text data-detail="context" x="474" y="740" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
+        <text data-detail="fine" x="474" y="758" class="t-external" font-size="7" text-anchor="middle">業主、設計師現場確認</text>
+        </g>
+
+        <g id="node-bill" data-node-id="bill" data-node-label="業主請款" tabindex="0" role="button" aria-label="聚焦業主請款，收入課, 施工中管理" aria-pressed="false" data-node-kind="database" data-node-sublabel="收入課" data-node-tag="依合約節點" data-node-context="施工中管理">
+          <title>業主請款 · 收入課 · 施工中管理 · 依合約節點</title>
+          <rect x="582" y="926" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="582" y="926" width="140" height="68" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(588 932) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="652" y="947" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">業主請款</text>
+          <text data-detail="context" x="652" y="964" class="t-muted" font-size="8" text-anchor="middle">收入課</text>
+        <text data-detail="fine" x="652" y="982" class="t-database" font-size="7" text-anchor="middle">依合約節點</text>
+        </g>
+
+        <g id="node-handoff" data-node-id="handoff" data-node-label="交接介面處理" tabindex="0" role="button" aria-label="聚焦交接介面處理，工程課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課" data-node-tag="工種交接、收邊順序" data-node-context="施工中管理">
+          <title>交接介面處理 · 工程課 · 施工中管理 · 工種交接、收邊順序</title>
           <rect x="582" y="702" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="582" y="702" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(588 708) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="652" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">自有土作</text>
-          <text data-detail="context" x="652" y="740" class="t-muted" font-size="8" text-anchor="middle">土造課</text>
-        <text data-detail="fine" x="652" y="758" class="t-backend" font-size="7" text-anchor="middle">樣板與養護</text>
+          <text data-node-label="" data-detail-anchor="" x="652" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">交接介面處理</text>
+          <text data-detail="context" x="652" y="740" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
+        <text data-detail="fine" x="652" y="758" class="t-backend" font-size="7" text-anchor="middle">工種交接、收邊順序</text>
         </g>
 
-        <g id="node-bill" data-node-id="bill" data-node-label="業主請款" tabindex="0" role="button" aria-label="聚焦業主請款，收入課, 施工中管理" aria-pressed="false" data-node-kind="database" data-node-sublabel="收入課" data-node-tag="依合約節點" data-node-context="施工中管理">
-          <title>業主請款 · 收入課 · 施工中管理 · 依合約節點</title>
-          <rect x="760" y="814" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="760" y="814" width="140" height="68" rx="6" class="c-database" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(766 820) scale(0.6875)">
-            <ellipse cx="8" cy="4" rx="5" ry="2"/>
-            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="830" y="835" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">業主請款</text>
-          <text data-detail="context" x="830" y="852" class="t-muted" font-size="8" text-anchor="middle">收入課</text>
-        <text data-detail="fine" x="830" y="870" class="t-database" font-size="7" text-anchor="middle">依合約節點</text>
-        </g>
-
-        <g id="node-subwork" data-node-id="subwork" data-node-label="分包工程" tabindex="0" role="button" aria-label="聚焦分包工程，工程課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課" data-node-tag="水電、木作、油漆" data-node-context="施工中管理">
-          <title>分包工程 · 工程課 · 施工中管理 · 水電、木作、油漆</title>
+        <g id="node-masonry" data-node-id="masonry" data-node-label="自有泥作" tabindex="0" role="button" aria-label="聚焦自有泥作，泥作課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="泥作課" data-node-tag="防水試水 48 小時" data-node-context="施工中管理">
+          <title>自有泥作 · 泥作課 · 施工中管理 · 防水試水 48 小時</title>
           <rect x="760" y="702" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="760" y="702" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(766 708) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="830" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">分包工程</text>
-          <text data-detail="context" x="830" y="740" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
-        <text data-detail="fine" x="830" y="758" class="t-backend" font-size="7" text-anchor="middle">水電、木作、油漆</text>
-        </g>
-
-        <g id="node-handoff" data-node-id="handoff" data-node-label="交接介面處理" tabindex="0" role="button" aria-label="聚焦交接介面處理，工程課, 施工中管理" aria-pressed="false" data-node-kind="security" data-node-sublabel="工程課" data-node-tag="前工種確認才進場" data-node-context="施工中管理">
-          <title>交接介面處理 · 工程課 · 施工中管理 · 前工種確認才進場</title>
-          <rect x="938" y="702" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="938" y="702" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(944 708) scale(0.6875)">
-            <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
-            <path d="m5.8 8 1.5 1.5 3-3"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="1008" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">交接介面處理</text>
-          <text data-detail="context" x="1008" y="740" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
-        <text data-detail="fine" x="1008" y="758" class="t-security" font-size="7" text-anchor="middle">前工種確認才進場</text>
+          <text data-node-label="" data-detail-anchor="" x="830" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">自有泥作</text>
+          <text data-detail="context" x="830" y="740" class="t-muted" font-size="8" text-anchor="middle">泥作課</text>
+        <text data-detail="fine" x="830" y="758" class="t-backend" font-size="7" text-anchor="middle">防水試水 48 小時</text>
         </g>
 
         <g id="node-payvendor" data-node-id="payvendor" data-node-label="廠商請款" tabindex="0" role="button" aria-label="聚焦廠商請款，支出課, 施工中管理" aria-pressed="false" data-node-kind="database" data-node-sublabel="支出課" data-node-tag="每月 10 號" data-node-context="施工中管理">
           <title>廠商請款 · 支出課 · 施工中管理 · 每月 10 號</title>
-          <rect x="938" y="814" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="938" y="814" width="140" height="68" rx="6" class="c-database" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(944 820) scale(0.6875)">
+          <rect x="760" y="926" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="760" y="926" width="140" height="68" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(766 932) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1008" y="835" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">廠商請款</text>
-          <text data-detail="context" x="1008" y="852" class="t-muted" font-size="8" text-anchor="middle">支出課</text>
-        <text data-detail="fine" x="1008" y="870" class="t-database" font-size="7" text-anchor="middle">每月 10 號</text>
+          <text data-node-label="" data-detail-anchor="" x="830" y="947" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">廠商請款</text>
+          <text data-detail="context" x="830" y="964" class="t-muted" font-size="8" text-anchor="middle">支出課</text>
+        <text data-detail="fine" x="830" y="982" class="t-database" font-size="7" text-anchor="middle">每月 10 號</text>
+        </g>
+
+        <g id="node-earth" data-node-id="earth" data-node-label="自有土作" tabindex="0" role="button" aria-label="聚焦自有土作，土造課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="土造課" data-node-tag="樣板與養護" data-node-context="施工中管理">
+          <title>自有土作 · 土造課 · 施工中管理 · 樣板與養護</title>
+          <rect x="938" y="702" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="938" y="702" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 708) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1008" y="723" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">自有土作</text>
+          <text data-detail="context" x="1008" y="740" class="t-muted" font-size="8" text-anchor="middle">土造課</text>
+        <text data-detail="fine" x="1008" y="758" class="t-backend" font-size="7" text-anchor="middle">樣板與養護</text>
+        </g>
+
+        <g id="node-subwork" data-node-id="subwork" data-node-label="分包工程" tabindex="0" role="button" aria-label="聚焦分包工程，工程課, 施工中管理" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課" data-node-tag="水電、木作、油漆" data-node-context="施工中管理">
+          <title>分包工程 · 工程課 · 施工中管理 · 水電、木作、油漆</title>
+          <rect x="938" y="814.056" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="938" y="814.056" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 820.056) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1008" y="835.056" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">分包工程</text>
+          <text data-detail="context" x="1008" y="852.056" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
+        <text data-detail="fine" x="1008" y="870.056" class="t-backend" font-size="7" text-anchor="middle">水電、木作、油漆</text>
         </g>
 
         <g id="node-selfcheck" data-node-id="selfcheck" data-node-label="自主檢核" tabindex="0" role="button" aria-label="聚焦自主檢核，工程課, 施工後交付" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課" data-node-tag="逐項對照報價" data-node-context="施工後交付">
           <title>自主檢核 · 工程課 · 施工後交付 · 逐項對照報價</title>
-          <rect x="48" y="940" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="48" y="940" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(54 946) scale(0.6875)">
+          <rect x="48" y="1052" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="48" y="1052" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(54 1058) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="118" y="961" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">自主檢核</text>
-          <text data-detail="context" x="118" y="978" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
-        <text data-detail="fine" x="118" y="996" class="t-backend" font-size="7" text-anchor="middle">逐項對照報價</text>
+          <text data-node-label="" data-detail-anchor="" x="118" y="1073" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">自主檢核</text>
+          <text data-detail="context" x="118" y="1090" class="t-muted" font-size="8" text-anchor="middle">工程課</text>
+        <text data-detail="fine" x="118" y="1108" class="t-backend" font-size="7" text-anchor="middle">逐項對照報價</text>
         </g>
 
         <g id="node-qc" data-node-id="qc" data-node-label="品質驗收" tabindex="0" role="button" aria-label="聚焦品質驗收，品質管理課, 施工後交付" aria-pressed="false" data-node-kind="security" data-node-sublabel="品質管理課" data-node-tag="通過／缺失" data-node-context="施工後交付">
           <title>品質驗收 · 品質管理課 · 施工後交付 · 通過／缺失</title>
-          <rect x="226" y="940" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="226" y="940" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(232 946) scale(0.6875)">
+          <rect x="226" y="1052" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="226" y="1052" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(232 1058) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="296" y="961" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">品質驗收</text>
-          <text data-detail="context" x="296" y="978" class="t-muted" font-size="8" text-anchor="middle">品質管理課</text>
-        <text data-detail="fine" x="296" y="996" class="t-security" font-size="7" text-anchor="middle">通過／缺失</text>
+          <text data-node-label="" data-detail-anchor="" x="296" y="1073" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">品質驗收</text>
+          <text data-detail="context" x="296" y="1090" class="t-muted" font-size="8" text-anchor="middle">品質管理課</text>
+        <text data-detail="fine" x="296" y="1108" class="t-security" font-size="7" text-anchor="middle">通過／缺失</text>
         </g>
 
         <g id="node-joint" data-node-id="joint" data-node-label="聯合驗收" tabindex="0" role="button" aria-label="聚焦聯合驗收，業主、設計師, 施工後交付" aria-pressed="false" data-node-kind="security" data-node-sublabel="業主、設計師" data-node-tag="通過／缺失" data-node-context="施工後交付">
           <title>聯合驗收 · 業主、設計師 · 施工後交付 · 通過／缺失</title>
-          <rect x="404" y="940" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="404" y="940" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(410 946) scale(0.6875)">
+          <rect x="404" y="1052" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="404" y="1052" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(410 1058) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="474" y="961" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">聯合驗收</text>
-          <text data-detail="context" x="474" y="978" class="t-muted" font-size="8" text-anchor="middle">業主、設計師</text>
-        <text data-detail="fine" x="474" y="996" class="t-security" font-size="7" text-anchor="middle">通過／缺失</text>
+          <text data-node-label="" data-detail-anchor="" x="474" y="1073" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">聯合驗收</text>
+          <text data-detail="context" x="474" y="1090" class="t-muted" font-size="8" text-anchor="middle">業主、設計師</text>
+        <text data-detail="fine" x="474" y="1108" class="t-security" font-size="7" text-anchor="middle">通過／缺失</text>
         </g>
 
         <g id="node-asbuilt" data-node-id="asbuilt" data-node-label="竣工資料" tabindex="0" role="button" aria-label="聚焦竣工資料，工程課、客戶關係課, 施工後交付" aria-pressed="false" data-node-kind="external" data-node-sublabel="工程課、客戶關係課" data-node-tag="竣工圖、保固書、使用說明" data-node-context="施工後交付">
           <title>竣工資料 · 工程課、客戶關係課 · 施工後交付 · 竣工圖、保固書、使用說明</title>
-          <rect x="582" y="940" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="582" y="940" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(588 946) scale(0.6875)">
+          <rect x="582" y="1052" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="582" y="1052" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(588 1058) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="652" y="961" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">竣工資料</text>
-          <text data-detail="context" x="652" y="978" class="t-muted" font-size="8" text-anchor="middle">工程課、客戶關係課</text>
-        <text data-detail="fine" x="652" y="996" class="t-external" font-size="7" text-anchor="middle">竣工圖、保固書、使用說明</text>
+          <text data-node-label="" data-detail-anchor="" x="652" y="1073" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">竣工資料</text>
+          <text data-detail="context" x="652" y="1090" class="t-muted" font-size="8" text-anchor="middle">工程課、客戶關係課</text>
+        <text data-detail="fine" x="652" y="1108" class="t-external" font-size="7" text-anchor="middle">竣工圖、保固書、使用說明</text>
         </g>
 
         <g id="node-final" data-node-id="final" data-node-label="尾款請款" tabindex="0" role="button" aria-label="聚焦尾款請款，收入課, 施工後交付" aria-pressed="false" data-node-kind="database" data-node-sublabel="收入課" data-node-tag="扣保留款" data-node-context="施工後交付">
           <title>尾款請款 · 收入課 · 施工後交付 · 扣保留款</title>
-          <rect x="760" y="940" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="760" y="940" width="140" height="68" rx="6" class="c-database" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(766 946) scale(0.6875)">
+          <rect x="760" y="1052" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="760" y="1052" width="140" height="68" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(766 1058) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="830" y="961" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">尾款請款</text>
-          <text data-detail="context" x="830" y="978" class="t-muted" font-size="8" text-anchor="middle">收入課</text>
-        <text data-detail="fine" x="830" y="996" class="t-database" font-size="7" text-anchor="middle">扣保留款</text>
+          <text data-node-label="" data-detail-anchor="" x="830" y="1073" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">尾款請款</text>
+          <text data-detail="context" x="830" y="1090" class="t-muted" font-size="8" text-anchor="middle">收入課</text>
+        <text data-detail="fine" x="830" y="1108" class="t-database" font-size="7" text-anchor="middle">扣保留款</text>
         </g>
 
         <g id="node-report" data-node-id="report" data-node-label="結案報告" tabindex="0" role="button" aria-label="聚焦結案報告，專案經理, 施工後交付" aria-pressed="false" data-node-kind="backend" data-node-sublabel="專案經理" data-node-tag="對內教育訓練" data-node-context="施工後交付">
           <title>結案報告 · 專案經理 · 施工後交付 · 對內教育訓練</title>
+          <rect x="760" y="1164" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="760" y="1164" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(766 1170) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="830" y="1185" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">結案報告</text>
+          <text data-detail="context" x="830" y="1202" class="t-muted" font-size="8" text-anchor="middle">專案經理</text>
+        <text data-detail="fine" x="830" y="1220" class="t-backend" font-size="7" text-anchor="middle">對內教育訓練</text>
+        </g>
+
+        <g id="node-casebook" data-node-id="casebook" data-node-label="案例紀錄" tabindex="0" role="button" aria-label="聚焦案例紀錄，公共關係課, 施工後交付" aria-pressed="false" data-node-kind="backend" data-node-sublabel="公共關係課" data-node-tag="完工照、施工前後對比" data-node-context="施工後交付">
+          <title>案例紀錄 · 公共關係課 · 施工後交付 · 完工照、施工前後對比</title>
           <rect x="938" y="1052" width="140" height="68" rx="6" class="c-mask"/>
           <rect x="938" y="1052" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 1058) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1008" y="1073" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">結案報告</text>
-          <text data-detail="context" x="1008" y="1090" class="t-muted" font-size="8" text-anchor="middle">專案經理</text>
-        <text data-detail="fine" x="1008" y="1108" class="t-backend" font-size="7" text-anchor="middle">對內教育訓練</text>
+          <text data-node-label="" data-detail-anchor="" x="1008" y="1073" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">案例紀錄</text>
+          <text data-detail="context" x="1008" y="1090" class="t-muted" font-size="8" text-anchor="middle">公共關係課</text>
+        <text data-detail="fine" x="1008" y="1108" class="t-backend" font-size="7" text-anchor="middle">完工照、施工前後對比</text>
         </g>
 
         <g id="node-review" data-node-id="review" data-node-label="結案覆盤" tabindex="0" role="button" aria-label="聚焦結案覆盤，主管議會、會計課, 施工後交付" aria-pressed="false" data-node-kind="backend" data-node-sublabel="主管議會、會計課" data-node-tag="損益、時程、客訴" data-node-context="施工後交付">
           <title>結案覆盤 · 主管議會、會計課 · 施工後交付 · 損益、時程、客訴</title>
-          <rect x="938" y="940" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="938" y="940" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 946) scale(0.6875)">
+          <rect x="938" y="1164" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="938" y="1164" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 1170) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1008" y="961" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">結案覆盤</text>
-          <text data-detail="context" x="1008" y="978" class="t-muted" font-size="8" text-anchor="middle">主管議會、會計課</text>
-        <text data-detail="fine" x="1008" y="996" class="t-backend" font-size="7" text-anchor="middle">損益、時程、客訴</text>
+          <text data-node-label="" data-detail-anchor="" x="1008" y="1185" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">結案覆盤</text>
+          <text data-detail="context" x="1008" y="1202" class="t-muted" font-size="8" text-anchor="middle">主管議會、會計課</text>
+        <text data-detail="fine" x="1008" y="1220" class="t-backend" font-size="7" text-anchor="middle">損益、時程、客訴</text>
         </g>
 
         <g id="node-visit" data-node-id="visit" data-node-label="保固回訪" tabindex="0" role="button" aria-label="聚焦保固回訪，客戶關係課, 保固售服" aria-pressed="false" data-node-kind="external" data-node-sublabel="客戶關係課" data-node-tag="交屋後 1、6、12 月" data-node-context="保固售服">
           <title>保固回訪 · 客戶關係課 · 保固售服 · 交屋後 1、6、12 月</title>
-          <rect x="48" y="1178" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="48" y="1178" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 1184) scale(0.6875)">
+          <rect x="48" y="1290" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="48" y="1290" width="140" height="68" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(54 1296) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="118" y="1199" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">保固回訪</text>
-          <text data-detail="context" x="118" y="1216" class="t-muted" font-size="8" text-anchor="middle">客戶關係課</text>
-        <text data-detail="fine" x="118" y="1234" class="t-external" font-size="7" text-anchor="middle">交屋後 1、6、12 月</text>
+          <text data-node-label="" data-detail-anchor="" x="118" y="1311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">保固回訪</text>
+          <text data-detail="context" x="118" y="1328" class="t-muted" font-size="8" text-anchor="middle">客戶關係課</text>
+        <text data-detail="fine" x="118" y="1346" class="t-external" font-size="7" text-anchor="middle">交屋後 1、6、12 月</text>
         </g>
 
         <g id="node-repair" data-node-id="repair" data-node-label="報修受理" tabindex="0" role="button" aria-label="聚焦報修受理，客戶關係課, 保固售服" aria-pressed="false" data-node-kind="security" data-node-sublabel="客戶關係課" data-node-tag="保固內／外" data-node-context="保固售服">
           <title>報修受理 · 客戶關係課 · 保固售服 · 保固內／外</title>
-          <rect x="226" y="1178" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="226" y="1178" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(232 1184) scale(0.6875)">
+          <rect x="226" y="1290" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="226" y="1290" width="140" height="68" rx="6" class="c-security" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="security" class="semantic-sigil s-security" transform="translate(232 1296) scale(0.6875)">
             <path d="M8 2.2 13 4v3.5c0 3.1-1.8 5.4-5 6.5-3.2-1.1-5-3.4-5-6.5V4Z"/>
             <path d="m5.8 8 1.5 1.5 3-3"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="296" y="1199" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">報修受理</text>
-          <text data-detail="context" x="296" y="1216" class="t-muted" font-size="8" text-anchor="middle">客戶關係課</text>
-        <text data-detail="fine" x="296" y="1234" class="t-security" font-size="7" text-anchor="middle">保固內／外</text>
+          <text data-node-label="" data-detail-anchor="" x="296" y="1311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">報修受理</text>
+          <text data-detail="context" x="296" y="1328" class="t-muted" font-size="8" text-anchor="middle">客戶關係課</text>
+        <text data-detail="fine" x="296" y="1346" class="t-security" font-size="7" text-anchor="middle">保固內／外</text>
         </g>
 
         <g id="node-fix" data-node-id="fix" data-node-label="維修派工" tabindex="0" role="button" aria-label="聚焦維修派工，工程課、泥作課, 保固售服" aria-pressed="false" data-node-kind="backend" data-node-sublabel="工程課、泥作課" data-node-tag="責任歸屬" data-node-context="保固售服">
           <title>維修派工 · 工程課、泥作課 · 保固售服 · 責任歸屬</title>
-          <rect x="404" y="1178" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="404" y="1178" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(410 1184) scale(0.6875)">
+          <rect x="404" y="1290" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="404" y="1290" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(410 1296) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="474" y="1199" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">維修派工</text>
-          <text data-detail="context" x="474" y="1216" class="t-muted" font-size="8" text-anchor="middle">工程課、泥作課</text>
-        <text data-detail="fine" x="474" y="1234" class="t-backend" font-size="7" text-anchor="middle">責任歸屬</text>
+          <text data-node-label="" data-detail-anchor="" x="474" y="1311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">維修派工</text>
+          <text data-detail="context" x="474" y="1328" class="t-muted" font-size="8" text-anchor="middle">工程課、泥作課</text>
+        <text data-detail="fine" x="474" y="1346" class="t-backend" font-size="7" text-anchor="middle">責任歸屬</text>
         </g>
 
         <g id="node-retention" data-node-id="retention" data-node-label="保留款請款" tabindex="0" role="button" aria-label="聚焦保留款請款，收入課, 保固售服" aria-pressed="false" data-node-kind="database" data-node-sublabel="收入課" data-node-tag="保固期滿" data-node-context="保固售服">
           <title>保留款請款 · 收入課 · 保固售服 · 保固期滿</title>
-          <rect x="582" y="1178" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="582" y="1178" width="140" height="68" rx="6" class="c-database" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(588 1184) scale(0.6875)">
+          <rect x="582" y="1290" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="582" y="1290" width="140" height="68" rx="6" class="c-database" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(588 1296) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="652" y="1199" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">保留款請款</text>
-          <text data-detail="context" x="652" y="1216" class="t-muted" font-size="8" text-anchor="middle">收入課</text>
-        <text data-detail="fine" x="652" y="1234" class="t-database" font-size="7" text-anchor="middle">保固期滿</text>
+          <text data-node-label="" data-detail-anchor="" x="652" y="1311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">保留款請款</text>
+          <text data-detail="context" x="652" y="1328" class="t-muted" font-size="8" text-anchor="middle">收入課</text>
+        <text data-detail="fine" x="652" y="1346" class="t-database" font-size="7" text-anchor="middle">保固期滿</text>
         </g>
 
         <g id="node-satisfy" data-node-id="satisfy" data-node-label="滿意調查" tabindex="0" role="button" aria-label="聚焦滿意調查，客戶關係課, 保固售服" aria-pressed="false" data-node-kind="external" data-node-sublabel="客戶關係課" data-node-context="保固售服">
           <title>滿意調查 · 客戶關係課 · 保固售服</title>
-          <rect x="760" y="1186" width="140" height="52" rx="6" class="c-mask"/>
-          <rect x="760" y="1186" width="140" height="52" rx="6" class="c-external" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(766 1192) scale(0.6875)">
+          <rect x="760" y="1298" width="140" height="52" rx="6" class="c-mask"/>
+          <rect x="760" y="1298" width="140" height="52" rx="6" class="c-external" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(766 1304) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="830" y="1207" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">滿意調查</text>
-          <text data-detail="context" x="830" y="1224" class="t-muted" font-size="8" text-anchor="middle">客戶關係課</text>
+          <text data-node-label="" data-detail-anchor="" x="830" y="1319" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">滿意調查</text>
+          <text data-detail="context" x="830" y="1336" class="t-muted" font-size="8" text-anchor="middle">客戶關係課</text>
         </g>
 
         <g id="node-referral" data-node-id="referral" data-node-label="見證與引薦" tabindex="0" role="button" aria-label="聚焦見證與引薦，公共關係課, 保固售服" aria-pressed="false" data-node-kind="backend" data-node-sublabel="公共關係課" data-node-tag="回到詢案" data-node-context="保固售服">
           <title>見證與引薦 · 公共關係課 · 保固售服 · 回到詢案</title>
-          <rect x="938" y="1178" width="140" height="68" rx="6" class="c-mask"/>
-          <rect x="938" y="1178" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 1184) scale(0.6875)">
+          <rect x="938" y="1290" width="140" height="68" rx="6" class="c-mask"/>
+          <rect x="938" y="1290" width="140" height="68" rx="6" class="c-backend" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(944 1296) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1008" y="1199" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">見證與引薦</text>
-          <text data-detail="context" x="1008" y="1216" class="t-muted" font-size="8" text-anchor="middle">公共關係課</text>
-        <text data-detail="fine" x="1008" y="1234" class="t-backend" font-size="7" text-anchor="middle">回到詢案</text>
+          <text data-node-label="" data-detail-anchor="" x="1008" y="1311" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">見證與引薦</text>
+          <text data-detail="context" x="1008" y="1328" class="t-muted" font-size="8" text-anchor="middle">公共關係課</text>
+        <text data-detail="fine" x="1008" y="1346" class="t-backend" font-size="7" text-anchor="middle">回到詢案</text>
         </g>
 
         <!-- Edge labels -->
 
 
-        <g data-detail="context" data-edge-from="change" data-edge-to="bill" data-edge-label="簽認" data-edge-key="2" data-edge-id="change-bill">
-          <rect x="726" y="828" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="741" y="838" class="t-edge-emphasis" font-size="8" text-anchor="middle">簽認</text>
+
+        <g data-detail="context" data-edge-from="change" data-edge-to="bill" data-edge-label="簽認" data-edge-key="3" data-edge-id="change-bill">
+          <rect x="548" y="940" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="563" y="950" class="t-edge-emphasis" font-size="8" text-anchor="middle">簽認</text>
         </g>
-        <g data-detail="context" data-edge-from="clarify" data-edge-to="g-audit" data-edge-label="補圖" data-edge-key="3" data-edge-id="clarify-g-audit">
+        <g data-detail="context" data-edge-from="clarify" data-edge-to="g-audit" data-edge-label="補圖" data-edge-key="4" data-edge-id="clarify-g-audit">
           <rect x="414.5" y="288" width="30" height="14" rx="3" class="c-mask"/>
           <text x="429.5" y="298" class="t-edge-dashed" font-size="8" text-anchor="middle">補圖</text>
         </g>
-        <g data-detail="context" data-edge-from="clarify" data-edge-to="shop" data-edge-label="確認" data-edge-key="4" data-edge-id="clarify-shop">
+        <g data-detail="context" data-edge-from="clarify" data-edge-to="shop" data-edge-label="確認" data-edge-key="5" data-edge-id="clarify-shop">
           <rect x="370" y="338" width="30" height="14" rx="3" class="c-mask"/>
           <text x="385" y="348" class="t-edge-emphasis" font-size="8" text-anchor="middle">確認</text>
         </g>
@@ -5884,27 +5897,28 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 
 
-        <g data-detail="context" data-edge-from="joint" data-edge-to="asbuilt" data-edge-label="通過" data-edge-key="20" data-edge-id="joint-asbuilt">
-          <rect x="548" y="954" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="563" y="964" class="t-edge-emphasis" font-size="8" text-anchor="middle">通過</text>
+
+        <g data-detail="context" data-edge-from="joint" data-edge-to="asbuilt" data-edge-label="通過" data-edge-key="22" data-edge-id="joint-asbuilt">
+          <rect x="548" y="1066" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="563" y="1076" class="t-edge-emphasis" font-size="8" text-anchor="middle">通過</text>
         </g>
-        <g data-detail="context" data-edge-from="joint" data-edge-to="selfcheck" data-edge-label="缺失改善" data-edge-key="21" data-edge-id="joint-selfcheck">
-          <rect x="271.8" y="1120" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="296" y="1130" class="t-edge-dashed" font-size="8" text-anchor="middle">缺失改善</text>
+        <g data-detail="context" data-edge-from="joint" data-edge-to="selfcheck" data-edge-label="缺失改善" data-edge-key="23" data-edge-id="joint-selfcheck">
+          <rect x="271.8" y="1232" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="296" y="1242" class="t-edge-dashed" font-size="8" text-anchor="middle">缺失改善</text>
         </g>
 
 
 
-        <g data-detail="context" data-edge-from="material" data-edge-to="procure" data-edge-label="核可" data-edge-key="25" data-edge-id="material-procure">
+        <g data-detail="context" data-edge-from="material" data-edge-to="procure" data-edge-label="核可" data-edge-key="27" data-edge-id="material-procure">
           <rect x="726" y="590" width="30" height="14" rx="3" class="c-mask"/>
           <text x="741" y="600" class="t-edge-emphasis" font-size="8" text-anchor="middle">核可</text>
         </g>
 
-        <g data-detail="context" data-edge-from="nego" data-edge-to="contract" data-edge-label="確認" data-edge-key="27" data-edge-id="nego-contract">
+        <g data-detail="context" data-edge-from="nego" data-edge-to="contract" data-edge-label="確認" data-edge-key="29" data-edge-id="nego-contract">
           <rect x="904" y="464" width="30" height="14" rx="3" class="c-mask"/>
           <text x="919" y="474" class="t-edge-emphasis" font-size="8" text-anchor="middle">確認</text>
         </g>
-        <g data-detail="context" data-edge-from="nego" data-edge-to="scope" data-edge-label="調整" data-edge-key="28" data-edge-id="nego-scope">
+        <g data-detail="context" data-edge-from="nego" data-edge-to="scope" data-edge-label="調整" data-edge-key="30" data-edge-id="nego-scope">
           <rect x="726" y="457" width="30" height="14" rx="3" class="c-mask"/>
           <text x="741" y="467" class="t-edge-dashed" font-size="8" text-anchor="middle">調整</text>
         </g>
@@ -5912,13 +5926,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 
 
-        <g data-detail="context" data-edge-from="qc" data-edge-to="joint" data-edge-label="通過" data-edge-key="33" data-edge-id="qc-joint">
-          <rect x="370" y="954" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="385" y="964" class="t-edge-emphasis" font-size="8" text-anchor="middle">通過</text>
+        <g data-detail="context" data-edge-from="qc" data-edge-to="joint" data-edge-label="通過" data-edge-key="35" data-edge-id="qc-joint">
+          <rect x="370" y="1066" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="385" y="1076" class="t-edge-emphasis" font-size="8" text-anchor="middle">通過</text>
         </g>
-        <g data-detail="context" data-edge-from="qc" data-edge-to="selfcheck" data-edge-label="缺失" data-edge-key="34" data-edge-id="qc-selfcheck">
-          <rect x="198" y="1004" width="30" height="14" rx="3" class="c-mask"/>
-          <text x="213" y="1014" class="t-edge-dashed" font-size="8" text-anchor="middle">缺失</text>
+        <g data-detail="context" data-edge-from="qc" data-edge-to="selfcheck" data-edge-label="缺失" data-edge-key="36" data-edge-id="qc-selfcheck">
+          <rect x="198" y="1116" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="213" y="1126" class="t-edge-dashed" font-size="8" text-anchor="middle">缺失</text>
         </g>
 
 
@@ -5930,14 +5944,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 
 
-        <g data-detail="context" data-edge-from="spend" data-edge-to="procure" data-edge-label="退回" data-edge-key="45" data-edge-id="spend-procure">
+        <g data-detail="context" data-edge-from="spend" data-edge-to="procure" data-edge-label="退回" data-edge-key="47" data-edge-id="spend-procure">
           <rect x="904" y="578" width="30" height="14" rx="3" class="c-mask"/>
           <text x="919" y="588" class="t-edge-dashed" font-size="8" text-anchor="middle">退回</text>
         </g>
 
 
-
-        <g data-detail="context" data-edge-from="take" data-edge-to="pm" data-edge-label="承接" data-edge-key="49" data-edge-id="take-pm">
+        <g data-detail="context" data-edge-from="take" data-edge-to="pm" data-edge-label="承接" data-edge-key="50" data-edge-id="take-pm">
           <rect x="726" y="100" width="30" height="14" rx="3" class="c-mask"/>
           <text x="741" y="110" class="t-edge-emphasis" font-size="8" text-anchor="middle">承接</text>
         </g>
@@ -5945,22 +5958,22 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
-          <text x="20" y="1274" class="t-primary" font-size="12" font-weight="650">圖例</text>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="內部作業" data-legend-x="20" data-legend-baseline="1294" data-legend-width="78">
-            <rect x="20" y="1286" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
-            <text x="42" y="1294" class="t-muted" font-size="7.5" font-weight="500">內部作業</text>
+          <text x="20" y="1386" class="t-primary" font-size="12" font-weight="650">圖例</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="內部作業" data-legend-x="20" data-legend-baseline="1406" data-legend-width="78">
+            <rect x="20" y="1398" width="14" height="9" rx="2" class="c-backend" stroke-width="1"/>
+            <text x="42" y="1406" class="t-muted" font-size="7.5" font-weight="500">內部作業</text>
           </g>
-          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="決策關卡" data-legend-x="105" data-legend-baseline="1294" data-legend-width="78">
-            <rect x="105" y="1286" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
-            <text x="127" y="1294" class="t-muted" font-size="7.5" font-weight="500">決策關卡</text>
+          <g data-legend-semantic-kind="security" data-legend-kind="security" data-legend-label="決策關卡" data-legend-x="105" data-legend-baseline="1406" data-legend-width="78">
+            <rect x="105" y="1398" width="14" height="9" rx="2" class="c-security" stroke-width="1"/>
+            <text x="127" y="1406" class="t-muted" font-size="7.5" font-weight="500">決策關卡</text>
           </g>
-          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="帳務請款" data-legend-x="190" data-legend-baseline="1294" data-legend-width="78">
-            <rect x="190" y="1286" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
-            <text x="212" y="1294" class="t-muted" font-size="7.5" font-weight="500">帳務請款</text>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="帳務請款" data-legend-x="190" data-legend-baseline="1406" data-legend-width="78">
+            <rect x="190" y="1398" width="14" height="9" rx="2" class="c-database" stroke-width="1"/>
+            <text x="212" y="1406" class="t-muted" font-size="7.5" font-weight="500">帳務請款</text>
           </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="業主參與" data-legend-x="275" data-legend-baseline="1294" data-legend-width="78">
-            <rect x="275" y="1286" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
-            <text x="297" y="1294" class="t-muted" font-size="7.5" font-weight="500">業主參與</text>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="業主參與" data-legend-x="275" data-legend-baseline="1406" data-legend-width="78">
+            <rect x="275" y="1398" width="14" height="9" rx="2" class="c-external" stroke-width="1"/>
+            <text x="297" y="1406" class="t-muted" font-size="7.5" font-weight="500">業主參與</text>
           </g>
         </g>
       </svg>
@@ -6192,7 +6205,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <h3>監造八管　施工中每天要管的事</h3>
         </div>
         <ul>
-          <li>管安全：開工講習、高處作業與電動工具檢查、收工斷電與門禁。利於避免職災與停工</li>
+          <li>管安全：施工圍籬、防護網、警示標示與消防器材每日巡查，高處作業與電動工具檢查，收工斷電與門禁。利於避免職災、公安意外與停工</li>
           <li>管品質：依送審樣品查驗；水電、防水等隱蔽工程封板前拍照查驗，合格才進下一工序。利於缺失當下改，不留到驗收</li>
           <li>管進度：每天對照工期表，落後就調人力或工序。利於準時交付，也是請款依據</li>
           <li>管介面：前一工種完成確認、下一工種簽收才進場。利於避免互相推諉與重工</li>
@@ -6258,7 +6271,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <h3>5 施工中管理：會遇到的問題</h3>
         </div>
         <ul>
-          <li>保護不足造成公共區域損壞：開工前拍照存證，每日巡查保護是否破損</li>
+          <li>安全防護與保護不足：開工前先架設圍籬、防護網與警示標示，公共區域拍照存證，每日巡查是否破損</li>
           <li>放樣與設計不符：放樣後請業主、設計師到場確認再施工</li>
           <li>業主或設計師直接交代工班：一律回到專案經理與變更流程，先簽追加減單再做</li>
           <li>請款被拖延：依合約節點與監造紀錄請款，附照片與完成比例；廠商款每月 10 號統一付</li>
@@ -6274,6 +6287,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <li>驗收標準與合約不同：依合約與送審核可的樣品驗收，現場不臨時加標準</li>
           <li>缺失改善反覆：缺失清單逐條編號、拍照，改善後複驗簽回</li>
           <li>竣工資料不齊：竣工圖說、保固書、使用說明書、材料清單、廠商聯絡表一起點交</li>
+          <li>案例紀錄：完工照、施工前後對比、特殊工法整理成案例，供業務與作品集使用</li>
           <li>結案覆盤看時程、成本、品質、客訴與介面問題；結案報告由專案經理對內分享，回寫成下一案的檢核項目</li>
         </ul>
       </div>
@@ -14644,7 +14658,6 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
     });
   </script>
-
 <script id="sensesoil-viewer-patch-script">
 (function () {
   var box = document.querySelector('.diagram-container');

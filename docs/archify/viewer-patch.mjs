@@ -77,9 +77,10 @@ const STYLE = `<style id="${MARK}-style">
   .ss-steps li::before { content: counter(st); grid-row: 1 / span 2; font: 600 0.85rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--text-faint, #8a8f98); }
   .ss-steps .d { width: 0.55rem; height: 0.55rem; border-radius: 50%; grid-row: 1; }
   .ss-steps .l { font-size: 0.98rem; font-weight: 600; grid-row: 1; }
-  .ss-steps .w, .ss-steps .f { grid-column: 3; font-size: 0.8rem; color: var(--text-faint, #8a8f98); }
-  .ss-steps .f { color: var(--text-muted, #a3a9b4); }
-  .ss-steps .f:empty, .ss-steps .w:empty { display: none; }
+  /* 收合清單只列步驟名稱；部門與說明留在流程圖上 */
+  .ss-steps .w, .ss-steps .f { display: none; }
+  .ss-steps li { padding: 0.55rem 0; }
+  .ss-steps li::before { grid-row: 1; }
   .ss-go {
     all: unset; box-sizing: border-box; cursor: pointer; margin-top: 0.75rem;
     display: inline-flex; align-items: center; padding: 0.45rem 0.9rem; border-radius: 999px;
