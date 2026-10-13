@@ -4869,6 +4869,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     }
   </style>
 
+
+
+
 <style id="sensesoil-viewer-patch-style">
   /* 1. 底框 */
   .diagram-container,
@@ -4892,6 +4895,10 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .diagram-container .semantic-lens,
   .diagram-container .diagram-guide,
   .diagram-container .node-finder { transform: none !important; }
+  /* 圖示：iPhone Safari 對「放在縮放群組裡的 non-scaling-stroke」算錯，放大後線條糊成一團；改成跟著圖一起縮放 */
+  svg .semantic-sigil > * { vector-effect: none !important; }
+  /* 標題前的燈號：手機版原本靠上對齊，會跟標題錯開；改成垂直置中 */
+  .header-row { align-items: center !important; }
   /* 2. 縮放按鈕、路徑 */
   .diagram-nav [data-view], #btn-route-probe, .route-probe { display: none !important; }
   /* 3. 手勢：沒放大時單指照常捲動頁面；放大後單指拖曳圖 */
@@ -4913,17 +4920,39 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   html[data-ss-outline="on"] .diagram-container > svg { display: none !important; }
   html[data-ss-outline="on"] .ss-zoom-hint { display: none; }
   .ss-outline { display: none; }
-  html[data-ss-outline="on"] .ss-outline { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); padding: 0.25rem 0 0.5rem; }
-  .ss-outline button {
-    all: unset; box-sizing: border-box; cursor: pointer;
+  html[data-ss-outline="on"] .ss-outline { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); align-items: start; padding: 0.25rem 0 0.5rem; }
+  .ss-stage { border-radius: 0.9rem; border: 1px solid var(--panel-border, #2a3140); background: var(--panel, #10141c); color: var(--text, #e5e7eb); overflow: hidden; }
+  .ss-stage[data-open] { border-color: color-mix(in srgb, var(--frontend-stroke, #22d3ee) 55%, transparent); }
+  .ss-stage-head {
+    all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
     display: flex; align-items: center; gap: 0.9rem; padding: 0.9rem 1rem;
-    border-radius: 0.9rem; border: 1px solid var(--panel-border, #2a3140);
-    background: var(--panel, #10141c); color: var(--text, #e5e7eb);
   }
-  .ss-outline button:hover, .ss-outline button:focus-visible { border-color: var(--frontend-stroke, #22d3ee); }
+  .ss-stage-head:focus-visible { outline: 2px solid var(--frontend-stroke, #22d3ee); outline-offset: -2px; }
   .ss-outline .n { font: 700 1.6rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--frontend-stroke, #22d3ee); min-width: 2.2rem; }
   .ss-outline .t { font-size: 1.05rem; font-weight: 700; }
   .ss-outline .c { margin-left: auto; font-size: 0.8rem; color: var(--text-faint, #8a8f98); white-space: nowrap; }
+  .ss-outline .v { width: 0.5rem; height: 0.5rem; border-right: 2px solid var(--text-faint, #8a8f98); border-bottom: 2px solid var(--text-faint, #8a8f98); rotate: 45deg; translate: 0 -0.15rem; transition: rotate .2s; flex: none; }
+  .ss-stage[data-open] .v { rotate: 225deg; translate: 0 0.1rem; }
+  .ss-steps { padding: 0 1rem 0.9rem; }
+  .ss-steps ol { list-style: none; margin: 0; padding: 0; counter-reset: st; border-top: 1px solid var(--panel-border, #2a3140); }
+  .ss-steps li {
+    counter-increment: st; display: grid; grid-template-columns: 1.6rem 0.55rem 1fr; column-gap: 0.55rem; row-gap: 0.1rem;
+    align-items: center; padding: 0.6rem 0; border-bottom: 1px solid color-mix(in srgb, var(--panel-border, #2a3140) 60%, transparent);
+  }
+  .ss-steps li::before { content: counter(st); grid-row: 1 / span 2; font: 600 0.85rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--text-faint, #8a8f98); }
+  .ss-steps .d { width: 0.55rem; height: 0.55rem; border-radius: 50%; grid-row: 1; }
+  .ss-steps .l { font-size: 0.98rem; font-weight: 600; grid-row: 1; }
+  .ss-steps .w, .ss-steps .f { grid-column: 3; font-size: 0.8rem; color: var(--text-faint, #8a8f98); }
+  .ss-steps .f { color: var(--text-muted, #a3a9b4); }
+  .ss-steps .f:empty, .ss-steps .w:empty { display: none; }
+  .ss-go {
+    all: unset; box-sizing: border-box; cursor: pointer; margin-top: 0.75rem;
+    display: inline-flex; align-items: center; padding: 0.45rem 0.9rem; border-radius: 999px;
+    font-size: 0.85rem; font-weight: 600; color: var(--frontend-stroke, #22d3ee);
+    border: 1px solid color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent);
+  }
+  /* 收合時「資訊」用不到，先藏起來；展開後才出現 */
+  html[data-ss-outline="on"] #ss-info-toggle { display: none !important; }
   .card-header { cursor: pointer; }
   .card[data-ss-collapsed] > :not(.card-header) { display: none !important; }
   .card[data-ss-collapsed] .card-header { margin-bottom: 0 !important; }
@@ -14524,6 +14553,9 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     });
   </script>
 
+
+
+
 <script id="sensesoil-viewer-patch-script">
 (function () {
   var box = document.querySelector('.diagram-container');
@@ -14769,25 +14801,67 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     laneLabels.forEach(function (label) {
       var m = label.textContent.trim().match(/^(\d+)\s*\/\s*(.+)$/);
       var rect = laneOf(label);
-      var count = 0;
+      // 這一段的步驟：卡片中心落在這條泳道裡的節點，由左到右
+      var steps = [];
       if (rect) {
         var lb = rect.getBBox();
         svg.querySelectorAll('[data-node-id]').forEach(function (n) {
           var nb = n.getBBox(), cy = nb.y + nb.height / 2;
-          if (cy >= lb.y && cy <= lb.y + lb.height) count++;
+          if (cy < lb.y || cy > lb.y + lb.height) return;
+          // 卡片底框的 class 是 c-backend／c-security…（另有 c-mask 之類的輔助 class，要略過）
+          var kind = '';
+          n.querySelectorAll('[class]').forEach(function (el) {
+            var mm = (el.getAttribute('class') || '').match(/\bc-(frontend|backend|database|cloud|security|messagebus|external)\b/);
+            if (mm && !kind) kind = mm[1];
+          });
+          var txt = function (sel) { var e = n.querySelector(sel); return e ? e.textContent.trim() : ''; };
+          steps.push({ x: nb.x, label: txt('[data-node-label]'), who: txt('[data-detail="context"]'), note: txt('[data-detail="fine"]'), kind: kind });
         });
+        steps.sort(function (a, b2) { return a.x - b2.x; });
       }
+      var stage = document.createElement('div');
+      stage.className = 'ss-stage';
       var b = document.createElement('button');
       b.type = 'button';
-      b.innerHTML = '<span class="n"></span><span class="t"></span><span class="c"></span>';
+      b.className = 'ss-stage-head';
+      b.setAttribute('aria-expanded', 'false');
+      b.innerHTML = '<span class="n"></span><span class="t"></span><span class="c"></span><span class="v" aria-hidden="true"></span>';
       b.querySelector('.n').textContent = String(+m[1]);
       b.querySelector('.t').textContent = m[2];
-      b.querySelector('.c').textContent = count ? count + ' 個步驟' : '';
-      b.addEventListener('click', function () {
+      b.querySelector('.c').textContent = steps.length ? steps.length + ' 個步驟' : '';
+      var list = document.createElement('div');
+      list.className = 'ss-steps';
+      list.hidden = true;
+      var ol = document.createElement('ol');
+      steps.forEach(function (st) {
+        var li = document.createElement('li');
+        li.innerHTML = '<span class="d"></span><span class="l"></span><span class="w"></span><span class="f"></span>';
+        li.querySelector('.d').style.background = 'var(--' + (st.kind || 'backend') + '-stroke, #22d3ee)';
+        li.querySelector('.l').textContent = st.label;
+        li.querySelector('.w').textContent = st.who;
+        li.querySelector('.f').textContent = st.note;
+        ol.appendChild(li);
+      });
+      list.appendChild(ol);
+      var go = document.createElement('button');
+      go.type = 'button';
+      go.className = 'ss-go';
+      go.textContent = '在流程圖上看';
+      go.addEventListener('click', function () {
         setOutline(false);
         requestAnimationFrame(function () { zoomToLane(rect); });
       });
-      outline.appendChild(b);
+      list.appendChild(go);
+      // 單擊大標題：只開合這一段的步驟
+      b.addEventListener('click', function () {
+        var open = list.hidden;
+        list.hidden = !open;
+        b.setAttribute('aria-expanded', open ? 'true' : 'false');
+        stage.toggleAttribute('data-open', open);
+      });
+      stage.appendChild(b);
+      stage.appendChild(list);
+      outline.appendChild(stage);
     });
     box.insertBefore(outline, svg);
 
@@ -14811,6 +14885,54 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     nav.insertBefore(obtn, nav.firstChild);
     setOutline(outlined);
   }
+  // 透鏡：一次只看一種角色（點別的就換過去，再點同一個取消），名稱跟圖例一致
+  var lensRoot = document.getElementById('semantic-lens-kinds');
+  var lensPanel = document.getElementById('semantic-lens');
+  var legendName = {};
+  svg.querySelectorAll('[data-legend-kind][data-legend-label]').forEach(function (g) {
+    legendName[g.getAttribute('data-legend-kind')] = g.getAttribute('data-legend-label');
+  });
+  var genericName = {};
+  function relabelLens() {
+    if (!lensRoot) return;
+    lensRoot.querySelectorAll('[data-kind]').forEach(function (btn) {
+      var kind = btn.getAttribute('data-kind');
+      var strong = btn.querySelector('strong');
+      var name = legendName[kind];
+      if (!strong || !name) return;
+      if (strong.textContent !== name) {
+        genericName[strong.textContent] = name;
+        strong.textContent = name;
+      }
+      var em = btn.querySelector('em');
+      btn.setAttribute('aria-label', name + (em ? '，' + em.textContent + ' 個步驟' : ''));
+    });
+    var set = function (sel, text) { var e = lensPanel && lensPanel.querySelector(sel); if (e && e.textContent !== text) e.textContent = text; };
+    set('.semantic-lens-eyebrow', '透鏡');
+    set('#semantic-lens-title, .semantic-lens-title', '依角色查看');
+    set('.semantic-lens-instruction', '點一種角色，標出這類步驟和相連的流程；點別的就換過去，再點一次取消。');
+    // 狀態文字裡的通用名稱（後端、安全…）換成圖例名稱
+    var status = lensPanel && lensPanel.querySelector('.semantic-lens-status');
+    if (status) {
+      var t = status.textContent;
+      Object.keys(genericName).forEach(function (g) { t = t.split(g).join(genericName[g]); });
+      if (t !== status.textContent) status.textContent = t;
+    }
+  }
+  if (lensRoot && window.Archify && Archify.semanticLens) {
+    lensRoot.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-kind]');
+      if (!btn || btn.disabled) return;
+      e.stopImmediatePropagation();
+      var kind = btn.getAttribute('data-kind');
+      var active = Archify.semanticLens.active() || [];
+      active.forEach(function (k) { if (k !== kind) Archify.semanticLens.select(k); });
+      Archify.semanticLens.select(kind);
+    }, true);
+    new MutationObserver(relabelLens).observe(lensPanel, { childList: true, subtree: true, characterData: true });
+    relabelLens();
+  }
+
   // 下方說明卡：點標題單獨開合
   cards.forEach(function (c) {
     var head = c.querySelector('.card-header');
