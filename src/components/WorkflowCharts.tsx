@@ -87,8 +87,7 @@ interface DiagramEntry {
 
 export const STATIC_FLOWS: DiagramEntry[] = [
   { title: "專案管理流程總覽", en: "PM overview", src: "/flows/pm-overview.html" },
-  { title: "工程承攬流程（一）接洽到開工", en: "Construction I", src: "/flows/construction-1.html" },
-  { title: "工程承攬流程（二）施工到保固", en: "Construction II", src: "/flows/construction-2.html" },
+  { title: "工程承攬流程", en: "Construction", src: "/flows/construction.html" },
 ];
 
 function DiagramViewer({ diagram, onClose }: { diagram: DiagramEntry | null; onClose: () => void }) {

@@ -1,7 +1,7 @@
 // 產生 Archify workflow 候選檔：拾壤「工程承攬流程」
 // 角色：不做設計。業主（與其設計師）提供設計，拾壤擔任工程管理單位——
 //   協助釐清設計介面問題、把工程落實；泥作、土作由自有工班施作，其他工種發包協力廠商。
-// 用法：node docs/archify/construction.build.mjs  →  docs/archify/construction-1.workflow.json、construction-2.workflow.json
+// 用法：node docs/archify/construction.build.mjs  →  docs/archify/construction.workflow.json
 import fs from "fs";
 
 // 繁中介面字串沿用總覽那份（OpenCC 由簡轉繁，未逐條人工校對）
@@ -192,10 +192,10 @@ const lanes = [
   { id: "s8", label: "保固與售後" },
 ];
 
-// 8 個階段一張圖放不進桌機一屏（Archify 的 viewport 檢查會擋），拆成前後兩張，各 4 個階段。
+// 8 個階段合成一張完整流程（Archify 的瀏覽器檢查會嫌整頁太高，所以用 deliver 產生、不跑 finalize；
+// 版面靠 viewer-patch.mjs 的縮放手勢與「收合」按鈕處理）。
 const PARTS = [
-  { file: "construction-1", title: "工程承攬流程（一）接洽到開工", lanes: ["s1", "s2", "s3", "s4"], cards: [1, 2, 3, 4] },
-  { file: "construction-2", title: "工程承攬流程（二）施工到保固", lanes: ["s5", "s6", "s7", "s8"], cards: [5, 6, 7, 8], width: 140 },
+  { file: "construction", title: "工程承攬流程", lanes: ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"], cards: [0, 1, 2, 3, 4, 5, 6, 7, 8], width: 140 },
 ];
 
 for (const part of PARTS) {

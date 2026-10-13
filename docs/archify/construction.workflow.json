@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "工程承攬流程（二）施工到保固",
+    "title": "工程承攬流程",
     "locale": "zh-TW",
     "translations": {
       "viewer.kind.frontend": "前端",
@@ -445,7 +445,7 @@
       "legend.lifecycle.final": "終態"
     },
     "quality_profile": "standard",
-    "output": "public/flows/construction-2.html",
+    "output": "public/flows/construction.html",
     "legend": {
       "mode": "auto",
       "entries": {
@@ -466,6 +466,22 @@
   },
   "lanes": [
     {
+      "id": "s1",
+      "label": "接洽與評估"
+    },
+    {
+      "id": "s2",
+      "label": "設計介面釐清"
+    },
+    {
+      "id": "s3",
+      "label": "估價與簽約"
+    },
+    {
+      "id": "s4",
+      "label": "開工準備"
+    },
+    {
       "id": "s5",
       "label": "施工執行"
     },
@@ -483,14 +499,254 @@
     }
   ],
   "mainPath": [
-    "protect",
-    "mep",
-    "hidden",
-    "masonry",
-    "earth",
-    "subwork"
+    "lead",
+    "docs",
+    "site",
+    "take",
+    "pm",
+    "account"
   ],
   "nodes": [
+    {
+      "id": "lead",
+      "lane": "s1",
+      "col": 0,
+      "type": "backend",
+      "label": "詢案受理",
+      "sublabel": "銷售課",
+      "tag": "業主或設計師轉介",
+      "width": 140
+    },
+    {
+      "id": "docs",
+      "lane": "s1",
+      "col": 1,
+      "type": "external",
+      "label": "圖說與需求盤點",
+      "sublabel": "規劃課",
+      "tag": "圖面常不齊",
+      "width": 140
+    },
+    {
+      "id": "site",
+      "lane": "s1",
+      "col": 2,
+      "type": "external",
+      "label": "現勘與既有條件",
+      "sublabel": "規劃課、工程課",
+      "tag": "管委會規範",
+      "width": 140
+    },
+    {
+      "id": "take",
+      "lane": "s1",
+      "col": 3,
+      "type": "security",
+      "label": "承接評估",
+      "sublabel": "主管議會",
+      "tag": "承接／婉拒",
+      "width": 140
+    },
+    {
+      "id": "pm",
+      "lane": "s1",
+      "col": 4,
+      "type": "backend",
+      "label": "指派專案經理",
+      "sublabel": "策略管理課",
+      "tag": "單一窗口",
+      "width": 140
+    },
+    {
+      "id": "account",
+      "lane": "s1",
+      "col": 5,
+      "type": "database",
+      "label": "建立專案帳戶",
+      "sublabel": "收入課",
+      "tag": "→ 介面釐清",
+      "width": 140
+    },
+    {
+      "id": "review",
+      "lane": "s2",
+      "col": 0,
+      "type": "backend",
+      "label": "設計圖說審查",
+      "sublabel": "規劃課",
+      "tag": "尺寸與法規",
+      "width": 140
+    },
+    {
+      "id": "interface",
+      "lane": "s2",
+      "col": 1,
+      "type": "backend",
+      "label": "工序介面檢討",
+      "sublabel": "規劃課、工程課",
+      "tag": "收邊與管線衝突",
+      "width": 140
+    },
+    {
+      "id": "craft",
+      "lane": "s2",
+      "col": 2,
+      "type": "backend",
+      "label": "泥作土作可行性",
+      "sublabel": "泥作課、土造課",
+      "tag": "厚度與養護期",
+      "width": 140
+    },
+    {
+      "id": "issues",
+      "lane": "s2",
+      "col": 3,
+      "type": "backend",
+      "label": "疑義清單",
+      "sublabel": "規劃課",
+      "tag": "附照片與標註",
+      "width": 140
+    },
+    {
+      "id": "clarify",
+      "lane": "s2",
+      "col": 4,
+      "type": "security",
+      "label": "澄清會議",
+      "sublabel": "業主、設計師",
+      "tag": "確認／補圖",
+      "width": 140
+    },
+    {
+      "id": "shop",
+      "lane": "s2",
+      "col": 5,
+      "type": "backend",
+      "label": "介面整合圖",
+      "sublabel": "設計課",
+      "tag": "→ 估價",
+      "width": 140
+    },
+    {
+      "id": "qty",
+      "lane": "s3",
+      "col": 0,
+      "type": "backend",
+      "label": "數量計算",
+      "sublabel": "規劃課",
+      "tag": "依整合圖",
+      "width": 140
+    },
+    {
+      "id": "subquote",
+      "lane": "s3",
+      "col": 1,
+      "type": "database",
+      "label": "分包詢價",
+      "sublabel": "支出課",
+      "tag": "至少兩家比價",
+      "width": 140
+    },
+    {
+      "id": "selfcost",
+      "lane": "s3",
+      "col": 2,
+      "type": "backend",
+      "label": "自有工班工料分析",
+      "sublabel": "泥作課、土造課",
+      "tag": "工時與耗損",
+      "width": 140
+    },
+    {
+      "id": "scope",
+      "lane": "s3",
+      "col": 3,
+      "type": "backend",
+      "label": "報價與範圍界定",
+      "sublabel": "規劃課",
+      "tag": "含／不含／甲供",
+      "width": 140
+    },
+    {
+      "id": "nego",
+      "lane": "s3",
+      "col": 4,
+      "type": "security",
+      "label": "議價確認",
+      "sublabel": "銷售課",
+      "tag": "確認／調整",
+      "width": 140
+    },
+    {
+      "id": "contract",
+      "lane": "s3",
+      "col": 5,
+      "type": "external",
+      "label": "合約審閱與簽約",
+      "sublabel": "風控課、收入課",
+      "tag": "→ 開工準備",
+      "width": 140
+    },
+    {
+      "id": "deposit",
+      "lane": "s4",
+      "col": 0,
+      "type": "database",
+      "label": "訂金請款",
+      "sublabel": "收入課",
+      "tag": "到帳才排程",
+      "width": 140
+    },
+    {
+      "id": "plan",
+      "lane": "s4",
+      "col": 1,
+      "type": "backend",
+      "label": "施工計畫與排程",
+      "sublabel": "工程課",
+      "tag": "自有工班檔期",
+      "width": 140
+    },
+    {
+      "id": "permit",
+      "lane": "s4",
+      "col": 2,
+      "type": "backend",
+      "label": "申請與保險",
+      "sublabel": "工程課",
+      "tag": "裝修審查、管委會",
+      "width": 140
+    },
+    {
+      "id": "submittal",
+      "lane": "s4",
+      "col": 3,
+      "type": "security",
+      "label": "材料送審",
+      "sublabel": "業主、設計師",
+      "tag": "核可／更換",
+      "width": 140
+    },
+    {
+      "id": "procure",
+      "lane": "s4",
+      "col": 4,
+      "type": "backend",
+      "label": "發包與叫料",
+      "sublabel": "規劃課",
+      "tag": "交期回推",
+      "width": 140
+    },
+    {
+      "id": "spend",
+      "lane": "s4",
+      "col": 5,
+      "type": "security",
+      "label": "支出審核",
+      "sublabel": "支出課",
+      "tag": "核准／退回",
+      "width": 140
+    },
     {
       "id": "protect",
       "lane": "s5",
@@ -733,6 +989,146 @@
   ],
   "edges": [
     {
+      "id": "lead-docs",
+      "from": "lead",
+      "to": "docs"
+    },
+    {
+      "id": "docs-site",
+      "from": "docs",
+      "to": "site"
+    },
+    {
+      "id": "site-take",
+      "from": "site",
+      "to": "take"
+    },
+    {
+      "id": "take-pm",
+      "from": "take",
+      "to": "pm",
+      "label": "承接",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pm-account",
+      "from": "pm",
+      "to": "account"
+    },
+    {
+      "id": "review-interface",
+      "from": "review",
+      "to": "interface"
+    },
+    {
+      "id": "interface-craft",
+      "from": "interface",
+      "to": "craft"
+    },
+    {
+      "id": "craft-issues",
+      "from": "craft",
+      "to": "issues"
+    },
+    {
+      "id": "issues-clarify",
+      "from": "issues",
+      "to": "clarify"
+    },
+    {
+      "id": "clarify-shop",
+      "from": "clarify",
+      "to": "shop",
+      "label": "確認",
+      "variant": "emphasis"
+    },
+    {
+      "id": "clarify-review",
+      "from": "clarify",
+      "to": "review",
+      "label": "補圖",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "id": "qty-subquote",
+      "from": "qty",
+      "to": "subquote"
+    },
+    {
+      "id": "subquote-selfcost",
+      "from": "subquote",
+      "to": "selfcost"
+    },
+    {
+      "id": "selfcost-scope",
+      "from": "selfcost",
+      "to": "scope"
+    },
+    {
+      "id": "scope-nego",
+      "from": "scope",
+      "to": "nego"
+    },
+    {
+      "id": "nego-contract",
+      "from": "nego",
+      "to": "contract",
+      "label": "確認",
+      "variant": "emphasis"
+    },
+    {
+      "id": "nego-scope",
+      "from": "nego",
+      "to": "scope",
+      "label": "調整",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "id": "deposit-plan",
+      "from": "deposit",
+      "to": "plan"
+    },
+    {
+      "id": "plan-permit",
+      "from": "plan",
+      "to": "permit"
+    },
+    {
+      "id": "permit-submittal",
+      "from": "permit",
+      "to": "submittal"
+    },
+    {
+      "id": "submittal-procure",
+      "from": "submittal",
+      "to": "procure",
+      "label": "核可",
+      "variant": "emphasis"
+    },
+    {
+      "id": "submittal-plan",
+      "from": "submittal",
+      "to": "plan",
+      "label": "更換重排",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
+      "id": "procure-spend",
+      "from": "procure",
+      "to": "spend"
+    },
+    {
+      "id": "spend-procure",
+      "from": "spend",
+      "to": "procure",
+      "label": "退回",
+      "role": "return",
+      "variant": "dashed"
+    },
+    {
       "id": "protect-mep",
       "from": "protect",
       "to": "mep"
@@ -866,6 +1262,59 @@
     }
   ],
   "cards": [
+    {
+      "dot": "slate",
+      "title": "角色定位",
+      "items": [
+        "設計由業主（與其設計師）負責，拾壤不做設計",
+        "拾壤是工程管理單位：釐清設計介面問題、把工程落實到完工",
+        "泥作、土作由自有工班施作；水電、木作、油漆、系統櫃等發包協力廠商"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "1 接洽與評估：會遇到的問題",
+      "items": [
+        "只有 3D 圖或平面配置，沒有施工圖：先列「缺圖清單」，報價註明依現有圖面，缺圖另計",
+        "業主與設計師期望不一致（預算、工期、誰拍板）：第一次會議就確認決策人與溝通窗口",
+        "現況與圖面不符（樑柱、管道間、地坪高程）：現勘拍照量測，列入疑義清單",
+        "大樓管委會限制施工時段、電梯保護、保證金：現勘就向管委會索取裝修規範",
+        "承接評估看：自有泥作／土作檔期、毛利、付款條件、業主是否配合釐清介面"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "2 設計介面釐清：會遇到的問題",
+      "items": [
+        "設計圖尺寸互相矛盾、未依法規（防火、無障礙、逃生）：審查後標註，請設計師修正",
+        "工種介面衝突：管線與木作衝突、磁磚分割與門檻收邊、地坪洩水坡度、冷氣排水路徑",
+        "泥作與土作的厚度、重量與養護期，常被設計忽略：提前提出可行工法與替代方案",
+        "疑義口頭確認沒有紀錄：疑義清單逐條編號、附照片，澄清會議紀錄由業主與設計師簽認",
+        "補圖遲遲不來：在清單上寫回覆期限，逾期影響工期要寫進會議紀錄"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "3 估價與簽約：會遇到的問題",
+      "items": [
+        "數量算錯或漏項：依介面整合圖計算，報價逐項對應圖號",
+        "協力廠商報價差距大、規格不同：至少兩家比價，規格統一後再比",
+        "自有泥作、土作低估工時與耗損：依過去專案的實際工時與耗損率估算",
+        "範圍不清造成日後爭議：寫明含／不含、甲供材料、設計變更與追加計價方式",
+        "合約重點：付款節點、保留款比例與期限、工期延誤責任（業主延遲提供圖面不算我方）、保固範圍"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "4 開工準備：會遇到的問題",
+      "items": [
+        "訂金未到就開始排工：到帳才排程、才叫料",
+        "自有工班檔期與其他案子重疊：排程時同時看全公司的泥作、土作檔期",
+        "室內裝修審查與管委會申請時間比預期長：申請時間要算進總工期",
+        "材料送審拖延、停產、交期長：送審附替代品，長交期材料（進口磁磚、設備）優先下單",
+        "發包超出預算：支出審核把關，超預算退回重新詢價或與業主討論"
+      ]
+    },
     {
       "dot": "emerald",
       "title": "5 施工執行：會遇到的問題",

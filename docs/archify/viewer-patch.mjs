@@ -43,6 +43,29 @@ const STYLE = `<style id="${MARK}-style">
     transition: opacity .3s;
   }
   .diagram-container[data-ss-zoomed] .ss-zoom-hint { opacity: 0; }
+  /* 4. 卡片資訊（語義護照）：預設關閉，點卡片只會標出相關步驟；用「資訊」按鈕開關 */
+  html:not([data-ss-info="on"]) #focus-chip { display: none !important; }
+  #focus-chip { max-height: min(60vh, 26rem); overflow-y: auto; overscroll-behavior: contain; }
+  #ss-info-toggle[aria-pressed="true"] { color: var(--frontend-stroke, #22d3ee); }
+  /* 5. 收合：圖只留各階段大標題，下方問題卡只留標題；點單一階段或單一卡片再打開 */
+  html[data-ss-outline="on"] .diagram-container > svg { display: none !important; }
+  html[data-ss-outline="on"] .ss-zoom-hint { display: none; }
+  .ss-outline { display: none; }
+  html[data-ss-outline="on"] .ss-outline { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); padding: 0.25rem 0 0.5rem; }
+  .ss-outline button {
+    all: unset; box-sizing: border-box; cursor: pointer;
+    display: flex; align-items: center; gap: 0.9rem; padding: 0.9rem 1rem;
+    border-radius: 0.9rem; border: 1px solid var(--panel-border, #2a3140);
+    background: var(--panel, #10141c); color: var(--text, #e5e7eb);
+  }
+  .ss-outline button:hover, .ss-outline button:focus-visible { border-color: var(--frontend-stroke, #22d3ee); }
+  .ss-outline .n { font: 700 1.6rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--frontend-stroke, #22d3ee); min-width: 2.2rem; }
+  .ss-outline .t { font-size: 1.05rem; font-weight: 700; }
+  .ss-outline .c { margin-left: auto; font-size: 0.8rem; color: var(--text-faint, #8a8f98); white-space: nowrap; }
+  .card-header { cursor: pointer; }
+  .card[data-ss-collapsed] > :not(.card-header) { display: none !important; }
+  .card[data-ss-collapsed] .card-header { margin-bottom: 0 !important; }
+  #ss-outline-toggle[aria-pressed="true"] { color: var(--frontend-stroke, #22d3ee); }
 </style>`;
 
 const SCRIPT = `<script id="${MARK}-script">
@@ -230,6 +253,118 @@ const SCRIPT = `<script id="${MARK}-script">
   }, true);
 
   window.addEventListener('resize', function () { requestAnimationFrame(function () { read(); apply(); }); });
+
+  // 「資訊」按鈕：開關卡片資訊面板，記住使用者的選擇
+  var nav = box.querySelector('.diagram-nav');
+  var lens = document.getElementById('btn-semantic-lens');
+  if (nav) {
+    var KEY = 'ss-flow-info';
+    var on = false;
+    try { on = localStorage.getItem(KEY) === 'on'; } catch (_) {}
+    var btn = document.createElement('button');
+    btn.id = 'ss-info-toggle';
+    btn.type = 'button';
+    btn.textContent = '資訊';
+    btn.title = '點卡片時顯示詳細資訊';
+    function setInfo(v) {
+      on = v;
+      document.documentElement.setAttribute('data-ss-info', v ? 'on' : 'off');
+      btn.setAttribute('aria-pressed', v ? 'true' : 'false');
+      btn.setAttribute('aria-label', v ? '關閉卡片資訊' : '開啟卡片資訊');
+      try { localStorage.setItem(KEY, v ? 'on' : 'off'); } catch (_) {}
+    }
+    btn.addEventListener('click', function () { setInfo(!on); });
+    if (lens && lens.parentNode === nav) nav.insertBefore(btn, lens); else nav.insertBefore(btn, nav.firstChild);
+    setInfo(on);
+  }
+
+  // 「收合／展開」：一鍵只看各階段大標題（1、2、3…），點某一階段就展開並放大到那一段
+  var vb = svg.viewBox && svg.viewBox.baseVal;
+  var laneRects = Array.prototype.slice.call(svg.querySelectorAll('.c-lane'));
+  var laneLabels = Array.prototype.slice.call(svg.querySelectorAll('text')).filter(function (t) { return /^\\d+\\s*\\/\\s*/.test(t.textContent.trim()); });
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.cards .card'));
+  function laneOf(label) {
+    var ly = +label.getAttribute('y');
+    return laneRects.filter(function (r) { var b = r.getBBox(); return ly >= b.y && ly <= b.y + b.height; })[0];
+  }
+  function zoomToLane(rect) {
+    if (!rect || !vb) return;
+    var b = rect.getBBox();
+    var w = svg.clientWidth, h = svg.clientHeight;
+    var k = Math.min(w / vb.width, h / vb.height);
+    var ox = (w - vb.width * k) / 2, oy = (h - vb.height * k) / 2;
+    var lx = (b.x - vb.x) * k + ox, ly = (b.y - vb.y) * k + oy;
+    // 放大到卡片字看得清楚就好（每個 SVG 單位約 1 像素）；電腦上本來就看得清楚，只捲到那一段
+    var need = Math.min(3, 1 / k);
+    if (need < 1.1) {
+      s = 1; x = 0; y = 0; apply();
+      var top = svg.getBoundingClientRect().top + window.scrollY + ly - 12;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      return;
+    }
+    s = need;
+    x = -lx * s + 8; y = -ly * s + 8;
+    apply();
+    box.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  if (nav && laneLabels.length) {
+    var outline = document.createElement('div');
+    outline.className = 'ss-outline';
+    laneLabels.forEach(function (label) {
+      var m = label.textContent.trim().match(/^(\\d+)\\s*\\/\\s*(.+)$/);
+      var rect = laneOf(label);
+      var count = 0;
+      if (rect) {
+        var lb = rect.getBBox();
+        svg.querySelectorAll('[data-node-id]').forEach(function (n) {
+          var nb = n.getBBox(), cy = nb.y + nb.height / 2;
+          if (cy >= lb.y && cy <= lb.y + lb.height) count++;
+        });
+      }
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = '<span class="n"></span><span class="t"></span><span class="c"></span>';
+      b.querySelector('.n').textContent = String(+m[1]);
+      b.querySelector('.t').textContent = m[2];
+      b.querySelector('.c').textContent = count ? count + ' 個步驟' : '';
+      b.addEventListener('click', function () {
+        setOutline(false);
+        requestAnimationFrame(function () { zoomToLane(rect); });
+      });
+      outline.appendChild(b);
+    });
+    box.insertBefore(outline, svg);
+
+    var OKEY = 'ss-flow-outline';
+    var outlined = false;
+    try { outlined = localStorage.getItem(OKEY) === 'on'; } catch (_) {}
+    var obtn = document.createElement('button');
+    obtn.id = 'ss-outline-toggle';
+    obtn.type = 'button';
+    function setOutline(v) {
+      outlined = v;
+      document.documentElement.setAttribute('data-ss-outline', v ? 'on' : 'off');
+      obtn.textContent = v ? '展開' : '收合';
+      obtn.setAttribute('aria-pressed', v ? 'true' : 'false');
+      obtn.title = v ? '展開全部流程與說明' : '只看各階段大標題';
+      cards.forEach(function (c) { c.toggleAttribute('data-ss-collapsed', v); });
+      if (v) { s = 1; x = 0; y = 0; apply(); }
+      try { localStorage.setItem(OKEY, v ? 'on' : 'off'); } catch (_) {}
+    }
+    obtn.addEventListener('click', function () { setOutline(!outlined); });
+    nav.insertBefore(obtn, nav.firstChild);
+    setOutline(outlined);
+  }
+  // 下方說明卡：點標題單獨開合
+  cards.forEach(function (c) {
+    var head = c.querySelector('.card-header');
+    if (!head) return;
+    head.setAttribute('role', 'button');
+    head.setAttribute('tabindex', '0');
+    function flip() { c.toggleAttribute('data-ss-collapsed'); }
+    head.addEventListener('click', flip);
+    head.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+  });
 })();
 </script>`;
 
