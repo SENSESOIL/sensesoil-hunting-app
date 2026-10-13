@@ -467,35 +467,31 @@
   "lanes": [
     {
       "id": "s1",
-      "label": "接洽與評估"
+      "label": "接洽評估"
     },
     {
       "id": "s2",
-      "label": "設計介面釐清"
+      "label": "釐清設計（八工檢核）"
     },
     {
       "id": "s3",
-      "label": "估價與簽約"
+      "label": "估價簽約"
     },
     {
       "id": "s4",
-      "label": "開工準備"
+      "label": "施工前準備"
     },
     {
       "id": "s5",
-      "label": "施工執行"
+      "label": "施工中管理"
     },
     {
       "id": "s6",
-      "label": "施工管理"
+      "label": "施工後交付"
     },
     {
       "id": "s7",
-      "label": "驗收與交屋"
-    },
-    {
-      "id": "s8",
-      "label": "保固與售後"
+      "label": "保固售服"
     }
   ],
   "mainPath": [
@@ -524,7 +520,7 @@
       "type": "external",
       "label": "圖說與需求盤點",
       "sublabel": "規劃課",
-      "tag": "圖面常不齊",
+      "tag": "缺圖先列清單",
       "width": 140
     },
     {
@@ -534,7 +530,7 @@
       "type": "external",
       "label": "現勘與既有條件",
       "sublabel": "規劃課、工程課",
-      "tag": "管委會規範",
+      "tag": "拍照量測",
       "width": 140
     },
     {
@@ -564,37 +560,95 @@
       "type": "database",
       "label": "建立專案帳戶",
       "sublabel": "收入課",
-      "tag": "→ 介面釐清",
+      "tag": "→ 釐清設計",
       "width": 140
     },
     {
-      "id": "review",
+      "id": "g-limit",
       "lane": "s2",
       "col": 0,
       "type": "backend",
-      "label": "設計圖說審查",
-      "sublabel": "規劃課",
-      "tag": "尺寸與法規",
+      "label": "工限",
+      "sublabel": "環境限制",
+      "tag": "動線、管委會、裝修審查",
+      "yOffset": -56,
       "width": 140
     },
     {
-      "id": "interface",
+      "id": "g-audit",
       "lane": "s2",
       "col": 1,
       "type": "backend",
-      "label": "工序介面檢討",
-      "sublabel": "規劃課、工程課",
-      "tag": "收邊與管線衝突",
+      "label": "工審",
+      "sublabel": "圖面釋疑",
+      "tag": "列疑義、書面釐清",
+      "yOffset": -56,
       "width": 140
     },
     {
-      "id": "craft",
+      "id": "g-item",
       "lane": "s2",
       "col": 2,
       "type": "backend",
-      "label": "泥作土作可行性",
-      "sublabel": "泥作課、土造課",
-      "tag": "厚度與養護期",
+      "label": "工項",
+      "sublabel": "項目釐清",
+      "tag": "設計圖翻成工程項目",
+      "yOffset": -56,
+      "width": 140
+    },
+    {
+      "id": "g-method",
+      "lane": "s2",
+      "col": 3,
+      "type": "backend",
+      "label": "工法",
+      "sublabel": "技術評估",
+      "tag": "畫得出是否做得出",
+      "yOffset": -56,
+      "width": 140
+    },
+    {
+      "id": "g-duty",
+      "lane": "s2",
+      "col": 4,
+      "type": "backend",
+      "label": "工責",
+      "sublabel": "邊界釐清",
+      "tag": "我們做／別人做",
+      "yOffset": -56,
+      "width": 140
+    },
+    {
+      "id": "g-seq",
+      "lane": "s2",
+      "col": 5,
+      "type": "backend",
+      "label": "工序",
+      "sublabel": "介面檢討",
+      "tag": "異材質交接、機電衝突",
+      "yOffset": -56,
+      "width": 140
+    },
+    {
+      "id": "g-mat",
+      "lane": "s2",
+      "col": 5,
+      "type": "backend",
+      "label": "工料",
+      "sublabel": "資源盤點",
+      "tag": "交期、工班、同等品",
+      "yOffset": 56,
+      "width": 140
+    },
+    {
+      "id": "g-time",
+      "lane": "s2",
+      "col": 4,
+      "type": "backend",
+      "label": "工期",
+      "sublabel": "時間排程",
+      "tag": "進退場節點",
+      "yOffset": 56,
       "width": 140
     },
     {
@@ -604,27 +658,30 @@
       "type": "backend",
       "label": "疑義清單",
       "sublabel": "規劃課",
-      "tag": "附照片與標註",
+      "tag": "編號、附照片",
+      "yOffset": 56,
       "width": 140
     },
     {
       "id": "clarify",
       "lane": "s2",
-      "col": 4,
+      "col": 2,
       "type": "security",
       "label": "澄清會議",
       "sublabel": "業主、設計師",
       "tag": "確認／補圖",
+      "yOffset": 56,
       "width": 140
     },
     {
       "id": "shop",
       "lane": "s2",
-      "col": 5,
+      "col": 1,
       "type": "backend",
       "label": "介面整合圖",
       "sublabel": "設計課",
-      "tag": "→ 估價",
+      "tag": "→ 估價簽約",
+      "yOffset": 56,
       "width": 140
     },
     {
@@ -634,7 +691,7 @@
       "type": "backend",
       "label": "數量計算",
       "sublabel": "規劃課",
-      "tag": "依整合圖",
+      "tag": "依工項清單",
       "width": 140
     },
     {
@@ -664,7 +721,7 @@
       "type": "backend",
       "label": "報價與範圍界定",
       "sublabel": "規劃課",
-      "tag": "含／不含／甲供",
+      "tag": "依工責寫含／不含",
       "width": 140
     },
     {
@@ -684,7 +741,7 @@
       "type": "external",
       "label": "合約審閱與簽約",
       "sublabel": "風控課、收入課",
-      "tag": "→ 開工準備",
+      "tag": "→ 施工前準備",
       "width": 140
     },
     {
@@ -698,13 +755,13 @@
       "width": 140
     },
     {
-      "id": "plan",
+      "id": "insure",
       "lane": "s4",
       "col": 1,
       "type": "backend",
-      "label": "施工計畫與排程",
-      "sublabel": "工程課",
-      "tag": "自有工班檔期",
+      "label": "保險",
+      "sublabel": "風控課",
+      "tag": "工程綜合險、意外險",
       "width": 140
     },
     {
@@ -712,19 +769,19 @@
       "lane": "s4",
       "col": 2,
       "type": "backend",
-      "label": "申請與保險",
+      "label": "許可申請",
       "sublabel": "工程課",
       "tag": "裝修審查、管委會",
       "width": 140
     },
     {
-      "id": "submittal",
+      "id": "material",
       "lane": "s4",
       "col": 3,
       "type": "security",
-      "label": "材料送審",
+      "label": "材質確認",
       "sublabel": "業主、設計師",
-      "tag": "核可／更換",
+      "tag": "核可／更換同等品",
       "width": 140
     },
     {
@@ -732,9 +789,9 @@
       "lane": "s4",
       "col": 4,
       "type": "backend",
-      "label": "發包與叫料",
+      "label": "發包叫料",
       "sublabel": "規劃課",
-      "tag": "交期回推",
+      "tag": "依工期回推交期",
       "width": 140
     },
     {
@@ -752,184 +809,213 @@
       "lane": "s5",
       "col": 0,
       "type": "external",
-      "label": "保護與放樣",
+      "label": "保護",
       "sublabel": "工程課",
-      "tag": "放樣現場會勘",
+      "tag": "公共區域拍照存證",
+      "yOffset": -56,
       "width": 140
     },
     {
-      "id": "mep",
+      "id": "layout",
       "lane": "s5",
       "col": 1,
-      "type": "backend",
-      "label": "拆除與水電配管",
-      "sublabel": "工程課、協力",
-      "tag": "隱蔽工程",
-      "width": 140
-    },
-    {
-      "id": "hidden",
-      "lane": "s5",
-      "col": 2,
-      "type": "security",
-      "label": "隱蔽查驗",
-      "sublabel": "品質管理課",
-      "tag": "合格／改善",
+      "type": "external",
+      "label": "放樣",
+      "sublabel": "工程課",
+      "tag": "業主、設計師現場確認",
+      "yOffset": -56,
       "width": 140
     },
     {
       "id": "masonry",
       "lane": "s5",
-      "col": 3,
+      "col": 2,
       "type": "backend",
       "label": "自有泥作",
       "sublabel": "泥作課",
       "tag": "防水試水 48 小時",
+      "yOffset": -56,
       "width": 140
     },
     {
       "id": "earth",
       "lane": "s5",
-      "col": 4,
+      "col": 3,
       "type": "backend",
       "label": "自有土作",
       "sublabel": "土造課",
       "tag": "樣板與養護",
+      "yOffset": -56,
       "width": 140
     },
     {
       "id": "subwork",
       "lane": "s5",
-      "col": 5,
+      "col": 4,
       "type": "backend",
       "label": "分包工程",
       "sublabel": "工程課",
-      "tag": "木作、油漆、系統櫃",
+      "tag": "水電、木作、油漆",
+      "yOffset": -56,
       "width": 140
     },
     {
-      "id": "daily",
-      "lane": "s6",
+      "id": "handoff",
+      "lane": "s5",
+      "col": 5,
+      "type": "security",
+      "label": "交接介面處理",
+      "sublabel": "工程課",
+      "tag": "前工種確認才進場",
+      "yOffset": -56,
+      "width": 140
+    },
+    {
+      "id": "safety",
+      "lane": "s5",
       "col": 0,
       "type": "backend",
-      "label": "每日監造與日誌",
+      "label": "安全防護",
       "sublabel": "工程課",
-      "tag": "工安與品質",
+      "tag": "講習、斷電、門禁",
+      "yOffset": 56,
       "width": 140
     },
     {
-      "id": "weekly",
-      "lane": "s6",
+      "id": "supervise",
+      "lane": "s5",
       "col": 1,
+      "type": "backend",
+      "label": "監造管理",
+      "sublabel": "工程課、品質管理課",
+      "tag": "監造八管",
+      "yOffset": 56,
+      "width": 140
+    },
+    {
+      "id": "meeting",
+      "lane": "s5",
+      "col": 2,
       "type": "external",
-      "label": "週報與協調會",
+      "label": "工務會議",
       "sublabel": "工程課",
-      "tag": "業主、設計師",
+      "tag": "每週，業主、設計師",
+      "yOffset": 56,
       "width": 140
     },
     {
       "id": "change",
-      "lane": "s6",
-      "col": 2,
-      "type": "external",
-      "label": "變更需求",
-      "sublabel": "銷售課",
-      "tag": "設計或現況",
-      "width": 140
-    },
-    {
-      "id": "changegate",
-      "lane": "s6",
+      "lane": "s5",
       "col": 3,
       "type": "security",
-      "label": "變更評估",
+      "label": "變更設計",
       "sublabel": "規劃課、主管",
-      "tag": "簽認／不變更",
+      "tag": "先估價簽認再施作",
+      "yOffset": 56,
       "width": 140
     },
     {
-      "id": "progress",
-      "lane": "s6",
+      "id": "bill",
+      "lane": "s5",
       "col": 4,
       "type": "database",
-      "label": "期款請款",
+      "label": "業主請款",
       "sublabel": "收入課",
       "tag": "依合約節點",
+      "yOffset": 56,
       "width": 140
     },
     {
       "id": "payvendor",
-      "lane": "s6",
+      "lane": "s5",
       "col": 5,
       "type": "database",
-      "label": "廠商付款",
+      "label": "廠商請款",
       "sublabel": "支出課",
       "tag": "每月 10 號",
+      "yOffset": 56,
       "width": 140
     },
     {
       "id": "selfcheck",
-      "lane": "s7",
+      "lane": "s6",
       "col": 0,
       "type": "backend",
-      "label": "完工自主檢查",
+      "label": "自主檢核",
       "sublabel": "工程課",
       "tag": "逐項對照報價",
+      "yOffset": -56,
       "width": 140
     },
     {
       "id": "qc",
-      "lane": "s7",
+      "lane": "s6",
       "col": 1,
       "type": "security",
       "label": "品質驗收",
       "sublabel": "品質管理課",
       "tag": "通過／缺失",
+      "yOffset": -56,
       "width": 140
     },
     {
       "id": "joint",
-      "lane": "s7",
+      "lane": "s6",
       "col": 2,
       "type": "security",
       "label": "聯合驗收",
       "sublabel": "業主、設計師",
       "tag": "通過／缺失",
+      "yOffset": -56,
       "width": 140
     },
     {
-      "id": "handover",
-      "lane": "s7",
+      "id": "asbuilt",
+      "lane": "s6",
       "col": 3,
       "type": "external",
-      "label": "交屋與竣工資料",
+      "label": "竣工資料",
       "sublabel": "工程課、客戶關係課",
-      "tag": "竣工圖、保固書",
+      "tag": "竣工圖、保固書、使用說明",
+      "yOffset": -56,
       "width": 140
     },
     {
       "id": "final",
-      "lane": "s7",
+      "lane": "s6",
       "col": 4,
       "type": "database",
       "label": "尾款請款",
       "sublabel": "收入課",
       "tag": "扣保留款",
+      "yOffset": -56,
       "width": 140
     },
     {
-      "id": "close",
-      "lane": "s7",
+      "id": "review",
+      "lane": "s6",
       "col": 5,
       "type": "backend",
-      "label": "結案檢討",
+      "label": "結案覆盤",
       "sublabel": "主管議會、會計課",
-      "tag": "損益與績效",
+      "tag": "損益、時程、客訴",
+      "yOffset": -56,
+      "width": 140
+    },
+    {
+      "id": "report",
+      "lane": "s6",
+      "col": 5,
+      "type": "backend",
+      "label": "結案報告",
+      "sublabel": "專案經理",
+      "tag": "對內教育訓練",
+      "yOffset": 56,
       "width": 140
     },
     {
       "id": "visit",
-      "lane": "s8",
+      "lane": "s7",
       "col": 0,
       "type": "external",
       "label": "保固回訪",
@@ -939,17 +1025,17 @@
     },
     {
       "id": "repair",
-      "lane": "s8",
+      "lane": "s7",
       "col": 1,
       "type": "security",
       "label": "報修受理",
       "sublabel": "客戶關係課",
-      "tag": "保固外先報價",
+      "tag": "保固內／外",
       "width": 140
     },
     {
       "id": "fix",
-      "lane": "s8",
+      "lane": "s7",
       "col": 2,
       "type": "backend",
       "label": "維修派工",
@@ -959,7 +1045,7 @@
     },
     {
       "id": "retention",
-      "lane": "s8",
+      "lane": "s7",
       "col": 3,
       "type": "database",
       "label": "保留款請款",
@@ -969,7 +1055,7 @@
     },
     {
       "id": "satisfy",
-      "lane": "s8",
+      "lane": "s7",
       "col": 4,
       "type": "external",
       "label": "滿意調查",
@@ -978,7 +1064,7 @@
     },
     {
       "id": "referral",
-      "lane": "s8",
+      "lane": "s7",
       "col": 5,
       "type": "backend",
       "label": "見證與引薦",
@@ -1016,39 +1102,77 @@
       "to": "account"
     },
     {
-      "id": "review-interface",
-      "from": "review",
-      "to": "interface"
+      "id": "g-limit-g-audit",
+      "from": "g-limit",
+      "to": "g-audit"
     },
     {
-      "id": "interface-craft",
-      "from": "interface",
-      "to": "craft"
+      "id": "g-audit-g-item",
+      "from": "g-audit",
+      "to": "g-item",
+      "fromSide": "right",
+      "toSide": "left"
     },
     {
-      "id": "craft-issues",
-      "from": "craft",
-      "to": "issues"
+      "id": "g-item-g-method",
+      "from": "g-item",
+      "to": "g-method"
+    },
+    {
+      "id": "g-method-g-duty",
+      "from": "g-method",
+      "to": "g-duty"
+    },
+    {
+      "id": "g-duty-g-seq",
+      "from": "g-duty",
+      "to": "g-seq"
+    },
+    {
+      "id": "g-seq-g-mat",
+      "from": "g-seq",
+      "to": "g-mat",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "g-mat-g-time",
+      "from": "g-mat",
+      "to": "g-time",
+      "fromSide": "left",
+      "toSide": "right"
+    },
+    {
+      "id": "g-time-issues",
+      "from": "g-time",
+      "to": "issues",
+      "fromSide": "left",
+      "toSide": "right"
     },
     {
       "id": "issues-clarify",
       "from": "issues",
-      "to": "clarify"
+      "to": "clarify",
+      "fromSide": "left",
+      "toSide": "right"
     },
     {
       "id": "clarify-shop",
       "from": "clarify",
       "to": "shop",
       "label": "確認",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "left",
+      "toSide": "right"
     },
     {
-      "id": "clarify-review",
+      "id": "clarify-g-audit",
       "from": "clarify",
-      "to": "review",
+      "to": "g-audit",
       "label": "補圖",
       "role": "return",
-      "variant": "dashed"
+      "variant": "dashed",
+      "fromSide": "top"
     },
     {
       "id": "qty-subquote",
@@ -1086,34 +1210,26 @@
       "variant": "dashed"
     },
     {
-      "id": "deposit-plan",
+      "id": "deposit-insure",
       "from": "deposit",
-      "to": "plan"
+      "to": "insure"
     },
     {
-      "id": "plan-permit",
-      "from": "plan",
+      "id": "insure-permit",
+      "from": "insure",
       "to": "permit"
     },
     {
-      "id": "permit-submittal",
+      "id": "permit-material",
       "from": "permit",
-      "to": "submittal"
+      "to": "material"
     },
     {
-      "id": "submittal-procure",
-      "from": "submittal",
+      "id": "material-procure",
+      "from": "material",
       "to": "procure",
       "label": "核可",
       "variant": "emphasis"
-    },
-    {
-      "id": "submittal-plan",
-      "from": "submittal",
-      "to": "plan",
-      "label": "更換重排",
-      "role": "return",
-      "variant": "dashed"
     },
     {
       "id": "procure-spend",
@@ -1129,29 +1245,14 @@
       "variant": "dashed"
     },
     {
-      "id": "protect-mep",
+      "id": "protect-layout",
       "from": "protect",
-      "to": "mep"
+      "to": "layout"
     },
     {
-      "id": "mep-hidden",
-      "from": "mep",
-      "to": "hidden"
-    },
-    {
-      "id": "hidden-masonry",
-      "from": "hidden",
-      "to": "masonry",
-      "label": "合格",
-      "variant": "emphasis"
-    },
-    {
-      "id": "hidden-mep",
-      "from": "hidden",
-      "to": "mep",
-      "label": "改善",
-      "role": "return",
-      "variant": "dashed"
+      "id": "layout-masonry",
+      "from": "layout",
+      "to": "masonry"
     },
     {
       "id": "masonry-earth",
@@ -1164,30 +1265,35 @@
       "to": "subwork"
     },
     {
-      "id": "daily-weekly",
-      "from": "daily",
-      "to": "weekly"
+      "id": "subwork-handoff",
+      "from": "subwork",
+      "to": "handoff"
     },
     {
-      "id": "weekly-change",
-      "from": "weekly",
+      "id": "safety-supervise",
+      "from": "safety",
+      "to": "supervise"
+    },
+    {
+      "id": "supervise-meeting",
+      "from": "supervise",
+      "to": "meeting"
+    },
+    {
+      "id": "meeting-change",
+      "from": "meeting",
       "to": "change"
     },
     {
-      "id": "change-changegate",
+      "id": "change-bill",
       "from": "change",
-      "to": "changegate"
-    },
-    {
-      "id": "changegate-progress",
-      "from": "changegate",
-      "to": "progress",
+      "to": "bill",
       "label": "簽認",
       "variant": "emphasis"
     },
     {
-      "id": "progress-payvendor",
-      "from": "progress",
+      "id": "bill-payvendor",
+      "from": "bill",
       "to": "payvendor"
     },
     {
@@ -1211,9 +1317,9 @@
       "variant": "dashed"
     },
     {
-      "id": "joint-handover",
+      "id": "joint-asbuilt",
       "from": "joint",
-      "to": "handover",
+      "to": "asbuilt",
       "label": "通過",
       "variant": "emphasis"
     },
@@ -1226,14 +1332,21 @@
       "variant": "dashed"
     },
     {
-      "id": "handover-final",
-      "from": "handover",
+      "id": "asbuilt-final",
+      "from": "asbuilt",
       "to": "final"
     },
     {
-      "id": "final-close",
+      "id": "final-review",
       "from": "final",
-      "to": "close"
+      "to": "review"
+    },
+    {
+      "id": "review-report",
+      "from": "review",
+      "to": "report",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
       "id": "visit-repair",
@@ -1267,96 +1380,114 @@
       "title": "角色定位",
       "items": [
         "設計由業主（與其設計師）負責，拾壤不做設計",
-        "拾壤是工程管理單位：釐清設計介面問題、把工程落實到完工",
+        "拾壤是工程管理單位：用八工檢核釐清設計介面問題，再把工程落實到完工",
         "泥作、土作由自有工班施作；水電、木作、油漆、系統櫃等發包協力廠商"
       ]
     },
     {
       "dot": "cyan",
-      "title": "1 接洽與評估：會遇到的問題",
+      "title": "八工檢核①　先看客觀條件與圖面盲區",
       "items": [
-        "只有 3D 圖或平面配置，沒有施工圖：先列「缺圖清單」，報價註明依現有圖面，缺圖另計",
+        "工限（環境限制）：進退料動線與電梯尺寸、管委會施工時間與噪音規定、消防區劃與室內裝修審查。利於掌握隱性成本與工時折損：只能假日施工或要請吊車，報價前就算進去",
+        "工審（圖面釋疑）：挑出圖面漏項、設計不合理、尺寸兜不攏、材料不適配，列成疑義清單。利於防禦性報價與免責：報價前書面釐清，不概括承受設計圖的錯誤"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "八工檢核②　拆解執行細節與責任歸屬",
+      "items": [
+        "工項（項目釐清）：把設計圖翻成工程執行項目，例如天花板＝角材、矽酸鈣板、批土、油漆。利於精準發包與成本初估，是估價與排程的基石",
+        "工法（技術評估）：結構支撐、特殊造型、材質銜接畫得出是否做得出。利於把五金補強、特殊打底等隱形成本提早反映在報價",
+        "工責（邊界釐清）：保護工程、鷹架、廢棄物清運、粗細清歸誰，哪些我們做、哪些業主自包。利於消除灰色地帶，防堵收尾時的合約糾紛"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "八工檢核③　收斂介面、資源與時間",
+      "items": [
+        "工序（介面檢討）：預演施工順序，抓出木作與泥作收邊、空調與天花板高度等衝突。利於在紙上解決衝突，避免重工與推諉",
+        "工料（資源盤點）：特殊建材交期與庫存、技術工班人力；缺料缺工就評估同等品。利於避免工班等料、料到沒人做",
+        "工期（時間排程）：綜合前七工，排出各工種進退場節點與總進度。利於承諾交期，也是控管進度與請款的基準"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "監造八管　施工中每天要管的事",
+      "items": [
+        "管安全：開工講習、高處作業與電動工具檢查、收工斷電與門禁。利於避免職災與停工",
+        "管品質：依送審樣品查驗；水電、防水等隱蔽工程封板前拍照查驗，合格才進下一工序。利於缺失當下改，不留到驗收",
+        "管進度：每天對照工期表，落後就調人力或工序。利於準時交付，也是請款依據",
+        "管介面：前一工種完成確認、下一工種簽收才進場。利於避免互相推諉與重工",
+        "管材料：進場驗收規格與數量、保管防潮防損、餘料回收。利於避免用錯料與浪費",
+        "管變更：任何變更先估價、簽追加減單再施作。利於防止口頭變更變成無償施工",
+        "管成本：發包與實際支出對照預算，超支就預警。利於守住毛利",
+        "管紀錄：每日日誌、照片依專案／日期／工項歸檔，會議紀錄簽認。利於爭議有證據、結案能覆盤"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "1 接洽評估：會遇到的問題",
+      "items": [
+        "只有 3D 圖或平面配置，沒有施工圖：先列缺圖清單，報價註明依現有圖面，缺圖另計",
         "業主與設計師期望不一致（預算、工期、誰拍板）：第一次會議就確認決策人與溝通窗口",
-        "現況與圖面不符（樑柱、管道間、地坪高程）：現勘拍照量測，列入疑義清單",
-        "大樓管委會限制施工時段、電梯保護、保證金：現勘就向管委會索取裝修規範",
         "承接評估看：自有泥作／土作檔期、毛利、付款條件、業主是否配合釐清介面"
       ]
     },
     {
       "dot": "violet",
-      "title": "2 設計介面釐清：會遇到的問題",
+      "title": "2 釐清設計：會遇到的問題",
       "items": [
-        "設計圖尺寸互相矛盾、未依法規（防火、無障礙、逃生）：審查後標註，請設計師修正",
-        "工種介面衝突：管線與木作衝突、磁磚分割與門檻收邊、地坪洩水坡度、冷氣排水路徑",
-        "泥作與土作的厚度、重量與養護期，常被設計忽略：提前提出可行工法與替代方案",
+        "八工依序做：先工限、工審（不可控風險），再工項、工法、工責（做什麼、怎麼做、誰做），最後工序、工料、工期（先後與資源）",
         "疑義口頭確認沒有紀錄：疑義清單逐條編號、附照片，澄清會議紀錄由業主與設計師簽認",
-        "補圖遲遲不來：在清單上寫回覆期限，逾期影響工期要寫進會議紀錄"
+        "補圖遲遲不來：清單上寫回覆期限，逾期影響工期要寫進會議紀錄"
       ]
     },
     {
       "dot": "amber",
-      "title": "3 估價與簽約：會遇到的問題",
+      "title": "3 估價簽約：會遇到的問題",
       "items": [
-        "數量算錯或漏項：依介面整合圖計算，報價逐項對應圖號",
-        "協力廠商報價差距大、規格不同：至少兩家比價，規格統一後再比",
-        "自有泥作、土作低估工時與耗損：依過去專案的實際工時與耗損率估算",
-        "範圍不清造成日後爭議：寫明含／不含、甲供材料、設計變更與追加計價方式",
+        "數量算錯或漏項：依工項清單計算，報價逐項對應圖號",
+        "範圍不清：依工責寫明含／不含、甲供材料、變更與追加計價方式",
         "合約重點：付款節點、保留款比例與期限、工期延誤責任（業主延遲提供圖面不算我方）、保固範圍"
       ]
     },
     {
       "dot": "orange",
-      "title": "4 開工準備：會遇到的問題",
+      "title": "4 施工前準備：會遇到的問題",
       "items": [
-        "訂金未到就開始排工：到帳才排程、才叫料",
-        "自有工班檔期與其他案子重疊：排程時同時看全公司的泥作、土作檔期",
-        "室內裝修審查與管委會申請時間比預期長：申請時間要算進總工期",
-        "材料送審拖延、停產、交期長：送審附替代品，長交期材料（進口磁磚、設備）優先下單",
-        "發包超出預算：支出審核把關，超預算退回重新詢價或與業主討論"
+        "訂金未到就排工：到帳才排程、才叫料",
+        "保險漏保：工程綜合險、第三人責任險、工班意外險開工前確認生效",
+        "裝修審查與管委會申請比預期久：申請時間算進工期",
+        "材質送審拖延、停產、交期長：送審附同等品，長交期材料優先下單；超預算由支出審核退回重議"
       ]
     },
     {
       "dot": "emerald",
-      "title": "5 施工執行：會遇到的問題",
+      "title": "5 施工中管理：會遇到的問題",
       "items": [
-        "保護工程不足造成公共區域損壞與賠償：開工前拍照存證公共區域現況",
-        "放樣與設計不符：放樣後請業主、設計師到現場確認再施工",
-        "隱蔽工程（水電、防水）封板後才發現問題：封板前查驗並拍照，合格才進下一工序",
-        "泥作：防水層要試水 48 小時，磁磚空心、洩水不良是常見客訴",
-        "土作：天候與養護時間影響工期，先做樣板讓業主確認質感與色澤",
-        "分包工種交接：前一工種完成並經確認，才讓下一工種進場，避免互相推卸責任"
-      ]
-    },
-    {
-      "dot": "slate",
-      "title": "6 施工管理：會遇到的問題",
-      "items": [
-        "每日日誌與照片沒有歸檔：照片依專案、日期、工項命名上傳雲端",
-        "業主和設計師直接交代工班，繞過專案經理：所有變更都回到專案經理與變更流程",
-        "口頭變更沒有簽認，事後爭議追加款：先估價、簽追加減單，再施作",
-        "期款請款被拖延：依合約節點與查驗紀錄請款，附照片與完成比例",
-        "廠商付款與請款不同步：每月 10 號統一付款，付款前核對發包單與發票"
+        "保護不足造成公共區域損壞：開工前拍照存證，每日巡查保護是否破損",
+        "放樣與設計不符：放樣後請業主、設計師到場確認再施工",
+        "業主或設計師直接交代工班：一律回到專案經理與變更流程，先簽追加減單再做",
+        "請款被拖延：依合約節點與監造紀錄請款，附照片與完成比例；廠商款每月 10 號統一付"
       ]
     },
     {
       "dot": "rose",
-      "title": "7 驗收與交屋：會遇到的問題",
+      "title": "6 施工後交付：會遇到的問題",
       "items": [
-        "業主驗收標準與合約不同：驗收依合約與送審核可的樣品，現場不臨時加標準",
-        "缺失改善一再反覆：缺失清單逐條編號、拍照，改善後複驗簽回",
-        "竣工資料不齊：竣工圖、保固書、維護手冊、材料清單、廠商聯絡表一起點交",
-        "尾款與保留款：尾款扣除保留款，保留款到期日寫進專案帳戶提醒",
-        "結案檢討：時程、成本、品質、客訴與介面問題，回寫到下一案的檢討清單"
+        "驗收標準與合約不同：依合約與送審核可的樣品驗收，現場不臨時加標準",
+        "缺失改善反覆：缺失清單逐條編號、拍照，改善後複驗簽回",
+        "竣工資料不齊：竣工圖說、保固書、使用說明書、材料清單、廠商聯絡表一起點交",
+        "結案覆盤看時程、成本、品質、客訴與介面問題；結案報告由專案經理對內分享，回寫成下一案的檢核項目"
       ]
     },
     {
-      "dot": "cyan",
-      "title": "8 保固與售後：會遇到的問題",
+      "dot": "slate",
+      "title": "7 保固售服：會遇到的問題",
       "items": [
-        "報修責任不清（使用不當、設計問題、施工問題、甲供材料）：受理時先判斷責任與保固範圍",
-        "泥作類報修最多（磁磚、防水、裂縫）：泥作課優先處理並記錄原因，回饋到施工標準",
-        "保固期滿忘記請保留款：保固期滿前一個月提醒請款",
-        "回訪時機：交屋後 1、6、12 個月，順便請業主評價與引薦"
+        "報修責任不清（使用不當、設計、施工、甲供材料）：受理時先判斷責任與保固範圍，保固外先報價",
+        "泥作類報修最多（磁磚、防水、裂縫）：記錄原因，回饋到施工標準",
+        "保固期滿忘記請保留款：期滿前一個月提醒請款"
       ]
     }
   ]

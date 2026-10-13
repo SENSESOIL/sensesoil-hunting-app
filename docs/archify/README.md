@@ -7,11 +7,11 @@
 | --- | --- |
 | `pm-overview.workflow.json` | 專案管理流程總覽（有設計）：5 個階段 × 6 個關鍵步驟、決策關卡與退回路徑 |
 | `pm-overview.build.mjs` | 產生上面 JSON 的腳本 |
-| `construction.build.mjs` | 工程承攬流程（沒有設計，拾壤是工程管理單位，泥作／土作由自有工班施作）。8 個階段 × 6 個步驟，每個階段附「會遇到的問題」卡片 |
-| `construction.workflow.json` | 工程承攬流程完整版：8 個階段（接洽 → 保固），附 9 張說明卡 |
+| `construction.build.mjs` | 工程承攬流程（沒有設計，拾壤是工程管理單位，泥作／土作由自有工班施作）。7 個階段、54 個步驟；釐清設計用「八工檢核法」，施工中用「監造八管」；附 12 張說明卡。超過 6 步的階段用上下兩排（yOffset） |
+| `construction.workflow.json` | 上面腳本產生的 Archify 輸入 |
 | `../../public/flows/*.html` | 產出的圖（自含 HTML，APP 用 iframe 顯示） |
 
-工程承攬流程 8 個階段放在同一張圖。整頁太高、過不了 Archify 的瀏覽器檢查，所以用 `deliver`（不跑 finalize）產生，版面靠後處理的縮放手勢與「收合」按鈕。
+工程承攬流程 7 個階段放在同一張圖。整頁太高、過不了 Archify 的瀏覽器檢查，所以用 `deliver`（不跑 finalize）產生，版面靠後處理的縮放手勢與「收合」按鈕。
 
 重新產生（需要安裝 Archify skill）：
 

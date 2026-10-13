@@ -313,6 +313,30 @@ const SCRIPT = `<script id="${MARK}-script">
     var ly = +label.getAttribute('y');
     return laneRects.filter(function (r) { var b = r.getBBox(); return ly >= b.y && ly <= b.y + b.height; })[0];
   }
+  // 依箭頭順序排步驟（略過退回的虛線）；蛇形或上下兩排時才不會亂掉。
+  // 同時可做的步驟依位置排：上排先、再左到右，所以兩條並行的線會一條一條列完。
+  function flowOrder(steps) {
+    var byId = {}, indeg = {}, next = {};
+    steps.forEach(function (s) { byId[s.id] = s; indeg[s.id] = 0; next[s.id] = []; });
+    svg.querySelectorAll('path[data-edge-from][data-edge-to]').forEach(function (e) {
+      var f = e.getAttribute('data-edge-from'), t = e.getAttribute('data-edge-to');
+      if (e.getAttribute('data-edge-role') === 'return' || !byId[f] || !byId[t] || next[f].indexOf(t) >= 0) return;
+      next[f].push(t);
+      indeg[t]++;
+    });
+    var pos = function (a, b) { return Math.abs(a.y - b.y) > 4 ? a.y - b.y : a.x - b.x; };
+    var ready = steps.filter(function (s) { return !indeg[s.id]; });
+    var out = [];
+    while (ready.length) {
+      ready.sort(pos);
+      var cur = ready.shift();
+      out.push(cur);
+      next[cur.id].forEach(function (t) { if (--indeg[t] === 0) ready.push(byId[t]); });
+    }
+    // 有環或沒連到的，照位置補在後面
+    steps.filter(function (s) { return out.indexOf(s) < 0; }).sort(pos).forEach(function (s) { out.push(s); });
+    return out;
+  }
   function zoomToLane(rect) {
     if (!rect || !vb) return;
     var b = rect.getBBox();
@@ -353,9 +377,9 @@ const SCRIPT = `<script id="${MARK}-script">
             if (mm && !kind) kind = mm[1];
           });
           var txt = function (sel) { var e = n.querySelector(sel); return e ? e.textContent.trim() : ''; };
-          steps.push({ x: nb.x, label: txt('[data-node-label]'), who: txt('[data-detail="context"]'), note: txt('[data-detail="fine"]'), kind: kind });
+          steps.push({ id: n.getAttribute('data-node-id'), x: nb.x, y: nb.y, label: txt('[data-node-label]'), who: txt('[data-detail="context"]'), note: txt('[data-detail="fine"]'), kind: kind });
         });
-        steps.sort(function (a, b2) { return a.x - b2.x; });
+        steps = flowOrder(steps);
       }
       var stage = document.createElement('div');
       stage.className = 'ss-stage';
