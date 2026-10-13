@@ -4873,7 +4873,13 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 
 
+
 <style id="sensesoil-viewer-patch-style">
+  /* 主題色：跟 APP 一樣用品牌橘（流程圖節點的分類顏色不變） */
+  :root { --ss-accent: #F39C12; }
+  .pulse-dot { background: var(--ss-accent) !important; box-shadow: 0 0 0 4px color-mix(in srgb, var(--ss-accent) 18%, transparent) !important; }
+  .preset-control-mark { border-color: var(--ss-accent) !important; background: color-mix(in srgb, var(--ss-accent) 28%, transparent) !important; }
+  #btn-preset[data-preset-option="signal-flow"] .preset-control-mark { box-shadow: 0 0 10px color-mix(in srgb, var(--ss-accent) 78%, transparent) !important; }
   /* 1. 底框 */
   .diagram-container,
   html[data-preset] .diagram-container {
@@ -4916,20 +4922,20 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   /* 4. 卡片資訊（語義護照）：預設關閉，點卡片只會標出相關步驟；用「資訊」按鈕開關 */
   html:not([data-ss-info="on"]) #focus-chip { display: none !important; }
   #focus-chip { max-height: min(60vh, 26rem); overflow-y: auto; overscroll-behavior: contain; }
-  #ss-info-toggle[aria-pressed="true"] { color: var(--frontend-stroke, #22d3ee); }
+  #ss-info-toggle[aria-pressed="true"] { color: var(--ss-accent); }
   /* 5. 收合：圖只留各階段大標題，下方問題卡只留標題；點單一階段或單一卡片再打開 */
   html[data-ss-outline="on"] .diagram-container > svg { display: none !important; }
   html[data-ss-outline="on"] .ss-zoom-hint { display: none; }
   .ss-outline { display: none; }
   html[data-ss-outline="on"] .ss-outline { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); align-items: start; padding: 0.25rem 0 0.5rem; }
   .ss-stage { border-radius: 0.9rem; border: 1px solid var(--panel-border, #2a3140); background: var(--panel, #10141c); color: var(--text, #e5e7eb); overflow: hidden; }
-  .ss-stage[data-open] { border-color: color-mix(in srgb, var(--frontend-stroke, #22d3ee) 55%, transparent); }
+  .ss-stage[data-open] { border-color: color-mix(in srgb, var(--ss-accent) 55%, transparent); }
   .ss-stage-head {
     all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
     display: flex; align-items: center; gap: 0.9rem; padding: 0.9rem 1rem;
   }
-  .ss-stage-head:focus-visible { outline: 2px solid var(--frontend-stroke, #22d3ee); outline-offset: -2px; }
-  .ss-outline .n { font: 700 1.6rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--frontend-stroke, #22d3ee); min-width: 2.2rem; }
+  .ss-stage-head:focus-visible { outline: 2px solid var(--ss-accent); outline-offset: -2px; }
+  .ss-outline .n { font: 700 1.6rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--ss-accent); min-width: 2.2rem; }
   .ss-outline .t { font-size: 1.05rem; font-weight: 700; }
   .ss-outline .c { margin-left: auto; font-size: 0.8rem; color: var(--text-faint, #8a8f98); white-space: nowrap; }
   .ss-outline .v { width: 0.5rem; height: 0.5rem; border-right: 2px solid var(--text-faint, #8a8f98); border-bottom: 2px solid var(--text-faint, #8a8f98); rotate: 45deg; translate: 0 -0.15rem; transition: rotate .2s; flex: none; }
@@ -4950,17 +4956,17 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .ss-go {
     all: unset; box-sizing: border-box; cursor: pointer; margin-top: 0.75rem;
     display: inline-flex; align-items: center; padding: 0.45rem 0.9rem; border-radius: 999px;
-    font-size: 0.85rem; font-weight: 600; color: var(--frontend-stroke, #22d3ee);
-    border: 1px solid color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent);
+    font-size: 0.85rem; font-weight: 600; color: var(--ss-accent);
+    border: 1px solid color-mix(in srgb, var(--ss-accent) 45%, transparent);
   }
   /* 步驟詳細說明（監造八管、八工） */
   .ss-steps li.has-detail .l { cursor: pointer; }
   .ss-more {
     all: unset; box-sizing: border-box; cursor: pointer; grid-column: 4; grid-row: 1; justify-self: end;
     font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.6rem; border-radius: 999px;
-    color: var(--frontend-stroke, #22d3ee); border: 1px solid color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent);
+    color: var(--ss-accent); border: 1px solid color-mix(in srgb, var(--ss-accent) 45%, transparent);
   }
-  .ss-steps li[data-open] .ss-more { background: color-mix(in srgb, var(--frontend-stroke, #22d3ee) 16%, transparent); }
+  .ss-steps li[data-open] .ss-more { background: color-mix(in srgb, var(--ss-accent) 16%, transparent); }
   .ss-detail {
     grid-column: 1 / -1; margin-top: 0.6rem; padding: 0.85rem 0.9rem; border-radius: 0.75rem;
     background: color-mix(in srgb, var(--bg, #05070d) 60%, transparent); border: 1px solid var(--panel-border, #2a3140);
@@ -4976,12 +4982,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .ss-d-benefit { color: var(--backend-stroke, #34d399); }
   .ss-d-rhythm { display: grid; gap: 0.3rem; margin: 0.4rem 0 0.7rem; }
   .ss-d-rrow { display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.5rem; }
-  .ss-d-when { font-weight: 700; color: var(--frontend-stroke, #22d3ee); }
+  .ss-d-when { font-weight: 700; color: var(--ss-accent); }
   .ss-d-group { font-weight: 700; margin: 0.8rem 0 0.4rem; padding-top: 0.6rem; border-top: 1px solid var(--panel-border, #2a3140); }
   .ss-d-item { border: 1px solid var(--panel-border, #2a3140); border-radius: 0.6rem; padding: 0.5rem 0.7rem; margin-bottom: 0.45rem; }
-  .ss-d-item[data-open] { border-color: color-mix(in srgb, var(--frontend-stroke, #22d3ee) 45%, transparent); }
+  .ss-d-item[data-open] { border-color: color-mix(in srgb, var(--ss-accent) 45%, transparent); }
   .ss-d-head { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; display: flex; align-items: center; gap: 0.6rem; }
-  .ss-d-no { font: 700 0.95rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--frontend-stroke, #22d3ee); min-width: 1rem; }
+  .ss-d-no { font: 700 0.95rem/1 'JetBrains Mono', ui-monospace, monospace; color: var(--ss-accent); min-width: 1rem; }
   .ss-d-name { font-weight: 700; flex: 1; }
   .ss-d-name small { font-weight: 500; color: var(--text-faint, #8a8f98); margin-left: 0.4rem; }
   .ss-d-item .v { width: 0.4rem; height: 0.4rem; border-right: 2px solid var(--text-faint, #8a8f98); border-bottom: 2px solid var(--text-faint, #8a8f98); rotate: 45deg; translate: 0 -0.1rem; flex: none; }
@@ -4995,7 +5001,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   .card-header { cursor: pointer; }
   .card[data-ss-collapsed] > :not(.card-header) { display: none !important; }
   .card[data-ss-collapsed] .card-header { margin-bottom: 0 !important; }
-  #ss-outline-toggle[aria-pressed="true"] { color: var(--frontend-stroke, #22d3ee); }
+  #ss-outline-toggle[aria-pressed="true"] { color: var(--ss-accent); }
 </style>
 </head>
 <body>
@@ -14700,6 +14706,8 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
       }
     });
   </script>
+
+
 
 
 
