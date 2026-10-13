@@ -23,6 +23,14 @@ node <archify>/bin/archify.mjs finalize workflow docs/archify/construction-2.wor
 node <archify>/bin/archify.mjs finalize workflow docs/archify/pm-overview.workflow.json public/flows/pm-overview.html --quality showcase --json
 ```
 
+產生後一定要再跑一次後處理（拿掉底框、縮放按鈕與「路徑」，加上雙指縮放、拖曳、雙擊放大）：
+
+```bash
+node docs/archify/viewer-patch.mjs public/flows/pm-overview.html public/flows/construction-1.html public/flows/construction-2.html
+```
+
+這支腳本可以重複執行，不會重複插入。
+
 finalize 會在輸出旁邊寫檢查紀錄（`*.finalize-summary.json` 等）。建議在暫存資料夾執行，再把 HTML 複製進 `public/flows/`，避免把紀錄檔一起部署。
 
 `meta.translations` 是繁體中文介面字串（由 Archify 內建的簡體中文經 OpenCC 轉成台灣用語，未經逐條人工校對）。
