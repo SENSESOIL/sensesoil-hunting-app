@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useCallback } from "react";
 import useSWR from "swr";
 import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 import TeamPage from "@/components/team/TeamPage";
-import WorkflowCharts, { useFlows } from "@/components/WorkflowCharts";
+import WorkflowCharts, { useFlows, STATIC_FLOWS } from "@/components/WorkflowCharts";
 import type { FlowRole } from "@/lib/flow-role";
 import {
   IconGavel,
@@ -436,7 +436,7 @@ export default function CommandCenter({
                   opsAccess.flows && {
                     icon: IconRoute,
                     title: "流程 FLOW",
-                    meta: flows.length ? `${flows.length} 項` : undefined,
+                    meta: `${flows.length + STATIC_FLOWS.length} 項`,
                     onClick: () => setScreen("flows"),
                   },
                   opsAccess.sops && {

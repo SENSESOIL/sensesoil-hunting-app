@@ -36,46 +36,65 @@ export default function WorkflowCharts({ flowRole }: { flowRole: FlowRole }) {
   const flows = data?.flows ?? [];
   const [open, setOpen] = useState<FlowEntry | null>(null);
 
+  const [diagram, setDiagram] = useState<DiagramEntry | null>(null);
+
+  const row = "bg-[#FFFFFF] rounded-[18px] shadow-card overflow-hidden w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#F4F4F5] transition-colors outline-none";
+  const chevron = (
+    <span className="material-symbols-outlined text-[20px] text-[#D4D4D8]" style={{ fontVariationSettings: "'wght' 200" }}>
+      chevron_right
+    </span>
+  );
+
   return (
     <>
       <div className="flex flex-col gap-5">
         {flows.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => setOpen(f)}
-            className="bg-[#FFFFFF] rounded-[18px] shadow-card overflow-hidden w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#F4F4F5] transition-colors outline-none"
-          >
+          <button key={f.id} onClick={() => setOpen(f)} className={row}>
             <p className="flex-1 min-w-0 text-[15px] font-medium text-[#18181B] truncate">
               {f.title}
               {f.en && <span className="ml-2 text-[12px] font-normal text-[#A1A1AA] tracking-wide">{f.en.toUpperCase()}</span>}
             </p>
-            <span className="material-symbols-outlined text-[20px] text-[#D4D4D8]" style={{ fontVariationSettings: "'wght' 200" }}>
-              chevron_right
-            </span>
+            {chevron}
           </button>
         ))}
         {isLoading && !flows.length && <div className="h-[52px] rounded-[18px] bg-[#FFFFFF] border border-[#E4E4E7]/60 animate-pulse" />}
+        {STATIC_FLOWS.map((d) => (
+          <button key={d.src} onClick={() => setDiagram(d)} className={row}>
+            <p className="flex-1 min-w-0 text-[15px] font-medium text-[#18181B] truncate">
+              {d.title}
+              <span className="ml-2 text-[12px] font-normal text-[#A1A1AA] tracking-wide">{d.en.toUpperCase()}</span>
+            </p>
+            {chevron}
+          </button>
+        ))}
       </div>
 
-      <OverviewPreview />
-
+      <DiagramViewer diagram={diagram} onClose={() => setDiagram(null)} />
       <FlowViewer flow={open} flowRole={flowRole} onClose={() => setOpen(null)} />
     </>
   );
 }
 
-/* ── 流程總覽（Archify 產生的靜態圖，測試中） ─────────────────
-   專案管理流程 47 步濃縮成 5 個階段 × 6 個關鍵步驟，決策關卡與退回路徑保留。
-   檔案在 public/flows/pm-overview.html（Archify 產生、自含，不連外部資源）。
-   清單裡的「專案管理流程」仍是可編輯的完整版；這張是給人一眼看懂的總覽。 */
+/* ── Archify 產生的靜態流程圖（唯讀） ─────────────────────────
+   檔案在 public/flows/*.html（Archify 產生、自含，不連外部資源），原始檔在 docs/archify/。
+   和上面可編輯的流程圖並列成清單，點開滿版顯示。 */
 
-const OVERVIEW_SRC = "/flows/pm-overview.html";
+interface DiagramEntry {
+  title: string;
+  en: string;
+  src: string;
+}
 
-function OverviewPreview() {
-  const [full, setFull] = useState(false);
+export const STATIC_FLOWS: DiagramEntry[] = [
+  { title: "專案管理流程總覽", en: "PM overview", src: "/flows/pm-overview.html" },
+  { title: "工程承攬流程（一）接洽到開工", en: "Construction I", src: "/flows/construction-1.html" },
+  { title: "工程承攬流程（二）施工到保固", en: "Construction II", src: "/flows/construction-2.html" },
+];
+
+function DiagramViewer({ diagram, onClose }: { diagram: DiagramEntry | null; onClose: () => void }) {
   useEffect(() => {
-    if (!full) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFull(false);
+    if (!diagram) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -83,49 +102,26 @@ function OverviewPreview() {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [full]);
+  }, [diagram, onClose]);
 
-  return (
-    <section className="mt-6">
-      <div className="flex items-center justify-between px-1 pb-2">
-        <h3 className="text-[14px] font-semibold text-[#52525B] flex items-center gap-2">
-          專案管理流程總覽
-          <span className="h-5 px-2 rounded-full text-[11px] leading-5 font-medium bg-[var(--accent-soft)] text-[var(--accent-ink)]">測試</span>
-        </h3>
-        <button
-          type="button"
-          onClick={() => setFull(true)}
-          className="h-8 px-3 rounded-full text-[13px] font-medium text-[#52525B] bg-white shadow-card inline-flex items-center gap-1 active:bg-[#F4F4F5]"
-        >
-          <span className="material-symbols-outlined text-[16px]">open_in_full</span>
-          全螢幕
-        </button>
-      </div>
-      <div className="rounded-[18px] overflow-hidden shadow-card bg-[#0B0F17]">
-        <iframe src={OVERVIEW_SRC} title="專案管理流程總覽" loading="lazy" className="block w-full h-[440px] md:h-[620px] border-none" />
-      </div>
-
-      {full &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div className="fixed inset-0 z-[9999] bg-[#0B0F17] flex flex-col" role="dialog" aria-label="專案管理流程總覽">
-            <iframe src={OVERVIEW_SRC} title="專案管理流程總覽（全螢幕）" className="flex-1 w-full border-none" />
-            <button
-              type="button"
-              onClick={() => setFull(false)}
-              aria-label="關閉總覽"
-              className="group absolute z-10 bottom-3 left-3 w-11 h-11 flex items-center justify-center bg-transparent border-none p-0 outline-none"
-              style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
-            >
-              <span className="absolute w-9 h-9 rounded-full bg-[rgba(22,24,29,0.95)] border border-[color-mix(in_srgb,var(--accent)_40%,transparent)] transition-colors group-active:bg-[#27272A]" />
-              <svg viewBox="0 0 24 24" className="relative w-3.5 h-3.5" fill="none" stroke="#B9BEC9" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 5l-7 7 7 7" />
-              </svg>
-            </button>
-          </div>,
-          document.body
-        )}
-    </section>
+  if (!diagram || typeof document === "undefined") return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-[#0B0F17] flex flex-col" role="dialog" aria-label={diagram.title}>
+      <iframe src={diagram.src} title={diagram.title} className="flex-1 w-full border-none" />
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="返回"
+        className="group absolute z-10 bottom-3 left-3 w-11 h-11 flex items-center justify-center bg-transparent border-none p-0 outline-none"
+        style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <span className="absolute w-9 h-9 rounded-full bg-[rgba(22,24,29,0.95)] border border-[color-mix(in_srgb,var(--accent)_40%,transparent)] transition-colors group-active:bg-[#27272A]" />
+        <svg viewBox="0 0 24 24" className="relative w-3.5 h-3.5" fill="none" stroke="#B9BEC9" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 5l-7 7 7 7" />
+        </svg>
+      </button>
+    </div>,
+    document.body
   );
 }
 
