@@ -10,7 +10,7 @@ import { pmPost } from "./usePm";
 
 const KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
-export type PushState = "unsupported" | "needs-install" | "denied" | "off" | "on";
+export type PushState = "not-configured" | "unsupported" | "needs-install" | "denied" | "off" | "on";
 
 export function isIOS(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -27,7 +27,8 @@ function supported(): boolean {
 }
 
 export async function pushState(): Promise<PushState> {
-  if (!KEY) return "unsupported";
+  // 伺服器沒設定推播金鑰（Vercel 的 NEXT_PUBLIC_VAPID_PUBLIC_KEY）：不是手機的問題
+  if (!KEY) return "not-configured";
   if (isIOS() && !isStandalone()) return "needs-install";
   if (!supported()) return "unsupported";
   if (Notification.permission === "denied") return "denied";
@@ -56,7 +57,7 @@ async function subscribe(): Promise<PushSubscription> {
 /** 使用者按「開啟通知」：一定要在點擊事件裡呼叫（iOS 規定） */
 export async function enablePush(): Promise<PushState | "error"> {
   const s = await pushState();
-  if (s === "unsupported" || s === "needs-install" || s === "denied") return s;
+  if (s === "not-configured" || s === "unsupported" || s === "needs-install" || s === "denied") return s;
   try {
     const perm = await Notification.requestPermission();
     if (perm !== "granted") return perm === "denied" ? "denied" : "off";

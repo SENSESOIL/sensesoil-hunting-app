@@ -104,6 +104,7 @@ export function SettingsSheet({
     off: "被指派任務時不會跳通知",
     denied: "通知被系統封鎖了，請到手機設定開啟",
     "needs-install": "iPhone 要先「加入主畫面」，從主畫面打開 APP 才能收通知",
+    "not-configured": "推播還沒設定好，請管理者到 Vercel 加上推播金鑰",
     unsupported: "這個瀏覽器不支援通知",
   };
   const canTogglePush = push === "on" || push === "off";

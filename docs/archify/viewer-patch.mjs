@@ -127,6 +127,17 @@ const STYLE = `<style id="${MARK}-style">
   .ss-d-item[data-open] .v { rotate: 225deg; translate: 0 0.1rem; }
   .ss-d-item .ss-d-benefit { margin: 0.3rem 0 0; font-size: 0.8rem; }
   .ss-d-body { margin-top: 0.3rem; }
+  /* 手機／平板（觸控）：省記憶體，避免閃退
+     - 圖裡每張卡片的陰影、發光（drop-shadow）放大時要用高解析度重算，55 張卡就很吃記憶體
+     - 浮動按鈕、面板的毛玻璃（backdrop-filter）每次移動都要重算底下整張圖
+     兩者在 iPhone 放大、拖曳時最容易讓 Safari 把頁面關掉，觸控裝置一律關掉，改用實色 */
+  @media (pointer: coarse) {
+    .diagram-container > svg, .diagram-container > svg * { filter: none !important; }
+    .diagram-nav, .focus-chip, .semantic-lens, .node-finder, .overview-map, .diagram-guide, .toolbar, .export-menu, .preset-menu {
+      -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+    }
+    .diagram-nav, .focus-chip, .semantic-lens, .node-finder, .overview-map { background: var(--panel, #10141c) !important; }
+  }
   /* 節點索引（Archify 在說明卡旁列出全部節點）與「要點與索引」開關：用收合清單取代，不顯示 */
   #node-outline, .node-outline, #rail-reveal { display: none !important; }
   /* 收合時「資訊」用不到，先藏起來；展開後才出現 */
@@ -142,7 +153,11 @@ const SCRIPT = `<script id="${MARK}-script">
   var box = document.querySelector('.diagram-container');
   var svg = box && box.querySelector(':scope > svg');
   if (!box || !svg) return;
-  var MAX = 5;
+  // 手機最多放大 3 倍：放太大時 iPhone 要把整張圖用高解析度重畫，記憶體不夠會被系統關掉（閃退）
+  var COARSE = matchMedia('(pointer: coarse)').matches;
+  var MAX = COARSE ? 3 : 5;
+  var ax = 0, ay = 0; // 畫面上實際套用中的位移（重畫排在下一格時，用來換算座標）
+  var raf = 0;
   var s = 1, x = 0, y = 0;
   var pts = new Map();
   var pinch = null, pan = null, lastTap = 0;
@@ -153,11 +168,12 @@ const SCRIPT = `<script id="${MARK}-script">
   box.appendChild(hint);
 
   function read() {
+    if (raf) return; // 還有排隊中的重畫：目前的 s/x/y 才是最新的
     // Archify 的搜尋／聚焦也會改 transform，手勢開始前先讀目前的實際狀態
     var m = (getComputedStyle(svg).transform || '').match(/^matrix\\(([^)]+)\\)$/);
-    if (!m) { s = 1; x = 0; y = 0; return; }
+    if (!m) { s = 1; x = 0; y = 0; ax = 0; ay = 0; return; }
     var v = m[1].split(',').map(Number);
-    if (v.length === 6 && v.every(isFinite)) { s = v[0]; x = v[4]; y = v[5]; }
+    if (v.length === 6 && v.every(isFinite)) { s = v[0]; x = v[4]; y = v[5]; ax = x; ay = y; }
   }
   function clamp() {
     var w = svg.clientWidth || 1, h = svg.clientHeight || 1;
@@ -165,24 +181,31 @@ const SCRIPT = `<script id="${MARK}-script">
     x = Math.min(0, Math.max(w - w * s, x));
     y = Math.min(0, Math.max(h - h * s, y));
   }
+  // 寫進畫面。外框本身 overflow:hidden，不再另外算 clip-path（每次都算會拖慢、也多吃記憶體）
   function apply() {
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
     clamp();
     svg.style.transformOrigin = '0 0';
-    svg.style.transform = s > 1.001 ? 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')' : '';
+    svg.style.removeProperty('clip-path');
     if (s > 1.001) {
-      var w = svg.clientWidth, h = svg.clientHeight;
-      var t = -y / s, l = -x / s, r = w - (w - x) / s, b = h - (h - y) / s;
-      svg.style.clipPath = 'inset(' + [t, Math.max(0, r), Math.max(0, b), l].map(function (n) { return Math.max(0, n).toFixed(2) + 'px'; }).join(' ') + ')';
+      svg.style.transform = 'translate(' + x + 'px,' + y + 'px) scale(' + s + ')';
+      ax = x; ay = y;
       box.setAttribute('data-ss-zoomed', '');
     } else {
-      svg.style.removeProperty('clip-path');
+      svg.style.transform = '';
+      ax = 0; ay = 0;
       box.removeAttribute('data-ss-zoomed');
     }
+  }
+  // 拖曳、縮放時一格（約 1/60 秒）最多重畫一次
+  function applySoon() {
+    clamp();
+    if (!raf) raf = requestAnimationFrame(function () { raf = 0; apply(); });
   }
   function local(e) {
     var r = svg.getBoundingClientRect();
     // getBoundingClientRect 已含 transform；換算回未縮放時 svg 左上角的座標
-    return { x: e.clientX - r.left + x, y: e.clientY - r.top + y };
+    return { x: e.clientX - r.left + ax, y: e.clientY - r.top + ay };
   }
   function zoomAt(px, py, next) {
     var cx = (px - x) / s, cy = (py - y) / s;
@@ -203,7 +226,7 @@ const SCRIPT = `<script id="${MARK}-script">
       var r = svg.getBoundingClientRect();
       pinch = {
         d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1, s: s,
-        mx: (a[0].x + a[1].x) / 2 - r.left + x, my: (a[0].y + a[1].y) / 2 - r.top + y,
+        mx: (a[0].x + a[1].x) / 2 - r.left + ax, my: (a[0].y + a[1].y) / 2 - r.top + ay,
         x: x, y: y
       };
       pan = null;
@@ -220,18 +243,18 @@ const SCRIPT = `<script id="${MARK}-script">
       var a = Array.from(pts.values());
       var r = svg.getBoundingClientRect();
       var d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) || 1;
-      var mx = (a[0].x + a[1].x) / 2 - r.left + x, my = (a[0].y + a[1].y) / 2 - r.top + y;
+      var mx = (a[0].x + a[1].x) / 2 - r.left + ax, my = (a[0].y + a[1].y) / 2 - r.top + ay;
       var next = Math.max(1, Math.min(MAX, pinch.s * d / pinch.d));
       // 起手時兩指中點下的那一點，跟著目前的中點走
       var cx = (pinch.mx - pinch.x) / pinch.s, cy = (pinch.my - pinch.y) / pinch.s;
       s = next; x = mx - cx * s; y = my - cy * s;
-      apply();
+      applySoon();
       e.preventDefault();
     } else if (pan && s > 1.001) {
       var dx = e.clientX - pan.sx, dy = e.clientY - pan.sy;
       if (Math.abs(dx) + Math.abs(dy) > 4) { pan.moved = true; box.setAttribute('data-ss-dragging', ''); }
       x = pan.x + dx; y = pan.y + dy;
-      apply();
+      applySoon();
       e.preventDefault();
     }
   }, { capture: true, passive: false });

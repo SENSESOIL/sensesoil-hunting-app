@@ -164,7 +164,7 @@ export function PushCard({ compact }: { compact?: boolean }) {
       setDismissed(false);
     }
   }, [compact]);
-  if (!pm.data?.pushReady || state === null || state === "on" || state === "unsupported") return null;
+  if (!pm.data?.pushReady || state === null || state === "on" || state === "unsupported" || state === "not-configured") return null;
   // 頁面上的精簡提示：只提醒「還沒開」，被封鎖的說明留在通知抽屜裡；可以關掉
   if (compact && (state === "denied" || state === "error" || dismissed)) return null;
   const hide = () => {
