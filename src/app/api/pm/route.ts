@@ -11,13 +11,16 @@ import {
 import { pushConfigured, pushNotifications, type NotifyRow } from "@/lib/pm/push";
 import { photoConfigured } from "@/lib/pm/drive";
 import {
+  goalPatchToRow,
   PROJECT_MONEY_KEYS,
   projectPatchToRow,
+  rowToGoal,
   rowToNotification,
   rowToProject,
   rowToTask,
   taskPatchToRow,
   TASK_STATUSES,
+  type Goal,
   type PmData,
   type PmProject,
   type Task,
@@ -28,9 +31,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * 專案／任務 API
- *   GET  /api/pm            首頁資料（專案、任務、人員、未讀數）
+ *   GET  /api/pm            首頁資料（專案、任務、公司目標、人員、未讀數）
  *   POST /api/pm {op, …}    寫入：task.save / task.delete / task.reorder / task.mark /
- *                           project.save / notifications.list / notifications.read /
+ *                           project.save / goal.save / goal.delete / notifications.list / notifications.read /
  *                           push.subscribe / push.unsubscribe / push.test
  *
  * 權限：登入且在權限表上（未離職）。manager 可以派工與看全部；member 只看得到指派給自己的任務，
@@ -61,6 +64,8 @@ export async function GET() {
     people,
     projects: [],
     tasks: [],
+    goals: [],
+    goalsReady: false,
     unread: 0,
     photoReady: photoConfigured(),
     pushReady: pushConfigured(),
@@ -83,6 +88,16 @@ export async function GET() {
       photoCounts = d.photo_counts ?? {};
     } catch (e) {
       base.dbError = explainDbError(e);
+    }
+    // 公司目標；20261014000000_pm_goals.sql 還沒執行也不影響其他功能
+    if (!base.dbError) {
+      try {
+        const g = await rpc<Record<string, unknown>[]>("pm_goals_list", { actor: user.email });
+        base.goals = (g ?? []).map(rowToGoal);
+        base.goalsReady = true;
+      } catch {
+        /* 還沒建 pm_goals */
+      }
     }
     // 大頭照（團隊頁上傳的）；團隊的資料表還沒建也不影響其他功能
     if (!base.dbError) {
@@ -139,6 +154,17 @@ function checkTask(t: Partial<Task>): string | null {
   if (!isDate(t.start) || !isDate(t.due)) return "日期格式不正確";
   if (t.start && t.due && t.due < t.start) return "期限不能早於開始日";
   if ("note" in t && t.note !== undefined && (typeof t.note !== "string" || t.note.length > 2000)) return "備註太長";
+  return null;
+}
+
+const HEX = /^#[0-9A-Fa-f]{6}$/;
+function checkGoal(g: Partial<Goal>): string | null {
+  if (!g.id || typeof g.id !== "string" || g.id.length > 64) return "目標識別碼不正確";
+  if ("title" in g && (typeof g.title !== "string" || !g.title.trim() || g.title.length > 80)) return "目標名稱必填（80 字內）";
+  if (!isDate(g.start) || !isDate(g.due)) return "日期格式不正確";
+  if (g.start && g.due && g.due < g.start) return "結束日不能早於開始日";
+  if ("color" in g && g.color !== undefined && g.color !== null && !HEX.test(String(g.color))) return "顏色格式不正確";
+  if ("note" in g && g.note !== undefined && (typeof g.note !== "string" || g.note.length > 2000)) return "說明太長";
   return null;
 }
 
@@ -231,6 +257,30 @@ export async function POST(req: Request) {
           patch: projectPatchToRow(patch),
         });
         return json({ status: r.status, project: r.project ? rowToProject(r.project) : undefined }, statusCode(r.status));
+      }
+      case "goal.save": {
+        if (user.role !== "manager") return json({ error: "只有管理者可以設定公司目標" }, 403);
+        const g = body.goal as Partial<Goal> & { id: string };
+        const bad = checkGoal(g ?? {});
+        if (bad) return json({ error: bad }, 400);
+        if (g.ownerEmail) {
+          const people = await listPeople();
+          const who = people.find((p) => p.email === g.ownerEmail!.toLowerCase());
+          if (!who) return json({ error: "負責人不在人員名單上" }, 400);
+          g.ownerName = who.name;
+        }
+        if (g.title) g.title = g.title.trim();
+        const r = await rpc<{ status: string; goal?: Record<string, unknown> }>("pm_goal_save", {
+          ...actor,
+          base_version: typeof body.baseVersion === "number" && body.baseVersion > 0 ? body.baseVersion : null,
+          goal: goalPatchToRow(g),
+        });
+        return json({ status: r.status, goal: r.goal ? rowToGoal(r.goal) : undefined }, statusCode(r.status));
+      }
+      case "goal.delete": {
+        if (user.role !== "manager") return json({ error: "只有管理者可以刪除公司目標" }, 403);
+        const r = await rpc<{ status: string }>("pm_goal_delete", { ...actor, id: String(body.id ?? "") });
+        return json(r, statusCode(r.status));
       }
       case "notifications.list": {
         const r = await rpc<{ items: Record<string, unknown>[]; unread: number }>("pm_notifications_list", { ...actor, limit: 60 });

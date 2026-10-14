@@ -9,7 +9,7 @@ import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 /* 分流頁已拿掉：點 Logo 直接進狩獵管理。
    這個路徑保留成自動轉址（其他頁面的 Logo 還連到這裡）：
    有「狩獵管理」權限 → 狩獵管理；沒有 → 狩獵覺醒。
-   兩者之間的切換改在狩獵管理右上角頭像的「設定 → 切換」。 */
+   兩者之間切換：點左上角 Logo（狩獵管理 → 狩獵覺醒；狩獵覺醒 → 這裡 → 狩獵管理）。 */
 export default function DiversionPage() {
   const router = useRouter();
   const { data: session, status } = useSession();

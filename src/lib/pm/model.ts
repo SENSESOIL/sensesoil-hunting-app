@@ -60,6 +60,8 @@ export interface Task {
   ackAt?: string;
   doneAt?: string;
   doneBy?: string;
+  /** 所屬的公司目標（pm_goals.id） */
+  goalId?: string;
   version: number;
   createdBy?: string;
   createdAt?: string;
@@ -136,6 +138,9 @@ export interface PmData {
   people: Person[];
   projects: PmProject[];
   tasks: Task[];
+  /** 公司目標（20261014000000_pm_goals.sql 還沒執行時是空陣列，goalsReady = false） */
+  goals: Goal[];
+  goalsReady: boolean;
   unread: number;
   /** 工程照上傳已設定（Apps Script） */
   photoReady: boolean;
@@ -174,6 +179,7 @@ export function rowToTask(r: Row): Task {
     ackAt: s(r.ack_at),
     doneAt: s(r.done_at),
     doneBy: s(r.done_by),
+    goalId: s(r.goal_id),
     version: n(r.version) ?? 1,
     createdBy: s(r.created_by),
     createdAt: s(r.created_at),
@@ -183,6 +189,61 @@ export function rowToTask(r: Row): Task {
 }
 
 /** 前端的任務修改 → 資料庫欄位（只帶有給的欄位） */
+/* ── 公司目標 ─────────────────────────────────────────── */
+
+export interface Goal {
+  id: string;
+  title: string;
+  ownerEmail?: string;
+  ownerName?: string;
+  start?: string;
+  due?: string;
+  color?: string;
+  note?: string;
+  seq: number;
+  version: number;
+}
+
+/** 目標的預設顏色（依序輪流） */
+export const GOAL_COLORS = ["#F39C12", "#3F63C7", "#2E9E6B", "#C2410C", "#7C3AED", "#0891B2", "#DB2777", "#65A30D"];
+
+export function rowToGoal(r: Row): Goal {
+  return {
+    id: String(r.id),
+    title: String(r.title ?? ""),
+    ownerEmail: s(r.owner_email),
+    ownerName: s(r.owner_name),
+    start: s(r.start_on),
+    due: s(r.due_on),
+    color: s(r.color),
+    note: s(r.note),
+    seq: n(r.sort_order) ?? 0,
+    version: n(r.version) ?? 1,
+  };
+}
+
+export function goalPatchToRow(g: Partial<Goal> & { id: string }): Row {
+  const out: Row = { id: g.id };
+  const map: [keyof Goal, string][] = [
+    ["title", "title"],
+    ["ownerEmail", "owner_email"],
+    ["ownerName", "owner_name"],
+    ["start", "start_on"],
+    ["due", "due_on"],
+    ["color", "color"],
+    ["note", "note"],
+    ["seq", "sort_order"],
+  ];
+  for (const [k, col] of map) {
+    if (k in g) out[col] = g[k] === undefined ? null : (g[k] as unknown);
+  }
+  return out;
+}
+
+export function newGoalId(): string {
+  return "g-" + newTaskId().slice(2);
+}
+
 export function taskPatchToRow(t: Partial<Task> & { id: string }): Row {
   const out: Row = { id: t.id };
   const map: [keyof Task, string][] = [
@@ -198,6 +259,7 @@ export function taskPatchToRow(t: Partial<Task> & { id: string }): Row {
     ["due", "due_on"],
     ["note", "note"],
     ["seq", "sort_order"],
+    ["goalId", "goal_id"],
   ];
   for (const [k, col] of map) {
     if (k in t) out[col] = t[k] === undefined ? null : (t[k] as unknown);

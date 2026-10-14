@@ -398,7 +398,7 @@ export default function CommandCenter({
           {/* ── 分頁：營運 ───────────────────────────────── */}
           {canSeeOperations && (
           <section
-            className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
+            className="shrink-0 px-6 lg:px-10 pt-0 pb-6 md:pb-12"
             style={{ width: panelW || `${100 / tabs.length}%` }}
           >
             
@@ -475,7 +475,7 @@ export default function CommandCenter({
           {/* 團隊頁很長：不在這一頁時把高度收起來，其他分頁才不會多出一大段空白可以捲 */}
           {canSeeTeam && (
           <section
-            className={`shrink-0 px-6 lg:px-10 pt-0 ${tabs[activeIdx] === COMMAND_TAB_TEAM ? "pb-28" : "h-0 overflow-hidden"}`}
+            className={`shrink-0 px-6 lg:px-10 pt-0 ${tabs[activeIdx] === COMMAND_TAB_TEAM ? "pb-6 md:pb-12" : "h-0 overflow-hidden"}`}
             style={{ width: panelW || `${100 / tabs.length}%` }}
           >
             {teamSeen && <TeamPage query={teamQuery} onQuery={onTeamQuery} searchOpen={teamSearchOpen} onSearchClose={onTeamSearchClose} />}
@@ -485,7 +485,7 @@ export default function CommandCenter({
           {/* ── 分頁：財務（管理層）───────────────────────── */}
           {canSeeFinance && (
             <section
-              className="shrink-0 px-6 lg:px-10 pt-0 pb-28"
+              className="shrink-0 px-6 lg:px-10 pt-0 pb-6 md:pb-12"
             style={{ width: panelW || `${100 / tabs.length}%` }}
             >
               

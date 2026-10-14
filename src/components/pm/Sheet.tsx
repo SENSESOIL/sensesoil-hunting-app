@@ -119,6 +119,27 @@ export function Sheet({
     if (shown) panel.current?.focus({ preventScroll: true });
   }, [shown]);
 
+  // 往下拖標題列（含上方的小橫條）收起抽屜；往上拖不動，避免整片浮起來
+  const [dragY, setDragY] = useState(0);
+  const drag = useRef<{ y: number; t: number } | null>(null);
+  const onDragStart = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    drag.current = { y: e.clientY, t: Date.now() };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onDragMove = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    setDragY(Math.max(0, e.clientY - drag.current.y));
+  };
+  const onDragEnd = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    const dy = Math.max(0, e.clientY - drag.current.y);
+    const fast = dy / Math.max(1, Date.now() - drag.current.t) > 0.5;
+    drag.current = null;
+    setDragY(0);
+    if (dy > 90 || (fast && dy > 30)) tryClose();
+  };
+
   if (!mounted) return null;
 
   // 掛到 body：放在有 transform 的容器裡（例如指揮中心左右滑的分頁）時，fixed 才會以整個畫面為準。
@@ -149,6 +170,7 @@ export function Sheet({
           shown ? "translate-y-0" : "translate-y-full md:translate-y-8 md:opacity-0"
         }`}
         style={{
+          ...(dragY ? { transform: `translateY(${dragY}px)`, transition: "none" } : null),
           maxHeight:
             kb.inset > 0
               ? `${Math.max(240, kb.height - 12)}px`
@@ -156,7 +178,13 @@ export function Sheet({
         }}
       >
         {/* 標題列 */}
-        <div className="shrink-0 bg-white rounded-t-[22px] border-b border-[#E4E4E7]/70 px-4 pt-2 pb-3">
+        <div
+          className="shrink-0 bg-white rounded-t-[22px] border-b border-[#E4E4E7]/70 px-4 pt-2 pb-3 touch-none select-none"
+          onPointerDown={onDragStart}
+          onPointerMove={onDragMove}
+          onPointerUp={onDragEnd}
+          onPointerCancel={onDragEnd}
+        >
           <div className="w-9 h-1 rounded-full bg-[#E4E4E7] mx-auto mb-2 md:hidden" aria-hidden />
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0">

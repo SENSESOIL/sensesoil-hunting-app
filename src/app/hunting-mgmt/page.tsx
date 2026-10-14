@@ -1222,7 +1222,7 @@ export default function HuntingManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[var(--accent)]/20 flex flex-col md:flex-row pb-20 md:pb-0 relative">
+    <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[var(--accent)]/20 flex flex-col md:flex-row relative">
       {/* 下拉更新指示器。
           基準點放在 header 分割線（118px）上，靜止時用負位移把自己藏到 header 底下
           （z-30 < header 的 z-40，所以被不透明的 header 蓋住），
@@ -1265,7 +1265,7 @@ export default function HuntingManagementPage() {
             onClick={() =>
               isSidebarCollapsed
                 ? setIsSidebarCollapsed(false)
-                : undefined
+                : router.push("/basic-mission")
             }
           >
             <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative group">
@@ -1476,7 +1476,7 @@ export default function HuntingManagementPage() {
             {/* Mobile Logo & Title */}
             <div
               className="flex md:hidden items-end gap-3 cursor-pointer"
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              onClick={() => router.push("/basic-mission")}
             >
               <div className="w-[35px] h-[35px] flex items-center justify-center">
                 <img

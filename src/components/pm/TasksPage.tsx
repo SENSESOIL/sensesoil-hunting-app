@@ -11,18 +11,20 @@ import { TaskGantt } from "./TaskGantt";
 import { Workload } from "./Workload";
 import { TaskSheet } from "./TaskSheet";
 import { SetupNotice } from "./SetupNotice";
-import { isLate, usePm, type Pm } from "./usePm";
+import { isLate, usePm, type GoalItem, type Pm } from "./usePm";
+import { GoalSheet, GoalsPage } from "./Goals";
 
 /* ══════════════════════════════════════════════════════════
    任務追蹤（參考時間管理 App：先看「今天」，再往前後翻日子）
-   我的    —— 每個人都有：問候＋今日進度、本週日期列、當日／已排程／全部／已完成
+   我的    —— 每個人都有：問候＋今日進度、日期（週／月切換，月曆上有公司目標橫條）、當日／已排程／全部／已完成
+   目標    —— 每個人都看得到公司目標與排程；管理者可新增、修改（任務以「所屬目標」連結）
    全部    —— 管理者：所有人的任務；上方是團隊頭像列（各自手上幾件），點人篩選
    工作量  —— 管理者：每個人手上有多少、接下來每天幾件
    三種檢視：清單、看板、甘特圖（功能與資料都和原本相同，只換呈現）
    ══════════════════════════════════════════════════════════ */
 
-export const TASK_TABS_MANAGER = ["我的", "全部", "工作量"];
-export const TASK_TABS_MEMBER = ["我的"];
+export const TASK_TABS_MANAGER = ["我的", "全部", "目標", "工作量"];
+export const TASK_TABS_MEMBER = ["我的", "目標"];
 
 type View = "list" | "board" | "gantt";
 type Smart = "day" | "scheduled" | "all" | "done";
@@ -90,7 +92,7 @@ export default function TasksPage({
   const open = (t: Task) => setSheet({ id: t.id });
   const add = (preset?: Partial<Task>) => setSheet({ id: null, preset });
 
-  const tab = pm.isManager ? activeTab : "我的";
+  const tab = pm.isManager ? activeTab : activeTab === "目標" ? "目標" : "我的";
 
   return (
     <div className="px-5 lg:px-10 pb-28 w-full max-w-5xl mx-auto flex flex-col gap-5">
@@ -103,6 +105,8 @@ export default function TasksPage({
             onTabChange("全部");
           }}
         />
+      ) : tab === "目標" ? (
+        <GoalsPage pm={pm} onOpenTask={open} />
       ) : tab === "全部" ? (
         <AllTasks pm={pm} onOpen={open} onAdd={add} person={personFilter} setPerson={setPersonFilter} />
       ) : (
@@ -239,6 +243,8 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
   const [day, setDay] = useState(today);
   const [weekStart, setWeekStart] = useState(() => mondayOf(today));
   const mine = useMemo(() => pm.tasks.filter((t) => t.assigneeEmail === pm.me?.email), [pm.tasks, pm.me?.email]);
+  const [calMode, setCalMode] = useStored<"week" | "month">("pm:my:cal", "week");
+  const [goalOpen, setGoalOpen] = useState<string | null>(null);
 
   const sets = useMemo(() => {
     const open = mine.filter((t) => t.status !== "done");
@@ -353,8 +359,20 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
         </button>
       )}
 
-      {/* 本週日期列 */}
-      <WeekStrip mine={mine} today={today} day={smart === "day" && view === "list" ? day : null} weekStart={weekStart} setWeekStart={setWeekStart} onPick={pick} />
+      {/* 日期：週／月切換；公司目標以橫條顯示 */}
+      <CalendarCard
+        mode={calMode}
+        setMode={setCalMode}
+        mine={mine}
+        goals={pm.goals}
+        today={today}
+        day={smart === "day" && view === "list" ? day : null}
+        weekStart={weekStart}
+        setWeekStart={setWeekStart}
+        onPick={pick}
+        onOpenGoal={setGoalOpen}
+      />
+      <GoalSheet pm={pm} open={!!goalOpen} goalId={goalOpen} onClose={() => setGoalOpen(null)} onOpenTask={onOpen} />
 
       {/* 篩選 */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 py-1 lg:mx-0 lg:px-0">
@@ -428,100 +446,292 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
   );
 }
 
-/** 一週七天：點日期看那天的任務；有任務的日子下方有點（今天有逾期是紅點）。左右滑換週 */
-function WeekStrip({
+/* ── 日期：週／月切換 ─────────────────────────────────────
+   週：一週七天（原本的日期列）。月：整個月的月曆（像 iCloud 行事曆）。
+   兩種都會把公司目標畫成橫跨日期的橫條，點橫條打開目標；點日期看那天的任務。
+   左右滑：週模式換週、月模式換月。 */
+
+const MONTH_FIRST = (iso: string) => `${iso.slice(0, 7)}-01`;
+const addMonths = (first: string, n: number) => {
+  const d = toDay(first);
+  d.setMonth(d.getMonth() + n, 1);
+  return todayISO(d);
+};
+
+/** 一週（週一開始的 7 天）裡要畫的目標橫條：起訖欄位，最多 maxLanes 排 */
+function weekBars(goals: GoalItem[], weekStart: string, maxLanes: number) {
+  const weekEnd = addDays(weekStart, 6);
+  const segs = goals
+    .filter((g) => (g.start || g.due) && (g.start ?? g.due)! <= weekEnd && (g.due ?? g.start)! >= weekStart)
+    .map((g) => {
+      const s = g.start ?? g.due!;
+      const e = g.due ?? g.start!;
+      return {
+        g,
+        from: Math.max(0, diffDays(weekStart, s)),
+        to: Math.min(6, diffDays(weekStart, e)),
+        openLeft: s < weekStart,
+        openRight: e > weekEnd,
+      };
+    })
+    .sort((a, b) => a.from - b.from || b.to - b.from - (a.to - a.from));
+  const lanes: number[] = [];
+  const placed: ((typeof segs)[number] & { lane: number })[] = [];
+  let hidden = 0;
+  for (const seg of segs) {
+    let lane = lanes.findIndex((end) => end < seg.from);
+    if (lane < 0) lane = lanes.length;
+    if (lane >= maxLanes) {
+      hidden++;
+      continue;
+    }
+    lanes[lane] = seg.to;
+    placed.push({ ...seg, lane });
+  }
+  return { bars: placed, lanes: Math.min(maxLanes, lanes.length), hidden };
+}
+
+function GoalBarsRow({
+  goals,
+  weekStart,
+  maxLanes,
+  onOpenGoal,
+}: {
+  goals: GoalItem[];
+  weekStart: string;
+  maxLanes: number;
+  onOpenGoal: (id: string) => void;
+}) {
+  const { bars, lanes, hidden } = weekBars(goals, weekStart, maxLanes);
+  if (!lanes) return null;
+  const LANE = 18;
+  return (
+    <div className="relative mx-1" style={{ height: lanes * LANE + (hidden ? 14 : 0) }}>
+      {bars.map((b) => (
+        <button
+          key={b.g.id}
+          type="button"
+          onClick={() => onOpenGoal(b.g.id)}
+          title={b.g.title}
+          className="absolute h-[15px] px-1.5 text-[10.5px] leading-[15px] font-medium text-white truncate text-left active:opacity-80"
+          style={{
+            top: b.lane * LANE,
+            left: `calc(${(b.from / 7) * 100}% + 2px)`,
+            width: `calc(${((b.to - b.from + 1) / 7) * 100}% - 4px)`,
+            background: b.g.color,
+            borderRadius: `${b.openLeft ? 0 : 5}px ${b.openRight ? 0 : 5}px ${b.openRight ? 0 : 5}px ${b.openLeft ? 0 : 5}px`,
+          }}
+        >
+          {b.g.title}
+        </button>
+      ))}
+      {hidden > 0 && (
+        <span className="absolute left-1 text-[10px] text-[#A1A1AA]" style={{ top: lanes * LANE }}>
+          另有 {hidden} 個目標
+        </span>
+      )}
+    </div>
+  );
+}
+
+function CalendarCard({
+  mode,
+  setMode,
   mine,
+  goals,
   today,
   day,
   weekStart,
   setWeekStart,
   onPick,
+  onOpenGoal,
 }: {
+  mode: "week" | "month";
+  setMode: (m: "week" | "month") => void;
   mine: Task[];
+  goals: GoalItem[];
   today: string;
   /** 目前選的日子（不在「當日」模式時是 null） */
   day: string | null;
   weekStart: string;
   setWeekStart: (d: string) => void;
   onPick: (d: string) => void;
+  onOpenGoal: (id: string) => void;
 }) {
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const thisWeek = weekStart === mondayOf(today);
+  const [month, setMonth] = useState(() => MONTH_FIRST(day ?? weekStart));
   const touch = useRef<number | null>(null);
-  const first = toDay(days[0]);
-  const last = toDay(days[6]);
-  const range =
-    first.getMonth() === last.getMonth()
-      ? `${first.getMonth() + 1}月 ${first.getDate()}–${last.getDate()}日`
-      : `${first.getMonth() + 1}/${first.getDate()} – ${last.getMonth() + 1}/${last.getDate()}`;
+  const dated = goals.filter((g) => g.start || g.due);
+
+  // 切到月曆時，對齊目前看的那週
+  useEffect(() => {
+    if (mode === "month") setMonth(MONTH_FIRST(day ?? addDays(weekStart, 3)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  const first = toDay(weekStart);
+  const last = toDay(addDays(weekStart, 6));
+  const m = toDay(month);
+  const title =
+    mode === "month"
+      ? `${m.getFullYear() !== toDay(today).getFullYear() ? `${m.getFullYear()}年 ` : ""}${m.getMonth() + 1}月`
+      : first.getMonth() === last.getMonth()
+        ? `${first.getMonth() + 1}月 ${first.getDate()}–${last.getDate()}日`
+        : `${first.getMonth() + 1}/${first.getDate()} – ${last.getMonth() + 1}/${last.getDate()}`;
+  const atToday = mode === "month" ? month === MONTH_FIRST(today) : weekStart === mondayOf(today);
+  const step = (n: number) => (mode === "month" ? setMonth(addMonths(month, n)) : setWeekStart(addDays(weekStart, 7 * n)));
+
+  const pickDay = (d: string) => {
+    setWeekStart(mondayOf(d));
+    if (mode === "month" && d.slice(0, 7) !== month.slice(0, 7)) setMonth(MONTH_FIRST(d));
+    onPick(d);
+  };
+
+  const swipe = {
+    onTouchStart: (e: React.TouchEvent) => {
+      e.stopPropagation();
+      touch.current = e.touches[0].clientX;
+    },
+    onTouchMove: (e: React.TouchEvent) => e.stopPropagation(),
+    onTouchEnd: (e: React.TouchEvent) => {
+      e.stopPropagation();
+      const start = touch.current;
+      touch.current = null;
+      if (start === null) return;
+      const dx = e.changedTouches[0].clientX - start;
+      if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+    },
+  };
+
+  // 月曆：從當月 1 號那週的週一，到月底那週的週日
+  const weeks = useMemo(() => {
+    if (mode !== "month") return [];
+    const start = mondayOf(month);
+    const end = addDays(addMonths(month, 1), -1);
+    const out: string[] = [];
+    for (let w = start; w <= end; w = addDays(w, 7)) out.push(w);
+    return out;
+  }, [mode, month]);
+
   return (
     <section className="bg-white rounded-[22px] shadow-card px-2 pt-3 pb-2.5">
       <div className="flex items-center justify-between pl-3 pr-1 pb-2">
-        <span className="text-[15px] font-semibold text-[#18181B] tabular-nums">{range}</span>
+        <span className="text-[15px] font-semibold text-[#18181B] tabular-nums">{title}</span>
         <span className="flex items-center gap-1">
-          {!thisWeek && (
+          {!atToday && (
             <button
               type="button"
               onClick={() => {
+                setMonth(MONTH_FIRST(today));
                 setWeekStart(mondayOf(today));
                 onPick(today);
               }}
               className="h-8 px-3 rounded-full text-[13px] font-medium bg-[var(--accent-soft)] text-[var(--accent-ink)]"
             >
-              回到今天
+              今天
             </button>
           )}
-          <button type="button" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="上一週" className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] active:bg-[#F4F4F5]">
+          <button type="button" onClick={() => step(-1)} aria-label={mode === "month" ? "上個月" : "上一週"} className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] active:bg-[#F4F4F5]">
             <Icon name="chevron_left" className="text-[20px]" />
           </button>
-          <button type="button" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="下一週" className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] active:bg-[#F4F4F5]">
+          <button type="button" onClick={() => step(1)} aria-label={mode === "month" ? "下個月" : "下一週"} className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] active:bg-[#F4F4F5]">
             <Icon name="chevron_right" className="text-[20px]" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode(mode === "month" ? "week" : "month")}
+            aria-label={mode === "month" ? "切換成週" : "切換成整個月"}
+            title={mode === "month" ? "切換成週" : "看整個月"}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${mode === "month" ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#71717A] active:bg-[#F4F4F5]"}`}
+          >
+            <Icon name={mode === "month" ? "calendar_view_week" : "calendar_month"} className="text-[20px]" />
           </button>
         </span>
       </div>
-      <div
-        className="grid grid-cols-7 gap-1"
-        onTouchStart={(e) => {
-          e.stopPropagation();
-          touch.current = e.touches[0].clientX;
-        }}
-        onTouchMove={(e) => e.stopPropagation()}
-        onTouchEnd={(e) => {
-          e.stopPropagation();
-          const start = touch.current;
-          touch.current = null;
-          if (start === null) return;
-          const dx = e.changedTouches[0].clientX - start;
-          if (Math.abs(dx) > 50) setWeekStart(addDays(weekStart, dx < 0 ? 7 : -7));
-        }}
-      >
-        {days.map((d) => {
-          const on = d === day;
-          const isToday = d === today;
-          const list = tasksOn(mine, d, today);
-          const late = isToday && list.some((t) => isLate(t, today));
-          return (
-            <button
-              key={d}
-              type="button"
-              onClick={() => onPick(d)}
-              aria-pressed={on}
-              aria-label={`${MONTH_DAY(d)}，${list.length} 件`}
-              className={`h-[68px] rounded-[16px] flex flex-col items-center justify-center gap-0.5 transition-colors ${on ? "text-white" : "active:bg-[#F4F4F5]"}`}
-              style={on ? { background: "var(--accent)" } : undefined}
-            >
-              <span className={`text-[12px] ${on ? "text-white/80" : "text-[#A1A1AA]"}`}>{WEEKDAYS[toDay(d).getDay()]}</span>
-              <span className={`text-[18px] font-semibold tabular-nums ${on ? "text-white" : isToday ? "text-[var(--accent)]" : "text-[#18181B]"}`}>{toDay(d).getDate()}</span>
-              <span className="h-1.5 flex items-center gap-0.5" aria-hidden>
-                {list.length > 0 && <span className="w-1.5 h-1.5 rounded-full" style={{ background: on ? "#fff" : late ? RED : "var(--accent)" }} />}
-                {list.length > 2 && (
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: on ? "rgba(255,255,255,0.6)" : "color-mix(in srgb, var(--accent) 45%, transparent)" }} />
-                )}
+
+      {mode === "week" ? (
+        <div {...swipe}>
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)).map((d) => {
+              const on = d === day;
+              const isToday = d === today;
+              const list = tasksOn(mine, d, today);
+              const late = isToday && list.some((t) => isLate(t, today));
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => pickDay(d)}
+                  aria-pressed={on}
+                  aria-label={`${MONTH_DAY(d)}，${list.length} 件`}
+                  className={`h-[68px] rounded-[16px] flex flex-col items-center justify-center gap-0.5 transition-colors ${on ? "text-white" : "active:bg-[#F4F4F5]"}`}
+                  style={on ? { background: "var(--accent)" } : undefined}
+                >
+                  <span className={`text-[12px] ${on ? "text-white/80" : "text-[#A1A1AA]"}`}>{WEEKDAYS[toDay(d).getDay()]}</span>
+                  <span className={`text-[18px] font-semibold tabular-nums ${on ? "text-white" : isToday ? "text-[var(--accent)]" : "text-[#18181B]"}`}>{toDay(d).getDate()}</span>
+                  <span className="h-1.5 flex items-center gap-0.5" aria-hidden>
+                    {list.length > 0 && <span className="w-1.5 h-1.5 rounded-full" style={{ background: on ? "#fff" : late ? RED : "var(--accent)" }} />}
+                    {list.length > 2 && (
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: on ? "rgba(255,255,255,0.6)" : "color-mix(in srgb, var(--accent) 45%, transparent)" }} />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {dated.length > 0 && (
+            <div className="mt-1.5">
+              <GoalBarsRow goals={dated} weekStart={weekStart} maxLanes={3} onOpenGoal={onOpenGoal} />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div {...swipe}>
+          <div className="grid grid-cols-7 pb-1">
+            {[1, 2, 3, 4, 5, 6, 0].map((w) => (
+              <span key={w} className="text-center text-[11px] text-[#A1A1AA]">
+                {WEEKDAYS[w]}
               </span>
-            </button>
-          );
-        })}
-      </div>
+            ))}
+          </div>
+          {weeks.map((w) => (
+            <div key={w} className="border-t border-[#F2F2F4] pt-1 pb-1.5">
+              <div className="grid grid-cols-7">
+                {Array.from({ length: 7 }, (_, i) => addDays(w, i)).map((d) => {
+                  const inMonth = d.slice(0, 7) === month.slice(0, 7);
+                  const on = d === day;
+                  const isToday = d === today;
+                  const list = tasksOn(mine, d, today);
+                  const late = list.some((t) => isLate(t, today)) && d <= today;
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => pickDay(d)}
+                      aria-pressed={on}
+                      aria-label={`${MONTH_DAY(d)}，${list.length} 件`}
+                      className="h-[46px] flex flex-col items-center justify-start gap-1 pt-0.5"
+                    >
+                      <span
+                        className={`w-[30px] h-[30px] rounded-full flex items-center justify-center text-[15px] tabular-nums ${
+                          on ? "text-white font-semibold" : isToday ? "text-[var(--accent)] font-bold" : inMonth ? "text-[#18181B]" : "text-[#C7C7CC]"
+                        }`}
+                        style={on ? { background: "var(--accent)" } : undefined}
+                      >
+                        {toDay(d).getDate()}
+                      </span>
+                      <span className="h-1.5 flex items-center gap-0.5" aria-hidden>
+                        {list.length > 0 && <span className="w-1.5 h-1.5 rounded-full" style={{ background: late ? RED : inMonth ? "var(--accent)" : "#D4D4D8" }} />}
+                        {list.length > 2 && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "color-mix(in srgb, var(--accent) 45%, transparent)" }} />}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {dated.length > 0 && <GoalBarsRow goals={dated} weekStart={w} maxLanes={2} onOpenGoal={onOpenGoal} />}
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

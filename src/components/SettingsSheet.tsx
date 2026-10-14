@@ -135,33 +135,6 @@ export function SettingsSheet({
             </div>
           </section>
 
-          {/* 切換：狩獵管理／狩獵覺醒（原本的分流頁拿掉後，改在這裡切換） */}
-          <Section title="切換">
-            <div className="p-1.5 grid grid-cols-2 gap-1.5">
-              {[
-                { href: "/hunting-mgmt", label: "狩獵管理", icon: "shield" },
-                { href: "/basic-mission", label: "狩獵覺醒", icon: "local_fire_department" },
-              ].map((m) => {
-                const on = typeof window !== "undefined" && window.location.pathname.startsWith(m.href);
-                return (
-                  <button
-                    key={m.href}
-                    type="button"
-                    onClick={() => {
-                      if (on) return onClose();
-                      window.location.href = m.href;
-                    }}
-                    aria-pressed={on}
-                    className={`h-11 rounded-[16px] flex items-center justify-center gap-1.5 text-[15px] transition-colors ${on ? "bg-[var(--accent)] text-white font-semibold" : "text-[#52525B] active:bg-[#F4F4F5]"}`}
-                  >
-                    <Icon name={m.icon} weight={400} className="text-[19px]" />
-                    {m.label}
-                  </button>
-                );
-              })}
-            </div>
-          </Section>
-
           {/* 外觀：白天／夜晚（強調色固定品牌橘），小圖示切換 */}
           <Section title="外觀" hint="只改這支裝置">
             <div className="px-4 py-3 flex items-center justify-between">

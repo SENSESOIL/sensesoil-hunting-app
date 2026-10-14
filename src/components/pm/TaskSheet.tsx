@@ -8,6 +8,7 @@ import { fmtDateLong } from "./fields";
 import { Icon } from "./ui";
 import { Avatar, dateShortcuts, GREEN, ORANGE, RED } from "./kit";
 import { isLate, personLabel, type Pm } from "./usePm";
+import { GoalPicker } from "./Goals";
 
 /* ══════════════════════════════════════════════════════════
    任務細節（新增／編輯）
@@ -16,7 +17,7 @@ import { isLate, personLabel, type Pm } from "./usePm";
    - 指派紀錄：何時指派、對方何時看到、何時按收到 —— 不用再打電話確認
    ══════════════════════════════════════════════════════════ */
 
-type Draft = Pick<Task, "code" | "title" | "kind" | "status" | "progress" | "flagged" | "assigneeEmail" | "start" | "due" | "note">;
+type Draft = Pick<Task, "code" | "title" | "kind" | "status" | "progress" | "flagged" | "assigneeEmail" | "start" | "due" | "note" | "goalId">;
 
 const EMPTY: Draft = { code: "", title: "", kind: "施工", status: "todo", progress: 0, flagged: false };
 
@@ -31,6 +32,7 @@ const toDraft = (t: Task): Draft => ({
   start: t.start,
   due: t.due,
   note: t.note,
+  goalId: t.goalId,
 });
 
 export function TaskSheet({
@@ -62,6 +64,7 @@ export function TaskSheet({
   );
   const [d, setD] = useState<Draft>(initial);
   const [pickProject, setPickProject] = useState(false);
+  const [pickGoal, setPickGoal] = useState(false);
   const [showStart, setShowStart] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -70,6 +73,7 @@ export function TaskSheet({
     if (!open) return;
     setD(initial);
     setPickProject(isNew && !initial.code);
+    setPickGoal(false);
     setShowStart(!!initial.start);
     setConfirmDel(false);
     if (isNew) setTimeout(() => titleRef.current?.focus(), 350);
@@ -125,8 +129,8 @@ export function TaskSheet({
         action: {
           label: "復原",
           run: () => {
-            const { id, code, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq } = prev;
-            pm.saveTask({ id, code, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq });
+            const { id, code, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq, goalId } = prev;
+            pm.saveTask({ id, code, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq, goalId });
           },
         },
       });
@@ -244,6 +248,36 @@ export function TaskSheet({
                 setPickProject(false);
               }}
             />
+          )}
+          {/* 所屬的公司目標（有目標時才出現） */}
+          {pm.goalsReady && (pm.goals.length > 0 || d.goalId) && (
+            <>
+              <button
+                type="button"
+                disabled={!canEditAll}
+                onClick={() => setPickGoal((v) => !v)}
+                className="w-full flex items-center gap-3 px-4 min-h-[52px] text-left disabled:cursor-default"
+              >
+                <RowIcon icon="flag" color={d.goalId ? pm.goalBy.get(d.goalId)?.color ?? "#A1A1AA" : "#A1A1AA"} />
+                <span className="flex-1 min-w-0">
+                  <span className={`block text-[15px] truncate ${d.goalId ? "text-[#18181B]" : "text-[#71717A]"}`}>
+                    {d.goalId ? pm.goalBy.get(d.goalId)?.title ?? "（目標已刪除）" : "所屬目標"}
+                  </span>
+                  {d.goalId && <span className="block text-[12px] text-[#8E8E93]">公司目標</span>}
+                </span>
+                {canEditAll && <Icon name={pickGoal ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC]" />}
+              </button>
+              {pickGoal && canEditAll && (
+                <GoalPicker
+                  pm={pm}
+                  value={d.goalId}
+                  onPick={(id) => {
+                    set("goalId", id);
+                    setPickGoal(false);
+                  }}
+                />
+              )}
+            </>
           )}
           <div className="px-4 py-3">
             <div className="flex items-center gap-3 mb-2.5">

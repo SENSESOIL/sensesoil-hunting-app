@@ -9,9 +9,12 @@ import {
   type ProjectView,
 } from "@/lib/project-ops";
 import {
+  GOAL_COLORS,
+  newGoalId,
   newTaskId,
   projectToOps,
   taskToWorkItem,
+  type Goal,
   type PmData,
   type PmProject,
   type Person,
@@ -88,6 +91,16 @@ function applyRules(prev: Task | undefined, t: Task, me: string): Task {
   return out;
 }
 
+/** 畫面上的目標：連結的任務與自動計算的進度 */
+export interface GoalItem extends Goal {
+  color: string;
+  tasks: Task[];
+  doneCount: number;
+  /** 0–100：完成件數／總件數（沒有任務時是 0） */
+  progress: number;
+  lateCount: number;
+}
+
 export function isLate(t: Task, today: string) {
   return t.status !== "done" && !!t.due && t.due < today && t.kind !== "等待";
 }
@@ -149,6 +162,28 @@ export function usePm() {
   }, [data, today]);
 
   const projectBy = useMemo(() => new Map(projects.map((p) => [p.code, p])), [projects]);
+
+  /** 公司目標（依排序），附連結的任務與進度 */
+  const goals = useMemo<GoalItem[]>(() => {
+    if (!data?.goals) return [];
+    const byGoal = new Map<string, Task[]>();
+    for (const t of data.tasks) if (t.goalId) byGoal.set(t.goalId, [...(byGoal.get(t.goalId) ?? []), t]);
+    return [...data.goals]
+      .sort((a, b) => a.seq - b.seq || (a.start ?? "9999").localeCompare(b.start ?? "9999"))
+      .map((g, i) => {
+        const tasks = (byGoal.get(g.id) ?? []).sort((a, b) => (a.start ?? a.due ?? "9999").localeCompare(b.start ?? b.due ?? "9999"));
+        const doneCount = tasks.filter((t) => t.status === "done").length;
+        return {
+          ...g,
+          color: g.color || GOAL_COLORS[i % GOAL_COLORS.length],
+          tasks,
+          doneCount,
+          progress: tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0,
+          lateCount: tasks.filter((t) => isLate(t, today)).length,
+        };
+      });
+  }, [data?.goals, data?.tasks, today]);
+  const goalBy = useMemo(() => new Map(goals.map((g) => [g.id, g])), [goals]);
 
   /** 排隊：同一個 key 的請求依序送出 */
   const enqueue = useCallback(<T,>(key: string, job: () => Promise<T>): Promise<T> => {
@@ -311,6 +346,54 @@ export function usePm() {
     [enqueue, mutate]
   );
 
+  /** 新增或修改公司目標（只有管理者）。回傳存好的目標；失敗回傳 null */
+  const saveGoal = useCallback(
+    async (patch: Partial<Goal> & { id?: string }): Promise<Goal | null> => {
+      const d = latest.current;
+      if (!d) return null;
+      const id = patch.id ?? newGoalId();
+      const prev = d.goals.find((g) => g.id === id);
+      const optimistic: Goal = { ...(prev ?? { id, title: "", seq: d.goals.length, version: 0 }), ...patch, id };
+      await mutate((cur) => (cur ? { ...cur, goals: [...cur.goals.filter((g) => g.id !== id), optimistic] } : cur), { revalidate: false });
+      const res = await enqueue(`goal:${id}`, () =>
+        pmPost<{ status: string; goal?: Goal }>({ op: "goal.save", goal: { ...patch, id }, baseVersion: prev?.version })
+      );
+      if (res.ok && res.data.goal) {
+        const saved = res.data.goal;
+        await mutate((cur) => (cur ? { ...cur, goals: [...cur.goals.filter((g) => g.id !== id), saved] } : cur), { revalidate: false });
+        return saved;
+      }
+      toast(res.status === 409 ? "有人剛改過這個目標，已換成最新的內容" : res.data.error || "儲存失敗", { tone: "error" });
+      await mutate();
+      return null;
+    },
+    [enqueue, mutate]
+  );
+
+  const deleteGoal = useCallback(
+    async (id: string) => {
+      await mutate(
+        (cur) =>
+          cur
+            ? {
+                ...cur,
+                goals: cur.goals.filter((g) => g.id !== id),
+                tasks: cur.tasks.map((t) => (t.goalId === id ? { ...t, goalId: undefined } : t)),
+              }
+            : cur,
+        { revalidate: false }
+      );
+      const res = await enqueue(`goal:${id}`, () => pmPost({ op: "goal.delete", id }));
+      if (!res.ok) {
+        toast(res.data.error || "刪除失敗", { tone: "error" });
+        await mutate();
+        return false;
+      }
+      return true;
+    },
+    [enqueue, mutate]
+  );
+
   return {
     data,
     error: error as (Error & { status?: number }) | undefined,
@@ -324,6 +407,11 @@ export function usePm() {
     projects,
     projectBy,
     tasks: data?.tasks ?? [],
+    goals,
+    goalBy,
+    goalsReady: data?.goalsReady ?? false,
+    saveGoal,
+    deleteGoal,
     saveTask,
     deleteTask,
     reorderTasks,
