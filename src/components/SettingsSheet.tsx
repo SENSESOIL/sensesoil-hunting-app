@@ -135,40 +135,55 @@ export function SettingsSheet({
             </div>
           </section>
 
-          {/* 外觀：白天／夜晚（強調色固定品牌橘） */}
-          <Section title="外觀" hint="只改這支裝置">
-            <div className="grid grid-cols-2 gap-3 p-4">
-              {MODES.map((m) => {
-                const on = mode === m.value;
+          {/* 切換：狩獵管理／狩獵覺醒（原本的分流頁拿掉後，改在這裡切換） */}
+          <Section title="切換">
+            <div className="p-1.5 grid grid-cols-2 gap-1.5">
+              {[
+                { href: "/hunting-mgmt", label: "狩獵管理", icon: "shield" },
+                { href: "/basic-mission", label: "狩獵覺醒", icon: "local_fire_department" },
+              ].map((m) => {
+                const on = typeof window !== "undefined" && window.location.pathname.startsWith(m.href);
                 return (
                   <button
-                    key={m.value}
+                    key={m.href}
                     type="button"
-                    onClick={() => setThemeMode(m.value)}
+                    onClick={() => {
+                      if (on) return onClose();
+                      window.location.href = m.href;
+                    }}
                     aria-pressed={on}
-                    className={`rounded-[18px] p-2 pb-3 flex flex-col items-center gap-2.5 border-2 transition-colors ${on ? "border-[var(--accent)]" : "border-transparent bg-[#F4F4F5]"}`}
+                    className={`h-11 rounded-[16px] flex items-center justify-center gap-1.5 text-[15px] transition-colors ${on ? "bg-[var(--accent)] text-white font-semibold" : "text-[#52525B] active:bg-[#F4F4F5]"}`}
                   >
-                    {/* 小預覽：固定色碼（不跟著夜晚模式換），才看得出兩種模式的差別 */}
-                    <span className="w-full aspect-[4/3] rounded-[12px] p-2.5 flex flex-col gap-1.5" style={{ background: m.page }}>
-                      <span className="rounded-[8px] p-2 flex items-center gap-1.5" style={{ background: m.card }}>
-                        <span className="w-4 h-4 rounded-full shrink-0" style={{ background: "#F39C12" }} />
-                        <span className="flex-1 flex flex-col gap-1">
-                          <span className="h-1.5 rounded-full w-4/5" style={{ background: m.ink }} />
-                          <span className="h-1.5 rounded-full w-1/2" style={{ background: m.sub }} />
-                        </span>
-                      </span>
-                      <span className="rounded-[8px] p-2 flex flex-col gap-1" style={{ background: m.card }}>
-                        <span className="h-1.5 rounded-full w-3/4" style={{ background: m.ink }} />
-                        <span className="h-1.5 rounded-full w-2/5" style={{ background: m.sub }} />
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Icon name={m.icon} weight={400} className={`text-[18px] ${on ? "text-[var(--accent)]" : "text-[#A1A1AA]"}`} />
-                      <span className={`text-[15px] ${on ? "font-semibold text-[#18181B]" : "text-[#71717A]"}`}>{m.label}</span>
-                    </span>
+                    <Icon name={m.icon} weight={400} className="text-[19px]" />
+                    {m.label}
                   </button>
                 );
               })}
+            </div>
+          </Section>
+
+          {/* 外觀：白天／夜晚（強調色固定品牌橘），小圖示切換 */}
+          <Section title="外觀" hint="只改這支裝置">
+            <div className="px-4 py-3 flex items-center justify-between">
+              <p className="text-[15px] text-[#18181B]">{MODES.find((m) => m.value === mode)?.label ?? "白天"}模式</p>
+              <div className="flex gap-1 p-1 rounded-full bg-[#F4F4F5]">
+                {MODES.map((m) => {
+                  const on = mode === m.value;
+                  return (
+                    <button
+                      key={m.value}
+                      type="button"
+                      onClick={() => setThemeMode(m.value)}
+                      aria-pressed={on}
+                      aria-label={m.label}
+                      title={m.label}
+                      className={`w-10 h-8 rounded-full flex items-center justify-center transition-colors ${on ? "bg-white shadow-card" : ""}`}
+                    >
+                      <Icon name={m.icon} weight={400} className={`text-[19px] ${on ? "text-[var(--accent)]" : "text-[#A1A1AA]"}`} />
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </Section>
 

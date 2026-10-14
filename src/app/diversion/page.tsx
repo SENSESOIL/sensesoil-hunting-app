@@ -1,140 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 
+/* 分流頁已拿掉：點 Logo 直接進狩獵管理。
+   這個路徑保留成自動轉址（其他頁面的 Logo 還連到這裡）：
+   有「狩獵管理」權限 → 狩獵管理；沒有 → 狩獵覺醒。
+   兩者之間的切換改在狩獵管理右上角頭像的「設定 → 切換」。 */
 export default function DiversionPage() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const { permissions } = useDynamicPermissions();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const roles: Record<string, string> = permissions?.roles || (session?.user as any)?.roles || {};
+  const { data: session, status } = useSession();
+  const { permissions, isLoading, error } = useDynamicPermissions();
+  const dev = process.env.NODE_ENV === "development";
 
-  // 權限表的父層（狩獵管理／狩獵覺醒）會自動彙總底下所有子項目：
-  // 只要任何一個子項目有權限，父層就是可進入的。所以這裡查父層一個 key 就夠，
-  // 不必再把子項目名稱寫死（寫死的話每新增一個子欄位都要回來改，而且很容易漏）。
-  const roleOf = (key: string) => roles[key];
-  const canEnter = (key: string) => {
-    const r = roleOf(key);
-    return r === "admin" || r === "editor" || r === "user" || r === "viewer";
-  };
-  const hasHuntingMgmtAccess = canEnter("狩獵管理");
-
-  const handleEnterHuntingMgmt = () => {
-    if (!session) {
-      alert("權限不足，請以狩獵者身分登入");
+  useEffect(() => {
+    // 權限還沒讀到時先等，避免有權限的人被誤送到狩獵覺醒
+    if (status === "loading" || isLoading) return;
+    if (!session && !dev) {
+      router.replace("/");
       return;
     }
-    if (!hasHuntingMgmtAccess) {
-      alert("您尚未開放「狩獵管理」的權限，請聯繫管理員。");
-      return;
-    }
-    router.push('/hunting-mgmt');
-  };
+    const roles: Record<string, string> = permissions?.roles || (session?.user as any)?.roles || {};
+    if (dev && !session && !error && !Object.keys(roles).length) return; // 開發環境：等 /api/auth/permissions 回來
+    const r = roles["狩獵管理"];
+    const canMgmt = r === "admin" || r === "editor" || r === "user" || r === "viewer";
+    router.replace(canMgmt ? "/hunting-mgmt" : "/basic-mission");
+  }, [status, isLoading, error, session, permissions, dev, router]);
 
-  const handleEnterMission = () => {
-    if (!session) {
-      alert("權限不足，請以狩獵者身分登入");
-      return;
-    }
-    router.push("/basic-mission");
-  };
-
-  return (
-    <main className="flex-1 flex flex-col items-center justify-center p-gutter relative min-h-screen">
-      <div className="absolute top-12 left-1/2 -translate-x-1/2 z-50">
-        <div className="relative">
-          <button
-            className="flex items-center justify-center p-2 text-primary hover:text-primary/80 transition-colors"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <span className="material-symbols-outlined text-[32px]">
-              more_horiz
-            </span>
-          </button>
-          
-          {isMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-32 bg-surface-container-high border border-primary/30 rounded shadow-lg z-50">
-                <div
-                  className="px-4 py-3 hover:bg-primary/20 cursor-pointer text-[#efe0d2] text-sm flex items-center gap-2 justify-center"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    signOut({ callbackUrl: '/' });
-                  }}
-                >
-                  <span className="material-symbols-outlined text-[18px] text-primary">power_settings_new</span>
-                  <span>登出</span>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl px-margin mt-16 md:mt-0">
-        {/* Card 1: Hunting Management */}
-        <div 
-          className={`group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded-[4px] border-primary ${!hasHuntingMgmtAccess && session ? 'opacity-40 cursor-not-allowed' : ''}`}
-          onClick={handleEnterHuntingMgmt}
-        >
-          <div className="mb-8">
-            <span
-              className="material-symbols-outlined text-primary bg-transparent drop-shadow-[0_0_10px_rgba(243,156,18,0.8)] transition-transform group-hover:scale-110 duration-500"
-              style={{ fontSize: "100px", fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 48" }}
-            >
-              shield
-            </span>
-          </div>
-          <h3 className="font-headline-md text-headline-md text-primary mb-2 tracking-widest">
-            狩獵管理
-          </h3>
-        </div>
-
-        {/* Card 2: Hunting Awakening */}
-        <div
-          className="group relative bg-surface-container-low border p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:border-primary hover:shadow-[0_0_30px_rgba(243,156,18,0.2)] rounded-[4px] border-primary"
-          onClick={handleEnterMission}
-        >
-          <div className="mb-8">
-            <span
-              className="material-symbols-outlined text-primary bg-transparent drop-shadow-[0_0_10px_rgba(243,156,18,0.8)] transition-transform group-hover:scale-110 duration-500"
-              style={{ fontSize: "100px", fontVariationSettings: "'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 48" }}
-            >
-              local_fire_department
-            </span>
-          </div>
-          <h3 className="font-headline-md text-headline-md text-primary mb-2 tracking-widest">
-            狩獵覺醒
-          </h3>
-        </div>
-      </div>
-      
-      <style jsx global>{`
-        .scanline-overlay {
-          background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-          background-size: 100% 2px, 3px 100%;
-          pointer-events: none;
-        }
-        .hud-bracket {
-          position: absolute;
-          width: 15px;
-          height: 15px;
-          border-color: #f39c12;
-        }
-        .hud-bracket-tl { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
-        .hud-bracket-tr { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
-        .hud-bracket-bl { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
-        .hud-bracket-br { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
-        
-        .chamfered-button {
-          clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
-        }
-      `}</style>
-    </main>
-  );
+  return <main className="min-h-screen" />;
 }

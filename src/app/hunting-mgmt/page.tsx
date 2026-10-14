@@ -1265,7 +1265,7 @@ export default function HuntingManagementPage() {
             onClick={() =>
               isSidebarCollapsed
                 ? setIsSidebarCollapsed(false)
-                : router.push("/diversion")
+                : undefined
             }
           >
             <div className="w-[35px] h-[35px] flex items-center justify-center shrink-0 relative group">
@@ -1476,7 +1476,7 @@ export default function HuntingManagementPage() {
             {/* Mobile Logo & Title */}
             <div
               className="flex md:hidden items-end gap-3 cursor-pointer"
-              onClick={() => router.push("/diversion")}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             >
               <div className="w-[35px] h-[35px] flex items-center justify-center">
                 <img
