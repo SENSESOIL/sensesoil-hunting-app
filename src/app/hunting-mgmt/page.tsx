@@ -739,10 +739,16 @@ export default function HuntingManagementPage() {
   const TASK_TABS = isPmManager ? TASK_TABS_MANAGER : TASK_TABS_MEMBER;
   const [scheduleTab, setScheduleTab] = useState(TASK_TABS_MANAGER[0]);
   // 標題列的搜尋（分享鍵左邊）：指揮中心「團隊」與任務追蹤「清單」共用同一組狀態
-  const searchMode: "team" | "tasks" | null =
-    activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM ? "team" : activeNav === "tasks" && scheduleTab === "清單" ? "tasks" : null;
-  const searchPlaceholder = searchMode === "tasks" ? "搜尋任務、標籤" : "搜尋姓名、工項、電話";
-  const searchLabel = searchMode === "tasks" ? "搜尋任務" : "搜尋團隊";
+  const searchMode: "team" | "tasks" | "projects" | null =
+    activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM
+      ? "team"
+      : activeNav === "tasks" && scheduleTab === "清單"
+        ? "tasks"
+        : activeNav === "project_info"
+          ? "projects"
+          : null;
+  const searchPlaceholder = searchMode === "tasks" ? "搜尋任務、標籤" : searchMode === "projects" ? "搜尋代碼、名稱、業主" : "搜尋姓名、工項、電話";
+  const searchLabel = searchMode === "tasks" ? "搜尋任務" : searchMode === "projects" ? "搜尋專案" : "搜尋團隊";
   // 換到別的頁面就收起搜尋、清掉搜尋字
   useEffect(() => {
     setTeamSearchOpen(false);
@@ -1868,7 +1874,16 @@ export default function HuntingManagementPage() {
               }}
             />
           ) : (
-            <ProjectsPage activeTab={intelTab} />
+            <ProjectsPage
+              activeTab={intelTab}
+              searchQuery={teamQuery}
+              onSearchQuery={setTeamQuery}
+              searchOpen={teamSearchOpen}
+              onSearchClose={() => {
+                setTeamSearchOpen(false);
+                setTeamQuery("");
+              }}
+            />
           )}
         </div>
       </main>

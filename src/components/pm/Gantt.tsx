@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { diffDays, toDay, WEEKDAYS } from "@/lib/project-ops";
+import { addDays, diffDays, toDay, WEEKDAYS } from "@/lib/project-ops";
 import { ACCENT, STATUS, TRACK } from "./ui";
 
 /* ══════════════════════════════════════════════════════════
@@ -12,6 +12,11 @@ import { ACCENT, STATUS, TRACK } from "./ui";
    - 今天：一條品牌橘的細線，貫穿表頭與每一列
    - 桌機滑過長條有提示；手機點整列開啟細節
    - 列數多時改成框內上下捲動，表頭固定在上面（捲到後面還看得到日期）
+
+   排程（有傳 onChange／onPickDay 才開啟）：
+   - 拖曳長條＝整段平移；拖左右兩端＝改開始／結束日；放開才存
+   - 沒有日期的列：點時間軸上的某一天＝排到那天
+   - 只是點一下（沒拖動）還是打開細節
 
    效能：背景格線（週末、週／月刻度、今天線）整張只畫一層，不是每一列各畫一份；
    滑鼠提示自己管位置，移動滑鼠不會讓整張圖重繪。
@@ -27,6 +32,8 @@ export interface GanttBar {
   tip?: React.ReactNode;
   /** 等待期（養護、待驗…）：透明長條＋同色虛線外框，不畫進度 */
   dashed?: boolean;
+  /** 拖曳改日期：放開時呼叫 */
+  onChange?: (start: string, end: string) => void;
 }
 
 export interface GanttRow {
@@ -37,7 +44,11 @@ export interface GanttRow {
   onClick?: () => void;
   /** 列尾的小字（例如進度百分比） */
   trailing?: string;
+  /** 沒有日期的列：點時間軸上的某一天 */
+  onPickDay?: (iso: string) => void;
 }
+
+type DragMode = "move" | "start" | "end";
 
 const ROW_H = 44;
 const BAR_H = 14;
@@ -136,6 +147,14 @@ export default function Gantt({
   const scroller = useRef<HTMLDivElement>(null);
   const tipApi = useRef<TipApi>(null);
   const [boxW, setBoxW] = useState(0);
+  // 拖曳中的長條：畫面先跟著手指走，放開才存
+  const drag = useRef<{ key: string; mode: DragMode; x0: number; start: string; end: string; moved: boolean; bar: GanttBar } | null>(null);
+  const [preview, setPreview] = useState<{ key: string; start: string; end: string } | null>(null);
+  const previewRef = useRef(preview);
+  previewRef.current = preview;
+  // 拖完放開時，瀏覽器還會補一個 click：不要因此打開細節
+  const justDragged = useRef(false);
+  const [hoverPick, setHoverPick] = useState<{ row: string; x: number } | null>(null);
 
   // 左右／上下還有內容時顯示邊緣陰影 —— 手機上看不出「可以往左捲」是最常見的困惑
   const [edges, setEdges] = useState({ left: false, right: false, top: false, bottom: false });
@@ -326,7 +345,17 @@ export default function Gantt({
                 key={row.id}
                 className={`flex group outline-none focus-visible:bg-[#FAFAFA] ${row.onClick ? "cursor-pointer" : ""}`}
                 style={{ height: ROW_H }}
-                onClick={row.onClick}
+                onClick={
+                  row.onClick
+                    ? () => {
+                        if (justDragged.current) {
+                          justDragged.current = false;
+                          return;
+                        }
+                        row.onClick!();
+                      }
+                    : undefined
+                }
                 role={row.onClick ? "button" : undefined}
                 tabIndex={row.onClick ? 0 : undefined}
                 aria-label={row.onClick ? `${row.label}${row.sublabel ? `，${row.sublabel}` : ""}${row.trailing ? `，${row.trailing}` : ""}` : undefined}
@@ -353,13 +382,93 @@ export default function Gantt({
                 </div>
                 {/* 時間軸區保持透明，底下那層格線才看得到；滑過只疊一層極淡的墨色 */}
                 <div
-                  className="relative shrink-0 border-b border-[#F4F4F5] group-hover:bg-[#18181B]/[0.02]"
+                  className={`relative shrink-0 border-b border-[#F4F4F5] group-hover:bg-[#18181B]/[0.02] ${row.onPickDay ? "cursor-copy" : ""}`}
                   style={{ width: width + TAIL }}
+                  onClick={
+                    row.onPickDay
+                      ? (e) => {
+                          e.stopPropagation();
+                          const r = e.currentTarget.getBoundingClientRect();
+                          const i = Math.floor((e.clientX - r.left) / dayWidth);
+                          if (i >= 0 && i < days) row.onPickDay!(addDays(from, i));
+                        }
+                      : undefined
+                  }
+                  onPointerMove={
+                    row.onPickDay
+                      ? (e) => {
+                          if (e.pointerType !== "mouse") return;
+                          const r = e.currentTarget.getBoundingClientRect();
+                          const i = Math.floor((e.clientX - r.left) / dayWidth);
+                          setHoverPick(i >= 0 && i < days ? { row: row.id, x: i * dayWidth } : null);
+                        }
+                      : undefined
+                  }
+                  onPointerLeave={row.onPickDay ? () => setHoverPick(null) : undefined}
                 >
-                  {row.bars.map((b, bi) => {
+                  {row.onPickDay &&
+                    (hoverPick?.row === row.id ? (
+                      <div
+                        className="absolute z-[2] rounded-[4px] border-[1.5px] border-dashed border-[var(--accent)] pointer-events-none"
+                        style={{ left: hoverPick.x, width: dayWidth, top: (ROW_H - BAR_H) / 2, height: BAR_H }}
+                      />
+                    ) : (
+                      <span
+                        className="absolute z-[2] text-[11px] text-[#A1A1AA] whitespace-nowrap pointer-events-none"
+                        style={{ left: (showToday ? todayX : 0) + 8, top: ROW_H / 2 - 8 }}
+                      >
+                        點日期排入
+                      </span>
+                    ))}
+                  {row.bars.map((b0, bi) => {
+                    const key = `${row.id}:${bi}`;
+                    const b = preview?.key === key ? { ...b0, start: preview.start, end: preview.end } : b0;
                     const bx = x(b.start);
                     const bw = Math.max(dayWidth, (diffDays(b.start, b.end) + 1) * dayWidth);
                     const isLate = !!b.late && b.end < today;
+                    const editable = !!b0.onChange;
+                    const down = (mode: DragMode) => (e: React.PointerEvent) => {
+                      if (e.button !== 0) return;
+                      e.stopPropagation();
+                      tipApi.current?.hide();
+                      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                      drag.current = { key, mode, x0: e.clientX, start: b0.start, end: b0.end, moved: false, bar: b0 };
+                    };
+                    const move = (e: React.PointerEvent) => {
+                      const d = drag.current;
+                      if (!d || d.key !== key) return;
+                      const dx = e.clientX - d.x0;
+                      if (!d.moved && Math.abs(dx) < 5) return;
+                      d.moved = true;
+                      const n = Math.round(dx / dayWidth);
+                      let s = d.start;
+                      let en = d.end;
+                      if (d.mode === "move") {
+                        s = addDays(d.start, n);
+                        en = addDays(d.end, n);
+                      } else if (d.mode === "start") {
+                        s = addDays(d.start, n);
+                        if (s > en) s = en;
+                      } else {
+                        en = addDays(d.end, n);
+                        if (en < s) en = s;
+                      }
+                      setPreview((p) => (p && p.key === key && p.start === s && p.end === en ? p : { key, start: s, end: en }));
+                    };
+                    const up = (e: React.PointerEvent) => {
+                      e.stopPropagation();
+                      const d = drag.current;
+                      if (!d || d.key !== key) return;
+                      drag.current = null;
+                      if (d.moved) {
+                        justDragged.current = true;
+                        // 保險：萬一瀏覽器沒有補 click，下一次點擊不要被吃掉
+                        setTimeout(() => (justDragged.current = false), 400);
+                        const p = previewRef.current?.key === key ? previewRef.current : null;
+                        if (p && (p.start !== d.start || p.end !== d.end)) d.bar.onChange?.(p.start, p.end);
+                      }
+                      setPreview(null);
+                    };
                     const lateFrom = isLate ? bx + bw : 0;
                     const lateW = isLate ? x(today) + dayWidth - lateFrom : 0;
                     const pct = Math.max(0, Math.min(100, b.progress ?? 0));
@@ -379,8 +488,37 @@ export default function Gantt({
                             title="超過預定完成日"
                           />
                         )}
+                        {/* 可拖曳時：整列高度都是抓取範圍（長條只有 14px，手指很難點中） */}
+                        {editable && (
+                          <div
+                            className={`absolute z-[3] touch-none ${preview?.key === key ? "cursor-grabbing" : "cursor-grab"}`}
+                            style={{ left: bx - 2, width: bw + 4, top: 4, height: ROW_H - 8 }}
+                            onPointerDown={down("move")}
+                            onPointerMove={(e) => {
+                              if (drag.current) move(e);
+                              else if (tip && e.pointerType === "mouse") tipApi.current?.show(e.clientX, e.clientY, tip);
+                            }}
+                            onPointerUp={up}
+                            onPointerCancel={up}
+                            onPointerLeave={() => tipApi.current?.hide()}
+                          >
+                            {(["start", "end"] as const).map((m) => (
+                              <div
+                                key={m}
+                                className="absolute top-0 bottom-0 w-3 cursor-ew-resize flex items-center justify-center"
+                                style={m === "start" ? { left: -8 } : { right: -8 }}
+                                onPointerDown={down(m)}
+                                onPointerMove={move}
+                                onPointerUp={up}
+                                onPointerCancel={up}
+                              >
+                                <span className="w-[3px] h-3.5 rounded-full bg-[#18181B]/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <div
-                          className="absolute z-[2] rounded-[4px] overflow-hidden"
+                          className={`absolute z-[2] rounded-[4px] overflow-hidden ${preview?.key === key ? "ring-2 ring-[var(--accent)]/50" : ""}`}
                           style={{
                             left: bx,
                             width: bw,
@@ -392,13 +530,13 @@ export default function Gantt({
                           }}
                           // 只給滑鼠：觸控的 pointermove 是手指拖曳，跳提示只會擋住畫面
                           onPointerMove={
-                            tip
+                            tip && !editable
                               ? (e) => {
                                   if (e.pointerType === "mouse") tipApi.current?.show(e.clientX, e.clientY, tip);
                                 }
                               : undefined
                           }
-                          onPointerLeave={tip ? () => tipApi.current?.hide() : undefined}
+                          onPointerLeave={tip && !editable ? () => tipApi.current?.hide() : undefined}
                         >
                           {!b.dashed && (
                             <>
@@ -416,7 +554,15 @@ export default function Gantt({
                       </React.Fragment>
                     );
                   })}
-                  {row.trailing && row.bars.length > 0 && (
+                  {preview && preview.key.startsWith(`${row.id}:`) ? (
+                    <span
+                      className="absolute z-[4] text-[11px] font-semibold text-[#18181B] tabular-nums whitespace-nowrap pointer-events-none bg-white/90 rounded px-1"
+                      style={{ left: x(preview.end) + dayWidth + 6, top: ROW_H / 2 - 9 }}
+                    >
+                      {preview.start.slice(5).replace("-", "/")}
+                      {preview.end !== preview.start ? ` – ${preview.end.slice(5).replace("-", "/")}` : ""}
+                    </span>
+                  ) : row.trailing && row.bars.length > 0 && (
                     <span
                       className="absolute text-[11px] text-[#71717A] tabular-nums whitespace-nowrap z-[2]"
                       style={{

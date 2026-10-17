@@ -9,6 +9,7 @@ import { ProjectScreen } from "./ProjectScreen";
 import { ProjectInfoSheet } from "./ProjectInfoSheet";
 import { SetupNotice } from "./SetupNotice";
 import { usePm, type Pm, type ProjectItem } from "./usePm";
+import { SearchOverlay } from "@/components/team/TeamPage";
 
 /* ══════════════════════════════════════════════════════════
    專案情報（參考記帳 App：最上面一張總覽卡，下面是分類與明細）
@@ -33,11 +34,24 @@ export const STAGE_COLOR: Record<Stage, string> = {
   暫停: "#71717A",
 };
 
-export default function ProjectsPage({ activeTab }: { activeTab: string }) {
+export default function ProjectsPage({
+  activeTab,
+  searchQuery = "",
+  onSearchQuery,
+  searchOpen = false,
+  onSearchClose,
+}: {
+  activeTab: string;
+  /** 標題列的搜尋（分享鍵左邊）：電腦直接篩選下方清單；手機跳出搜尋欄，結果列在搜尋欄下 */
+  searchQuery?: string;
+  onSearchQuery?: (q: string) => void;
+  searchOpen?: boolean;
+  onSearchClose?: () => void;
+}) {
   const pm = usePm();
   const [open, setOpen] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [q, setQ] = useState("");
+  const q = searchQuery;
   const [attention, setAttention] = useState(false);
   const [stage, setStage] = useState<Stage | null>(null);
 
@@ -137,16 +151,31 @@ export default function ProjectsPage({ activeTab }: { activeTab: string }) {
         </div>
       </section>
 
-      {/* 搜尋 */}
-      <div className="relative">
-        <Icon name="search" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-[#A1A1AA]" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="搜尋代碼、名稱、業主"
-          className="w-full h-11 rounded-full bg-white shadow-card pl-10 pr-4 text-[16px] text-[#18181B] outline-none focus:ring-2 focus:ring-[var(--accent)]/35 placeholder:text-[#A1A1AA]"
-        />
-      </div>
+      {/* 手機搜尋：放大鏡（標題列）→ 跳出搜尋欄，結果列在下方 */}
+      <SearchOverlay open={searchOpen} query={q} onQuery={(v) => onSearchQuery?.(v)} onClose={() => onSearchClose?.()} placeholder="搜尋代碼、名稱、業主" label="搜尋專案">
+        {q.trim() &&
+          (list.length ? (
+            <Group>
+              {list.slice(0, 50).map((p, i, arr) => (
+                <ProjectRow
+                  key={p.code}
+                  p={p}
+                  pm={pm}
+                  last={i === arr.length - 1}
+                  showStage
+                  onOpen={() => {
+                    onSearchClose?.();
+                    setOpen(p.code);
+                  }}
+                />
+              ))}
+            </Group>
+          ) : (
+            <Group>
+              <Empty icon="search_off" title={`找不到「${q.trim()}」`} />
+            </Group>
+          ))}
+      </SearchOverlay>
 
       {/* 階段 */}
       {stageCounts.length > 0 && (
