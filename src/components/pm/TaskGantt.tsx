@@ -170,7 +170,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
           <span className="w-3 h-3 rounded-[3px]" style={{ background: "repeating-linear-gradient(135deg,#E5484D 0 2px,#fde2e2 2px 4px)" }} />
           逾期
         </span>
-        <span className="ml-auto">{undated > 0 ? `${undated} 件未排程，點日期排入` : "拖曳長條可改日期"}</span>
+        <span className="ml-auto">{undated > 0 ? `${undated} 件未排程，點日期排入` : "長按長條拖曳改日期，拖兩端改天數"}</span>
       </div>
       <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
     </div>

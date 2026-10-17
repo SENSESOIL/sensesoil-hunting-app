@@ -813,6 +813,7 @@ function TaskRow({
       } catch {
         /* iPhone 不支援震動 */
       }
+      window.getSelection()?.removeAllRanges();
       if (rowRef.current) onLongPress(rowRef.current.getBoundingClientRect());
     }, 450);
   };
@@ -922,6 +923,8 @@ function TaskRow({
           transform: offset ? `translateX(${offset}px)` : undefined,
           transition: dragging ? "none" : "transform 0.25s cubic-bezier(0.16,1,0.3,1)",
           touchAction: "pan-y",
+          // 長按是叫出任務選單：關掉 iPhone 的選字與「拷貝／查詢」泡泡（編輯中要能選字，不套）
+          ...(editing ? {} : { WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" }),
         }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -1118,7 +1121,7 @@ function RowMenu({
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[160] font-sans" role="dialog" aria-label="任務選單">
+    <div className="fixed inset-0 z-[160] font-sans select-none [-webkit-touch-callout:none]" role="dialog" aria-label="任務選單">
       <div className={`absolute inset-0 bg-black/25 backdrop-blur-[2px] transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
       {/* 預覽 */}
       <div

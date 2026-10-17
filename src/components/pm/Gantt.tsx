@@ -15,6 +15,8 @@ import { ACCENT, STATUS, TRACK } from "./ui";
 
    排程（有傳 onChange／onPickDay 才開啟）：
    - 拖曳長條＝整段平移；拖左右兩端＝改開始／結束日；放開才存
+   - 手機：長按（0.35 秒）長條才開始拖，兩端有小把手可以長按調整；直接滑還是左右捲動時間軸
+     長按後放開不算點擊（不會跳出時間安排）
    - 沒有日期的列：點時間軸上的某一天＝排到那天
    - 只是點一下（沒拖動）還是打開細節
 
@@ -150,12 +152,27 @@ export default function Gantt({
   const tipApi = useRef<TipApi>(null);
   const [boxW, setBoxW] = useState(0);
   // 拖曳中的長條：畫面先跟著手指走，放開才存
-  const drag = useRef<{ key: string; mode: DragMode; x0: number; start: string; end: string; moved: boolean; bar: GanttBar } | null>(null);
+  // active：真的進入拖曳（滑鼠按下就是；手指要長按）。timer：手指長按計時
+  const drag = useRef<{
+    key: string;
+    mode: DragMode;
+    x0: number;
+    y0: number;
+    start: string;
+    end: string;
+    moved: boolean;
+    active: boolean;
+    timer?: ReturnType<typeof setTimeout>;
+    bar: GanttBar;
+  } | null>(null);
   const [preview, setPreview] = useState<{ key: string; start: string; end: string } | null>(null);
   const previewRef = useRef(preview);
   previewRef.current = preview;
   // 拖完放開時，瀏覽器還會補一個 click：不要因此打開細節
   const justDragged = useRef(false);
+  // 觸控裝置：兩端把手一直顯示、抓取範圍放大
+  const [coarse, setCoarse] = useState(false);
+  useLayoutEffect(() => setCoarse(window.matchMedia("(pointer: coarse)").matches), []);
   const [hoverPick, setHoverPick] = useState<{ row: string; x: number } | null>(null);
 
   // 左右／上下還有內容時顯示邊緣陰影 —— 手機上看不出「可以往左捲」是最常見的困惑
@@ -206,6 +223,16 @@ export default function Gantt({
     updateEdges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayWidth, from, to, labelWidth]);
+
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const stop = (e: TouchEvent) => {
+      if (drag.current?.active) e.preventDefault();
+    };
+    el.addEventListener("touchmove", stop, { passive: false });
+    return () => el.removeEventListener("touchmove", stop);
+  }, []);
 
   // 列數變了（篩選、展開）上下陰影要重算
   useLayoutEffect(() => {
@@ -442,12 +469,37 @@ export default function Gantt({
                       if (e.button !== 0) return;
                       e.stopPropagation();
                       tipApi.current?.hide();
-                      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-                      drag.current = { key, mode, x0: e.clientX, start: b0.start, end: b0.end, moved: false, bar: b0 };
+                      if (drag.current?.timer) clearTimeout(drag.current.timer);
+                      const touch = e.pointerType !== "mouse";
+                      const d = { key, mode, x0: e.clientX, y0: e.clientY, start: b0.start, end: b0.end, moved: false, active: !touch, bar: b0 } as NonNullable<typeof drag.current>;
+                      drag.current = d;
+                      if (!touch) {
+                        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                        return;
+                      }
+                      // 手指：長按才開始拖，先亮起來＋震一下讓人知道可以移了
+                      d.timer = setTimeout(() => {
+                        if (drag.current !== d) return;
+                        d.active = true;
+                        try {
+                          navigator.vibrate?.(10);
+                        } catch {
+                          /* iPhone 不支援震動 */
+                        }
+                        setPreview({ key, start: d.start, end: d.end });
+                      }, 350);
                     };
                     const move = (e: React.PointerEvent) => {
                       const d = drag.current;
                       if (!d || d.key !== key) return;
+                      if (!d.active) {
+                        // 還沒長按到就滑動了：當作捲動，取消
+                        if (Math.abs(e.clientX - d.x0) > 8 || Math.abs(e.clientY - d.y0) > 8) {
+                          clearTimeout(d.timer);
+                          drag.current = null;
+                        }
+                        return;
+                      }
                       const dx = e.clientX - d.x0;
                       if (!d.moved && Math.abs(dx) < 5) return;
                       d.moved = true;
@@ -471,7 +523,13 @@ export default function Gantt({
                       const d = drag.current;
                       if (!d || d.key !== key) return;
                       drag.current = null;
-                      if (d.moved) {
+                      clearTimeout(d.timer);
+                      // 長按後放開（就算沒移動）也不算點擊，不跳時間安排
+                      if (d.active && !d.moved && e.pointerType !== "mouse") {
+                        justDragged.current = true;
+                        setTimeout(() => (justDragged.current = false), 400);
+                      }
+                      if (d.moved && e.type !== "pointercancel") {
                         justDragged.current = true;
                         // 保險：萬一瀏覽器沒有補 click，下一次點擊不要被吃掉
                         setTimeout(() => (justDragged.current = false), 400);
@@ -502,7 +560,7 @@ export default function Gantt({
                         {/* 可拖曳時：整列高度都是抓取範圍（長條只有 14px，手指很難點中） */}
                         {editable && (
                           <div
-                            className={`absolute z-[3] touch-none ${preview?.key === key ? "cursor-grabbing" : "cursor-grab"}`}
+                            className={`absolute z-[3] select-none [-webkit-touch-callout:none] ${preview?.key === key ? "cursor-grabbing" : "cursor-grab"}`}
                             style={{ left: bx - 2, width: bw + 4, top: 4, height: ROW_H - 8 }}
                             onPointerDown={down("move")}
                             onPointerMove={(e) => {
@@ -516,14 +574,14 @@ export default function Gantt({
                             {(["start", "end"] as const).map((m) => (
                               <div
                                 key={m}
-                                className="absolute top-0 bottom-0 w-3 cursor-ew-resize flex items-center justify-center"
-                                style={m === "start" ? { left: -8 } : { right: -8 }}
+                                className="absolute top-0 bottom-0 w-3 [@media(pointer:coarse)]:w-5 cursor-ew-resize flex items-center justify-center"
+                                style={m === "start" ? { left: coarse ? -16 : -8 } : { right: coarse ? -16 : -8 }}
                                 onPointerDown={down(m)}
                                 onPointerMove={move}
                                 onPointerUp={up}
                                 onPointerCancel={up}
                               >
-                                <span className="w-[3px] h-3.5 rounded-full bg-[#18181B]/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <span className="w-[3px] h-3.5 rounded-full bg-[#18181B]/40 opacity-0 group-hover:opacity-100 [@media(pointer:coarse)]:opacity-100 transition-opacity" />
                               </div>
                             ))}
                           </div>
