@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { addDays, toDay, WEEKDAYS } from "@/lib/project-ops";
-import type { Task } from "@/lib/pm/model";
+import { isAssignee, type Task } from "@/lib/pm/model";
 import { Icon } from "./ui";
 import { Avatar, Group, GREEN, ORANGE, RED } from "./kit";
 import { isLate, type Pm } from "./usePm";
@@ -33,7 +33,7 @@ export function Workload({ pm, onPick }: { pm: Pm; onPick: (email: string | null
     const weekAgo = addDays(today, -7);
     const weekAhead = addDays(today, 7);
     const make = (email: string | undefined, name: string): Load => {
-      const mine = tasks.filter((t) => (email ? t.assigneeEmail === email : !t.assigneeEmail));
+      const mine = tasks.filter((t) => (email ? isAssignee(t, email) : !t.assigneeEmail));
       const open = mine.filter((t) => t.status !== "done");
       const daily = days.map(
         (d) =>

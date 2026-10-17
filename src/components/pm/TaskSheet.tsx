@@ -2,12 +2,12 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { fmtDate, WORK_KINDS, type WorkKind } from "@/lib/project-ops";
-import { STATUS_LABEL, TASK_STATUSES, newTaskId, personColor, type Task, type TaskStatus } from "@/lib/pm/model";
+import { isAssignee, STATUS_LABEL, TASK_STATUSES, newTaskId, personColor, taskAssignees, type Task, type TaskStatus } from "@/lib/pm/model";
 import { Sheet, toast } from "./Sheet";
 import { fmtDateLong } from "./fields";
 import { Icon } from "./ui";
-import { Avatar, dateShortcuts, GREEN, ORANGE, RED } from "./kit";
-import { isLate, personLabel, type Pm } from "./usePm";
+import { Avatar, AvatarStack, dateShortcuts, GREEN, ORANGE, RED } from "./kit";
+import { assigneeLabel, assigneePatch, isLate, personLabel, type Pm } from "./usePm";
 import { GoalPicker } from "./Goals";
 import { TagSheet } from "./TagSheet";
 import { metaChips } from "@/lib/pm/tags";
@@ -19,9 +19,9 @@ import { metaChips } from "@/lib/pm/tags";
    - 指派紀錄：何時指派、對方何時看到、何時按收到 —— 不用再打電話確認
    ══════════════════════════════════════════════════════════ */
 
-type Draft = Pick<Task, "code" | "title" | "kind" | "status" | "progress" | "flagged" | "assigneeEmail" | "start" | "due" | "note" | "goalId">;
+type Draft = Pick<Task, "code" | "title" | "kind" | "status" | "progress" | "flagged" | "assigneeEmail" | "coAssignees" | "start" | "due" | "note" | "goalId">;
 
-const EMPTY: Draft = { code: "", title: "", kind: "施工", status: "todo", progress: 0, flagged: false };
+const EMPTY: Draft = { code: "", title: "", kind: "施工", status: "todo", progress: 0, flagged: false, coAssignees: [] };
 
 const toDraft = (t: Task): Draft => ({
   code: t.code,
@@ -31,6 +31,7 @@ const toDraft = (t: Task): Draft => ({
   progress: t.progress,
   flagged: t.flagged,
   assigneeEmail: t.assigneeEmail,
+  coAssignees: t.coAssignees ?? [],
   start: t.start,
   due: t.due,
   note: t.note,
@@ -55,7 +56,7 @@ export function TaskSheet({
   const task = taskId ? pm.tasks.find((t) => t.id === taskId) : undefined;
   const isNew = !taskId;
   const me = pm.me?.email;
-  const mine = !!task && task.assigneeEmail === me;
+  const mine = !!task && isAssignee(task, me);
   const canEditAll = pm.isManager || isNew || (!!task && task.createdBy === me && mine);
 
   const initial = useMemo<Draft>(
@@ -110,6 +111,8 @@ export function TaskSheet({
       return;
     }
     if (patch.title) patch.title = patch.title.trim();
+    // 新任務沒有協作者就不帶（還沒執行多人指派的 SQL 時才不會跳提醒）
+    if (isNew && !d.coAssignees?.length) delete patch.coAssignees;
     if (patch.assigneeEmail !== undefined || isNew) {
       patch.assigneeName = d.assigneeEmail ? pm.personBy.get(d.assigneeEmail)?.name : undefined;
     }
@@ -132,8 +135,8 @@ export function TaskSheet({
         action: {
           label: "復原",
           run: () => {
-            const { id, code, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq, goalId } = prev;
-            pm.saveTask({ id, code, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq, goalId });
+            const { id, code, title, kind, status, progress, flagged, assigneeEmail, assigneeName, coAssignees, start, due, note, seq, goalId } = prev;
+            pm.saveTask({ id, code, title, kind, status, progress, flagged, assigneeEmail, assigneeName, ...(coAssignees?.length ? { coAssignees } : {}), start, due, note, seq, goalId });
           },
         },
       });
@@ -303,15 +306,25 @@ export function TaskSheet({
           <div className="px-4 py-3">
             <div className="flex items-center gap-3 mb-2.5">
               {d.assigneeEmail ? (
-                <Avatar name={pm.personBy.get(d.assigneeEmail)?.name} email={d.assigneeEmail} size={32} />
+                <AvatarStack people={taskAssignees(d).map((e) => ({ email: e, name: pm.personBy.get(e)?.name }))} max={3} size={32} />
               ) : (
                 <RowIcon icon="person" color="#A1A1AA" />
               )}
-              <span className="text-[15px] text-[#18181B]">
-                {d.assigneeEmail ? `指派給 ${personLabel(pm, d.assigneeEmail)}` : "未指派"}
+              <span className="text-[15px] text-[#18181B] min-w-0">
+                {d.assigneeEmail ? `指派給 ${assigneeLabel(pm, d)}` : "未指派"}
+                {pm.isManager && <span className="block text-[12px] text-[#A1A1AA]">可複選；第一位是主要負責人，會收到回條提醒</span>}
               </span>
             </div>
-            {pm.isManager ? <AssigneeGrid pm={pm} value={d.assigneeEmail} onChange={(v) => set("assigneeEmail", v)} /> : null}
+            {pm.isManager ? (
+              <AssigneeGrid
+                pm={pm}
+                value={taskAssignees(d)}
+                onChange={(list) => {
+                  const p = assigneePatch(pm, list);
+                  setD((c) => ({ ...c, assigneeEmail: p.assigneeEmail, coAssignees: p.coAssignees }));
+                }}
+              />
+            ) : null}
             {task?.assigneeEmail && task.assigneeEmail !== me && <Receipt task={task} pm={pm} />}
           </div>
         </div>
@@ -448,26 +461,26 @@ export function TaskSheet({
 
 /* ── 小元件 ───────────────────────────────────────────── */
 
-/** 指派：大頭照格子，點一下選人；下方小字是對方手上還有幾件，方便分配 */
-function AssigneeGrid({ pm, value, onChange }: { pm: Pm; value?: string; onChange: (v: string | undefined) => void }) {
+/** 指派：大頭照格子，可複選（點一下加入／移除）；下方小字是對方手上還有幾件，方便分配。第一位＝主要負責人 */
+function AssigneeGrid({ pm, value, onChange }: { pm: Pm; value: string[]; onChange: (v: string[]) => void }) {
   const load = useMemo(() => {
     const m = new Map<string, number>();
-    for (const t of pm.tasks) if (t.status !== "done" && t.assigneeEmail) m.set(t.assigneeEmail, (m.get(t.assigneeEmail) ?? 0) + 1);
+    for (const t of pm.tasks) if (t.status !== "done") for (const e of taskAssignees(t)) m.set(e, (m.get(e) ?? 0) + 1);
     return m;
   }, [pm.tasks]);
   const me = pm.me?.email;
   return (
-    <div className="grid grid-cols-4 sm:grid-cols-6 gap-y-3 gap-x-1 pt-1" role="radiogroup" aria-label="指派給">
+    <div className="grid grid-cols-4 sm:grid-cols-6 gap-y-3 gap-x-1 pt-1" role="group" aria-label="指派給（可複選）">
       {pm.people.map((p) => {
-        const on = value === p.email;
+        const on = value.includes(p.email);
         const n = load.get(p.email) ?? 0;
         return (
           <button
             key={p.email}
             type="button"
-            role="radio"
+            role="checkbox"
             aria-checked={on}
-            onClick={() => onChange(on ? undefined : p.email)}
+            onClick={() => onChange(on ? value.filter((e) => e !== p.email) : [...value, p.email])}
             className="flex flex-col items-center gap-1 min-w-0 active:scale-95 transition-transform"
           >
             <span className="relative rounded-full p-[3px] transition-colors" style={{ background: on ? ORANGE : "transparent" }}>
@@ -483,6 +496,7 @@ function AssigneeGrid({ pm, value, onChange }: { pm: Pm; value?: string; onChang
             <span className={`text-[12.5px] leading-tight truncate max-w-full ${on ? "font-bold text-[#18181B]" : "text-[#3F3F46]"}`}>
               {p.email === me ? "我" : p.name}
             </span>
+            {value.length > 1 && value[0] === p.email && <span className="text-[10.5px] leading-none font-semibold" style={{ color: ORANGE }}>主要</span>}
             <span className="text-[11px] leading-none text-[#A1A1AA] tabular-nums">{n ? `${n} 件` : "空閒"}</span>
           </button>
         );

@@ -9,6 +9,9 @@ import {
   type ProjectView,
 } from "@/lib/project-ops";
 import {
+  defaultMark,
+  isAssignee,
+  taskAssignees,
   GOAL_COLORS,
   newGoalId,
   newTaskId,
@@ -152,10 +155,11 @@ export function usePm() {
       );
       const who = new Map<string, { email: string; name: string; open: number }>();
       for (const t of tasks) {
-        if (!t.assigneeEmail) continue;
-        const cur = who.get(t.assigneeEmail) ?? { email: t.assigneeEmail, name: t.assigneeName ?? t.assigneeEmail.split("@")[0], open: 0 };
-        if (t.status !== "done") cur.open++;
-        who.set(t.assigneeEmail, cur);
+        for (const e of taskAssignees(t)) {
+          const cur = who.get(e) ?? { email: e, name: (e === t.assigneeEmail && t.assigneeName) || e.split("@")[0], open: 0 };
+          if (t.status !== "done") cur.open++;
+          who.set(e, cur);
+        }
       }
       return {
         ...p,
@@ -316,7 +320,7 @@ export function usePm() {
     async (id: string, what: "seen" | "ack") => {
       const d = latest.current;
       const t = d?.tasks.find((x) => x.id === id);
-      if (!d || !t || t.assigneeEmail !== d.me.email) return;
+      if (!d || !t || !isAssignee(t, d.me.email)) return;
       if (what === "seen" && t.seenAt) return;
       if (what === "ack" && t.ackAt) return;
       const now = new Date().toISOString();
@@ -440,6 +444,25 @@ export function personLabel(pm: Pm, email?: string, fallback?: string): string {
   if (!email) return fallback ?? "未指派";
   if (email === pm.me?.email) return "我";
   return pm.personBy.get(email)?.name ?? fallback ?? email.split("@")[0];
+}
+
+/** 清單上大頭照旁邊的代表字：自己設定的，沒有就用名字最後一個字 */
+export function personMark(pm: Pm, email: string, fallbackName?: string): string {
+  const p = pm.personBy.get(email);
+  return p?.mark || defaultMark(p?.name ?? fallbackName ?? email.split("@")[0]);
+}
+
+/** 所有負責人的名字：「我」、「王小明、陳大文」、「王小明、陳大文 等 4 人」 */
+export function assigneeLabel(pm: Pm, t: Pick<Task, "assigneeEmail" | "assigneeName" | "coAssignees">): string {
+  const names = taskAssignees(t).map((e) => personLabel(pm, e, e === t.assigneeEmail ? t.assigneeName : undefined));
+  if (!names.length) return "未指派";
+  return names.length <= 2 ? names.join("、") : `${names.slice(0, 2).join("、")} 等 ${names.length} 人`;
+}
+
+/** 負責人清單 → 存檔用的欄位：第一位是主要負責人（收通知、回條），其餘是協作者 */
+export function assigneePatch(pm: Pm, list: string[]): Pick<Task, "assigneeEmail" | "assigneeName" | "coAssignees"> {
+  const [first, ...rest] = [...new Set(list)];
+  return { assigneeEmail: first, assigneeName: first ? pm.personBy.get(first)?.name : undefined, coAssignees: rest };
 }
 
 export type { Person };

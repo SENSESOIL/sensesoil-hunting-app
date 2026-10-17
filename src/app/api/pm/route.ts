@@ -108,6 +108,12 @@ export async function GET() {
       } catch {
         /* 20260929000000_pm_team.sql 還沒執行 */
       }
+      try {
+        const marks = await rpc<Record<string, string>>("pm_marks", {});
+        for (const p of base.people) if (marks[p.email]) p.mark = marks[p.email];
+      } catch {
+        /* 20261019000000_pm_profile_mark.sql 還沒執行 */
+      }
     }
   }
 
@@ -156,6 +162,7 @@ function checkTask(t: Partial<Task>): string | null {
   if (t.start && t.due && t.due < t.start) return "期限不能早於開始日";
   if ("note" in t && t.note !== undefined && t.note !== null && (typeof t.note !== "string" || t.note.length > 2000)) return "備註太長";
   if ("parentId" in t && t.parentId !== null && t.parentId !== undefined && (typeof t.parentId !== "string" || t.parentId.length > 64 || t.parentId === t.id)) return "上層任務不正確";
+  if ("coAssignees" in t && t.coAssignees !== undefined && t.coAssignees !== null && (!Array.isArray(t.coAssignees) || t.coAssignees.length > 20 || t.coAssignees.some((e) => typeof e !== "string" || e.length > 120))) return "協作者格式不正確";
   if ("meta" in t && t.meta !== undefined && (typeof t.meta !== "object" || t.meta === null || Array.isArray(t.meta))) return "標籤格式不正確";
   return null;
 }
@@ -212,6 +219,13 @@ export async function POST(req: Request) {
           if (!who) return json({ error: "指派對象不在人員名單上" }, 400);
           t.assigneeName = who.name;
         }
+        // 協作者也必須在人員名單上；去重、拿掉主要負責人
+        if (Array.isArray(t.coAssignees)) {
+          const people = await listPeople();
+          const list = [...new Set(t.coAssignees.map((e) => e.trim().toLowerCase()).filter(Boolean))];
+          if (list.some((e) => !people.some((p) => p.email === e))) return json({ error: "協作者不在人員名單上" }, 400);
+          t.coAssignees = list;
+        }
         if (t.meta) t.meta = cleanMeta(t.meta);
         let projectName = "";
         if (t.code) {
@@ -221,8 +235,9 @@ export async function POST(req: Request) {
         // 上層任務、標籤、目標另外寫（pm_task_save 修改既有任務時不會更新這些後來加的欄位）
         const row = taskPatchToRow(t);
         const extra: Record<string, unknown> = {};
-        for (const k of ["parent_id", "meta", "goal_id"]) if (k in row) extra[k] = row[k];
+        for (const k of ["parent_id", "meta", "goal_id", "co_assignees"]) if (k in row) extra[k] = row[k];
         delete row.parent_id;
+        delete row.co_assignees;
         // 新增任務時 pm_task_save 用 jsonb_populate_record 建整列，沒帶到的欄位會是 null（不會套用預設值）；
         // meta 是 not null，一定要帶 {}。既有任務的 update 不會動 meta，所以帶了也沒關係
         if (!("meta" in row)) row.meta = {};
@@ -236,8 +251,11 @@ export async function POST(req: Request) {
         let extraError: string | undefined;
         if (Object.keys(extra).length && r.task && ["ok", "created", "unchanged"].includes(r.status)) {
           try {
-            const x = await rpc<{ status: string; task?: Record<string, unknown> }>("pm_task_set_extra", { ...actor, id: t.id, extra });
+            const x = await rpc<{ status: string; task?: Record<string, unknown>; notify?: NotifyRow[] }>("pm_task_set_extra", { ...actor, id: t.id, extra });
             if (x.task) task = x.task;
+            if (x.notify?.length) r.notify = [...(r.notify ?? []), ...x.notify];
+            // 舊版函式不認得 co_assignees，會默默略過：提醒要先執行 SQL
+            if ("co_assignees" in extra && x.task && !("co_assignees" in x.task)) extraError = "多人指派還沒啟用：請在 Supabase 執行 20261018000000_pm_task_assignees.sql";
             if (x.status === "invalid") extraError = "子任務只能有一層，而且要在同一個專案裡";
             if (x.status === "forbidden") extraError = "只能調整自己建立的任務";
           } catch (e) {

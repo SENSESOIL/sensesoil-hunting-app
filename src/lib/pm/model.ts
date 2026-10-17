@@ -38,6 +38,8 @@ export interface Person {
   manager: boolean;
   /** 大頭照（團隊頁上傳的，data URL） */
   avatar?: string;
+  /** 清單上的代表字（自己在設定裡改；沒設定用名字最後一個字） */
+  mark?: string;
 }
 
 export interface Task {
@@ -50,6 +52,8 @@ export interface Task {
   flagged: boolean;
   assigneeEmail?: string;
   assigneeName?: string;
+  /** 協作者（主要負責人以外，一起負責的人） */
+  coAssignees?: string[];
   start?: string;
   due?: string;
   note?: string;
@@ -173,6 +177,7 @@ export function rowToTask(r: Row): Task {
     flagged: r.flagged === true,
     assigneeEmail: s(r.assignee_email),
     assigneeName: s(r.assignee_name),
+    coAssignees: Array.isArray(r.co_assignees) ? (r.co_assignees as unknown[]).filter((x): x is string => typeof x === "string" && !!x) : [],
     start: s(r.start_on),
     due: s(r.due_on),
     note: s(r.note),
@@ -193,6 +198,16 @@ export function rowToTask(r: Row): Task {
     updatedAt: s(r.updated_at),
     updatedBy: s(r.updated_by),
   };
+}
+
+/** 任務的所有負責人：主要負責人在前，接著是協作者 */
+export function taskAssignees(t: Pick<Task, "assigneeEmail" | "coAssignees">): string[] {
+  return [...new Set([...(t.assigneeEmail ? [t.assigneeEmail] : []), ...(t.coAssignees ?? [])])];
+}
+
+/** 這個人是不是負責人之一（主要負責人或協作者） */
+export function isAssignee(t: Pick<Task, "assigneeEmail" | "coAssignees">, email?: string | null): boolean {
+  return !!email && (t.assigneeEmail === email || !!t.coAssignees?.includes(email));
 }
 
 /** 前端的任務修改 → 資料庫欄位（只帶有給的欄位） */
@@ -269,6 +284,7 @@ export function taskPatchToRow(t: Partial<Task> & { id: string }): Row {
     ["goalId", "goal_id"],
     ["parentId", "parent_id"],
     ["meta", "meta"],
+    ["coAssignees", "co_assignees"],
   ];
   for (const [k, col] of map) {
     if (k in t) out[col] = t[k] === undefined ? null : (t[k] as unknown);
@@ -439,6 +455,30 @@ export function initials(name?: string): string {
   return t.slice(0, 2).toUpperCase();
 }
 
+/** 預設代表字：中文取名字最後一個字（彭詩渝 → 渝）；英文取前兩個字的字首（John Smith → JS） */
+export function defaultMark(name?: string): string {
+  const t = (name ?? "").trim();
+  if (!t) return "?";
+  if (/[一-鿿]/.test(t)) {
+    const han = [...t].filter((c) => /[一-鿿]/.test(c));
+    return han[han.length - 1];
+  }
+  const words = t.split(/\s+/).filter(Boolean);
+  return (words.length > 1 ? words[0][0] + words[1][0] : t.slice(0, 2)).toUpperCase();
+}
+
+/**
+ * 檢查代表字：名字裡的其中一個字（彭詩渝 → 彭／詩／渝），或兩個英文字母（SS）。
+ * 合格回傳整理後的字（英文轉大寫），不合格回傳 null。
+ */
+export function validMark(mark: string, name?: string): string | null {
+  const m = mark.trim();
+  if (/^[A-Za-z]{2}$/.test(m)) return m.toUpperCase();
+  const chars = [...m];
+  if (chars.length === 1 && /[一-鿿]/.test(m) && name && [...name].includes(m)) return m;
+  return null;
+}
+
 /** 依 email 固定配一個顏色（同一個人在各處同色） */
 const AVATAR_COLORS = ["#E8833A", "#3B82C4", "#4E9F6D", "#9D6BC2", "#C4553B", "#2E9C9C", "#B08A2E", "#5B6BC4", "#C44E86", "#6E8B3D"];
 export function personColor(key?: string): string {
@@ -486,6 +526,8 @@ export function tradeColor(trade?: string): string {
 export interface TeamMember {
   email: string;
   name: string;
+  /** 清單上的代表字 */
+  mark?: string;
   title?: string;
   bio?: string;
   phone?: string;

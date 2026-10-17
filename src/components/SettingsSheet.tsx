@@ -7,7 +7,10 @@ import { Avatar, Spinner } from "@/components/pm/kit";
 import { Icon } from "@/components/pm/ui";
 import { disablePush, enablePush, pushState, type PushState } from "@/components/pm/push-client";
 import { PortraitSheet } from "@/components/team/PortraitSheet";
-import { useTeam } from "@/components/team/useTeam";
+import { teamPost, useTeam } from "@/components/team/useTeam";
+import { mutate as swrMutate } from "swr";
+import { PM_KEY } from "@/components/pm/usePm";
+import { defaultMark, validMark } from "@/lib/pm/model";
 import { setThemeMode, useThemeMode, type ThemeMode } from "@/lib/theme";
 
 /* ══════════════════════════════════════════════════════════
@@ -136,6 +139,9 @@ export function SettingsSheet({
             </div>
           </section>
 
+          {/* 代表字：任務清單上大頭照旁邊顯示的字 */}
+          <MarkSection name={name} email={email} current={me?.mark} onSaved={() => team.mutate()} />
+
           {/* 外觀：白天／夜晚（強調色固定品牌橘），小圖示切換 */}
           <Section title="外觀" hint="只改這支裝置">
             <div className="px-4 py-3 flex items-center justify-between">
@@ -244,6 +250,81 @@ export function SettingsSheet({
       </Sheet>
       {me && <PortraitSheet member={me} open={portrait} onClose={() => setPortrait(false)} onSaved={() => team.mutate()} />}
     </>
+  );
+}
+
+/** 代表字：名字裡的其中一個字，或兩個英文字母；留空＝用名字最後一個字 */
+function MarkSection({ name, email, current, onSaved }: { name: string; email: string; current?: string; onSaved: () => void }) {
+  const [v, setV] = useState(current ?? "");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setV(current ?? ""), [current]);
+  const fallback = defaultMark(name);
+  const trimmed = v.trim();
+  const ok = trimmed ? validMark(trimmed, name) : "";
+  const shown = ok || fallback;
+  const changed = (ok ?? "") !== (current ?? "") && ok !== null;
+  const save = async () => {
+    if (ok === null || busy) return;
+    setBusy(true);
+    const r = await teamPost({ op: "profile.save", email, patch: { mark: ok || null } });
+    setBusy(false);
+    if (!r.ok) {
+      toast(r.data.error ?? "儲存失敗，請再試一次", { tone: "error" });
+      return;
+    }
+    toast(ok ? `代表字改成「${ok}」` : `代表字改回「${fallback}」`);
+    onSaved();
+    swrMutate(PM_KEY);
+  };
+  const chars = [...new Set([...name].filter((c) => /[一-鿿]/.test(c)))];
+  return (
+    <Section title="清單代表字" hint="任務清單上大頭照旁邊的字">
+      <div className="px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#F4F4F5] text-[15px] text-[#3F3F46] shrink-0">
+            <Avatar name={name} email={email} size={22} />
+            {shown}
+          </span>
+          <input
+            value={v}
+            onChange={(e) => setV(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) save();
+            }}
+            placeholder={fallback}
+            aria-label="代表字"
+            aria-invalid={ok === null}
+            className={`w-16 h-9 rounded-[10px] border text-center text-[16px] outline-none ${ok === null ? "border-[#E5484D]" : "border-[#E4E4E7] focus:border-[var(--accent)]"}`}
+          />
+          <button
+            type="button"
+            onClick={save}
+            disabled={!changed || busy}
+            className="ml-auto h-9 px-4 rounded-full text-[14px] font-semibold text-white bg-[var(--accent)] disabled:opacity-35"
+          >
+            {busy ? "儲存中" : "儲存"}
+          </button>
+        </div>
+        {chars.length > 1 && (
+          <div className="mt-2.5 flex gap-1.5">
+            {chars.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setV(c)}
+                aria-pressed={trimmed === c}
+                className={`w-9 h-9 rounded-full text-[15px] transition-colors ${trimmed === c ? "bg-[var(--accent)] text-white" : "bg-[#F4F4F5] text-[#3F3F46]"}`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
+        <p className={`mt-2 text-[12px] ${ok === null ? "text-[#E5484D]" : "text-[#A1A1AA]"}`}>
+          {ok === null ? "只能填名字裡的一個字，或兩個英文字母（例：SS）" : "名字裡的一個字，或兩個英文字母；留空就用名字最後一個字"}
+        </p>
+      </div>
+    </Section>
   );
 }
 

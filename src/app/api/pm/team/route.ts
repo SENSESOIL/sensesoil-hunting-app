@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readSheet } from "@/lib/google-sheets";
 import { explainDbError, getPmUser, listPeople, pmDbConfigured, rpc } from "@/lib/pm/server";
-import { rowToContact, type Contact, type ContactKind, type TeamData, type TeamMember, type TeamRole } from "@/lib/pm/model";
+import { rowToContact, validMark, type Contact, type ContactKind, type TeamData, type TeamMember, type TeamRole } from "@/lib/pm/model";
 import { checkPermissions } from "@/lib/permissions";
 import { deleteStaff, listStaff, saveStaff, STAFF_PRIVATE, type StaffRecord } from "@/lib/pm/staff-crm";
 import { deleteVendor, listVendors, saveVendor, VENDOR_PRIVATE } from "@/lib/pm/vendor-crm";
@@ -160,6 +160,7 @@ export async function GET(req: Request) {
       title: str(pr?.title),
       bio: str(pr?.bio),
       avatar: str(pr?.avatar),
+      mark: str(pr?.mark),
       cardBg: str(pr?.card_bg),
       hasCard: pr?.has_card === true,
       cardVersion: str(pr?.updated_at),
@@ -247,7 +248,14 @@ export async function POST(req: Request) {
       if (!isImg(patch.avatar, 60000) || !isImg(patch.card, 700000)) return json({ error: "圖片格式或大小不正確" }, 400);
       if (patch.title !== undefined && patch.title !== null && (typeof patch.title !== "string" || patch.title.length > 30)) return json({ error: "職稱太長" }, 400);
       if (patch.bio !== undefined && patch.bio !== null && (typeof patch.bio !== "string" || patch.bio.length > 200)) return json({ error: "介紹太長" }, 400);
-      const allowed = ["title", "bio", "avatar", "card", "card_bg", "sort_order"];
+      // 代表字：只能是自己名字裡的一個字，或兩個英文字母；空白＝改回預設
+      if (patch.mark !== undefined && patch.mark !== null && patch.mark !== "") {
+        const who = (await listPeople()).find((p) => p.email === email);
+        const ok = typeof patch.mark === "string" ? validMark(patch.mark, who?.name ?? (email === user.email ? user.name : undefined)) : null;
+        if (!ok) return json({ error: "代表字只能是名字裡的一個字，或兩個英文字母" }, 400);
+        patch.mark = ok;
+      }
+      const allowed = ["title", "bio", "avatar", "card", "card_bg", "sort_order", "mark"];
       const clean = Object.fromEntries(Object.entries(patch).filter(([k]) => allowed.includes(k)));
       const r = await rpc<{ status: string; updated_at?: string }>("pm_profile_save", { ...actor, email, patch: clean });
       return json(r, r.status === "forbidden" ? 403 : 200);

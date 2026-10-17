@@ -5,7 +5,7 @@ import { addDays, fmtDate } from "@/lib/project-ops";
 import { personColor, STATUS_LABEL, type Task } from "@/lib/pm/model";
 import Gantt, { type GanttRow } from "./Gantt";
 import { Empty, GREEN, ORANGE } from "./kit";
-import { isLate, personLabel, type Pm } from "./usePm";
+import { assigneeLabel, isLate, type Pm } from "./usePm";
 import { treeOrder } from "./tree";
 
 /* ══════════════════════════════════════════════════════════
@@ -91,7 +91,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
     const project = pm.projectBy.get(t.code);
     const firstOfProject = showProject && t.code !== lastCode;
     lastCode = t.code;
-    const who = t.assigneeEmail ? personLabel(pm, t.assigneeEmail, t.assigneeName) : "未指派";
+    const who = assigneeLabel(pm, t);
     if (!hasDate(t)) {
       return {
         id: t.id,

@@ -8,7 +8,7 @@ import { Sheet, toast } from "./Sheet";
 import { DateField, FieldGroup, Row, TextField } from "./fields";
 import { Icon } from "./ui";
 import { Avatar, Empty, GREEN, Group, ORANGE, RED } from "./kit";
-import { isLate, personLabel, type GoalItem, type Pm } from "./usePm";
+import { assigneeLabel, isLate, personLabel, type GoalItem, type Pm } from "./usePm";
 
 /* ══════════════════════════════════════════════════════════
    公司目標（任務追蹤 →「目標」分頁）
@@ -208,7 +208,7 @@ function GoalGantt({
       rows.push({
         id: `${g.id}:${t.id}`,
         label: `　${t.title}`,
-        sublabel: `　${t.assigneeEmail ? personLabel(pm, t.assigneeEmail, t.assigneeName) : "未指派"}`,
+        sublabel: `　${assigneeLabel(pm, t)}`,
         onClick: () => onOpenTask(t),
         trailing: done ? "完成" : isLate(t, today) ? "逾期" : t.progress ? `${t.progress}%` : undefined,
         bars:
@@ -428,7 +428,7 @@ export function GoalSheet({
                   <span className="flex-1 min-w-0">
                     <span className={`block text-[15px] truncate ${done ? "text-[#A1A1AA] line-through" : "text-[#18181B]"}`}>{t.title}</span>
                     <span className="block text-[12px] text-[#8E8E93] truncate">
-                      {t.assigneeEmail ? personLabel(pm, t.assigneeEmail, t.assigneeName) : "未指派"}
+                      {assigneeLabel(pm, t)}
                       {t.due ? `・${fmtDate(t.due, pm.today)}` : ""}
                     </span>
                   </span>

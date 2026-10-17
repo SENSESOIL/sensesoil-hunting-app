@@ -3,10 +3,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { addDays, diffDays } from "@/lib/project-ops";
-import { personColor, type Task } from "@/lib/pm/model";
+import { isAssignee, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { Icon } from "./ui";
-import { Avatar, CheckCircle, dueLabel, GRAY, Group, GREEN, ORANGE, RED } from "./kit";
-import { isLate, type Pm } from "./usePm";
+import { AvatarStack, CheckCircle, dueLabel, GRAY, Group, GREEN, ORANGE, RED } from "./kit";
+import { assigneeLabel, isLate, type Pm } from "./usePm";
 
 /* ══════════════════════════════════════════════════════════
    任務清單（提醒事項風格）
@@ -242,7 +242,7 @@ export function TaskRow({
 }) {
   const { today, me } = pm;
   const done = t.status === "done";
-  const mine = t.assigneeEmail === me?.email;
+  const mine = isAssignee(t, me?.email);
   const canToggle = pm.isManager || mine;
   const due = dueLabel(t.due, today, done);
   const project = showProject ? pm.projectBy.get(t.code) : undefined;
@@ -324,7 +324,9 @@ export function TaskRow({
       </div>
       <div className="flex items-center gap-1.5 pt-0.5 shrink-0">
         {t.flagged && !done && <Icon name="flag" fill={1} weight={400} className="text-[17px]" style={{ color: ORANGE }} />}
-        {showAssignee && t.assigneeEmail && !mine && <Avatar name={t.assigneeName} email={t.assigneeEmail} size={28} />}
+        {showAssignee && t.assigneeEmail && !(mine && !t.coAssignees?.length) && (
+          <AvatarStack people={taskAssignees(t).map((e) => ({ email: e, name: pm.personBy.get(e)?.name }))} max={3} size={26} label={assigneeLabel(pm, t)} />
+        )}
         {showAssignee && !t.assigneeEmail && pm.isManager && !done && (
           <span className="w-6 h-6 rounded-full border border-dashed border-[#D4D4D8] flex items-center justify-center" title="未指派">
             <Icon name="person_add" className="text-[13px] text-[#C7C7CC]" />

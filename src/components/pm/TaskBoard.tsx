@@ -2,11 +2,11 @@
 
 import React, { useMemo } from "react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { STATUS_LABEL, TASK_STATUSES, type Task, type TaskStatus } from "@/lib/pm/model";
+import { isAssignee, STATUS_LABEL, TASK_STATUSES, taskAssignees, type Task, type TaskStatus } from "@/lib/pm/model";
 import { Icon } from "./ui";
-import { Avatar, dueLabel, GREEN, ORANGE } from "./kit";
+import { AvatarStack, dueLabel, GREEN, ORANGE } from "./kit";
 import { toast } from "./Sheet";
-import type { Pm } from "./usePm";
+import { assigneeLabel, type Pm } from "./usePm";
 
 /* ══════════════════════════════════════════════════════════
    看板：待辦／進行中／完成，拖曳換欄＝改狀態
@@ -79,7 +79,7 @@ export function TaskBoard({
                       className={`flex flex-col gap-2 min-h-[120px] rounded-[12px] transition-colors ${snap.isDraggingOver ? "bg-[#E8E8EC]" : ""}`}
                     >
                       {list.map((t, i) => {
-                        const canMove = pm.isManager || t.assigneeEmail === pm.me?.email;
+                        const canMove = pm.isManager || isAssignee(t, pm.me?.email);
                         return (
                           <Draggable key={t.id} draggableId={t.id} index={i} isDragDisabled={!canMove}>
                             {(drag, ds) => (
@@ -121,7 +121,7 @@ function Card({ t, pm, showProject }: { t: Task; pm: Pm; showProject?: boolean }
   const done = t.status === "done";
   const due = dueLabel(t.due, pm.today, done);
   const project = showProject ? pm.projectBy.get(t.code) : undefined;
-  const mine = t.assigneeEmail === pm.me?.email;
+  const mine = isAssignee(t, pm.me?.email);
   return (
     <>
       <div className="flex items-start gap-2">
@@ -157,7 +157,7 @@ function Card({ t, pm, showProject }: { t: Task; pm: Pm; showProject?: boolean }
               style={{ color: t.ackAt ? GREEN : t.seenAt ? "#A1A1AA" : ORANGE }}
             />
           )}
-          {t.assigneeEmail && <Avatar name={t.assigneeName} email={t.assigneeEmail} size={22} />}
+          {t.assigneeEmail && <AvatarStack people={taskAssignees(t).map((e) => ({ email: e, name: pm.personBy.get(e)?.name }))} max={3} size={22} label={assigneeLabel(pm, t)} />}
         </span>
       </div>
     </>

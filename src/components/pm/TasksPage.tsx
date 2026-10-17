@@ -11,6 +11,7 @@ import { TaskGantt } from "./TaskGantt";
 import { Workload } from "./Workload";
 import { TaskSheet } from "./TaskSheet";
 import { SetupNotice } from "./SetupNotice";
+import { isAssignee, taskAssignees } from "@/lib/pm/model";
 import { isLate, usePm, type GoalItem, type Pm } from "./usePm";
 import { GoalSheet, GoalsPage } from "./Goals";
 import { ReminderPage, RemindersHome, SMART, smartTasks, TaskSearchResults, type ListRoute } from "./Reminders";
@@ -365,7 +366,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
   const { today } = pm;
   const [day, setDay] = useState(today);
   const [weekStart, setWeekStart] = useState(() => mondayOf(today));
-  const mine = useMemo(() => pm.tasks.filter((t) => t.assigneeEmail === pm.me?.email), [pm.tasks, pm.me?.email]);
+  const mine = useMemo(() => pm.tasks.filter((t) => isAssignee(t, pm.me?.email)), [pm.tasks, pm.me?.email]);
   const [calMode, setCalMode] = useStored<"week" | "month">("pm:my:cal", "week");
   const [goalOpen, setGoalOpen] = useState<string | null>(null);
 
@@ -884,7 +885,7 @@ function AllTasks({
     const k = q.trim().toLowerCase();
     return pm.tasks.filter((t) => {
       if (person === null && t.assigneeEmail) return false;
-      if (person && t.assigneeEmail !== person) return false;
+      if (person && !isAssignee(t, person)) return false;
       if (k) {
         const p = pm.projectBy.get(t.code);
         const hay = `${t.title} ${t.note ?? ""} ${t.code} ${p?.name ?? ""} ${t.assigneeName ?? ""}`.toLowerCase();
@@ -902,9 +903,11 @@ function AllTasks({
   const counts = new Map<string, number>();
   const lates = new Map<string, number>();
   pm.tasks.forEach((t) => {
-    if (t.status === "done" || !t.assigneeEmail) return;
-    counts.set(t.assigneeEmail, (counts.get(t.assigneeEmail) ?? 0) + 1);
-    if (isLate(t, pm.today)) lates.set(t.assigneeEmail, (lates.get(t.assigneeEmail) ?? 0) + 1);
+    if (t.status === "done") return;
+    for (const e of taskAssignees(t)) {
+      counts.set(e, (counts.get(e) ?? 0) + 1);
+      if (isLate(t, pm.today)) lates.set(e, (lates.get(e) ?? 0) + 1);
+    }
   });
   const people = [...pm.people].sort((a, b) => (counts.get(b.email) ?? 0) - (counts.get(a.email) ?? 0));
   const unassigned = pm.tasks.filter((t) => !t.assigneeEmail && t.status !== "done").length;

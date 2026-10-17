@@ -3,7 +3,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { addDays, toDay } from "@/lib/project-ops";
-import { newTaskId, personColor, type Task } from "@/lib/pm/model";
+import { isAssignee, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { metaChips, tagKeys } from "@/lib/pm/tags";
 import { Icon } from "./ui";
 import { Avatar, CheckCircle, dueLabel, ORANGE, RED } from "./kit";
@@ -12,7 +12,7 @@ import { ProjectPicker } from "./TaskSheet";
 import { TaskGantt } from "./TaskGantt";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
-import { isLate, personLabel, type Pm } from "./usePm";
+import { assigneeLabel, assigneePatch, isLate, personLabel, personMark, type Pm } from "./usePm";
 import { treeOrder, type TreeRow } from "./tree";
 
 export { treeOrder };
@@ -54,7 +54,7 @@ export function smartTasks(pm: Pm, id: SmartId): Task[] {
     case "flagged":
       return open.filter((t) => t.flagged);
     case "mine":
-      return open.filter((t) => t.assigneeEmail === pm.me?.email);
+      return open.filter((t) => isAssignee(t, pm.me?.email));
     case "done":
       return pm.tasks.filter((t) => t.status === "done" && (t.doneAt ?? "") >= addDays(today, -30));
     default:
@@ -63,7 +63,7 @@ export function smartTasks(pm: Pm, id: SmartId): Task[] {
 }
 
 const canEditAll = (pm: Pm, t: Task) => pm.isManager || t.createdBy === pm.me?.email;
-const canToggle = (pm: Pm, t: Task) => pm.isManager || t.assigneeEmail === pm.me?.email || t.createdBy === pm.me?.email;
+const canToggle = (pm: Pm, t: Task) => pm.isManager || isAssignee(t, pm.me?.email) || t.createdBy === pm.me?.email;
 
 /* ══════════════════════════════════════════════════════════
    首頁
@@ -591,8 +591,8 @@ export function ReminderTasks({
         action: {
           label: "復原",
           run: () => {
-            const { id, code: c, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq, goalId, meta } = prev;
-            pm.saveTask({ id, code: c, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq, goalId, meta });
+            const { id, code: c, title, kind, status, progress, flagged, assigneeEmail, assigneeName, coAssignees, start, due, note, seq, goalId, meta } = prev;
+            pm.saveTask({ id, code: c, title, kind, status, progress, flagged, assigneeEmail, assigneeName, ...(coAssignees?.length ? { coAssignees } : {}), start, due, note, seq, goalId, meta });
           },
         },
       });
@@ -696,7 +696,7 @@ export function ReminderTasks({
       {menu && (
         <RowMenu
           pm={pm}
-          task={menu.task}
+          task={pm.tasks.find((t) => t.id === menu.task.id) ?? menu.task}
           rect={menu.rect}
           depth={menu.depth}
           inProject={!!code}
@@ -940,10 +940,18 @@ function TaskRow({
             {(due || task.assigneeEmail || chips.length > 0 || (task.note && !editing)) && (
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-[18px]">
                 {due && <span style={{ color: late ? RED : due.color }}>{due.text}</span>}
-                {task.assigneeEmail && task.assigneeEmail !== pm.me?.email && (
-                  <span className="inline-flex items-center gap-1 text-[#8E8E93]">
-                    <Avatar name={task.assigneeName} email={task.assigneeEmail} size={16} />
-                    {personLabel(pm, task.assigneeEmail, task.assigneeName)}
+                {task.assigneeEmail && (task.assigneeEmail !== pm.me?.email || !!task.coAssignees?.length) && (
+                  // 大頭照＋代表字（名字最後一個字，或自己在設定裡改的字），多人就一個一個排
+                  <span className="inline-flex items-center gap-2 text-[#8E8E93]" aria-label={`負責人：${assigneeLabel(pm, task)}`}>
+                    {taskAssignees(task)
+                      .slice(0, 4)
+                      .map((e) => (
+                        <span key={e} className="inline-flex items-center gap-1">
+                          <Avatar name={pm.personBy.get(e)?.name} email={e} size={16} />
+                          {personMark(pm, e, e === task.assigneeEmail ? task.assigneeName : undefined)}
+                        </span>
+                      ))}
+                    {taskAssignees(task).length > 4 && <span>+{taskAssignees(task).length - 4}</span>}
                   </span>
                 )}
                 {chips.slice(0, 4).map((c) => (
@@ -1164,23 +1172,34 @@ function RowMenu({
               <Icon name="chevron_left" className="text-[22px]" />
               指派
             </button>
-            {pm.people.map((p) => (
-              <button
-                key={p.email}
-                type="button"
-                onClick={run(() => {
-                  if (p.email === task.assigneeEmail) return;
-                  pm.saveTask({ id: task.id, assigneeEmail: p.email, assigneeName: p.name });
-                  if (p.email !== pm.me?.email) toast(`已指派給 ${p.name}，對方會收到通知`);
-                })}
-                className="w-full flex items-center gap-3 px-4 h-12 text-left active:bg-[#EDEDF0]"
-              >
-                <Avatar name={p.name} email={p.email} size={28} />
-                <span className="flex-1 text-[16px] text-[#18181B]">{p.email === pm.me?.email ? "我" : p.name}</span>
-                {task.assigneeEmail === p.email && <Icon name="check" weight={600} className="text-[18px] text-[var(--accent)]" />}
-              </button>
-            ))}
-            {task.assigneeEmail && <MenuItem icon="person_off" label="取消指派" onClick={run(() => pm.saveTask({ id: task.id, assigneeEmail: undefined }))} />}
+            {/* 可複選：點一下加入／移除，選單不關，選完點外面收起。第一位是主要負責人 */}
+            {pm.people.map((p) => {
+              const list = taskAssignees(task);
+              const on = list.includes(p.email);
+              const primary = list[0] === p.email;
+              return (
+                <button
+                  key={p.email}
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={on}
+                  onClick={() => {
+                    const next = on ? list.filter((e) => e !== p.email) : [...list, p.email];
+                    pm.saveTask({ id: task.id, ...assigneePatch(pm, next) });
+                    if (!on && p.email !== pm.me?.email) toast(`已指派給 ${p.name}，對方會收到通知`);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 h-12 text-left active:bg-[#EDEDF0]"
+                >
+                  <Avatar name={p.name} email={p.email} size={28} />
+                  <span className="flex-1 text-[16px] text-[#18181B]">
+                    {p.email === pm.me?.email ? "我" : p.name}
+                    {primary && list.length > 1 && <span className="ml-1.5 text-[12px] text-[#A1A1AA]">主要</span>}
+                  </span>
+                  {on && <Icon name="check" weight={600} className="text-[18px] text-[var(--accent)]" />}
+                </button>
+              );
+            })}
+            {task.assigneeEmail && <MenuItem icon="person_off" label="全部取消指派" onClick={run(() => pm.saveTask({ id: task.id, assigneeEmail: undefined, coAssignees: [] }))} />}
           </div>
         )}
       </div>
