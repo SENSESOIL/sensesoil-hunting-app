@@ -13,7 +13,8 @@ import { TaskSheet } from "./TaskSheet";
 import { SetupNotice } from "./SetupNotice";
 import { isLate, usePm, type GoalItem, type Pm } from "./usePm";
 import { GoalSheet, GoalsPage } from "./Goals";
-import { ReminderPage, RemindersHome, SMART, smartTasks, type ListRoute } from "./Reminders";
+import { ReminderPage, RemindersHome, SMART, smartTasks, TaskSearchResults, type ListRoute } from "./Reminders";
+import { SearchOverlay } from "@/components/team/TeamPage";
 import { tagKeys } from "@/lib/pm/tags";
 
 /* ══════════════════════════════════════════════════════════
@@ -67,9 +68,18 @@ export default function TasksPage({
   onTabChange,
   openTaskId,
   onOpenedTask,
+  searchQuery = "",
+  onSearchQuery,
+  searchOpen = false,
+  onSearchClose,
 }: {
   activeTab: string;
   onTabChange: (t: string) => void;
+  /** 標題列的搜尋（分享鍵左邊的放大鏡），只在「清單」分頁 */
+  searchQuery?: string;
+  onSearchQuery?: (q: string) => void;
+  searchOpen?: boolean;
+  onSearchClose?: () => void;
   /** 從通知點進來要打開的任務 */
   openTaskId?: string | null;
   onOpenedTask?: () => void;
@@ -163,7 +173,7 @@ export default function TasksPage({
           </SubPage>
         );
       default:
-        return <RemindersHome pm={pm} go={setRoute} onOpen={open} />;
+        return <RemindersHome pm={pm} go={setRoute} />;
     }
   };
 
@@ -182,7 +192,25 @@ export default function TasksPage({
       ) : tab === "目標" ? (
         <GoalsPage pm={pm} onOpenTask={open} />
       ) : (
-        listView()
+        <>
+          {/* 手機：放大鏡 → 跳出搜尋欄，結果列在下方；電腦：標題列輸入，結果取代清單 */}
+          <SearchOverlay open={searchOpen} query={searchQuery} onQuery={(v) => onSearchQuery?.(v)} onClose={() => onSearchClose?.()} placeholder="搜尋任務、標籤" label="搜尋任務">
+            <TaskSearchResults
+              pm={pm}
+              query={searchQuery}
+              onOpen={(t) => {
+                onSearchClose?.();
+                open(t);
+              }}
+            />
+          </SearchOverlay>
+          {searchQuery.trim() ? (
+            <div className="hidden md:flex flex-col gap-5">
+              <TaskSearchResults pm={pm} query={searchQuery} onOpen={open} />
+            </div>
+          ) : null}
+          <div className={searchQuery.trim() ? "md:hidden flex flex-col gap-5" : "contents"}>{listView()}</div>
+        </>
       )}
       <TaskSheet pm={pm} open={!!sheet} taskId={sheet?.id ?? null} preset={sheet?.preset} onClose={() => setSheet(null)} />
     </div>

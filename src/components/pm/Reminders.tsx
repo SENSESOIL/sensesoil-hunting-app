@@ -69,8 +69,27 @@ const canToggle = (pm: Pm, t: Task) => pm.isManager || t.assigneeEmail === pm.me
    首頁
    ══════════════════════════════════════════════════════════ */
 
-export function RemindersHome({ pm, go, onOpen }: { pm: Pm; go: (r: ListRoute) => void; onOpen: (t: Task) => void }) {
-  const [q, setQ] = useState("");
+/** 搜尋：任務名稱、備註、標籤 */
+export function searchTasks(pm: Pm, q: string): Task[] {
+  const k = q.trim().toLowerCase();
+  if (!k) return [];
+  return pm.tasks.filter(
+    (t) => t.title.toLowerCase().includes(k) || (t.note ?? "").toLowerCase().includes(k) || tagKeys(t.meta).some((x) => x.toLowerCase().includes(k))
+  );
+}
+
+/** 搜尋結果（手機在跳出的搜尋欄下方、電腦取代清單） */
+export function TaskSearchResults({ pm, query, onOpen }: { pm: Pm; query: string; onOpen: (t: Task) => void }) {
+  const results = useMemo(() => searchTasks(pm, query), [pm, query]);
+  if (!query.trim()) return null;
+  return results.length ? (
+    <ReminderTasks pm={pm} tasks={results} grouped showDone onOpen={onOpen} />
+  ) : (
+    <p className="text-center text-[15px] text-[#8E8E93] py-10">找不到「{query.trim()}」</p>
+  );
+}
+
+export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }) {
   const [allProjects, setAllProjects] = useState(false);
   const smartIds: SmartId[] = pm.isManager ? ["today", "scheduled", "all", "flagged", "mine", "done"] : ["today", "scheduled", "all", "flagged", "done"];
 
@@ -90,45 +109,9 @@ export function RemindersHome({ pm, go, onOpen }: { pm: Pm; go: (r: ListRoute) =
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
   }, [pm.tasks]);
 
-  const search = q.trim().toLowerCase();
-  const results = useMemo(
-    () =>
-      search
-        ? pm.tasks.filter(
-            (t) =>
-              t.title.toLowerCase().includes(search) ||
-              (t.note ?? "").toLowerCase().includes(search) ||
-              tagKeys(t.meta).some((k) => k.toLowerCase().includes(search))
-          )
-        : [],
-    [pm.tasks, search]
-  );
-
   return (
     <div className="flex flex-col gap-6 pt-1">
-      <label className="relative block">
-        <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[19px] text-[#8E8E93]" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="搜尋任務、標籤"
-          className="w-full h-10 rounded-[12px] bg-[#E9E9EC] pl-10 pr-9 text-[16px] text-[#18181B] outline-none placeholder:text-[#8E8E93]"
-        />
-        {q && (
-          <button type="button" onClick={() => setQ("")} aria-label="清除搜尋" className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-[#8E8E93]">
-            <Icon name="cancel" fill={1} className="text-[18px]" />
-          </button>
-        )}
-      </label>
-
-      {search ? (
-        results.length ? (
-          <ReminderTasks pm={pm} tasks={results} grouped showDone onOpen={onOpen} />
-        ) : (
-          <p className="text-center text-[15px] text-[#8E8E93] py-10">找不到「{q}」</p>
-        )
-      ) : (
-        <>
+      <>
           {/* 智慧清單 */}
           <div className="grid grid-cols-2 gap-3">
             {smartIds.map((id) => {
@@ -194,8 +177,7 @@ export function RemindersHome({ pm, go, onOpen }: { pm: Pm; go: (r: ListRoute) =
               </div>
             </section>
           )}
-        </>
-      )}
+      </>
     </div>
   );
 }

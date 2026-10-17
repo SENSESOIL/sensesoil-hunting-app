@@ -729,14 +729,6 @@ export default function HuntingManagementPage() {
   const [teamQuery, setTeamQuery] = useState("");
   const [deskSearchOpen, setDeskSearchOpen] = useState(false);
   const deskSearchRef = useRef<HTMLInputElement>(null);
-  // 離開團隊分頁就收起搜尋、清掉搜尋字
-  useEffect(() => {
-    if (activeNav !== "command_center" || commandTab !== COMMAND_TAB_TEAM) {
-      setTeamSearchOpen(false);
-      setTeamQuery("");
-      setDeskSearchOpen(false);
-    }
-  }, [activeNav, commandTab]);
   // 停在沒有權限（或已不存在）的分頁時，退回第一個看得到的分頁。
   // 要等權限載入完：載入中 roles 是空的，算出來只剩「團隊」，會把預設的「營運」蓋掉。
   useEffect(() => {
@@ -746,6 +738,17 @@ export default function HuntingManagementPage() {
   const [intelTab, setIntelTab] = useState(PROJECT_TABS[0]);
   const TASK_TABS = isPmManager ? TASK_TABS_MANAGER : TASK_TABS_MEMBER;
   const [scheduleTab, setScheduleTab] = useState(TASK_TABS_MANAGER[0]);
+  // 標題列的搜尋（分享鍵左邊）：指揮中心「團隊」與任務追蹤「清單」共用同一組狀態
+  const searchMode: "team" | "tasks" | null =
+    activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM ? "team" : activeNav === "tasks" && scheduleTab === "清單" ? "tasks" : null;
+  const searchPlaceholder = searchMode === "tasks" ? "搜尋任務、標籤" : "搜尋姓名、工項、電話";
+  const searchLabel = searchMode === "tasks" ? "搜尋任務" : "搜尋團隊";
+  // 換到別的頁面就收起搜尋、清掉搜尋字
+  useEffect(() => {
+    setTeamSearchOpen(false);
+    setTeamQuery("");
+    setDeskSearchOpen(false);
+  }, [searchMode]);
   // 從通知點進來：要打開的任務
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [photoOpen, setPhotoOpen] = useState(false);
@@ -1501,7 +1504,7 @@ export default function HuntingManagementPage() {
               {/* 團隊：搜尋（分享鍵左邊），一次搜內部職員、外部職員、協力廠商、聯盟品牌
                   手機：放大鏡 → 跳出輸入欄（背景模糊，見 TeamPage 的 SearchOverlay）
                   電腦：標題列直接展開成輸入框，結果取代清單 */}
-              {activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM && (
+              {searchMode && (
                 <>
                   <button
                     onClick={() => {
@@ -1515,7 +1518,7 @@ export default function HuntingManagementPage() {
                     }}
                     className="md:hidden w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[#F4F4F5] text-[#71717A]"
                     title="搜尋"
-                    aria-label="搜尋團隊"
+                    aria-label={searchLabel}
                   >
                     <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
                       search
@@ -1535,7 +1538,7 @@ export default function HuntingManagementPage() {
                       }}
                       className="absolute left-0 top-0 w-9 h-9 flex items-center justify-center text-[#71717A] shrink-0"
                       title="搜尋"
-                      aria-label="搜尋團隊"
+                      aria-label={searchLabel}
                       tabIndex={deskSearchOpen || teamQuery ? -1 : 0}
                     >
                       <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
@@ -1554,8 +1557,8 @@ export default function HuntingManagementPage() {
                           (e.target as HTMLInputElement).blur();
                         }
                       }}
-                      placeholder="搜尋姓名、工項、電話"
-                      aria-label="搜尋團隊"
+                      placeholder={searchPlaceholder}
+                      aria-label={searchLabel}
                       tabIndex={deskSearchOpen || teamQuery ? 0 : -1}
                       className={`h-full bg-transparent pl-9 pr-8 text-[14px] text-[#18181B] outline-none placeholder:text-[#A1A1AA] transition-opacity ${
                         deskSearchOpen || teamQuery ? "w-full opacity-100" : "w-0 opacity-0 pointer-events-none"
@@ -1851,6 +1854,13 @@ export default function HuntingManagementPage() {
               onTabChange={setScheduleTab}
               openTaskId={openTaskId}
               onOpenedTask={clearOpenTask}
+              searchQuery={teamQuery}
+              onSearchQuery={setTeamQuery}
+              searchOpen={teamSearchOpen}
+              onSearchClose={() => {
+                setTeamSearchOpen(false);
+                setTeamQuery("");
+              }}
             />
           ) : (
             <ProjectsPage activeTab={intelTab} />

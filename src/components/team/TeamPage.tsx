@@ -395,18 +395,22 @@ function Row({ e, onOpen, onCall, onEdit }: { e: Entry; onOpen: (e: Entry) => vo
 }
 
 /** 手機搜尋：頂部輸入欄＋模糊背景，結果列在下方；電腦版不用（標題列直接輸入） */
-function SearchOverlay({
+export function SearchOverlay({
   open,
   query,
   onQuery,
   onClose,
   children,
+  placeholder = "搜尋姓名、工項、電話",
+  label = "搜尋團隊",
 }: {
   open: boolean;
   query: string;
   onQuery: (q: string) => void;
   onClose: () => void;
   children: React.ReactNode;
+  placeholder?: string;
+  label?: string;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const close = useRef(onClose);
@@ -421,7 +425,7 @@ function SearchOverlay({
   }, [open]);
   if (!open || typeof document === "undefined") return null;
   return createPortal(
-    <div className="md:hidden fixed inset-0 z-[140] flex flex-col bg-[#FAFAFA]/70 backdrop-blur-xl" role="dialog" aria-label="搜尋團隊">
+    <div className="md:hidden fixed inset-0 z-[140] flex flex-col bg-[#FAFAFA]/70 backdrop-blur-xl" role="dialog" aria-label={label}>
       <div className="shrink-0 px-4 pb-3 flex items-center gap-2" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
         <div className="relative flex-1 min-w-0">
           <IconSearch size={18} stroke={1.5} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA] pointer-events-none" />
@@ -429,7 +433,7 @@ function SearchOverlay({
             ref={input}
             value={query}
             onChange={(e) => onQuery(e.target.value)}
-            placeholder="搜尋姓名、工項、電話"
+            placeholder={placeholder}
             enterKeyHint="search"
             className="w-full h-11 rounded-full bg-white shadow-card pl-10 pr-9 text-[16px] text-[#18181B] outline-none placeholder:text-[#A1A1AA] focus:ring-2 focus:ring-[var(--accent)]/40"
           />
