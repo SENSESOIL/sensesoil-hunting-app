@@ -266,58 +266,82 @@ export function ReminderPage({
   const doneCount = tasks.filter((t) => t.status === "done").length;
   const canAdd = !!code || !!onAddFull;
 
+  // 「⋯」放進標題列分頁那一排的右邊（hunting-mgmt 的 #pm-header-slot）
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => setSlot(document.getElementById("pm-header-slot")), []);
+
+  const menuButton = (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setMenu((v) => !v)}
+        aria-label="更多"
+        aria-expanded={menu}
+        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${menu ? "bg-[#F4F4F5] text-[#18181B]" : "text-[#71717A] hover:bg-[#F4F4F5]"}`}
+      >
+        <Icon name="more_horiz" weight={400} className="text-[24px]" />
+      </button>
+      {menu && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
+          <div className="absolute right-0 top-11 z-40 w-56 rounded-[14px] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] overflow-hidden py-1">
+            <MenuItem
+              icon={showDone ? "visibility_off" : "visibility"}
+              label={showDone ? "隱藏已完成" : `顯示已完成${doneCount ? `（${doneCount}）` : ""}`}
+              onClick={() => {
+                setShowDone((v) => !v);
+                setMenu(false);
+              }}
+            />
+            {code && (
+              <>
+                <div className="h-px bg-[#F0F0F2] my-1" />
+                {(
+                  [
+                    ["list", "checklist", "清單"],
+                    ["board", "view_kanban", "看板"],
+                    ["gantt", "view_timeline", "甘特圖"],
+                  ] as [PageView, string, string][]
+                ).map(([v, icon, label]) => (
+                  <MenuItem
+                    key={v}
+                    icon={icon}
+                    label={label}
+                    checked={view === v}
+                    onClick={() => {
+                      setView(v);
+                      setMenu(false);
+                    }}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  const add = () => {
+    if (code) {
+      // 在點擊當下先叫出鍵盤（iPhone 只在使用者點擊的那一刻允許），新的一列出現後再把游標交給它
+      primeKeyboard();
+      if (pageView !== "list") setView("list");
+      setAddSignal((n) => n + 1);
+    } else onAddFull?.();
+  };
+
   return (
     <div className="flex flex-col gap-3 pb-24">
-      <div className="flex items-center justify-between pt-1">
-        <button type="button" onClick={onBack} aria-label="返回" className="w-11 h-11 rounded-full bg-white shadow-card flex items-center justify-center active:scale-95 transition-transform">
-          <Icon name="chevron_left" weight={500} className="text-[26px] text-[#18181B]" />
-        </button>
-        <div className="relative">
-          <button type="button" onClick={() => setMenu((v) => !v)} aria-label="更多" className="w-11 h-11 rounded-full bg-white shadow-card flex items-center justify-center active:scale-95 transition-transform">
-            <Icon name="more_horiz" weight={500} className="text-[24px] text-[#18181B]" />
-          </button>
-          {menu && (
-            <>
-              <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
-              <div className="absolute right-0 top-12 z-40 w-56 rounded-[14px] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] overflow-hidden py-1">
-                <MenuItem
-                  icon={showDone ? "visibility_off" : "visibility"}
-                  label={showDone ? "隱藏已完成" : `顯示已完成${doneCount ? `（${doneCount}）` : ""}`}
-                  onClick={() => {
-                    setShowDone((v) => !v);
-                    setMenu(false);
-                  }}
-                />
-                {code && (
-                  <>
-                    <div className="h-px bg-[#F0F0F2] my-1" />
-                    {(
-                      [
-                        ["list", "checklist", "清單"],
-                        ["board", "view_kanban", "看板"],
-                        ["gantt", "view_timeline", "甘特圖"],
-                      ] as [PageView, string, string][]
-                    ).map(([v, icon, label]) => (
-                      <MenuItem
-                        key={v}
-                        icon={icon}
-                        label={label}
-                        checked={view === v}
-                        onClick={() => {
-                          setView(v);
-                          setMenu(false);
-                        }}
-                      />
-                    ))}
-                  </>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+      {slot ? createPortal(menuButton, slot) : <div className="flex justify-end">{menuButton}</div>}
 
-      <div className="px-1">
+      {/* 電腦：返回鍵在標題上方；手機在左下角 */}
+      <button type="button" onClick={onBack} className="hidden md:flex items-center gap-1 self-start h-9 pr-3 text-[15px] text-[var(--accent)] font-medium">
+        <Icon name="chevron_left" weight={500} className="text-[24px]" />
+        任務追蹤
+      </button>
+
+      <div className="px-1 pt-1">
         <h1 className="text-[32px] leading-[38px] font-bold tracking-tight" style={{ color }}>
           {title}
         </h1>
@@ -327,27 +351,44 @@ export function ReminderPage({
       {pageView === "list" && (
         <ReminderTasks pm={pm} tasks={tasks} code={code} grouped={grouped} showDone={showDone} onOpen={onOpen} addSignal={addSignal} color={color} tapToAdd />
       )}
-      {pageView === "board" && <TaskBoard pm={pm} tasks={tasks} onOpen={onOpen} onAdd={() => setAddSignal((n) => n + 1)} />}
+      {pageView === "board" && <TaskBoard pm={pm} tasks={tasks} onOpen={onOpen} onAdd={add} />}
       {pageView === "gantt" && <TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} />}
 
+      {/* 手機：返回（左下）與新增（右下）放在原本底部導覽列的位置 */}
+      <button
+        type="button"
+        onClick={onBack}
+        aria-label="返回"
+        className="md:hidden fixed z-40 left-5 w-14 h-14 rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.14)] flex items-center justify-center active:scale-95 transition-transform"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
+      >
+        <Icon name="chevron_left" weight={500} className="text-[28px] text-[#18181B]" />
+      </button>
       {canAdd && (
         <button
           type="button"
-          onClick={() => {
-            if (code) {
-              if (pageView !== "list") setView("list");
-              setAddSignal((n) => n + 1);
-            } else onAddFull?.();
-          }}
+          onClick={add}
           aria-label="新增任務"
-          className="fixed z-40 right-5 bottom-[104px] md:bottom-8 md:right-10 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(243,156,18,0.4)] active:scale-95 transition-transform"
-          style={{ background: ORANGE }}
+          className="fixed z-40 right-5 md:right-10 md:!bottom-8 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(243,156,18,0.4)] active:scale-95 transition-transform"
+          style={{ background: ORANGE, bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
         >
           <Icon name="add" weight={500} className="text-[30px]" />
         </button>
       )}
     </div>
   );
+}
+
+/** 在使用者點擊的當下先讓一個暫時的輸入框取得焦點，鍵盤就會跳出來；
+ *  之後新出現的輸入框再接手焦點時，鍵盤會留著（iPhone 不允許在點擊之後才叫出鍵盤） */
+export function primeKeyboard() {
+  if (typeof document === "undefined") return;
+  const tmp = document.createElement("input");
+  tmp.setAttribute("aria-hidden", "true");
+  tmp.style.cssText = "position:fixed;top:40%;left:0;opacity:0;height:0;width:1px;font-size:16px;border:0;padding:0;";
+  document.body.appendChild(tmp);
+  tmp.focus();
+  setTimeout(() => tmp.remove(), 1000);
 }
 
 function MenuItem({ icon, label, onClick, checked, danger, disabled }: { icon: string; label: string; onClick: () => void; checked?: boolean; danger?: boolean; disabled?: boolean }) {
@@ -638,7 +679,7 @@ export function ReminderTasks({
             <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
               {items}
               {addRow && code && !draft && (
-                <button type="button" onClick={() => startDraft()} className="w-full flex items-center gap-3 pl-[14px] pr-3 h-12 text-left text-[15px] text-[#8E8E93] active:bg-[#FAFAFA]">
+                <button type="button" onClick={() => { primeKeyboard(); startDraft(); }} className="w-full flex items-center gap-3 pl-[14px] pr-3 h-12 text-left text-[15px] text-[#8E8E93] active:bg-[#FAFAFA]">
                   <Icon name="add_circle" className="text-[24px]" style={{ color }} />
                   新增任務
                 </button>
@@ -650,7 +691,7 @@ export function ReminderTasks({
           </section>
         );
       })}
-      {tapEmpty && <button type="button" aria-label="新增任務" onClick={() => !draft && startDraft()} className="min-h-[120px] w-full cursor-text" />}
+      {tapEmpty && <button type="button" aria-label="新增任務" onClick={() => { if (draft) return; primeKeyboard(); startDraft(); }} className="min-h-[120px] w-full cursor-text" />}
 
       {menu && (
         <RowMenu

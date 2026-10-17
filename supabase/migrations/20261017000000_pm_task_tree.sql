@@ -40,12 +40,12 @@ create or replace function public.pm_tasks_meta_default()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $$
 begin
   new.meta := coalesce(new.meta, '{}'::jsonb);
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists pm_tasks_meta_default on public.pm_tasks;
 create trigger pm_tasks_meta_default before insert or update on public.pm_tasks

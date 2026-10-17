@@ -68,6 +68,7 @@ export default function TasksPage({
   onTabChange,
   openTaskId,
   onOpenedTask,
+  onSubPage,
   searchQuery = "",
   onSearchQuery,
   searchOpen = false,
@@ -75,6 +76,8 @@ export default function TasksPage({
 }: {
   activeTab: string;
   onTabChange: (t: string) => void;
+  /** 進入清單頁（專案、智慧清單、標籤）時通知外層收起底部導覽列 */
+  onSubPage?: (on: boolean) => void;
   /** 標題列的搜尋（分享鍵左邊的放大鏡），只在「清單」分頁 */
   searchQuery?: string;
   onSearchQuery?: (q: string) => void;
@@ -92,6 +95,11 @@ export default function TasksPage({
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [route]);
+  const listPage = activeTab === "清單" && (route.kind === "project" || route.kind === "smart" || route.kind === "tag");
+  useEffect(() => {
+    onSubPage?.(listPage);
+  }, [listPage, onSubPage]);
+  useEffect(() => () => onSubPage?.(false), [onSubPage]);
 
   useEffect(() => {
     if (openTaskId && pm.data) {

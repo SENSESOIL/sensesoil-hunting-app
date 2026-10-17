@@ -821,6 +821,8 @@ export default function HuntingManagementPage() {
   const [overscrollY, setOverscrollY] = useState(0);
 
   const [showNav, setShowNav] = useState(true);
+  // 任務追蹤點進專案（清單頁）時收起底部導覽列，返回首頁才出現
+  const [taskSubPage, setTaskSubPage] = useState(false);
   const lastScrollY = useRef(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showManual, setShowManual] = useState(false);
@@ -1655,6 +1657,8 @@ export default function HuntingManagementPage() {
                 })()}
             </div>
             <div className="flex items-center gap-1">
+              {/* 任務追蹤的清單頁把「⋯」選單放在這裡（Reminders.tsx 用 portal 放進來） */}
+              {activeNav === "tasks" && <div id="pm-header-slot" className="flex items-center" />}
               {activeNav === "hunting_tasks" && activeSubTab === "每週任務" && (
                 <button
                   onClick={() => setShowManual(!showManual)}
@@ -1854,6 +1858,7 @@ export default function HuntingManagementPage() {
               onTabChange={setScheduleTab}
               openTaskId={openTaskId}
               onOpenedTask={clearOpenTask}
+              onSubPage={setTaskSubPage}
               searchQuery={teamQuery}
               onSearchQuery={setTeamQuery}
               searchOpen={teamSearchOpen}
@@ -1870,7 +1875,7 @@ export default function HuntingManagementPage() {
 
       {/* Mobile Floating Bottom Navigation */}
       <div
-        className={`md:hidden fixed bottom-6 left-0 right-0 z-50 flex items-center justify-center gap-4 pointer-events-none transition-transform duration-300 ${showNav ? "translate-y-0" : "translate-y-[150%]"}`}
+        className={`md:hidden fixed bottom-6 left-0 right-0 z-50 flex items-center justify-center gap-4 pointer-events-none transition-transform duration-300 ${showNav ? "translate-y-0" : "translate-y-[150%]"} ${activeNav === "tasks" && taskSubPage ? "hidden" : ""}`}
       >
         {/* Navigation Pill */}
         <div className="bg-white/90 backdrop-blur-xl border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.12)] rounded-full p-1.5 flex items-center gap-1 pointer-events-auto">
