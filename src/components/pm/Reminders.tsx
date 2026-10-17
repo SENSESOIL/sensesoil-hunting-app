@@ -1,0 +1,1182 @@
+"use client";
+
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { addDays, toDay } from "@/lib/project-ops";
+import { newTaskId, personColor, type Task } from "@/lib/pm/model";
+import { metaChips, tagKeys } from "@/lib/pm/tags";
+import { Icon } from "./ui";
+import { Avatar, CheckCircle, dueLabel, ORANGE, RED } from "./kit";
+import { Sheet, toast } from "./Sheet";
+import { ProjectPicker } from "./TaskSheet";
+import { TaskGantt } from "./TaskGantt";
+import { TaskBoard } from "./TaskBoard";
+import { TagSheet } from "./TagSheet";
+import { isLate, personLabel, type Pm } from "./usePm";
+import { treeOrder, type TreeRow } from "./tree";
+
+export { treeOrder };
+
+/* ══════════════════════════════════════════════════════════
+   任務追蹤（Apple 提醒事項風格）
+   - 首頁：智慧清單（今天、已排程、全部、重要…）＋ 專案清單 ＋ 標籤
+   - 專案頁：直接在清單裡打字新增，Enter 接著下一個；點名稱就能改
+   - 右滑：縮排／取消縮排（子任務只有一層，順序與甘特圖同步）
+   - 左滑：重要、刪除；長按（或右鍵）：完整選單（期限、標籤、指派、移到專案…）
+   ══════════════════════════════════════════════════════════ */
+
+export type SmartId = "today" | "scheduled" | "all" | "flagged" | "mine" | "done";
+export type ListRoute =
+  | { kind: "home" }
+  | { kind: "project"; code: string }
+  | { kind: "smart"; id: SmartId }
+  | { kind: "tag"; tag: string }
+  | { kind: "calendar" }
+  | { kind: "team" };
+
+export const SMART: Record<SmartId, { label: string; icon: string; color: string }> = {
+  today: { label: "今天", icon: "today", color: "#2F7FD8" },
+  scheduled: { label: "已排程", icon: "calendar_month", color: "#E5484D" },
+  all: { label: "全部", icon: "inbox", color: "#3F3F46" },
+  flagged: { label: "重要", icon: "flag", color: "#F39C12" },
+  mine: { label: "指派給我", icon: "person", color: "#7C3AED" },
+  done: { label: "已完成", icon: "check", color: "#8E8E93" },
+};
+
+export function smartTasks(pm: Pm, id: SmartId): Task[] {
+  const { today } = pm;
+  const open = pm.tasks.filter((t) => t.status !== "done");
+  switch (id) {
+    case "today":
+      return open.filter((t) => (t.due && t.due <= today) || (t.start && t.start <= today && (!t.due || t.due >= today)));
+    case "scheduled":
+      return open.filter((t) => t.due && t.due > today);
+    case "flagged":
+      return open.filter((t) => t.flagged);
+    case "mine":
+      return open.filter((t) => t.assigneeEmail === pm.me?.email);
+    case "done":
+      return pm.tasks.filter((t) => t.status === "done" && (t.doneAt ?? "") >= addDays(today, -30));
+    default:
+      return open;
+  }
+}
+
+const canEditAll = (pm: Pm, t: Task) => pm.isManager || t.createdBy === pm.me?.email;
+const canToggle = (pm: Pm, t: Task) => pm.isManager || t.assigneeEmail === pm.me?.email || t.createdBy === pm.me?.email;
+
+/* ══════════════════════════════════════════════════════════
+   首頁
+   ══════════════════════════════════════════════════════════ */
+
+export function RemindersHome({ pm, go, onOpen }: { pm: Pm; go: (r: ListRoute) => void; onOpen: (t: Task) => void }) {
+  const [q, setQ] = useState("");
+  const [allProjects, setAllProjects] = useState(false);
+  const smartIds: SmartId[] = pm.isManager ? ["today", "scheduled", "all", "flagged", "mine", "done"] : ["today", "scheduled", "all", "flagged", "done"];
+
+  const projects = useMemo(() => {
+    const active = (p: (typeof pm.projects)[number]) => p.tasks.length > 0 || (p.stage && ["簽約", "施工中", "驗收"].includes(p.stage));
+    return pm.projects
+      .filter((p) => !p.archived && (pm.isManager ? true : p.tasks.length > 0))
+      .sort((a, b) => Number(!!active(b)) - Number(!!active(a)) || b.openCount - a.openCount || b.code.localeCompare(a.code))
+      .map((p) => ({ p, active: !!active(p) }));
+  }, [pm]);
+  const shownProjects = allProjects ? projects : projects.filter((x) => x.active).slice(0, 12);
+  const hiddenCount = projects.length - shownProjects.length;
+
+  const tags = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of pm.tasks) if (t.status !== "done") for (const k of tagKeys(t.meta)) m.set(k, (m.get(k) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [pm.tasks]);
+
+  const search = q.trim().toLowerCase();
+  const results = useMemo(
+    () =>
+      search
+        ? pm.tasks.filter(
+            (t) =>
+              t.title.toLowerCase().includes(search) ||
+              (t.note ?? "").toLowerCase().includes(search) ||
+              tagKeys(t.meta).some((k) => k.toLowerCase().includes(search))
+          )
+        : [],
+    [pm.tasks, search]
+  );
+
+  return (
+    <div className="flex flex-col gap-6 pt-1">
+      <label className="relative block">
+        <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[19px] text-[#8E8E93]" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="搜尋任務、標籤"
+          className="w-full h-10 rounded-[12px] bg-[#E9E9EC] pl-10 pr-9 text-[16px] text-[#18181B] outline-none placeholder:text-[#8E8E93]"
+        />
+        {q && (
+          <button type="button" onClick={() => setQ("")} aria-label="清除搜尋" className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-[#8E8E93]">
+            <Icon name="cancel" fill={1} className="text-[18px]" />
+          </button>
+        )}
+      </label>
+
+      {search ? (
+        results.length ? (
+          <ReminderTasks pm={pm} tasks={results} grouped showDone onOpen={onOpen} />
+        ) : (
+          <p className="text-center text-[15px] text-[#8E8E93] py-10">找不到「{q}」</p>
+        )
+      ) : (
+        <>
+          {/* 智慧清單 */}
+          <div className="grid grid-cols-2 gap-3">
+            {smartIds.map((id) => {
+              const s = SMART[id];
+              const n = smartTasks(pm, id).length;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => go({ kind: "smart", id })}
+                  className="bg-white rounded-[16px] shadow-card p-3 pb-2.5 text-left active:scale-[0.98] transition-transform"
+                >
+                  <span className="flex items-start justify-between">
+                    <span className="w-9 h-9 rounded-full flex items-center justify-center text-white" style={{ background: s.color }}>
+                      <Icon name={s.icon} weight={500} fill={id === "flagged" ? 1 : 0} className="text-[20px]" />
+                    </span>
+                    {id !== "done" && <span className="text-[26px] leading-none font-bold tabular-nums text-[#18181B]">{n}</span>}
+                  </span>
+                  <span className="block mt-2 text-[15px] font-semibold text-[#8E8E93]">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 其他檢視 */}
+          <section>
+            <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
+              <ListRow icon="calendar_view_month" color="#2E9E6B" label="行事曆" hint="週／月、公司目標" onClick={() => go({ kind: "calendar" })} />
+              {pm.isManager && <ListRow icon="groups" color="#0891B2" label="團隊" hint="每個人手上的任務" onClick={() => go({ kind: "team" })} />}
+            </div>
+          </section>
+
+          {/* 專案 */}
+          <section>
+            <h2 className="px-1 pb-2 text-[22px] font-bold tracking-tight text-[#18181B]">專案</h2>
+            {shownProjects.length ? (
+              <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
+                {shownProjects.map(({ p }) => (
+                  <ListRow key={p.code} icon="format_list_bulleted" color={personColor(p.code)} label={p.name} hint={p.code} count={p.openCount} onClick={() => go({ kind: "project", code: p.code })} />
+                ))}
+                {(hiddenCount > 0 || allProjects) && (
+                  <button type="button" onClick={() => setAllProjects((v) => !v)} className="w-full h-11 text-[15px] text-[var(--accent)] font-medium">
+                    {allProjects ? "只顯示進行中的專案" : `顯示全部專案（另 ${hiddenCount} 個）`}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="px-1 text-[14px] text-[#8E8E93]">還沒有專案。</p>
+            )}
+          </section>
+
+          {/* 標籤 */}
+          {tags.length > 0 && (
+            <section>
+              <h2 className="px-1 pb-2 text-[22px] font-bold tracking-tight text-[#18181B]">標籤</h2>
+              <div className="bg-white rounded-[16px] shadow-card p-3 flex flex-wrap gap-2">
+                {tags.map(([k, n]) => (
+                  <button key={k} type="button" onClick={() => go({ kind: "tag", tag: k })} className="h-9 px-3.5 rounded-full bg-[#F2F2F4] text-[15px] text-[#3F3F46] active:bg-[#E4E4E7]">
+                    {k.startsWith("#") ? k : `#${k}`}
+                    <span className="ml-1.5 text-[12px] text-[#A1A1AA] tabular-nums">{n}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function ListRow({ icon, color, label, hint, count, onClick }: { icon: string; color: string; label: string; hint?: string; count?: number; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="w-full flex items-center gap-3 pl-3 pr-2.5 min-h-[54px] text-left active:bg-[#F4F4F5] group">
+      <span className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0" style={{ background: color }}>
+        <Icon name={icon} weight={500} className="text-[18px]" />
+      </span>
+      <span className="flex-1 min-w-0 self-stretch flex items-center gap-2 border-b border-[#F0F0F2] group-last:border-b-0 pr-1">
+        <span className="flex-1 min-w-0">
+          <span className="block text-[16px] text-[#18181B] truncate">{label}</span>
+          {hint && <span className="block text-[12px] text-[#A1A1AA] truncate -mt-0.5">{hint}</span>}
+        </span>
+        {count !== undefined && <span className="text-[16px] text-[#8E8E93] tabular-nums">{count}</span>}
+        <Icon name="chevron_right" className="text-[20px] text-[#C7C7CC]" />
+      </span>
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   清單頁（專案、智慧清單、標籤）
+   ══════════════════════════════════════════════════════════ */
+
+type PageView = "list" | "board" | "gantt";
+
+function useStoredView(): [PageView, (v: PageView) => void] {
+  const [v, setV] = useState<PageView>("list");
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem("pm:my:view");
+      if (s === "list" || s === "board" || s === "gantt") setV(s);
+    } catch {
+      /* 讀不到就用清單 */
+    }
+  }, []);
+  return [
+    v,
+    (n) => {
+      setV(n);
+      try {
+        localStorage.setItem("pm:my:view", n);
+      } catch {
+        /* 忽略 */
+      }
+    },
+  ];
+}
+
+export function ReminderPage({
+  pm,
+  title,
+  color,
+  subtitle,
+  tasks,
+  code,
+  grouped,
+  onBack,
+  onOpen,
+  onAddFull,
+  showDoneDefault,
+}: {
+  pm: Pm;
+  title: string;
+  color: string;
+  subtitle?: string;
+  tasks: Task[];
+  /** 專案頁：可以直接打字新增、縮排 */
+  code?: string;
+  /** 跨專案（智慧清單、標籤）：依專案分組 */
+  grouped?: boolean;
+  onBack: () => void;
+  onOpen: (t: Task) => void;
+  /** 跨專案頁按「＋」：開完整表單 */
+  onAddFull?: () => void;
+  /** 一進來就顯示已完成（「已完成」清單） */
+  showDoneDefault?: boolean;
+}) {
+  const [showDone, setShowDone] = useState(!!showDoneDefault);
+  const [view, setView] = useStoredView();
+  const [menu, setMenu] = useState(false);
+  const [addSignal, setAddSignal] = useState(0);
+  const pageView: PageView = code ? view : "list";
+  const doneCount = tasks.filter((t) => t.status === "done").length;
+  const canAdd = !!code || !!onAddFull;
+
+  return (
+    <div className="flex flex-col gap-3 pb-24">
+      <div className="flex items-center justify-between pt-1">
+        <button type="button" onClick={onBack} aria-label="返回" className="w-11 h-11 rounded-full bg-white shadow-card flex items-center justify-center active:scale-95 transition-transform">
+          <Icon name="chevron_left" weight={500} className="text-[26px] text-[#18181B]" />
+        </button>
+        <div className="relative">
+          <button type="button" onClick={() => setMenu((v) => !v)} aria-label="更多" className="w-11 h-11 rounded-full bg-white shadow-card flex items-center justify-center active:scale-95 transition-transform">
+            <Icon name="more_horiz" weight={500} className="text-[24px] text-[#18181B]" />
+          </button>
+          {menu && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
+              <div className="absolute right-0 top-12 z-40 w-56 rounded-[14px] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] overflow-hidden py-1">
+                <MenuItem
+                  icon={showDone ? "visibility_off" : "visibility"}
+                  label={showDone ? "隱藏已完成" : `顯示已完成${doneCount ? `（${doneCount}）` : ""}`}
+                  onClick={() => {
+                    setShowDone((v) => !v);
+                    setMenu(false);
+                  }}
+                />
+                {code && (
+                  <>
+                    <div className="h-px bg-[#F0F0F2] my-1" />
+                    {(
+                      [
+                        ["list", "checklist", "清單"],
+                        ["board", "view_kanban", "看板"],
+                        ["gantt", "view_timeline", "甘特圖"],
+                      ] as [PageView, string, string][]
+                    ).map(([v, icon, label]) => (
+                      <MenuItem
+                        key={v}
+                        icon={icon}
+                        label={label}
+                        checked={view === v}
+                        onClick={() => {
+                          setView(v);
+                          setMenu(false);
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="px-1">
+        <h1 className="text-[32px] leading-[38px] font-bold tracking-tight" style={{ color }}>
+          {title}
+        </h1>
+        {subtitle && <p className="text-[13px] text-[#8E8E93] mt-0.5">{subtitle}</p>}
+      </div>
+
+      {pageView === "list" && (
+        <ReminderTasks pm={pm} tasks={tasks} code={code} grouped={grouped} showDone={showDone} onOpen={onOpen} addSignal={addSignal} color={color} tapToAdd />
+      )}
+      {pageView === "board" && <TaskBoard pm={pm} tasks={tasks} onOpen={onOpen} onAdd={() => setAddSignal((n) => n + 1)} />}
+      {pageView === "gantt" && <TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} />}
+
+      {canAdd && (
+        <button
+          type="button"
+          onClick={() => {
+            if (code) {
+              if (pageView !== "list") setView("list");
+              setAddSignal((n) => n + 1);
+            } else onAddFull?.();
+          }}
+          aria-label="新增任務"
+          className="fixed z-40 right-5 bottom-[104px] md:bottom-8 md:right-10 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(243,156,18,0.4)] active:scale-95 transition-transform"
+          style={{ background: ORANGE }}
+        >
+          <Icon name="add" weight={500} className="text-[30px]" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function MenuItem({ icon, label, onClick, checked, danger, disabled }: { icon: string; label: string; onClick: () => void; checked?: boolean; danger?: boolean; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 h-11 text-left text-[16px] active:bg-[#F4F4F5] disabled:opacity-40 ${danger ? "text-[#E5484D]" : "text-[#18181B]"}`}
+    >
+      <span className="w-5 flex justify-center">{checked && <Icon name="check" weight={600} className="text-[18px]" />}</span>
+      <span className="flex-1">{label}</span>
+      <Icon name={icon} className="text-[20px] opacity-80" />
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   清單本體（專案頁、智慧清單、專案情報裡的任務分頁共用）
+   ══════════════════════════════════════════════════════════ */
+
+const LINGER_MS = 1200;
+
+interface Draft {
+  id: string;
+  parentId?: string;
+  /** 插在哪一列後面；沒有就加在最後 */
+  afterId?: string;
+}
+
+export function ReminderTasks({
+  pm,
+  tasks,
+  code,
+  grouped,
+  showDone,
+  onOpen,
+  addSignal,
+  color = ORANGE,
+  tapToAdd,
+  addRow,
+}: {
+  pm: Pm;
+  tasks: Task[];
+  code?: string;
+  grouped?: boolean;
+  showDone?: boolean;
+  onOpen: (t: Task) => void;
+  /** 數字一變就在最後新增一列（右下「＋」） */
+  addSignal?: number;
+  color?: string;
+  /** 點清單下方空白處新增 */
+  tapToAdd?: boolean;
+  /** 清單最後顯示「新增任務」列 */
+  addRow?: boolean;
+}) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [linger, setLinger] = useState<Set<string>>(new Set());
+  const [swiped, setSwiped] = useState<string | null>(null);
+  const [menu, setMenu] = useState<{ task: Task; rect: DOMRect; depth: 0 | 1 } | null>(null);
+  const [tagFor, setTagFor] = useState<string | null>(null);
+  const [moveFor, setMoveFor] = useState<Task | null>(null);
+  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  // 右下「＋」：在最後加一列
+  const lastSignal = useRef(addSignal ?? 0);
+  useEffect(() => {
+    if (addSignal === undefined || addSignal === lastSignal.current) return;
+    lastSignal.current = addSignal;
+    if (code) startDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addSignal]);
+
+  /** 這個專案全部的任務（含已完成），順序以這份為準 */
+  const projectAll = useMemo(() => (code ? pm.tasks.filter((t) => t.code === code) : []), [pm.tasks, code]);
+
+  const visible = useMemo(() => tasks.filter((t) => showDone || t.status !== "done" || linger.has(t.id)), [tasks, showDone, linger]);
+
+  const sections = useMemo(() => {
+    if (!grouped) return [{ code: code ?? "", rows: treeOrder(visible) }];
+    const by = new Map<string, Task[]>();
+    for (const t of visible) by.set(t.code, [...(by.get(t.code) ?? []), t]);
+    return [...by.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([c, list]) => ({ code: c, rows: treeOrder(list) }));
+  }, [visible, grouped, code]);
+
+  const toggleDone = (t: Task) => {
+    const done = t.status !== "done";
+    if (done && !showDone) {
+      setLinger((s) => new Set(s).add(t.id));
+      clearTimeout(timers.current.get(t.id));
+      timers.current.set(
+        t.id,
+        setTimeout(() => setLinger((s) => {
+          const n = new Set(s);
+          n.delete(t.id);
+          return n;
+        }), LINGER_MS)
+      );
+    }
+    pm.saveTask({ id: t.id, status: done ? "done" : "todo" });
+  };
+
+  /* ── 新增與編輯 ── */
+
+  const startDraft = (after?: Task) => {
+    if (!code) return;
+    setSwiped(null);
+    const parentId = after ? after.parentId ?? undefined : undefined;
+    setDraft({ id: newTaskId(), parentId, afterId: after?.id });
+    setEditing(null);
+  };
+
+  /** 依顯示順序算出整個專案的新順序（新任務插在指定位置） */
+  const orderWith = (newId: string, afterId?: string, parentId?: string): string[] => {
+    const rows = treeOrder(projectAll).map((r) => r.task.id);
+    if (!afterId) {
+      if (parentId) {
+        // 加在上層的最後一個子任務後面
+        const lastChild = treeOrder(projectAll).filter((r) => r.task.parentId === parentId).pop();
+        const anchor = lastChild?.task.id ?? parentId;
+        const i = rows.indexOf(anchor);
+        rows.splice(i + 1, 0, newId);
+        return rows;
+      }
+      return [...rows, newId];
+    }
+    const anchor = projectAll.find((t) => t.id === afterId);
+    let i = rows.indexOf(afterId);
+    // 上層任務後面新增：接在它的子任務之後
+    if (anchor && !anchor.parentId) {
+      while (i + 1 < rows.length && projectAll.find((t) => t.id === rows[i + 1])?.parentId === afterId) i++;
+    }
+    rows.splice(i + 1, 0, newId);
+    return rows;
+  };
+
+  const commitDraft = (title: string, next: boolean) => {
+    const d = draft;
+    if (!d || !code) return;
+    const text = title.trim();
+    if (!text) {
+      setDraft(null);
+      return;
+    }
+    const order = orderWith(d.id, d.afterId, d.parentId);
+    const p = pm.saveTask({ id: d.id, code, title: text, ...(d.parentId ? { parentId: d.parentId } : {}) });
+    pm.reorderTasks(order, { localOnly: true });
+    p.then((saved) => saved && pm.reorderTasks(order));
+    if (next) setDraft({ id: newTaskId(), parentId: d.parentId, afterId: d.id });
+    else setDraft(null);
+  };
+
+  const commitEdit = (t: Task, title: string, next: boolean) => {
+    const text = title.trim();
+    setEditing(null);
+    if (text && text !== t.title) pm.saveTask({ id: t.id, title: text });
+    if (next && code) startDraft(t);
+  };
+
+  /* ── 縮排 ── */
+
+  const indent = (t: Task) => {
+    if (!code) return;
+    const rows = treeOrder(projectAll);
+    const i = rows.findIndex((r) => r.task.id === t.id);
+    const prevTop = rows.slice(0, i).reverse().find((r) => r.depth === 0 && r.task.id !== t.id);
+    if (!prevTop) return toast("上面沒有任務可以歸入");
+    if (rows[i]?.childCount) return toast("有子任務的項目不能再縮排");
+    pm.saveTask({ id: t.id, parentId: prevTop.task.id });
+    setCollapsed((s) => {
+      const n = new Set(s);
+      n.delete(prevTop.task.id);
+      return n;
+    });
+  };
+
+  const outdent = (t: Task) => {
+    if (!code || !t.parentId) return;
+    const parent = t.parentId;
+    // 取消縮排後放在原上層的最後一個子任務後面（跟提醒事項一樣）
+    const rows = treeOrder(projectAll).map((r) => r.task);
+    const without = rows.filter((x) => x.id !== t.id);
+    let at = without.findIndex((x) => x.id === parent);
+    while (at + 1 < without.length && without[at + 1].parentId === parent) at++;
+    without.splice(at + 1, 0, t);
+    const order = without.map((x) => x.id);
+    const p = pm.saveTask({ id: t.id, parentId: null });
+    pm.reorderTasks(order, { localOnly: true });
+    p.then((saved) => saved && pm.reorderTasks(order));
+  };
+
+  const remove = async (t: Task) => {
+    setSwiped(null);
+    const prev = await pm.deleteTask(t.id);
+    if (prev && typeof prev === "object") {
+      toast(`已刪除「${prev.title}」`, {
+        action: {
+          label: "復原",
+          run: () => {
+            const { id, code: c, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq, goalId, meta } = prev;
+            pm.saveTask({ id, code: c, title, kind, status, progress, flagged, assigneeEmail, assigneeName, start, due, note, seq, goalId, meta });
+          },
+        },
+      });
+    }
+  };
+
+  const flag = (t: Task) => {
+    setSwiped(null);
+    pm.saveTask({ id: t.id, flagged: !t.flagged });
+  };
+
+  /* ── 畫面 ── */
+
+  const tapEmpty = tapToAdd && !!code;
+
+  /** 草稿要插在第幾列（只在單一專案的清單裡） */
+  const draftIndex = (rows: TreeRow[]): number => {
+    if (!draft) return -1;
+    const lastChildIdx = (pid: string) => {
+      let i = rows.findIndex((r) => r.task.id === pid);
+      while (i + 1 < rows.length && rows[i + 1].task.parentId === pid) i++;
+      return i;
+    };
+    if (!draft.afterId) return draft.parentId ? lastChildIdx(draft.parentId) + 1 : rows.length;
+    const i = rows.findIndex((r) => r.task.id === draft.afterId);
+    if (i < 0) return rows.length;
+    const anchor = rows[i];
+    if (anchor.depth === 0 && !draft.parentId) return lastChildIdx(anchor.task.id) + 1;
+    return i + 1;
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      {sections.map((sec) => {
+        const project = pm.projectBy.get(sec.code);
+        const rows = sec.rows.filter((r) => !(r.depth === 1 && r.task.parentId && collapsed.has(r.task.parentId)));
+        if (grouped && !rows.length) return null;
+        const at = !grouped ? draftIndex(rows) : -1;
+        const items: React.ReactNode[] = rows.map((r) => (
+          <TaskRow
+            key={r.task.id}
+            pm={pm}
+            task={r.task}
+            depth={r.depth}
+            childCount={r.childCount}
+            collapsed={collapsed.has(r.task.id)}
+            onCollapse={() =>
+              setCollapsed((s0) => {
+                const n = new Set(s0);
+                if (n.has(r.task.id)) n.delete(r.task.id);
+                else n.add(r.task.id);
+                return n;
+              })
+            }
+            color={color}
+            showProject={false}
+            editing={editing === r.task.id}
+            onStartEdit={() => {
+              if (!canEditAll(pm, r.task)) return onOpen(r.task);
+              setDraft(null);
+              setSwiped(null);
+              setEditing(r.task.id);
+            }}
+            onCommitEdit={(title, next) => commitEdit(r.task, title, next)}
+            onToggle={() => toggleDone(r.task)}
+            onInfo={() => onOpen(r.task)}
+            swiped={swiped === r.task.id}
+            onSwipeOpen={(open) => setSwiped(open ? r.task.id : null)}
+            onIndent={code && canEditAll(pm, r.task) ? () => (r.depth ? outdent(r.task) : indent(r.task)) : undefined}
+            onFlag={canEditAll(pm, r.task) ? () => flag(r.task) : undefined}
+            onDelete={canEditAll(pm, r.task) ? () => remove(r.task) : undefined}
+            onLongPress={(rect) => setMenu({ task: r.task, rect, depth: r.depth })}
+            linger={linger.has(r.task.id)}
+          />
+        ));
+        if (draft && at >= 0) items.splice(at, 0, <DraftRow key={draft.id} depth={draft.parentId ? 1 : 0} color={color} onCommit={commitDraft} />);
+        return (
+          <section key={sec.code || "list"}>
+            {grouped && (
+              <h3 className="px-1 pb-1.5 text-[17px] font-bold" style={{ color: personColor(sec.code) }}>
+                {project?.name ?? sec.code}
+              </h3>
+            )}
+            <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
+              {items}
+              {addRow && code && !draft && (
+                <button type="button" onClick={() => startDraft()} className="w-full flex items-center gap-3 pl-[14px] pr-3 h-12 text-left text-[15px] text-[#8E8E93] active:bg-[#FAFAFA]">
+                  <Icon name="add_circle" className="text-[24px]" style={{ color }} />
+                  新增任務
+                </button>
+              )}
+              {!rows.length && !draft && !addRow && (
+                <p className="px-4 py-8 text-center text-[14px] text-[#A1A1AA]">{code ? "還沒有任務。點下方空白處或「＋」開始輸入。" : "沒有任務"}</p>
+              )}
+            </div>
+          </section>
+        );
+      })}
+      {tapEmpty && <button type="button" aria-label="新增任務" onClick={() => !draft && startDraft()} className="min-h-[120px] w-full cursor-text" />}
+
+      {menu && (
+        <RowMenu
+          pm={pm}
+          task={menu.task}
+          rect={menu.rect}
+          depth={menu.depth}
+          inProject={!!code}
+          onClose={() => setMenu(null)}
+          onOpen={() => onOpen(menu.task)}
+          onToggle={() => toggleDone(menu.task)}
+          onFlag={() => flag(menu.task)}
+          onDelete={() => remove(menu.task)}
+          onIndent={() => (menu.depth ? outdent(menu.task) : indent(menu.task))}
+          onTags={() => setTagFor(menu.task.id)}
+          onMove={() => setMoveFor(menu.task)}
+        />
+      )}
+      <TagSheet pm={pm} taskId={tagFor} open={!!tagFor} onClose={() => setTagFor(null)} />
+      <Sheet open={!!moveFor} title="移到專案" subtitle={moveFor?.title} onClose={() => setMoveFor(null)}>
+        {moveFor && (
+          <div className="pb-4">
+            <ProjectPicker
+              pm={pm}
+              value={moveFor.code}
+              onPick={(c) => {
+                const t = moveFor;
+                setMoveFor(null);
+                if (c === t.code) return;
+                const kids = pm.tasks.filter((x) => x.parentId === t.id);
+                pm.saveTask({ id: t.id, code: c, parentId: null });
+                for (const k of kids) pm.saveTask({ id: k.id, code: c });
+                toast(`已移到「${pm.projectBy.get(c)?.name ?? c}」${kids.length ? `（含 ${kids.length} 個子任務）` : ""}`);
+              }}
+            />
+          </div>
+        )}
+      </Sheet>
+    </div>
+  );
+}
+
+/* ── 一列任務 ─────────────────────────────────────────── */
+
+const SWIPE_OPEN = 144;
+const INDENT_AT = 64;
+
+function TaskRow({
+  pm,
+  task,
+  depth,
+  childCount,
+  collapsed,
+  onCollapse,
+  color,
+  editing,
+  onStartEdit,
+  onCommitEdit,
+  onToggle,
+  onInfo,
+  swiped,
+  onSwipeOpen,
+  onIndent,
+  onFlag,
+  onDelete,
+  onLongPress,
+  linger,
+}: {
+  pm: Pm;
+  task: Task;
+  depth: 0 | 1;
+  childCount: number;
+  collapsed: boolean;
+  onCollapse: () => void;
+  color: string;
+  showProject: boolean;
+  editing: boolean;
+  onStartEdit: () => void;
+  onCommitEdit: (title: string, next: boolean) => void;
+  onToggle: () => void;
+  onInfo: () => void;
+  swiped: boolean;
+  onSwipeOpen: (open: boolean) => void;
+  onIndent?: () => void;
+  onFlag?: () => void;
+  onDelete?: () => void;
+  onLongPress: (rect: DOMRect) => void;
+  linger: boolean;
+}) {
+  const { today } = pm;
+  const done = task.status === "done";
+  const due = dueLabel(task.due, today, done);
+  const chips = metaChips(task.meta);
+  const late = isLate(task, today);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const g = useRef<{ x: number; y: number; mode: "?" | "h" | "v"; base: number; timer?: ReturnType<typeof setTimeout>; long: boolean } | null>(null);
+  const suppressClick = useRef(false);
+
+  const offset = dragging ? dx : swiped ? -SWIPE_OPEN : 0;
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (editing || (e.pointerType === "mouse" && e.button !== 0)) return;
+    if ((e.target as HTMLElement).closest("[data-no-gesture]")) return;
+    const base = swiped ? -SWIPE_OPEN : 0;
+    g.current = { x: e.clientX, y: e.clientY, mode: "?", base, long: false };
+    g.current.timer = setTimeout(() => {
+      if (!g.current || g.current.mode !== "?") return;
+      g.current.long = true;
+      suppressClick.current = true;
+      try {
+        navigator.vibrate?.(10);
+      } catch {
+        /* iPhone 不支援震動 */
+      }
+      if (rowRef.current) onLongPress(rowRef.current.getBoundingClientRect());
+    }, 450);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const s = g.current;
+    if (!s || s.long) return;
+    const mx = e.clientX - s.x;
+    const my = e.clientY - s.y;
+    if (s.mode === "?") {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      clearTimeout(s.timer);
+      s.mode = Math.abs(mx) > Math.abs(my) ? "h" : "v";
+      if (s.mode === "h") {
+        setDragging(true);
+        try {
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        } catch {
+          /* 忽略 */
+        }
+      }
+    }
+    if (s.mode !== "h") return;
+    let next = s.base + mx;
+    if (next > 0 && !onIndent) next = 0;
+    if (next < 0 && !onFlag && !onDelete) next = 0;
+    // 超過範圍時有阻力
+    if (next > INDENT_AT * 1.6) next = INDENT_AT * 1.6 + (next - INDENT_AT * 1.6) * 0.25;
+    if (next < -SWIPE_OPEN) next = -SWIPE_OPEN + (next + SWIPE_OPEN) * 0.25;
+    setDx(next);
+  };
+  const onPointerUp = () => {
+    const s = g.current;
+    g.current = null;
+    if (!s) return;
+    clearTimeout(s.timer);
+    if (s.mode !== "h") return;
+    suppressClick.current = true;
+    setTimeout(() => (suppressClick.current = false), 60);
+    setDragging(false);
+    if (dx >= INDENT_AT && onIndent) {
+      onSwipeOpen(false);
+      onIndent();
+    } else if (dx <= -60) onSwipeOpen(true);
+    else onSwipeOpen(false);
+    setDx(0);
+  };
+  const onPointerCancel = () => {
+    const s = g.current;
+    g.current = null;
+    if (s) clearTimeout(s.timer);
+    setDragging(false);
+    setDx(0);
+  };
+
+  const guardClick = (fn: () => void) => (e: React.MouseEvent) => {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      e.preventDefault();
+      return;
+    }
+    if (swiped) {
+      onSwipeOpen(false);
+      return;
+    }
+    fn();
+  };
+
+  const showIndent = offset > 0;
+  const indentReady = offset >= INDENT_AT;
+
+  return (
+    <div ref={rowRef} className={`relative overflow-hidden select-none transition-opacity ${linger ? "opacity-60" : ""}`} style={{ WebkitTouchCallout: "none" }}>
+      {/* 右滑：縮排／取消縮排 */}
+      {showIndent && (
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3" style={{ width: Math.max(offset, 0) }}>
+          <span
+            className="h-9 px-3.5 rounded-full flex items-center gap-1.5 text-[14px] font-semibold text-white whitespace-nowrap transition-colors"
+            style={{ background: indentReady ? "#8B6A52" : "#B79F8C" }}
+          >
+            <Icon name={depth ? "format_indent_decrease" : "format_indent_increase"} className="text-[18px]" />
+            {depth ? "取消縮排" : "縮排"}
+          </span>
+        </div>
+      )}
+      {/* 左滑：重要、刪除 */}
+      {offset < 0 && (
+        <div className="absolute inset-y-0 right-0 flex" style={{ width: SWIPE_OPEN }}>
+          {onFlag && (
+            <button type="button" data-no-gesture onClick={onFlag} className="flex-1 flex flex-col items-center justify-center gap-0.5 text-white text-[12px] font-semibold" style={{ background: ORANGE }}>
+              <Icon name="flag" fill={task.flagged ? 0 : 1} className="text-[20px]" />
+              {task.flagged ? "取消重要" : "重要"}
+            </button>
+          )}
+          {onDelete && (
+            <button type="button" data-no-gesture onClick={onDelete} className="flex-1 flex flex-col items-center justify-center gap-0.5 text-white text-[12px] font-semibold" style={{ background: RED }}>
+              <Icon name="delete" className="text-[20px]" />
+              刪除
+            </button>
+          )}
+        </div>
+      )}
+
+      <div
+        className="relative bg-white flex items-start gap-3 pr-3"
+        style={{
+          paddingLeft: depth ? 48 : 14,
+          transform: offset ? `translateX(${offset}px)` : undefined,
+          transition: dragging ? "none" : "transform 0.25s cubic-bezier(0.16,1,0.3,1)",
+          touchAction: "pan-y",
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          if (rowRef.current) onLongPress(rowRef.current.getBoundingClientRect());
+        }}
+      >
+        <span className="pt-[11px]" data-no-gesture>
+          <CheckCircle checked={done} onToggle={onToggle} color={color} disabled={!canToggle(pm, task)} label={done ? "標記為未完成" : "標記為完成"} />
+        </span>
+        <div className="flex-1 min-w-0 py-[11px] border-b border-[#F0F0F2] flex items-start gap-2">
+          <div className="flex-1 min-w-0" onClick={guardClick(onStartEdit)}>
+            {editing ? (
+              <InlineInput initial={task.title} onCommit={onCommitEdit} />
+            ) : (
+              <p className={`text-[16px] leading-[22px] break-words ${done ? "text-[#A1A1AA]" : "text-[#18181B]"}`}>{task.title}</p>
+            )}
+            {(due || task.assigneeEmail || chips.length > 0 || (task.note && !editing)) && (
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-[18px]">
+                {due && <span style={{ color: late ? RED : due.color }}>{due.text}</span>}
+                {task.assigneeEmail && task.assigneeEmail !== pm.me?.email && (
+                  <span className="inline-flex items-center gap-1 text-[#8E8E93]">
+                    <Avatar name={task.assigneeName} email={task.assigneeEmail} size={16} />
+                    {personLabel(pm, task.assigneeEmail, task.assigneeName)}
+                  </span>
+                )}
+                {chips.slice(0, 4).map((c) => (
+                  <span key={c.text} className="h-[20px] px-1.5 rounded-[6px] text-[12px] leading-[20px] font-medium" style={{ color: c.color, background: c.bg }}>
+                    {c.text}
+                  </span>
+                ))}
+                {chips.length > 4 && <span className="text-[12px] text-[#A1A1AA]">+{chips.length - 4}</span>}
+              </div>
+            )}
+            {task.note && !editing && <p className="mt-0.5 text-[13px] text-[#8E8E93] truncate">{task.note}</p>}
+          </div>
+          <span className="flex items-center gap-1 pt-0.5 shrink-0" data-no-gesture>
+            {editing && (
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onInfo} aria-label="詳細資料" className="w-7 h-7 flex items-center justify-center" style={{ color }}>
+                <Icon name="info" className="text-[22px]" />
+              </button>
+            )}
+            {task.flagged && !editing && <Icon name="flag" fill={1} className="text-[18px]" style={{ color: ORANGE }} />}
+            {childCount > 0 && (
+              <button type="button" onClick={onCollapse} aria-label={collapsed ? "展開子任務" : "收合子任務"} aria-expanded={!collapsed} className="w-7 h-7 flex items-center justify-center text-[#8E8E93]">
+                <Icon name="expand_more" weight={500} className={`text-[22px] transition-transform ${collapsed ? "-rotate-90" : ""}`} />
+              </button>
+            )}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 列內直接編輯名稱：Enter 存好並新增下一列，點別處就存 */
+function InlineInput({ initial, onCommit, placeholder }: { initial: string; onCommit: (v: string, next: boolean) => void; placeholder?: string }) {
+  const [v, setV] = useState(initial);
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const done = useRef(false);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.focus({ preventScroll: false });
+    el.setSelectionRange(el.value.length, el.value.length);
+  }, []);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "0px";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [v]);
+  const finish = (next: boolean) => {
+    if (done.current) return;
+    done.current = true;
+    onCommit(v, next);
+  };
+  return (
+    <textarea
+      ref={ref}
+      value={v}
+      rows={1}
+      maxLength={80}
+      enterKeyHint="next"
+      placeholder={placeholder}
+      onChange={(e) => setV(e.target.value.replace(/\n/g, ""))}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+          e.preventDefault();
+          finish(true);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          done.current = true;
+          onCommit(initial, false);
+        }
+      }}
+      onBlur={() => finish(false)}
+      className="block w-full resize-none bg-transparent outline-none text-[16px] leading-[22px] text-[#18181B] placeholder:text-[#C7C7CC] p-0 m-0"
+    />
+  );
+}
+
+function DraftRow({ depth, color, onCommit }: { depth: 0 | 1; color: string; onCommit: (title: string, next: boolean) => void }) {
+  return (
+    <div className="relative bg-white flex items-start gap-3 pr-3" style={{ paddingLeft: depth ? 48 : 14 }}>
+      <span className="pt-[11px]">
+        <span className="block w-6 h-6 rounded-full border-2" style={{ borderColor: `color-mix(in srgb, ${color} 45%, #D4D4D8)` }} />
+      </span>
+      <div className="flex-1 min-w-0 py-[11px] border-b border-[#F0F0F2]">
+        <InlineInput initial="" placeholder="新任務" onCommit={onCommit} />
+      </div>
+    </div>
+  );
+}
+
+/* ── 長按選單（像提醒事項） ─────────────────────────────── */
+
+type MenuPage = "main" | "due" | "assign";
+
+function RowMenu({
+  pm,
+  task,
+  rect,
+  depth,
+  inProject,
+  onClose,
+  onOpen,
+  onToggle,
+  onFlag,
+  onDelete,
+  onIndent,
+  onTags,
+  onMove,
+}: {
+  pm: Pm;
+  task: Task;
+  rect: DOMRect;
+  depth: 0 | 1;
+  inProject: boolean;
+  onClose: () => void;
+  onOpen: () => void;
+  onToggle: () => void;
+  onFlag: () => void;
+  onDelete: () => void;
+  onIndent: () => void;
+  onTags: () => void;
+  onMove: () => void;
+}) {
+  const [page, setPage] = useState<MenuPage>("main");
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    requestAnimationFrame(() => setShown(true));
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  if (typeof document === "undefined") return null;
+
+  const edit = canEditAll(pm, task);
+  const done = task.status === "done";
+  const run = (fn: () => void) => () => {
+    onClose();
+    fn();
+  };
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+  const MENU_H = page === "assign" ? 380 : 420;
+  // 預覽卡停在原位；下面放不下選單時整組往上移
+  const previewTop = Math.max(16, Math.min(rect.top, vh - MENU_H - 90));
+  const menuTop = previewTop + Math.min(rect.height, 90) + 10;
+  const left = Math.max(12, Math.min(rect.left + 8, vw - 292));
+  const today = pm.today;
+  const dow = toDay(today).getDay();
+  const dues: [string, string | undefined][] = [
+    ["今天", today],
+    ["明天", addDays(today, 1)],
+    ["這週末", addDays(today, (6 - dow + 7) % 7 || 7)],
+    ["下週一", addDays(today, ((1 - dow + 7) % 7) || 7)],
+    ["無期限", undefined],
+  ];
+
+  return createPortal(
+    <div className="fixed inset-0 z-[160] font-sans" role="dialog" aria-label="任務選單">
+      <div className={`absolute inset-0 bg-black/25 backdrop-blur-[2px] transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
+      {/* 預覽 */}
+      <div
+        className={`absolute bg-white rounded-[14px] shadow-[0_10px_30px_rgba(0,0,0,0.18)] px-4 py-3 flex items-center gap-3 transition-all duration-200 ${shown ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+        style={{ top: previewTop, left: 12, right: 12 }}
+      >
+        <span className="w-6 h-6 rounded-full border-2 border-[#D4D4D8] shrink-0" style={done ? { background: ORANGE, borderColor: ORANGE } : undefined} />
+        <span className={`flex-1 min-w-0 text-[16px] truncate ${done ? "text-[#A1A1AA]" : "text-[#18181B]"}`}>{task.title}</span>
+      </div>
+      {/* 選單 */}
+      <div
+        className={`absolute w-[280px] rounded-[16px] bg-[#F7F7F8]/95 shadow-[0_16px_50px_rgba(0,0,0,0.22)] overflow-hidden transition-all duration-200 origin-top-left ${shown ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
+        style={{ top: menuTop, left }}
+      >
+        {page === "main" && (
+          <>
+            <div className="grid grid-cols-3 border-b border-[#E4E4E7]">
+              <TopAction icon="info" label="詳細" onClick={run(onOpen)} />
+              <TopAction icon="flag" label={task.flagged ? "取消重要" : "重要"} onClick={run(onFlag)} disabled={!edit} fill={task.flagged} />
+              <TopAction icon="delete" label="刪除" onClick={run(onDelete)} disabled={!edit} danger />
+            </div>
+            <div className="py-1">
+              <MenuItem icon={done ? "radio_button_unchecked" : "check_circle"} label={done ? "標記為未完成" : "標記為完成"} onClick={run(onToggle)} disabled={!canToggle(pm, task)} />
+              <MenuItem icon="event" label="期限 ›" onClick={() => setPage("due")} disabled={!edit} />
+              <MenuItem icon="sell" label="標籤 ›" onClick={run(onTags)} disabled={!edit} />
+              {pm.isManager && <MenuItem icon="person" label="指派 ›" onClick={() => setPage("assign")} />}
+            </div>
+            <div className="h-px bg-[#E4E4E7]" />
+            <div className="py-1">
+              {inProject && <MenuItem icon={depth ? "format_indent_decrease" : "format_indent_increase"} label={depth ? "取消縮排" : "縮排"} onClick={run(onIndent)} disabled={!edit} />}
+              <MenuItem icon="drive_file_move" label="移到專案 ›" onClick={run(onMove)} disabled={!edit} />
+            </div>
+          </>
+        )}
+        {page === "due" && (
+          <div className="py-1">
+            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7]">
+              <Icon name="chevron_left" className="text-[22px]" />
+              期限
+            </button>
+            {dues.map(([label, v]) => (
+              <MenuItem
+                key={label}
+                icon={v ? "event" : "event_busy"}
+                label={label}
+                checked={task.due === v}
+                onClick={run(() => {
+                  // 有開始日、而且新期限早於開始日時，一起把開始日拿掉
+                  pm.saveTask({ id: task.id, due: v, ...(task.start && v && v < task.start ? { start: undefined } : {}) });
+                })}
+              />
+            ))}
+            <MenuItem icon="edit_calendar" label="自訂日期…" onClick={run(onOpen)} />
+          </div>
+        )}
+        {page === "assign" && (
+          <div className="py-1 max-h-[360px] overflow-y-auto">
+            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 bg-[#F7F7F8]">
+              <Icon name="chevron_left" className="text-[22px]" />
+              指派
+            </button>
+            {pm.people.map((p) => (
+              <button
+                key={p.email}
+                type="button"
+                onClick={run(() => {
+                  if (p.email === task.assigneeEmail) return;
+                  pm.saveTask({ id: task.id, assigneeEmail: p.email, assigneeName: p.name });
+                  if (p.email !== pm.me?.email) toast(`已指派給 ${p.name}，對方會收到通知`);
+                })}
+                className="w-full flex items-center gap-3 px-4 h-12 text-left active:bg-[#EDEDF0]"
+              >
+                <Avatar name={p.name} email={p.email} size={28} />
+                <span className="flex-1 text-[16px] text-[#18181B]">{p.email === pm.me?.email ? "我" : p.name}</span>
+                {task.assigneeEmail === p.email && <Icon name="check" weight={600} className="text-[18px] text-[var(--accent)]" />}
+              </button>
+            ))}
+            {task.assigneeEmail && <MenuItem icon="person_off" label="取消指派" onClick={run(() => pm.saveTask({ id: task.id, assigneeEmail: undefined }))} />}
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function TopAction({ icon, label, onClick, disabled, danger, fill }: { icon: string; label: string; onClick: () => void; disabled?: boolean; danger?: boolean; fill?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex flex-col items-center justify-center gap-1 h-[68px] text-[13px] active:bg-[#EDEDF0] disabled:opacity-35 ${danger ? "text-[#E5484D]" : "text-[#18181B]"}`}
+    >
+      <Icon name={icon} fill={fill ? 1 : 0} className="text-[24px]" />
+      {label}
+    </button>
+  );
+}
+

@@ -6,7 +6,7 @@ import { fmtDate, fmtMoney, STAGES, type Stage } from "@/lib/project-ops";
 import { personColor, type PmPhoto, type Task } from "@/lib/pm/model";
 import { HealthBadge, Icon, ProgressBar, SubScreen } from "./ui";
 import { Avatar, AvatarStack, Empty, Group, ORANGE, SegmentedIcons, Spinner } from "./kit";
-import { TaskList } from "./TaskList";
+import { ReminderTasks } from "./Reminders";
 import { TaskBoard } from "./TaskBoard";
 import { TaskGantt } from "./TaskGantt";
 import { TaskSheet } from "./TaskSheet";
@@ -217,17 +217,7 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
                   />
                 </div>
                 {view === "list" && (
-                  <TaskList
-                    pm={pm}
-                    tasks={shown.tasks}
-                    groupBy="manual"
-                    showAssignee
-                    showDone={showDone}
-                    onOpen={(t) => setSheet({ id: t.id })}
-                    quickAddCode={pm.isManager ? shown.code : undefined}
-                    onAdd={pm.isManager ? undefined : () => setSheet({ id: null, preset: { code: shown.code } })}
-                    emptyText="還沒有任務。輸入第一個工項，按 Enter 接著加下一個。"
-                  />
+                  <ReminderTasks pm={pm} tasks={shown.tasks} code={shown.code} showDone={showDone} onOpen={(t) => setSheet({ id: t.id })} addRow />
                 )}
                 {view === "board" && <TaskBoard pm={pm} tasks={shown.tasks} onOpen={(t) => setSheet({ id: t.id })} onAdd={() => setSheet({ id: null, preset: { code: shown.code } })} />}
                 {view === "gantt" && <TaskGantt pm={pm} tasks={shown.tasks.filter((t) => showDone || t.status !== "done")} onOpen={(t) => setSheet({ id: t.id })} />}

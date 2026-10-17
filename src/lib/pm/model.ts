@@ -5,6 +5,7 @@
  * 資料庫欄位是 snake_case，這裡轉成 camelCase；轉換只在這支檔案做。
  */
 
+import type { TaskMeta } from "./tags";
 import {
   weightedProgress,
   type OpsRecord,
@@ -62,6 +63,10 @@ export interface Task {
   doneBy?: string;
   /** 所屬的公司目標（pm_goals.id） */
   goalId?: string;
+  /** 上一層任務（子任務只有一層）；null＝送出「取消上層」 */
+  parentId?: string | null;
+  /** 標籤：工種、工項、工審…（見 tags.ts） */
+  meta?: TaskMeta;
   version: number;
   createdBy?: string;
   createdAt?: string;
@@ -180,6 +185,8 @@ export function rowToTask(r: Row): Task {
     doneAt: s(r.done_at),
     doneBy: s(r.done_by),
     goalId: s(r.goal_id),
+    parentId: s(r.parent_id),
+    meta: r.meta && typeof r.meta === "object" && !Array.isArray(r.meta) ? (r.meta as TaskMeta) : {},
     version: n(r.version) ?? 1,
     createdBy: s(r.created_by),
     createdAt: s(r.created_at),
@@ -260,6 +267,8 @@ export function taskPatchToRow(t: Partial<Task> & { id: string }): Row {
     ["note", "note"],
     ["seq", "sort_order"],
     ["goalId", "goal_id"],
+    ["parentId", "parent_id"],
+    ["meta", "meta"],
   ];
   for (const [k, col] of map) {
     if (k in t) out[col] = t[k] === undefined ? null : (t[k] as unknown);
@@ -450,9 +459,9 @@ const TRADE_FAMILIES: { color: string; trades: string[] }[] = [
   { color: "#EA580C", trades: ["室裝"] }, // 室內裝修：橘
   { color: "#92400E", trades: ["木作", "系統櫃", "輕隔間", "地板"] }, // 木作類：咖啡
   { color: "#0E7490", trades: ["泥作", "防水"] }, // 泥作防水：青
-  { color: "#BE185D", trades: ["漆料"] }, // 塗裝：桃紅
-  { color: "#475569", trades: ["鐵工", "鋁窗", "玻璃"] }, // 金屬門窗：鐵灰
-  { color: "#1D4ED8", trades: ["水電", "弱電", "冷氣", "燈具"] }, // 機電：藍
+  { color: "#BE185D", trades: ["漆料", "油漆"] }, // 塗裝：桃紅
+  { color: "#475569", trades: ["鐵工", "鐵件", "鋁窗", "玻璃"] }, // 金屬門窗：鐵灰
+  { color: "#1D4ED8", trades: ["水電", "弱電", "冷氣", "空調", "燈具"] }, // 機電：藍
   { color: "#7E22CE", trades: ["傢飾", "衛浴"] }, // 軟裝衛浴：紫
   { color: "#27272A", trades: ["鷹架", "打除", "清運", "搬運", "重機"] }, // 拆除運輸：炭黑
   { color: "#15803D", trades: ["景觀", "清潔"] }, // 環境：綠

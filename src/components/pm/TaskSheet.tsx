@@ -9,6 +9,8 @@ import { Icon } from "./ui";
 import { Avatar, dateShortcuts, GREEN, ORANGE, RED } from "./kit";
 import { isLate, personLabel, type Pm } from "./usePm";
 import { GoalPicker } from "./Goals";
+import { TagSheet } from "./TagSheet";
+import { metaChips } from "@/lib/pm/tags";
 
 /* ══════════════════════════════════════════════════════════
    任務細節（新增／編輯）
@@ -65,6 +67,7 @@ export function TaskSheet({
   const [d, setD] = useState<Draft>(initial);
   const [pickProject, setPickProject] = useState(false);
   const [pickGoal, setPickGoal] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [showStart, setShowStart] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
@@ -249,6 +252,24 @@ export function TaskSheet({
               }}
             />
           )}
+          {/* 標籤（既有任務才有；新任務存好後再加） */}
+          {task && canEditAll && (
+            <button type="button" onClick={() => setTagsOpen(true)} className="w-full flex items-center gap-3 px-4 min-h-[52px] py-2 text-left">
+              <RowIcon icon="sell" color="#2F7FD8" />
+              <span className="flex-1 min-w-0 flex flex-wrap gap-1.5">
+                {metaChips(task.meta).length ? (
+                  metaChips(task.meta).map((c) => (
+                    <span key={c.text} className="h-[22px] px-2 rounded-[6px] text-[12.5px] leading-[22px] font-medium" style={{ color: c.color, background: c.bg }}>
+                      {c.text}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[15px] text-[#71717A]">標籤（工種、工項、工審、工料…）</span>
+                )}
+              </span>
+              <Icon name="chevron_right" className="text-[20px] text-[#C7C7CC]" />
+            </button>
+          )}
           {/* 所屬的公司目標（有目標時才出現） */}
           {pm.goalsReady && (pm.goals.length > 0 || d.goalId) && (
             <>
@@ -420,6 +441,7 @@ export function TaskSheet({
 
         {task && <History task={task} pm={pm} />}
       </div>
+      <TagSheet pm={pm} taskId={task?.id ?? null} open={tagsOpen} onClose={() => setTagsOpen(false)} />
     </Sheet>
   );
 }

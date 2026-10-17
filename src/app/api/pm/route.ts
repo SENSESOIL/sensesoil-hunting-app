@@ -26,6 +26,7 @@ import {
   type Task,
 } from "@/lib/pm/model";
 import { isInternal, STAGES, WORK_KINDS } from "@/lib/project-ops";
+import { cleanMeta } from "@/lib/pm/tags";
 
 export const dynamic = "force-dynamic";
 
@@ -153,7 +154,9 @@ function checkTask(t: Partial<Task>): string | null {
   if ("progress" in t && (typeof t.progress !== "number" || t.progress < 0 || t.progress > 100)) return "進度要在 0–100";
   if (!isDate(t.start) || !isDate(t.due)) return "日期格式不正確";
   if (t.start && t.due && t.due < t.start) return "期限不能早於開始日";
-  if ("note" in t && t.note !== undefined && (typeof t.note !== "string" || t.note.length > 2000)) return "備註太長";
+  if ("note" in t && t.note !== undefined && t.note !== null && (typeof t.note !== "string" || t.note.length > 2000)) return "備註太長";
+  if ("parentId" in t && t.parentId !== null && t.parentId !== undefined && (typeof t.parentId !== "string" || t.parentId.length > 64 || t.parentId === t.id)) return "上層任務不正確";
+  if ("meta" in t && t.meta !== undefined && (typeof t.meta !== "object" || t.meta === null || Array.isArray(t.meta))) return "標籤格式不正確";
   return null;
 }
 
@@ -209,19 +212,42 @@ export async function POST(req: Request) {
           if (!who) return json({ error: "指派對象不在人員名單上" }, 400);
           t.assigneeName = who.name;
         }
+        if (t.meta) t.meta = cleanMeta(t.meta);
         let projectName = "";
         if (t.code) {
           const reg = await readRegistry();
           projectName = reg.data.find((p) => p.code === t.code)?.name ?? "";
         }
+        // 上層任務、標籤、目標另外寫（pm_task_save 修改既有任務時不會更新這些後來加的欄位）
+        const row = taskPatchToRow(t);
+        const extra: Record<string, unknown> = {};
+        for (const k of ["parent_id", "meta", "goal_id"]) if (k in row) extra[k] = row[k];
+        delete row.parent_id;
         const r = await rpc<{ status: string; task?: Record<string, unknown>; notify?: NotifyRow[] }>("pm_task_save", {
           ...actor,
           project_name: projectName,
           base_version: typeof body.baseVersion === "number" ? body.baseVersion : null,
-          task: taskPatchToRow(t),
+          task: row,
         });
+        let task = r.task;
+        let extraError: string | undefined;
+        if (Object.keys(extra).length && r.task && ["ok", "created", "unchanged"].includes(r.status)) {
+          try {
+            const x = await rpc<{ status: string; task?: Record<string, unknown> }>("pm_task_set_extra", { ...actor, id: t.id, extra });
+            if (x.task) task = x.task;
+            if (x.status === "invalid") extraError = "子任務只能有一層，而且要在同一個專案裡";
+            if (x.status === "forbidden") extraError = "只能調整自己建立的任務";
+          } catch (e) {
+            extraError = explainDbError(e).includes("資料庫還沒建立")
+              ? "子任務與標籤還沒啟用：請在 Supabase 執行 20261017000000_pm_task_tree.sql"
+              : explainDbError(e);
+          }
+        }
         const pushed = await pushNotifications(r.notify);
-        return json({ status: r.status, task: r.task ? rowToTask(r.task) : undefined, notified: (r.notify ?? []).length, pushed }, statusCode(r.status));
+        return json(
+          { status: r.status, task: task ? rowToTask(task) : undefined, notified: (r.notify ?? []).length, pushed, extraError },
+          statusCode(r.status)
+        );
       }
       case "task.delete": {
         const r = await rpc<{ status: string; notify?: NotifyRow[] }>("pm_task_delete", { ...actor, id: String(body.id ?? "") });

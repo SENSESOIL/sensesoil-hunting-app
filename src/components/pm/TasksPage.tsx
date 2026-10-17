@@ -13,9 +13,13 @@ import { TaskSheet } from "./TaskSheet";
 import { SetupNotice } from "./SetupNotice";
 import { isLate, usePm, type GoalItem, type Pm } from "./usePm";
 import { GoalSheet, GoalsPage } from "./Goals";
+import { ReminderPage, RemindersHome, SMART, smartTasks, type ListRoute } from "./Reminders";
+import { tagKeys } from "@/lib/pm/tags";
 
 /* ══════════════════════════════════════════════════════════
-   任務追蹤（參考時間管理 App：先看「今天」，再往前後翻日子）
+   任務追蹤（Apple 提醒事項風格）
+   清單    —— 首頁：智慧清單、專案、標籤；點進專案直接打字新增任務（見 Reminders.tsx）
+              「行事曆」是原本的我的任務（週／月、公司目標）；「團隊」是原本的全部任務
    我的    —— 每個人都有：問候＋今日進度、日期（週／月切換，月曆上有公司目標橫條）、當日／已排程／全部／已完成
    目標    —— 每個人都看得到公司目標與排程；管理者可新增、修改（任務以「所屬目標」連結）
    全部    —— 管理者：所有人的任務；上方是團隊頭像列（各自手上幾件），點人篩選
@@ -23,8 +27,8 @@ import { GoalSheet, GoalsPage } from "./Goals";
    三種檢視：清單、看板、甘特圖（功能與資料都和原本相同，只換呈現）
    ══════════════════════════════════════════════════════════ */
 
-export const TASK_TABS_MANAGER = ["我的", "全部", "目標", "工作量"];
-export const TASK_TABS_MEMBER = ["我的", "目標"];
+export const TASK_TABS_MANAGER = ["清單", "目標", "工作量"];
+export const TASK_TABS_MEMBER = ["清單", "目標"];
 
 type View = "list" | "board" | "gantt";
 type Smart = "day" | "scheduled" | "all" | "done";
@@ -73,6 +77,11 @@ export default function TasksPage({
   const pm = usePm();
   const [sheet, setSheet] = useState<{ id: string | null; preset?: Partial<Task> } | null>(null);
   const [personFilter, setPersonFilter] = useState<string | null | undefined>(undefined);
+  const [route, setRoute] = useState<ListRoute>({ kind: "home" });
+  // 換頁時回到頁首
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [route]);
 
   useEffect(() => {
     if (openTaskId && pm.data) {
@@ -92,7 +101,71 @@ export default function TasksPage({
   const open = (t: Task) => setSheet({ id: t.id });
   const add = (preset?: Partial<Task>) => setSheet({ id: null, preset });
 
-  const tab = pm.isManager ? activeTab : activeTab === "目標" ? "目標" : "我的";
+  const tab = activeTab === "目標" ? "目標" : pm.isManager && activeTab === "工作量" ? "工作量" : "清單";
+  const home = () => setRoute({ kind: "home" });
+
+  const listView = () => {
+    switch (route.kind) {
+      case "project": {
+        const p = pm.projectBy.get(route.code);
+        return (
+          <ReminderPage
+            pm={pm}
+            title={p?.name ?? route.code}
+            color={personColor(route.code)}
+            subtitle={[route.code, p?.company].filter(Boolean).join("　")}
+            tasks={pm.tasks.filter((t) => t.code === route.code)}
+            code={route.code}
+            onBack={home}
+            onOpen={open}
+          />
+        );
+      }
+      case "smart": {
+        const sm = SMART[route.id];
+        const id = route.id;
+        return (
+          <ReminderPage
+            pm={pm}
+            title={sm.label}
+            color={sm.color}
+            tasks={smartTasks(pm, id)}
+            grouped
+            showDoneDefault={id === "done"}
+            onBack={home}
+            onOpen={open}
+            onAddFull={id === "done" ? undefined : () => add(id === "today" ? { due: pm.today } : id === "flagged" ? { flagged: true } : undefined)}
+          />
+        );
+      }
+      case "tag":
+        return (
+          <ReminderPage
+            pm={pm}
+            title={route.tag.startsWith("#") ? route.tag : `#${route.tag}`}
+            color="#2F7FD8"
+            tasks={pm.tasks.filter((t) => t.status !== "done" && tagKeys(t.meta).includes(route.tag))}
+            grouped
+            onBack={home}
+            onOpen={open}
+          />
+        );
+      case "calendar":
+        return (
+          <SubPage title="行事曆" onBack={home}>
+            <MyTasks pm={pm} onOpen={open} onAdd={add} />
+          </SubPage>
+        );
+      case "team":
+        return (
+          <SubPage title="團隊" onBack={home}>
+            <AllTasks pm={pm} onOpen={open} onAdd={add} person={personFilter} setPerson={setPersonFilter} />
+          </SubPage>
+        );
+      default:
+        return <RemindersHome pm={pm} go={setRoute} onOpen={open} />;
+    }
+  };
 
   return (
     <div className="px-5 lg:px-10 pb-28 w-full max-w-5xl mx-auto flex flex-col gap-5">
@@ -102,18 +175,32 @@ export default function TasksPage({
           pm={pm}
           onPick={(email) => {
             setPersonFilter(email);
-            onTabChange("全部");
+            setRoute({ kind: "team" });
+            onTabChange("清單");
           }}
         />
       ) : tab === "目標" ? (
         <GoalsPage pm={pm} onOpenTask={open} />
-      ) : tab === "全部" ? (
-        <AllTasks pm={pm} onOpen={open} onAdd={add} person={personFilter} setPerson={setPersonFilter} />
       ) : (
-        <MyTasks pm={pm} onOpen={open} onAdd={add} />
+        listView()
       )}
       <TaskSheet pm={pm} open={!!sheet} taskId={sheet?.id ?? null} preset={sheet?.preset} onClose={() => setSheet(null)} />
     </div>
+  );
+}
+
+/** 子頁：左上返回＋標題 */
+function SubPage({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) {
+  return (
+    <>
+      <div className="flex items-center gap-3 pt-1">
+        <button type="button" onClick={onBack} aria-label="返回" className="w-11 h-11 rounded-full bg-white shadow-card flex items-center justify-center active:scale-95 transition-transform shrink-0">
+          <Icon name="chevron_left" weight={500} className="text-[26px] text-[#18181B]" />
+        </button>
+        <h1 className="text-[22px] font-bold tracking-tight text-[#18181B]">{title}</h1>
+      </div>
+      {children}
+    </>
   );
 }
 

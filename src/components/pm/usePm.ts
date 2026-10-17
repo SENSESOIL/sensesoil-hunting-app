@@ -101,6 +101,13 @@ export interface GoalItem extends Goal {
   lateCount: number;
 }
 
+const CLEARABLE = ["start", "due", "note", "assigneeEmail", "assigneeName", "goalId", "parentId"] as const;
+function clearable(patch: Partial<Task>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...patch };
+  for (const k of CLEARABLE) if (k in patch && patch[k] === undefined) out[k] = null;
+  return out;
+}
+
 export function isLate(t: Task, today: string) {
   return t.status !== "done" && !!t.due && t.due < today && t.kind !== "等待";
 }
@@ -243,13 +250,16 @@ export function usePm() {
       return enqueue(id, async () => {
         const cur = latest.current?.tasks.find((t) => t.id === id);
         const version = prev ? cur?.version ?? prev.version : undefined;
-        const res = await pmPost<{ status: string; task?: Task }>({
+        const res = await pmPost<{ status: string; task?: Task; extraError?: string }>({
           op: "task.save",
-          task: { ...patch, id, code: patch.code ?? prev?.code ?? optimistic.code },
+          // 要清空的欄位送 null（JSON 會把 undefined 整個拿掉，伺服器就不知道要清空）
+          task: { ...clearable(patch), id, code: patch.code ?? prev?.code ?? optimistic.code },
           baseVersion: version && version > 0 ? version : undefined,
         });
         if (res.ok && res.data.task) {
           replaceTask(res.data.task);
+          // 子任務、標籤沒存進去（例如還沒執行 SQL、層級不合規則）
+          if (res.data.extraError) toast(res.data.extraError, { tone: "error" });
           return res.data.task;
         }
         if (res.status === 409) {
@@ -268,6 +278,8 @@ export function usePm() {
     async (id: string) => {
       const prev = latest.current?.tasks.find((t) => t.id === id);
       replaceTask(undefined, id);
+      // 子任務留下來，變回一般任務（與資料庫 on delete set null 一致）
+      mutate((d) => (d ? { ...d, tasks: d.tasks.map((t) => (t.parentId === id ? { ...t, parentId: undefined } : t)) } : d), { revalidate: false });
       const res = await enqueue(id, () => pmPost({ op: "task.delete", id }));
       if (!res.ok) {
         toast(res.data.error || "刪除失敗", { tone: "error" });
@@ -280,7 +292,7 @@ export function usePm() {
   );
 
   const reorderTasks = useCallback(
-    async (ids: string[]) => {
+    async (ids: string[], opts: { localOnly?: boolean } = {}) => {
       mutate(
         (d) => {
           if (!d) return d;
@@ -289,6 +301,7 @@ export function usePm() {
         },
         { revalidate: false }
       );
+      if (opts.localOnly) return;
       const res = await pmPost({ op: "task.reorder", ids });
       if (!res.ok) {
         toast(res.data.error || "排序沒有存到", { tone: "error" });
