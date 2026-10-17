@@ -8,7 +8,7 @@ import { Empty, GREEN, ORANGE } from "./kit";
 import { isLate, personMark, type Pm } from "./usePm";
 import { taskAssignees } from "@/lib/pm/model";
 import { ScheduleSheet } from "./ScheduleSheet";
-import { splitBySection, treeOrder } from "./tree";
+import { realSections, splitBySection, treeOrder } from "./tree";
 
 /* ══════════════════════════════════════════════════════════
    甘特圖（排程）：每個任務一條
@@ -42,7 +42,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
     const taskById = new Map(pm.tasks.map((t) => [t.id, t]));
     for (const c of codes) {
       const secs = pm.projectBy.get(c)?.sections ?? [];
-      const groups = secs.length
+      const groups = realSections(secs).length
         ? splitBySection(byCode.get(c)!, secs, taskById).filter((g) => g.tasks.length)
         : [{ id: null as string | null, name: "", tasks: byCode.get(c)! }];
       for (const g of groups) {
