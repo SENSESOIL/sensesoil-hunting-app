@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { signOut } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { Sheet, toast } from "@/components/pm/Sheet";
 import { Avatar, Spinner } from "@/components/pm/kit";
 import { Icon } from "@/components/pm/ui";
@@ -73,6 +73,7 @@ export function SettingsSheet({
   const me = team.data?.members.find((m) => m.email === email);
   const [portrait, setPortrait] = useState(false);
   const [markOpen, setMarkOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [start, setStart] = useState<string>("");
   const [taskView, setTaskView] = useState<string>("list");
   const [push, setPush] = useState<PushState | "loading">("loading");
@@ -241,28 +242,69 @@ export function SettingsSheet({
             </div>
           </Section>
 
-          <button
-            type="button"
-            onClick={async () => {
-              // 登出前先取消這支手機的推播，才不會收到下一個人的任務通知
-              await disablePush().catch(() => {});
-              signOut({ callbackUrl: "/" });
-            }}
-            className="h-12 rounded-full bg-white shadow-card text-[16px] font-medium text-[#E5484D] inline-flex items-center justify-center gap-2 active:bg-[#FDECEC]"
-          >
-            <Icon name="logout" className="text-[20px]" />
-            登出
-          </button>
+          {/* 切換帳號：直接跳 Google 選帳號，選好回到狩獵管理（不用先登出、再點 Logo）。
+              推播不用先取消：打開 APP 時 refreshPush 會把這支手機重新綁到新登入的人 */}
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              disabled={switching}
+              onClick={() => {
+                setSwitching(true);
+                signIn("google", { callbackUrl: "/hunting-mgmt" }, { prompt: "select_account" }).catch(() => setSwitching(false));
+              }}
+              className="h-12 rounded-full bg-white shadow-card text-[16px] font-medium text-[#18181B] inline-flex items-center justify-center gap-2 active:bg-[#F4F4F5] disabled:opacity-60"
+            >
+              {switching ? <Spinner size={18} /> : <Icon name="switch_account" className="text-[20px]" />}
+              切換帳號
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                // 登出前先取消這支手機的推播，才不會收到下一個人的任務通知
+                await disablePush().catch(() => {});
+                signOut({ callbackUrl: "/" });
+              }}
+              className="h-12 rounded-full bg-white shadow-card text-[16px] font-medium text-[#E5484D] inline-flex items-center justify-center gap-2 active:bg-[#FDECEC]"
+            >
+              <Icon name="logout" className="text-[20px]" />
+              登出
+            </button>
+          </div>
         </div>
       </Sheet>
-      <MarkSheet open={markOpen} onClose={() => setMarkOpen(false)} name={name} email={email} current={me?.mark || defaultMark(name)} onSaved={() => team.mutate()} />
+      <MarkSheet
+        open={markOpen}
+        onClose={() => setMarkOpen(false)}
+        name={name}
+        email={email}
+        current={me?.mark || defaultMark(name)}
+        taken={new Map((team.data?.members ?? []).filter((m) => m.email !== email && m.mark).map((m) => [m.mark!, m.name]))}
+        onSaved={() => team.mutate()}
+      />
       {me && <PortraitSheet member={me} open={portrait} onClose={() => setPortrait(false)} onSaved={() => team.mutate()} />}
     </>
   );
 }
 
 /** 代表字選擇：名字第一字、第二字、英文縮寫兩種（姓＋名首字、名兩字），點一下就存 */
-function MarkSheet({ open, onClose, name, email, current, onSaved }: { open: boolean; onClose: () => void; name: string; email: string; current: string; onSaved: () => void }) {
+function MarkSheet({
+  open,
+  onClose,
+  name,
+  email,
+  current,
+  taken,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  name: string;
+  email: string;
+  current: string;
+  /** 別人已經選走的字 → 那個人的名字（同一個字只能一個人用） */
+  taken: Map<string, string>;
+  onSaved: () => void;
+}) {
   const [latin, setLatin] = useState<string[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   // 英文縮寫要用拼音：打開時才載入拼音字典，平常不拖慢 APP
@@ -283,7 +325,7 @@ function MarkSheet({ open, onClose, name, email, current, onSaved }: { open: boo
     if (busy) return;
     if (mark === current) return onClose();
     setBusy(mark);
-    const r = await teamPost({ op: "profile.save", email, patch: { mark: mark === defaultMark(name) ? null : mark } });
+    const r = await teamPost({ op: "profile.save", email, patch: { mark } });
     setBusy(null);
     if (!r.ok) {
       toast(r.data.error ?? "儲存失敗，請再試一次", { tone: "error" });
@@ -299,20 +341,21 @@ function MarkSheet({ open, onClose, name, email, current, onSaved }: { open: boo
       <div className="px-4 pt-3 pb-8 grid grid-cols-2 gap-3">
         {options.map((o) => {
           const on = o.mark === current;
+          const owner = taken.get(o.mark);
           return (
             <button
               key={o.label}
               type="button"
               onClick={() => pick(o.mark)}
-              disabled={!!busy}
+              disabled={!!busy || !!owner}
               aria-pressed={on}
-              className={`rounded-[18px] bg-white shadow-card p-4 flex flex-col items-center gap-2 transition-shadow active:scale-[0.98] ${on ? "ring-2 ring-[var(--accent)]" : ""}`}
+              className={`rounded-[18px] bg-white shadow-card p-4 flex flex-col items-center gap-2 transition-shadow active:scale-[0.98] disabled:opacity-45 disabled:active:scale-100 ${on ? "ring-2 ring-[var(--accent)]" : ""}`}
             >
               <span className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#F4F4F5] text-[17px] font-semibold text-[#18181B]">
                 <Avatar name={name} email={email} size={24} />
                 {busy === o.mark ? <Spinner size={14} /> : o.mark}
               </span>
-              <span className={`text-[13px] ${on ? "font-semibold text-[var(--accent-ink)]" : "text-[#71717A]"}`}>{o.label}</span>
+              <span className={`text-[13px] ${on ? "font-semibold text-[var(--accent-ink)]" : "text-[#71717A]"}`}>{owner ? `${owner} 已選` : o.label}</span>
             </button>
           );
         })}

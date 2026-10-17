@@ -250,9 +250,14 @@ export async function POST(req: Request) {
       if (patch.bio !== undefined && patch.bio !== null && (typeof patch.bio !== "string" || patch.bio.length > 200)) return json({ error: "介紹太長" }, 400);
       // 代表字：只能是自己名字裡的一個字，或兩個英文字母；空白＝改回預設
       if (patch.mark !== undefined && patch.mark !== null && patch.mark !== "") {
-        const who = (await listPeople()).find((p) => p.email === email);
+        const people = await listPeople();
+        const who = people.find((p) => p.email === email);
         const ok = typeof patch.mark === "string" ? validMark(patch.mark, who?.name ?? (email === user.email ? user.name : undefined)) : null;
         if (!ok) return json({ error: "代表字只能是名字裡的一個字，或兩個英文字母" }, 400);
+        // 同一個字只能一個人用（先選先贏）
+        const marks = await rpc<Record<string, string>>("pm_marks", {});
+        const owner = Object.entries(marks).find(([e, m]) => m === ok && e !== email)?.[0];
+        if (owner) return json({ error: `「${ok}」已經被 ${people.find((p) => p.email === owner)?.name ?? owner.split("@")[0]} 選走了` }, 409);
         patch.mark = ok;
       }
       const allowed = ["title", "bio", "avatar", "card", "card_bg", "sort_order", "mark"];
