@@ -35,6 +35,22 @@ end $$;
 
 create index if not exists pm_tasks_parent_idx on public.pm_tasks (parent_id) where parent_id is not null;
 
+-- pm_task_save 新增時以 jsonb_populate_record 建整列，沒帶 meta 會是 null（不套用預設值）→ 補成 {}
+create or replace function public.pm_tasks_meta_default()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  new.meta := coalesce(new.meta, '{}'::jsonb);
+  return new;
+end;
+$;
+
+drop trigger if exists pm_tasks_meta_default on public.pm_tasks;
+create trigger pm_tasks_meta_default before insert or update on public.pm_tasks
+  for each row execute function public.pm_tasks_meta_default();
+
 
 -- ───────────────────────── 2. 函式 ─────────────────────────
 

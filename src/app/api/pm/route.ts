@@ -223,6 +223,9 @@ export async function POST(req: Request) {
         const extra: Record<string, unknown> = {};
         for (const k of ["parent_id", "meta", "goal_id"]) if (k in row) extra[k] = row[k];
         delete row.parent_id;
+        // 新增任務時 pm_task_save 用 jsonb_populate_record 建整列，沒帶到的欄位會是 null（不會套用預設值）；
+        // meta 是 not null，一定要帶 {}。既有任務的 update 不會動 meta，所以帶了也沒關係
+        if (!("meta" in row)) row.meta = {};
         const r = await rpc<{ status: string; task?: Record<string, unknown>; notify?: NotifyRow[] }>("pm_task_save", {
           ...actor,
           project_name: projectName,
