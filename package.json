@@ -19,6 +19,7 @@
     "jimp": "^1.6.1",
     "next": "latest",
     "next-auth": "beta",
+    "pinyin-pro": "^3.29.5",
     "react": "latest",
     "react-dom": "latest",
     "react-signature-canvas": "^1.1.0-alpha.2",

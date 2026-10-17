@@ -10,7 +10,7 @@ import { PortraitSheet } from "@/components/team/PortraitSheet";
 import { teamPost, useTeam } from "@/components/team/useTeam";
 import { mutate as swrMutate } from "swr";
 import { PM_KEY } from "@/components/pm/usePm";
-import { defaultMark, validMark } from "@/lib/pm/model";
+import { defaultMark, markOptions } from "@/lib/pm/model";
 import { setThemeMode, useThemeMode, type ThemeMode } from "@/lib/theme";
 
 /* ══════════════════════════════════════════════════════════
@@ -57,7 +57,6 @@ export function SettingsSheet({
   onClose,
   name,
   email,
-  role,
   pages,
 }: {
   open: boolean;
@@ -73,6 +72,7 @@ export function SettingsSheet({
   const team = useTeam(open);
   const me = team.data?.members.find((m) => m.email === email);
   const [portrait, setPortrait] = useState(false);
+  const [markOpen, setMarkOpen] = useState(false);
   const [start, setStart] = useState<string>("");
   const [taskView, setTaskView] = useState<string>("list");
   const [push, setPush] = useState<PushState | "loading">("loading");
@@ -135,12 +135,19 @@ export function SettingsSheet({
             <div className="flex-1 min-w-0">
               <p className="text-[19px] font-bold text-[#18181B] truncate">{name}</p>
               <p className="text-[13px] text-[#A1A1AA] truncate">{email}</p>
-              <span className="mt-1.5 inline-flex h-6 px-2.5 rounded-full items-center text-[12px] font-medium bg-[var(--accent-soft)] text-[var(--accent-ink)]">{role}</span>
+              {/* 代表字：任務清單上大頭照旁邊的字；像大頭照一樣點了再改 */}
+              <button
+                type="button"
+                onClick={() => setMarkOpen(true)}
+                aria-label={`清單代表字：${me?.mark || defaultMark(name)}，點一下更換`}
+                className="mt-1.5 inline-flex h-7 pl-2.5 pr-1.5 rounded-full items-center gap-1 text-[13px] bg-[var(--accent-soft)] text-[var(--accent-ink)] active:opacity-70"
+              >
+                <span className="text-[12px] opacity-75">代表字</span>
+                <span className="font-bold">{me?.mark || defaultMark(name)}</span>
+                <Icon name="chevron_right" weight={400} className="text-[16px] opacity-60" />
+              </button>
             </div>
           </section>
-
-          {/* 代表字：任務清單上大頭照旁邊顯示的字 */}
-          <MarkSection name={name} email={email} current={me?.mark} onSaved={() => team.mutate()} />
 
           {/* 外觀：白天／夜晚（強調色固定品牌橘），小圖示切換 */}
           <Section title="外觀" hint="只改這支裝置">
@@ -248,83 +255,74 @@ export function SettingsSheet({
           </button>
         </div>
       </Sheet>
+      <MarkSheet open={markOpen} onClose={() => setMarkOpen(false)} name={name} email={email} current={me?.mark || defaultMark(name)} onSaved={() => team.mutate()} />
       {me && <PortraitSheet member={me} open={portrait} onClose={() => setPortrait(false)} onSaved={() => team.mutate()} />}
     </>
   );
 }
 
-/** 代表字：名字裡的其中一個字，或兩個英文字母；留空＝用名字最後一個字 */
-function MarkSection({ name, email, current, onSaved }: { name: string; email: string; current?: string; onSaved: () => void }) {
-  const [v, setV] = useState(current ?? "");
-  const [busy, setBusy] = useState(false);
-  useEffect(() => setV(current ?? ""), [current]);
-  const fallback = defaultMark(name);
-  const trimmed = v.trim();
-  const ok = trimmed ? validMark(trimmed, name) : "";
-  const shown = ok || fallback;
-  const changed = (ok ?? "") !== (current ?? "") && ok !== null;
-  const save = async () => {
-    if (ok === null || busy) return;
-    setBusy(true);
-    const r = await teamPost({ op: "profile.save", email, patch: { mark: ok || null } });
-    setBusy(false);
+/** 代表字選擇：名字第一字、第二字、英文縮寫兩種（姓＋名首字、名兩字），點一下就存 */
+function MarkSheet({ open, onClose, name, email, current, onSaved }: { open: boolean; onClose: () => void; name: string; email: string; current: string; onSaved: () => void }) {
+  const [latin, setLatin] = useState<string[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  // 英文縮寫要用拼音：打開時才載入拼音字典，平常不拖慢 APP
+  useEffect(() => {
+    if (!open || latin) return;
+    let alive = true;
+    import("pinyin-pro")
+      .then(({ pinyin }) => {
+        if (alive) setLatin(pinyin(name, { pattern: "first", toneType: "none", type: "array", surname: "head" }).map((x) => x.toUpperCase()));
+      })
+      .catch(() => alive && setLatin([]));
+    return () => {
+      alive = false;
+    };
+  }, [open, latin, name]);
+  const options = markOptions(name, latin ?? undefined);
+  const pick = async (mark: string) => {
+    if (busy) return;
+    if (mark === current) return onClose();
+    setBusy(mark);
+    const r = await teamPost({ op: "profile.save", email, patch: { mark: mark === defaultMark(name) ? null : mark } });
+    setBusy(null);
     if (!r.ok) {
       toast(r.data.error ?? "儲存失敗，請再試一次", { tone: "error" });
       return;
     }
-    toast(ok ? `代表字改成「${ok}」` : `代表字改回「${fallback}」`);
+    toast(`代表字改成「${mark}」`);
     onSaved();
     swrMutate(PM_KEY);
+    onClose();
   };
-  const chars = [...new Set([...name].filter((c) => /[一-鿿]/.test(c)))];
   return (
-    <Section title="清單代表字" hint="任務清單上大頭照旁邊的字">
-      <div className="px-4 py-3.5">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#F4F4F5] text-[15px] text-[#3F3F46] shrink-0">
-            <Avatar name={name} email={email} size={22} />
-            {shown}
-          </span>
-          <input
-            value={v}
-            onChange={(e) => setV(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.nativeEvent.isComposing) save();
-            }}
-            placeholder={fallback}
-            aria-label="代表字"
-            aria-invalid={ok === null}
-            className={`w-16 h-9 rounded-[10px] border text-center text-[16px] outline-none ${ok === null ? "border-[#E5484D]" : "border-[#E4E4E7] focus:border-[var(--accent)]"}`}
-          />
-          <button
-            type="button"
-            onClick={save}
-            disabled={!changed || busy}
-            className="ml-auto h-9 px-4 rounded-full text-[14px] font-semibold text-white bg-[var(--accent)] disabled:opacity-35"
-          >
-            {busy ? "儲存中" : "儲存"}
-          </button>
-        </div>
-        {chars.length > 1 && (
-          <div className="mt-2.5 flex gap-1.5">
-            {chars.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setV(c)}
-                aria-pressed={trimmed === c}
-                className={`w-9 h-9 rounded-full text-[15px] transition-colors ${trimmed === c ? "bg-[var(--accent)] text-white" : "bg-[#F4F4F5] text-[#3F3F46]"}`}
-              >
-                {c}
-              </button>
-            ))}
+    <Sheet open={open} title="清單代表字" subtitle="任務清單上大頭照旁邊顯示的字" onClose={onClose}>
+      <div className="px-4 pt-3 pb-8 grid grid-cols-2 gap-3">
+        {options.map((o) => {
+          const on = o.mark === current;
+          return (
+            <button
+              key={o.label}
+              type="button"
+              onClick={() => pick(o.mark)}
+              disabled={!!busy}
+              aria-pressed={on}
+              className={`rounded-[18px] bg-white shadow-card p-4 flex flex-col items-center gap-2 transition-shadow active:scale-[0.98] ${on ? "ring-2 ring-[var(--accent)]" : ""}`}
+            >
+              <span className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#F4F4F5] text-[17px] font-semibold text-[#18181B]">
+                <Avatar name={name} email={email} size={24} />
+                {busy === o.mark ? <Spinner size={14} /> : o.mark}
+              </span>
+              <span className={`text-[13px] ${on ? "font-semibold text-[var(--accent-ink)]" : "text-[#71717A]"}`}>{o.label}</span>
+            </button>
+          );
+        })}
+        {latin === null && (
+          <div className="col-span-2 flex justify-center py-2">
+            <Spinner size={16} />
           </div>
         )}
-        <p className={`mt-2 text-[12px] ${ok === null ? "text-[#E5484D]" : "text-[#A1A1AA]"}`}>
-          {ok === null ? "只能填名字裡的一個字，或兩個英文字母（例：SS）" : "名字裡的一個字，或兩個英文字母；留空就用名字最後一個字"}
-        </p>
       </div>
-    </Section>
+    </Sheet>
   );
 }
 

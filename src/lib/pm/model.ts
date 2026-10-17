@@ -468,6 +468,39 @@ export function defaultMark(name?: string): string {
 }
 
 /**
+ * 代表字的選項（設定 → 點代表字）：
+ *   名字第一字、名字第二字（三字名＝去掉姓的兩個字；兩字名＝姓、名；四字名＝後兩字當名字）
+ *   英文：姓＋名第一字、名兩字（用拼音字首，例：魏文軍 → WW、WJ）
+ * latin：每個字的拼音字首（大寫），由畫面載入拼音字典後傳進來；沒有就只給中文選項
+ */
+export function markOptions(name: string, latin?: string[]): { mark: string; label: string }[] {
+  const chars = [...name.trim()];
+  const han = chars.every((c) => /[一-鿿]/.test(c)) && chars.length >= 2;
+  const out: { mark: string; label: string }[] = [];
+  const add = (mark: string | undefined, label: string) => {
+    if (mark && !out.some((o) => o.mark === mark)) out.push({ mark, label });
+  };
+  if (han) {
+    const given = chars.length === 2 ? chars : chars.length >= 4 ? chars.slice(2) : chars.slice(1);
+    const sur = chars.length >= 4 ? 2 : 1;
+    add(given[0], "名字第一字");
+    add(given[1], "名字第二字");
+    if (latin && latin.length === chars.length) {
+      const g = latin.slice(chars.length === 2 ? 1 : sur);
+      add(latin[0] + (g[0] ?? ""), "姓＋名第一字");
+      if (g.length >= 2) add(g[0] + g[1], "名字縮寫");
+    }
+  } else {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    if (words.length > 1) {
+      add((words[0][0] + words[1][0]).toUpperCase(), "姓名字首");
+      add(words[words.length - 1].slice(0, 2).toUpperCase(), "名字前兩字");
+    } else add(name.trim().slice(0, 2).toUpperCase(), "名字前兩字");
+  }
+  return out;
+}
+
+/**
  * 檢查代表字：名字裡的其中一個字（彭詩渝 → 彭／詩／渝），或兩個英文字母（SS）。
  * 合格回傳整理後的字（英文轉大寫），不合格回傳 null。
  */
