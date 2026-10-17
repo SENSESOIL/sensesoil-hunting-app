@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { addDays, fmtDate } from "@/lib/project-ops";
 import { personColor, STATUS_LABEL, type Task } from "@/lib/pm/model";
 import Gantt, { type GanttRow } from "./Gantt";
 import { Empty, GREEN, ORANGE } from "./kit";
-import { assigneeLabel, isLate, type Pm } from "./usePm";
+import { isLate, personMark, type Pm } from "./usePm";
+import { taskAssignees } from "@/lib/pm/model";
+import { ScheduleSheet } from "./ScheduleSheet";
 import { treeOrder } from "./tree";
 
 /* ══════════════════════════════════════════════════════════
@@ -14,6 +16,8 @@ import { treeOrder } from "./tree";
    - 顏色：完成＝綠、進行中＝橘、待辦＝灰、等待期＝虛線；逾期會延伸紅色斜紋到今天
    - 跨專案時依專案分段（每段第一列顯示專案名稱）
    - 順序與清單相同：子任務接在上層底下、名稱縮排；上層沒排日期時，畫成涵蓋子任務的總橫條
+   - 點名稱＝任務細節；點時間軸（長條或空白處）＝時間安排（只改日期）
+   - 負責人用代表字（軍、恒…），名稱欄比較放得下
    - 沒有日期的任務也列出來（像清單一樣），點時間軸上的某一天就排進去；
      有日期的長條可以直接拖曳平移、拖兩端改開始／結束日 —— 在甘特圖上就能排程
    ══════════════════════════════════════════════════════════ */
@@ -23,6 +27,7 @@ const FIT = { min: 14, max: 26 } as const;
 
 export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: Task[]; showProject?: boolean; onOpen: (t: Task) => void }) {
   const { today } = pm;
+  const [schedId, setSchedId] = useState<string | null>(null);
   // 依專案分組，組內依清單的層級順序；上層沒有日期時用子任務的期間
   const { rowsAll: dated, span, depthOf } = useMemo(() => {
     const byCode = new Map<string, Task[]>();
@@ -91,7 +96,13 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
     const project = pm.projectBy.get(t.code);
     const firstOfProject = showProject && t.code !== lastCode;
     lastCode = t.code;
-    const who = assigneeLabel(pm, t);
+    const list = taskAssignees(t);
+    const who = list.length
+      ? list
+          .slice(0, 4)
+          .map((e) => personMark(pm, e, e === t.assigneeEmail ? t.assigneeName : undefined))
+          .join("、") + (list.length > 4 ? ` +${list.length - 4}` : "")
+      : "未指派";
     if (!hasDate(t)) {
       return {
         id: t.id,
@@ -115,6 +126,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
       label: child ? `　${t.title}` : t.title,
       sublabel: firstOfProject ? `● ${project?.name ?? t.code}` : t.kind === "等待" ? "等待期" : who,
       onClick: () => onOpen(t),
+      onTimeline: sp ? undefined : () => setSchedId(t.id),
       trailing: done ? undefined : t.progress > 0 ? `${t.progress}%` : late ? "逾期" : undefined,
       bars: [
         {
@@ -160,6 +172,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
         </span>
         <span className="ml-auto">{undated > 0 ? `${undated} 件未排程，點日期排入` : "拖曳長條可改日期"}</span>
       </div>
+      <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
     </div>
   );
 }

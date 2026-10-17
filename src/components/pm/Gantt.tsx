@@ -46,6 +46,8 @@ export interface GanttRow {
   trailing?: string;
   /** 沒有日期的列：點時間軸上的某一天 */
   onPickDay?: (iso: string) => void;
+  /** 點時間軸（長條或空白處）：例如打開「時間安排」；沒給就和點名稱一樣 */
+  onTimeline?: () => void;
 }
 
 type DragMode = "move" | "start" | "end";
@@ -392,7 +394,16 @@ export default function Gantt({
                           const i = Math.floor((e.clientX - r.left) / dayWidth);
                           if (i >= 0 && i < days) row.onPickDay!(addDays(from, i));
                         }
-                      : undefined
+                      : row.onTimeline
+                        ? (e) => {
+                            e.stopPropagation();
+                            if (justDragged.current) {
+                              justDragged.current = false;
+                              return;
+                            }
+                            row.onTimeline!();
+                          }
+                        : undefined
                   }
                   onPointerMove={
                     row.onPickDay

@@ -10,6 +10,7 @@ import { Avatar, CheckCircle, dueLabel, ORANGE, RED } from "./kit";
 import { Sheet, toast } from "./Sheet";
 import { ProjectPicker } from "./TaskSheet";
 import { TaskGantt } from "./TaskGantt";
+import { ScheduleSheet } from "./ScheduleSheet";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
 import { assigneeLabel, assigneePatch, isLate, personLabel, personMark, type Pm } from "./usePm";
@@ -451,6 +452,8 @@ export function ReminderTasks({
   const [linger, setLinger] = useState<Set<string>>(new Set());
   const [swiped, setSwiped] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ task: Task; rect: DOMRect; depth: 0 | 1 } | null>(null);
+  // 長按 → 期限 → 自訂日期…：時間安排
+  const [schedId, setSchedId] = useState<string | null>(null);
   const [tagFor, setTagFor] = useState<string | null>(null);
   const [moveFor, setMoveFor] = useState<Task | null>(null);
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
@@ -702,6 +705,7 @@ export function ReminderTasks({
           inProject={!!code}
           onClose={() => setMenu(null)}
           onOpen={() => onOpen(menu.task)}
+          onSchedule={() => setSchedId(menu.task.id)}
           onToggle={() => toggleDone(menu.task)}
           onFlag={() => flag(menu.task)}
           onDelete={() => remove(menu.task)}
@@ -711,6 +715,7 @@ export function ReminderTasks({
         />
       )}
       <TagSheet pm={pm} taskId={tagFor} open={!!tagFor} onClose={() => setTagFor(null)} />
+      <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
       <Sheet open={!!moveFor} title="移到專案" subtitle={moveFor?.title} onClose={() => setMoveFor(null)}>
         {moveFor && (
           <div className="pb-4">
@@ -1055,6 +1060,7 @@ function RowMenu({
   inProject,
   onClose,
   onOpen,
+  onSchedule,
   onToggle,
   onFlag,
   onDelete,
@@ -1069,6 +1075,8 @@ function RowMenu({
   inProject: boolean;
   onClose: () => void;
   onOpen: () => void;
+  /** 「自訂日期…」：打開時間安排 */
+  onSchedule: () => void;
   onToggle: () => void;
   onFlag: () => void;
   onDelete: () => void;
@@ -1163,7 +1171,7 @@ function RowMenu({
                 })}
               />
             ))}
-            <MenuItem icon="edit_calendar" label="自訂日期…" onClick={run(onOpen)} />
+            <MenuItem icon="edit_calendar" label="自訂日期…" onClick={run(onSchedule)} />
           </div>
         )}
         {page === "assign" && (
