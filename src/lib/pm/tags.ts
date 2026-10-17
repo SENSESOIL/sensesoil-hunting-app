@@ -37,6 +37,8 @@ export interface TaskMeta {
   bill?: string;
   /** 自訂標籤 */
   tags?: string[];
+  /** 清單分組（專案 sections 裡的 id） */
+  section?: string;
 }
 
 export const TRADES = ["打除", "水電", "泥作", "防水", "木作", "系統櫃", "油漆", "鐵件", "玻璃", "空調", "地板", "石材", "燈具", "衛浴", "清潔", "景觀", "其他"];
@@ -198,5 +200,7 @@ export function cleanMeta(raw: unknown): TaskMeta {
   if (typeof r.days === "number" && Number.isFinite(r.days) && r.days > 0 && r.days <= 999) out.days = Math.round(r.days);
   const tags = list(r.tags);
   if (tags?.length) out.tags = tags;
+  const section = str(r.section, 40);
+  if (section) out.section = section;
   return out;
 }

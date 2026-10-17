@@ -305,6 +305,21 @@ export async function POST(req: Request) {
         });
         return json({ status: r.status, project: r.project ? rowToProject(r.project) : undefined }, statusCode(r.status));
       }
+      case "sections.save": {
+        if (user.role !== "manager") return json({ error: "只有管理者可以調整分組" }, 403);
+        const code = String(body.code ?? "").trim();
+        const list = Array.isArray(body.sections) ? (body.sections as { id?: unknown; name?: unknown }[]) : null;
+        if (!code || code.length > 32 || !list || list.length > 50) return json({ error: "分組格式不正確" }, 400);
+        const clean = list.map((x) => ({ id: String(x.id ?? "").slice(0, 40), name: String(x.name ?? "").trim().slice(0, 40) || "未命名分組" }));
+        if (clean.some((x) => !x.id) || new Set(clean.map((x) => x.id)).size !== clean.length) return json({ error: "分組格式不正確" }, 400);
+        try {
+          const r = await rpc<{ status: string; sections?: unknown }>("pm_sections_set", { ...actor, code, sections: clean });
+          return json(r, r.status === "forbidden" ? 403 : 200);
+        } catch (e) {
+          const msg = explainDbError(e);
+          return json({ error: msg.includes("資料庫還沒建立") ? "分組還沒啟用：請在 Supabase 執行 20261021000000_pm_sections.sql" : msg }, 500);
+        }
+      }
       case "goal.save": {
         if (user.role !== "manager") return json({ error: "只有管理者可以設定公司目標" }, 403);
         const g = body.goal as Partial<Goal> & { id: string };

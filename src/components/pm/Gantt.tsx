@@ -50,6 +50,8 @@ export interface GanttRow {
   onPickDay?: (iso: string) => void;
   /** 點時間軸（長條或空白處）：例如打開「時間安排」；沒給就和點名稱一樣 */
   onTimeline?: () => void;
+  /** 分組標題列（字小、灰底） */
+  heading?: boolean;
 }
 
 type DragMode = "move" | "start" | "end";
@@ -401,10 +403,10 @@ export default function Gantt({
               >
                 {/* 鍵盤焦點：globals.css 清掉了 outline，改用名稱欄變底色＋左側橘色細條 */}
                 <div
-                  className="sticky left-0 z-[4] bg-white shrink-0 border-r border-[#F0F0F2] border-b border-b-[#F4F4F5] flex flex-col justify-center px-3 group-hover:bg-[#FAFAFA] group-focus-visible:bg-[#F4F4F5] transition-colors before:absolute before:left-0 before:inset-y-0 before:w-[3px] before:content-[''] group-focus-visible:before:bg-[var(--accent)]"
+                  className={`sticky left-0 z-[4] ${row.heading ? "bg-[#F7F7F8]" : "bg-white"} shrink-0 border-r border-[#F0F0F2] border-b border-b-[#F4F4F5] flex flex-col justify-center px-3 group-hover:bg-[#FAFAFA] group-focus-visible:bg-[#F4F4F5] transition-colors before:absolute before:left-0 before:inset-y-0 before:w-[3px] before:content-[''] group-focus-visible:before:bg-[var(--accent)]`}
                   style={{ width: labelWidth }}
                 >
-                  <span className="text-[13px] font-semibold text-[#18181B] truncate leading-tight">{row.label}</span>
+                  <span className={`truncate leading-tight ${row.heading ? "text-[14px] font-bold text-[#18181B]" : "text-[13px] font-semibold text-[#18181B]"}`}>{row.label}</span>
                   {row.sublabel && (
                     <span className="text-[11px] text-[#71717A] truncate leading-tight mt-0.5">{row.sublabel}</span>
                   )}

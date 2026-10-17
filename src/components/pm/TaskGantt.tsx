@@ -8,7 +8,7 @@ import { Empty, GREEN, ORANGE } from "./kit";
 import { isLate, personMark, type Pm } from "./usePm";
 import { taskAssignees } from "@/lib/pm/model";
 import { ScheduleSheet } from "./ScheduleSheet";
-import { treeOrder } from "./tree";
+import { splitBySection, treeOrder } from "./tree";
 
 /* ══════════════════════════════════════════════════════════
    甘特圖（排程）：每個任務一條
@@ -17,6 +17,7 @@ import { treeOrder } from "./tree";
    - 跨專案時依專案分段（每段第一列顯示專案名稱）
    - 順序與清單相同：子任務接在上層底下、名稱縮排；上層沒排日期時，畫成涵蓋子任務的總橫條
    - 點名稱＝任務細節；點時間軸（長條或空白處）＝時間安排（只改日期）
+   - 專案有分組（Section）時：先分組、再任務；分組標題列畫一條涵蓋組內任務的總橫條
    - 負責人用代表字（軍、恒…），名稱欄比較放得下
    - 沒有日期的任務也列出來（像清單一樣），點時間軸上的某一天就排進去；
      有日期的長條可以直接拖曳平移、拖兩端改開始／結束日 —— 在甘特圖上就能排程
@@ -29,15 +30,24 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
   const { today } = pm;
   const [schedId, setSchedId] = useState<string | null>(null);
   // 依專案分組，組內依清單的層級順序；上層沒有日期時用子任務的期間
-  const { rowsAll: dated, span, depthOf } = useMemo(() => {
+  const { rowsAll: dated, span, depthOf, headBefore } = useMemo(() => {
     const byCode = new Map<string, Task[]>();
     for (const t of tasks) byCode.set(t.code, [...(byCode.get(t.code) ?? []), t]);
     const codes = [...byCode.keys()].sort((a, b) => a.localeCompare(b));
     const span = new Map<string, { start: string; end: string; progress: number }>();
     const depthOf = new Map<string, number>();
     const out: Task[] = [];
+    // 分組標題：插在該組第一個任務前面
+    const headBefore = new Map<string, { key: string; name: string; tasks: Task[] }>();
+    const taskById = new Map(pm.tasks.map((t) => [t.id, t]));
     for (const c of codes) {
-      const rows = treeOrder(byCode.get(c)!);
+      const secs = pm.projectBy.get(c)?.sections ?? [];
+      const groups = secs.length
+        ? splitBySection(byCode.get(c)!, secs, taskById).filter((g) => g.tasks.length)
+        : [{ id: null as string | null, name: "", tasks: byCode.get(c)! }];
+      for (const g of groups) {
+      const rows = treeOrder(g.tasks);
+      if (g.id !== null && rows.length) headBefore.set(rows[0].task.id, { key: `${c}:${g.id}`, name: g.name, tasks: g.tasks });
       for (const r of rows) {
         depthOf.set(r.task.id, r.depth);
         if (r.childCount > 0 && !(r.task.start || r.task.due)) {
@@ -54,9 +64,10 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
         }
         out.push(r.task);
       }
+      }
     }
-    return { rowsAll: out, span, depthOf };
-  }, [tasks]);
+    return { rowsAll: out, span, depthOf, headBefore };
+  }, [tasks, pm.tasks, pm.projectBy]);
   const hasDate = (t: Task) => !!(t.start || t.due || span.has(t.id));
   const undated = dated.filter((t) => !hasDate(t)).length;
 
@@ -90,7 +101,32 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
   }
 
   let lastCode = "";
-  const rows: GanttRow[] = dated.map((t) => {
+  /** 分組標題列：總橫條＝組內有日期的任務（含上層的子任務期間）從最早到最晚 */
+  const headRow = (h: { key: string; name: string; tasks: Task[] }): GanttRow => {
+    const ranges = h.tasks
+      .map((t) => {
+        const sp = span.get(t.id);
+        const a = sp?.start ?? t.start ?? t.due;
+        const b = sp?.end ?? t.due ?? t.start;
+        return a && b ? [a, b] : null;
+      })
+      .filter((x): x is string[] => !!x);
+    const done = h.tasks.length ? Math.round(h.tasks.reduce((n, t) => n + (t.status === "done" ? 100 : t.progress), 0) / h.tasks.length) : 0;
+    return {
+      id: `h:${h.key}`,
+      label: h.name,
+      sublabel: `${h.tasks.length} 項`,
+      heading: true,
+      bars: ranges.length
+        ? [{ start: ranges.map((r) => r[0]).sort()[0], end: ranges.map((r) => r[1]).sort().pop()!, progress: done, fill: "#3F3F46" }]
+        : [],
+    };
+  };
+  const rows: GanttRow[] = dated.flatMap((t) => {
+    const head = headBefore.get(t.id);
+    return head ? [headRow(head), taskRow(t)] : [taskRow(t)];
+  });
+  function taskRow(t: Task): GanttRow {
     const sp = span.get(t.id);
     const child = depthOf.get(t.id) === 1;
     const project = pm.projectBy.get(t.code);
@@ -154,7 +190,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
         },
       ],
     };
-  });
+  }
 
   return (
     <div className="flex flex-col gap-2">

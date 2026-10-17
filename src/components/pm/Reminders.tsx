@@ -3,7 +3,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { addDays, toDay } from "@/lib/project-ops";
-import { isAssignee, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
+import { isAssignee, newSectionId, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { metaChips, tagKeys } from "@/lib/pm/tags";
 import { Icon } from "./ui";
 import { Avatar, CheckCircle, dueLabel, ORANGE, RED } from "./kit";
@@ -14,7 +14,7 @@ import { ScheduleSheet } from "./ScheduleSheet";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
 import { assigneeLabel, assigneePatch, isLate, personLabel, personMark, type Pm } from "./usePm";
-import { treeOrder, type TreeRow } from "./tree";
+import { sectionOf, splitBySection, treeOrder, type TreeRow } from "./tree";
 
 export { treeOrder };
 
@@ -261,68 +261,54 @@ export function ReminderPage({
 }) {
   const [showDone, setShowDone] = useState(!!showDoneDefault);
   const [view, setView] = useStoredView();
-  const [menu, setMenu] = useState(false);
   const [addSignal, setAddSignal] = useState(0);
   const pageView: PageView = code ? view : "list";
   const doneCount = tasks.filter((t) => t.status === "done").length;
   const canAdd = !!code || !!onAddFull;
 
-  // 「⋯」放進標題列分頁那一排的右邊（hunting-mgmt 的 #pm-header-slot）
+  // 檢視切換放進標題列分頁那一排的右邊（hunting-mgmt 的 #pm-header-slot）
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => setSlot(document.getElementById("pm-header-slot")), []);
 
-  const menuButton = (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setMenu((v) => !v)}
-        aria-label="更多"
-        aria-expanded={menu}
-        className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${menu ? "bg-[#F4F4F5] text-[#18181B]" : "text-[#71717A] hover:bg-[#F4F4F5]"}`}
-      >
-        <Icon name="more_horiz" weight={400} className="text-[24px]" />
-      </button>
-      {menu && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
-          <div className="absolute right-0 top-11 z-40 w-56 rounded-[14px] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.18)] overflow-hidden py-1">
-            <MenuItem
-              icon={showDone ? "visibility_off" : "visibility"}
-              label={showDone ? "隱藏已完成" : `顯示已完成${doneCount ? `（${doneCount}）` : ""}`}
-              onClick={() => {
-                setShowDone((v) => !v);
-                setMenu(false);
-              }}
-            />
-            {code && (
-              <>
-                <div className="h-px bg-[#F0F0F2] my-1" />
-                {(
-                  [
-                    ["list", "checklist", "清單"],
-                    ["board", "view_kanban", "看板"],
-                    ["gantt", "view_timeline", "甘特圖"],
-                  ] as [PageView, string, string][]
-                ).map(([v, icon, label]) => (
-                  <MenuItem
-                    key={v}
-                    icon={icon}
-                    label={label}
-                    checked={view === v}
-                    onClick={() => {
-                      setView(v);
-                      setMenu(false);
-                    }}
-                  />
-                ))}
-              </>
-            )}
-          </div>
-        </>
-      )}
+  // 專案頁：清單／看板／甘特圖三個圖示直接切換（不用打開選單）；跨專案頁只有「顯示已完成」
+  const menuButton = code ? (
+    <div className="flex items-center gap-0.5 p-0.5 rounded-full bg-[#F4F4F5]" role="radiogroup" aria-label="檢視">
+      {(
+        [
+          ["list", "checklist", "清單"],
+          ["board", "view_kanban", "看板"],
+          ["gantt", "view_timeline", "甘特圖"],
+        ] as [PageView, string, string][]
+      ).map(([v, icon, label]) => {
+        const on = view === v;
+        return (
+          <button
+            key={v}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            aria-label={label}
+            title={label}
+            onClick={() => setView(v)}
+            className={`w-9 h-8 rounded-full flex items-center justify-center transition-colors ${on ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] text-[var(--accent)]" : "text-[#8E8E93]"}`}
+          >
+            <Icon name={icon} weight={on ? 500 : 400} className="text-[20px]" />
+          </button>
+        );
+      })}
     </div>
+  ) : (
+    <button
+      type="button"
+      onClick={() => setShowDone((v) => !v)}
+      aria-pressed={showDone}
+      aria-label={showDone ? "隱藏已完成" : "顯示已完成"}
+      title={showDone ? "隱藏已完成" : "顯示已完成"}
+      className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${showDone ? "bg-[#F4F4F5] text-[var(--accent)]" : "text-[#71717A] hover:bg-[#F4F4F5]"}`}
+    >
+      <Icon name={showDone ? "visibility" : "visibility_off"} weight={400} className="text-[22px]" />
+    </button>
   );
-
   const add = () => {
     if (code) {
       // 在點擊當下先叫出鍵盤（iPhone 只在使用者點擊的那一刻允許），新的一列出現後再把游標交給它
@@ -353,6 +339,16 @@ export function ReminderPage({
         <ReminderTasks pm={pm} tasks={tasks} code={code} grouped={grouped} showDone={showDone} onOpen={onOpen} addSignal={addSignal} color={color} tapToAdd />
       )}
       {pageView === "board" && <TaskBoard pm={pm} tasks={tasks} onOpen={onOpen} onAdd={add} />}
+      {code && pageView !== "board" && (
+        <button
+          type="button"
+          onClick={() => setShowDone((v) => !v)}
+          className="self-center h-9 px-4 rounded-full text-[13px] text-[#8E8E93] active:bg-[#F4F4F5] inline-flex items-center gap-1.5 order-last"
+        >
+          <Icon name={showDone ? "visibility_off" : "visibility"} className="text-[17px]" />
+          {showDone ? "隱藏已完成" : `顯示已完成${doneCount ? `（${doneCount}）` : ""}`}
+        </button>
+      )}
       {pageView === "gantt" && <TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} />}
 
       {/* 手機：返回（左下）與新增（右下）放在原本底部導覽列的位置 */}
@@ -418,6 +414,8 @@ interface Draft {
   parentId?: string;
   /** 插在哪一列後面；沒有就加在最後 */
   afterId?: string;
+  /** 新任務放進哪個分組（"" 或沒有＝其他） */
+  section?: string;
 }
 
 export function ReminderTasks({
@@ -456,6 +454,13 @@ export function ReminderTasks({
   const [schedId, setSchedId] = useState<string | null>(null);
   const [tagFor, setTagFor] = useState<string | null>(null);
   const [moveFor, setMoveFor] = useState<Task | null>(null);
+  // 分組：收合、改名中
+  const [foldSec, setFoldSec] = useState<Set<string>>(new Set());
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const projSections = useMemo(() => (code && !grouped ? pm.projectBy.get(code)?.sections ?? [] : []), [pm.projectBy, code, grouped]);
+  const taskById = useMemo(() => new Map(pm.tasks.map((t) => [t.id, t])), [pm.tasks]);
+  const validSec = useMemo(() => new Set(projSections.map((s) => s.id)), [projSections]);
+  const secOf = (t: Task) => sectionOf(t, taskById, validSec);
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -473,12 +478,15 @@ export function ReminderTasks({
 
   const visible = useMemo(() => tasks.filter((t) => showDone || t.status !== "done" || linger.has(t.id)), [tasks, showDone, linger]);
 
-  const sections = useMemo(() => {
+  const sections = useMemo((): { code: string; rows: TreeRow[]; sectionId?: string; sectionName?: string }[] => {
+    // 專案有分組：每個分組一段，最後是「其他」
+    if (!grouped && projSections.length)
+      return splitBySection(visible, projSections, taskById).map((g) => ({ code: code ?? "", rows: treeOrder(g.tasks), sectionId: g.id, sectionName: g.name }));
     if (!grouped) return [{ code: code ?? "", rows: treeOrder(visible) }];
     const by = new Map<string, Task[]>();
     for (const t of visible) by.set(t.code, [...(by.get(t.code) ?? []), t]);
     return [...by.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([c, list]) => ({ code: c, rows: treeOrder(list) }));
-  }, [visible, grouped, code]);
+  }, [visible, grouped, code, projSections, taskById]);
 
   const toggleDone = (t: Task) => {
     const done = t.status !== "done";
@@ -499,12 +507,52 @@ export function ReminderTasks({
 
   /* ── 新增與編輯 ── */
 
-  const startDraft = (after?: Task) => {
+  const startDraft = (after?: Task, section?: string) => {
     if (!code) return;
     setSwiped(null);
     const parentId = after ? after.parentId ?? undefined : undefined;
-    setDraft({ id: newTaskId(), parentId, afterId: after?.id });
+    setDraft({ id: newTaskId(), parentId, afterId: after?.id, section: after ? secOf(after) : section ?? "" });
     setEditing(null);
+  };
+
+  /* ── 分組 ── */
+
+  /** 移到分組（子任務一起）；"new"＝新增一個分組再移過去 */
+  const moveToSection = (t: Task, sid: string) => {
+    if (!code) return;
+    let target = sid;
+    if (sid === "new") {
+      target = newSectionId();
+      pm.saveSections(code, [...projSections, { id: target, name: "新分組" }]);
+      setRenaming(target);
+    }
+    const kids = pm.tasks.filter((x) => x.parentId === t.id);
+    for (const x of [t, ...kids]) {
+      const meta = { ...(x.meta ?? {}) };
+      if (target) meta.section = target;
+      else delete meta.section;
+      pm.saveTask({ id: x.id, meta });
+    }
+  };
+  const addSection = () => {
+    if (!code) return;
+    const id = newSectionId();
+    pm.saveSections(code, [...projSections, { id, name: "新分組" }]);
+    setRenaming(id);
+  };
+  const renameSection = (id: string, name: string) => {
+    setRenaming(null);
+    const n = name.trim();
+    if (!code || !n || projSections.find((s) => s.id === id)?.name === n) return;
+    pm.saveSections(code, projSections.map((s) => (s.id === id ? { ...s, name: n } : s)));
+  };
+  const deleteSection = (id: string) => {
+    setRenaming(null);
+    if (!code) return;
+    const before = projSections;
+    pm.saveSections(code, before.filter((s) => s.id !== id));
+    // 任務不用改：分組不在了就自動回到「其他」
+    toast("已刪除分組，裡面的任務移到「其他」", { action: { label: "復原", run: () => pm.saveSections(code, before) } });
   };
 
   /** 依顯示順序算出整個專案的新順序（新任務插在指定位置） */
@@ -540,10 +588,10 @@ export function ReminderTasks({
       return;
     }
     const order = orderWith(d.id, d.afterId, d.parentId);
-    const p = pm.saveTask({ id: d.id, code, title: text, ...(d.parentId ? { parentId: d.parentId } : {}) });
+    const p = pm.saveTask({ id: d.id, code, title: text, ...(d.parentId ? { parentId: d.parentId } : {}), ...(d.section && !d.parentId ? { meta: { section: d.section } } : {}) });
     pm.reorderTasks(order, { localOnly: true });
     p.then((saved) => saved && pm.reorderTasks(order));
-    if (next) setDraft({ id: newTaskId(), parentId: d.parentId, afterId: d.id });
+    if (next) setDraft({ id: newTaskId(), parentId: d.parentId, afterId: d.id, section: d.section });
     else setDraft(null);
   };
 
@@ -633,7 +681,9 @@ export function ReminderTasks({
         const project = pm.projectBy.get(sec.code);
         const rows = sec.rows.filter((r) => !(r.depth === 1 && r.task.parentId && collapsed.has(r.task.parentId)));
         if (grouped && !rows.length) return null;
-        const at = !grouped ? draftIndex(rows) : -1;
+        const secKey = sec.sectionId ?? "";
+        const folded = sec.sectionId !== undefined && foldSec.has(secKey);
+        const at = !grouped && (draft?.section ?? "") === secKey && (sec.sectionId !== undefined || true) ? draftIndex(rows) : -1;
         const items: React.ReactNode[] = rows.map((r) => (
           <TaskRow
             key={r.task.id}
@@ -672,6 +722,51 @@ export function ReminderTasks({
           />
         ));
         if (draft && at >= 0) items.splice(at, 0, <DraftRow key={draft.id} depth={draft.parentId ? 1 : 0} color={color} onCommit={commitDraft} />);
+        // 有分組的專案：每段一個標題（可收合、管理者可改名）＋最後一列虛線圓點新增
+        if (sec.sectionId !== undefined) {
+          const isOther = sec.sectionId === "";
+          return (
+            <section key={`sec-${secKey}`}>
+              <SectionHeader
+                name={sec.sectionName ?? ""}
+                muted={isOther}
+                count={rows.length}
+                folded={folded}
+                editing={renaming === sec.sectionId}
+                canEdit={pm.isManager && !isOther}
+                onFold={() =>
+                  setFoldSec((s0) => {
+                    const n = new Set(s0);
+                    if (n.has(secKey)) n.delete(secKey);
+                    else n.add(secKey);
+                    return n;
+                  })
+                }
+                onStartEdit={() => setRenaming(sec.sectionId!)}
+                onRename={(name) => renameSection(sec.sectionId!, name)}
+                onDelete={() => deleteSection(sec.sectionId!)}
+              />
+              {!folded && (
+                <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
+                  {items}
+                  {code && !(draft && (draft.section ?? "") === secKey) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        primeKeyboard();
+                        startDraft(undefined, secKey);
+                      }}
+                      aria-label={`在「${sec.sectionName}」新增任務`}
+                      className="w-full flex items-center gap-3 pl-[14px] pr-3 h-11 text-left active:bg-[#FAFAFA]"
+                    >
+                      <span className="w-[22px] h-[22px] rounded-full border-[1.5px] border-dashed border-[#C7C7CC] shrink-0" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        }
         return (
           <section key={sec.code || "list"}>
             {grouped && (
@@ -694,6 +789,12 @@ export function ReminderTasks({
           </section>
         );
       })}
+      {code && !grouped && pm.isManager && (
+        <button type="button" onClick={addSection} className="self-start h-9 px-3 rounded-full text-[14px] font-medium inline-flex items-center gap-1 active:bg-[#F4F4F5]" style={{ color }}>
+          <Icon name="add" weight={500} className="text-[19px]" />
+          新增分組
+        </button>
+      )}
       {tapEmpty && <button type="button" aria-label="新增任務" onClick={() => { if (draft) return; primeKeyboard(); startDraft(); }} className="min-h-[120px] w-full cursor-text" />}
 
       {menu && (
@@ -712,6 +813,9 @@ export function ReminderTasks({
           onIndent={() => (menu.depth ? outdent(menu.task) : indent(menu.task))}
           onTags={() => setTagFor(menu.task.id)}
           onMove={() => setMoveFor(menu.task)}
+          sections={code && !grouped ? projSections : undefined}
+          currentSection={secOf(menu.task)}
+          onSection={(sid) => moveToSection(pm.tasks.find((t) => t.id === menu.task.id) ?? menu.task, sid)}
         />
       )}
       <TagSheet pm={pm} taskId={tagFor} open={!!tagFor} onClose={() => setTagFor(null)} />
@@ -1053,7 +1157,7 @@ function DraftRow({ depth, color, onCommit }: { depth: 0 | 1; color: string; onC
 
 /* ── 長按選單（像提醒事項） ─────────────────────────────── */
 
-type MenuPage = "main" | "due" | "assign";
+type MenuPage = "main" | "due" | "assign" | "section";
 
 function RowMenu({
   pm,
@@ -1070,6 +1174,9 @@ function RowMenu({
   onIndent,
   onTags,
   onMove,
+  sections,
+  currentSection,
+  onSection,
 }: {
   pm: Pm;
   task: Task;
@@ -1086,6 +1193,10 @@ function RowMenu({
   onIndent: () => void;
   onTags: () => void;
   onMove: () => void;
+  /** 專案頁：分組清單（沒有＝不顯示「移到分組」） */
+  sections?: { id: string; name: string }[];
+  currentSection?: string;
+  onSection?: (id: string) => void;
 }) {
   const [page, setPage] = useState<MenuPage>("main");
   const [shown, setShown] = useState(false);
@@ -1152,9 +1263,28 @@ function RowMenu({
             <div className="h-px bg-[#E4E4E7]" />
             <div className="py-1">
               {inProject && <MenuItem icon={depth ? "format_indent_decrease" : "format_indent_increase"} label={depth ? "取消縮排" : "縮排"} onClick={run(onIndent)} disabled={!edit} />}
+              {sections && (sections.length > 0 || pm.isManager) && <MenuItem icon="segment" label="移到分組 ›" onClick={() => setPage("section")} disabled={!edit} />}
               <MenuItem icon="drive_file_move" label="移到專案 ›" onClick={run(onMove)} disabled={!edit} />
             </div>
           </>
+        )}
+        {page === "section" && sections && (
+          <div className="py-1 max-h-[360px] overflow-y-auto">
+            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 bg-[#F7F7F8]">
+              <Icon name="chevron_left" className="text-[22px]" />
+              移到分組
+            </button>
+            <MenuItem icon="block" label="不分組（其他）" checked={!currentSection} onClick={run(() => onSection?.(""))} />
+            {sections.map((s) => (
+              <MenuItem key={s.id} icon="segment" label={s.name} checked={currentSection === s.id} onClick={run(() => onSection?.(s.id))} />
+            ))}
+            {pm.isManager && (
+              <>
+                <div className="h-px bg-[#E4E4E7] my-1" />
+                <MenuItem icon="add" label="新增分組並移入" onClick={run(() => onSection?.("new"))} />
+              </>
+            )}
+          </div>
         )}
         {page === "due" && (
           <div className="py-1">
@@ -1233,3 +1363,79 @@ function TopAction({ icon, label, onClick, disabled, danger, fill }: { icon: str
   );
 }
 
+
+/** 分組標題：點名稱改名（管理者），右邊收合；改名時可以刪除分組 */
+function SectionHeader({
+  name,
+  muted,
+  count,
+  folded,
+  editing,
+  canEdit,
+  onFold,
+  onStartEdit,
+  onRename,
+  onDelete,
+}: {
+  name: string;
+  muted?: boolean;
+  count: number;
+  folded: boolean;
+  editing: boolean;
+  canEdit: boolean;
+  onFold: () => void;
+  onStartEdit: () => void;
+  onRename: (name: string) => void;
+  onDelete: () => void;
+}) {
+  const [v, setV] = useState(name);
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!editing) return;
+    setV(name);
+    setTimeout(() => ref.current?.select(), 30);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing]);
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2 px-1 pb-2">
+        <input
+          ref={ref}
+          value={v}
+          onChange={(e) => setV(e.target.value)}
+          onBlur={() => onRename(v)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.nativeEvent.isComposing) (e.target as HTMLInputElement).blur();
+            if (e.key === "Escape") onRename(name);
+          }}
+          maxLength={40}
+          aria-label="分組名稱"
+          className="flex-1 min-w-0 h-10 text-[22px] font-bold text-[#18181B] bg-transparent border-b-2 border-[var(--accent)] outline-none"
+        />
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={onDelete}
+          className="h-9 px-3 rounded-full text-[14px] text-[#E5484D] active:bg-[#FDECEC] shrink-0"
+        >
+          刪除分組
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2 px-1 pb-2 min-h-[40px]">
+      <button
+        type="button"
+        onClick={canEdit ? onStartEdit : onFold}
+        className={`flex-1 min-w-0 text-left text-[22px] font-bold truncate ${muted ? "text-[#AEAEB2]" : "text-[#18181B]"}`}
+      >
+        {name}
+      </button>
+      {folded && count > 0 && <span className="text-[14px] text-[#A1A1AA] tabular-nums">{count}</span>}
+      <button type="button" onClick={onFold} aria-label={folded ? `展開「${name}」` : `收合「${name}」`} aria-expanded={!folded} className="w-9 h-9 rounded-full flex items-center justify-center text-[#3F3F46] active:bg-[#F4F4F5]">
+        <Icon name="expand_more" className={`text-[24px] transition-transform ${folded ? "-rotate-90" : ""}`} />
+      </button>
+    </div>
+  );
+}

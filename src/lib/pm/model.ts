@@ -78,6 +78,15 @@ export interface Task {
   updatedBy?: string;
 }
 
+export interface Section {
+  id: string;
+  name: string;
+}
+
+export function newSectionId(): string {
+  return "s-" + newTaskId().slice(2, 12);
+}
+
 export interface PmProject {
   code: string;
   name: string;
@@ -104,6 +113,8 @@ export interface PmProject {
   risk?: Risk;
   note?: string;
   driveFolderId?: string;
+  /** 清單分組（像提醒事項的 Section），順序＝畫面順序 */
+  sections?: Section[];
   archived: boolean;
   version: number;
   updatedAt?: string;
@@ -321,6 +332,12 @@ export function rowToProject(r: Row): Omit<PmProject, "name" | "company" | "inCr
     note: s(r.note),
     driveFolderId: s(r.drive_folder_id),
     archived: r.archived === true,
+    sections: Array.isArray(r.sections)
+      ? (r.sections as unknown[])
+          .filter((x): x is { id: unknown; name: unknown } => !!x && typeof x === "object")
+          .map((x) => ({ id: String(x.id ?? ""), name: String(x.name ?? "") }))
+          .filter((x) => x.id)
+      : [],
     version: n(r.version) ?? 1,
     updatedAt: s(r.updated_at),
     updatedBy: s(r.updated_by),

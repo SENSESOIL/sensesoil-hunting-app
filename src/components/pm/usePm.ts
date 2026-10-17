@@ -20,6 +20,7 @@ import {
   type Goal,
   type PmData,
   type PmProject,
+  type Section,
   type Person,
   type Task,
 } from "@/lib/pm/model";
@@ -363,6 +364,21 @@ export function usePm() {
     [enqueue, mutate]
   );
 
+  /** 整份覆寫某個專案的清單分組（只有管理者） */
+  const saveSections = useCallback(
+    async (code: string, sections: Section[]): Promise<boolean> => {
+      mutate((x) => x && { ...x, projects: x.projects.map((p) => (p.code === code ? { ...p, sections } : p)) }, { revalidate: false });
+      const res = await enqueue(`sections:${code}`, () => pmPost({ op: "sections.save", code, sections }));
+      if (!res.ok) {
+        toast(res.data.error || "分組儲存失敗", { tone: "error" });
+        await mutate();
+        return false;
+      }
+      return true;
+    },
+    [enqueue, mutate]
+  );
+
   /** 新增或修改公司目標（只有管理者）。回傳存好的目標；失敗回傳 null */
   const saveGoal = useCallback(
     async (patch: Partial<Goal> & { id?: string }): Promise<Goal | null> => {
@@ -434,6 +450,7 @@ export function usePm() {
     reorderTasks,
     markTask,
     saveProject,
+    saveSections,
   };
 }
 
