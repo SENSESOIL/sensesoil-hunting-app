@@ -26,10 +26,10 @@ import { realSections, splitBySection, treeOrder } from "./tree";
 /* 日／週／月：每天的寬度不同（放不下就左右捲動）
    日＝看得到每天的星期；週＝每週一一個刻度（預設）；月＝一次看好幾個月 */
 type Zoom = "day" | "week" | "month";
-const ZOOMS: { value: Zoom; label: string; fit: { min: number; max: number }; dense: boolean; ahead: number }[] = [
-  { value: "day", label: "日", fit: { min: 30, max: 44 }, dense: true, ahead: 14 },
-  { value: "week", label: "週", fit: { min: 14, max: 26 }, dense: true, ahead: 21 },
-  { value: "month", label: "月", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
+const ZOOMS: { value: Zoom; label: string; icon: string; fit: { min: number; max: number }; dense: boolean; ahead: number }[] = [
+  { value: "day", label: "日", icon: "calendar_view_day", fit: { min: 30, max: 44 }, dense: true, ahead: 14 },
+  { value: "week", label: "週", icon: "calendar_view_week", fit: { min: 14, max: 26 }, dense: true, ahead: 21 },
+  { value: "month", label: "月", icon: "calendar_view_month", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
 ];
 const ZOOM_KEY = "pm:gantt:zoom";
 
@@ -123,9 +123,11 @@ export function TaskGantt({
     }
     // 太久以前的完成任務不要把圖拉得很長：最多往前看 60 天
     const floor = addDays(today, -60);
-    return { from: addDays(s < floor ? floor : s, -2), to: addDays(e, 4) };
+    const from = addDays(s < floor ? floor : s, -2);
+    // 月刻度：從那個月 1 號開始畫，月份標籤才會對齊、不會擠在一起
+    return { from: zoom === "month" ? `${from.slice(0, 8)}01` : from, to: addDays(e, 4) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dated, span, today, Z.ahead]);
+  }, [dated, span, today, Z.ahead, zoom]);
 
   if (!range) {
     return (
@@ -243,20 +245,18 @@ export function TaskGantt({
           labelWidth={132}
           rows={rows}
           corner={
-            <div className="flex w-full p-0.5 rounded-[9px] bg-[#F2F2F4]" role="radiogroup" aria-label="時間刻度">
-              {ZOOMS.map((z) => (
-                <button
-                  key={z.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={zoom === z.value}
-                  onClick={() => setZoom(z.value)}
-                  className={`flex-1 h-7 rounded-[7px] text-[12.5px] transition-colors ${zoom === z.value ? "bg-white shadow-[0_1px_2px_rgba(0,0,0,0.12)] font-semibold text-[#18181B]" : "text-[#8E8E93]"}`}
-                >
-                  {z.label}
-                </button>
-              ))}
-            </div>
+            // 同一個位置一顆按鈕：點一下換下一個刻度（日 → 週 → 月 → 日）
+            <button
+              type="button"
+              onClick={() => setZoom(ZOOMS[(ZOOMS.indexOf(Z) + 1) % ZOOMS.length].value)}
+              aria-label={`時間刻度：${Z.label}，點一下換成${ZOOMS[(ZOOMS.indexOf(Z) + 1) % ZOOMS.length].label}`}
+              className="h-8 pl-1.5 pr-2.5 rounded-full flex items-center gap-1 text-[#52525B] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
+                {Z.icon}
+              </span>
+              <span className="text-[13px] font-medium">{Z.label}</span>
+            </button>
           }
         />
       </div>

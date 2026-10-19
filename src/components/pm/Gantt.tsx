@@ -285,6 +285,20 @@ export default function Gantt({
     // 月初（粗體）標記附近的週一日期會疊在一起，讓位給月初
     const strong = marks.filter((m) => m.strong).map((m) => m.x);
     const kept = marks.filter((m) => m.strong || strong.every((sx) => Math.abs(sx - m.x) >= 34));
+    // 最左邊那個（不是 1 號開始的）標記離下一個太近會疊字：拿掉它，年份移到下一個月份上
+    if (kept.length > 1 && kept[0].x === 0) {
+      const gap = kept[1].x - kept[0].x;
+      const need = kept[0].label.length * 7 + 14;
+      if (gap < need) {
+        const first = kept.shift()!;
+        if (!dense && first.label.includes("·") && !kept[0].label.includes("·")) {
+          const year = first.label.split("·")[0].trim();
+          const m = Number(kept[0].label.replace("月", ""));
+          // 跨年時下一個標記本來就會帶年份；同年就把年份補上去
+          kept[0] = { ...kept[0], label: m === 1 ? kept[0].label : `${year} · ${kept[0].label}` };
+        }
+      }
+    }
     return { marks: kept, ticks, weekends, dayLabels };
   }, [from, today, days, dayWidth, dense]);
 
