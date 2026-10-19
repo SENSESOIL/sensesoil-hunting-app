@@ -187,7 +187,7 @@ export default function TasksPage({
   };
 
   return (
-    <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
+    <div className="px-5 lg:px-10 pb-6 w-full flex flex-col gap-5">
       <SetupNotice pm={pm} />
       {tab === "行事曆" ? (
         <MyTasks pm={pm} onOpen={open} onAdd={add} />

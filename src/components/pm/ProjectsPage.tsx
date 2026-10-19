@@ -106,7 +106,7 @@ export default function ProjectsPage({
       </button>
     );
     return (
-      <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
+      <div className="px-5 lg:px-10 pb-6 w-full flex flex-col gap-5">
         <SetupNotice pm={pm} />
         {activeTab === "目標" && <GoalsPage pm={pm} onOpenTask={openTask} />}
         {activeTab === "量能" && teamMode === "load" && (
@@ -175,7 +175,7 @@ export default function ProjectsPage({
   };
 
   return (
-    <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
+    <div className="px-5 lg:px-10 pb-6 w-full flex flex-col gap-5">
       <SetupNotice pm={pm} />
 
       {/* 總覽 */}

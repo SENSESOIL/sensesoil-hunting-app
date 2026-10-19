@@ -44,10 +44,11 @@ const allNavItems = [
 ];
 
 /**
- * 只給「可以派工的人」的主頁：權限表任一欄是 Admin，或「專案情報／工進排程／任務追蹤」是 Editor。
- * （規則在 src/lib/pm/model.ts 的 isManagerRoles；API 也用同一套）
+ * 只給「可以派工的人」的主頁（權限表任一欄 Admin，或「專案情報／工進排程／任務追蹤」是 Editor）。
+ * 專案情報改成照權限表「專案情報」欄：User 也看得到專案清單、公司目標；
+ * 裡面只有管理者能用的部分（量能、新專案、編輯專案、金額）各自另外擋（pm.isManager／API）。
  */
-const MANAGER_ONLY_NAV = new Set(["project_info"]);
+const MANAGER_ONLY_NAV = new Set<string>();
 /** 在權限表上的人都看得到 */
 const EVERYONE_NAV = new Set(["tasks"]);
 
@@ -1771,7 +1772,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/4 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "每週任務" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
-                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col">
+                  <div className="px-6 lg:px-10 pb-6 w-full h-full flex flex-col">
                     <div className={`flex-1 ${showManual ? "md:hidden" : ""}`}>
                       <HuntingTasksView ref={tasksViewRef} />
                     </div>
@@ -1786,7 +1787,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/4 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "領款" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
-                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
+                  <div className="px-6 lg:px-10 pb-6 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
                     <div className="flex-1 max-w-3xl mx-auto w-full">
                       <ReceiptForm ref={receiptFormRef} />
                     </div>
@@ -1796,7 +1797,7 @@ export default function HuntingManagementPage() {
                 <div
                   className={`w-1/4 md:w-full flex-shrink-0 transition-[height] duration-300 ${activeSubTab !== "請假" ? "h-0 overflow-hidden md:h-auto md:overflow-visible md:hidden" : "h-auto md:h-full"}`}
                 >
-                  <div className="px-6 lg:px-10 pb-20 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
+                  <div className="px-6 lg:px-10 pb-6 w-full h-full flex flex-col overflow-y-auto scrollbar-hide">
                     <div className="flex-1 max-w-3xl mx-auto w-full">
                       <LeaveForm ref={leaveFormRef} />
                     </div>

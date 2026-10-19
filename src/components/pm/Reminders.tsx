@@ -164,15 +164,14 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
                 ))}
                 {(hiddenCount > 0 || allProjects) && (
                   // 公司的專案（拾壤CRM 名冊）都已經在這裡，只是沒有任務的先收起來；展開找到專案就能直接寫任務，不用另外新增專案
-                  <button type="button" onClick={() => setAllProjects((v) => !v)} className="w-full px-4 py-3 text-center active:bg-[#F4F4F5]">
-                    <span className="block text-[15px] text-[var(--accent)] font-medium">
-                      {allProjects ? "收起沒有任務的專案" : `展開其他 ${hiddenCount} 個專案`}
-                    </span>
-                    {!allProjects && (
-                      <span className="block mt-0.5 text-[12.5px] leading-relaxed text-[#A1A1AA]">
-                        展開其他專案新增任務排程
-                      </span>
-                    )}
+                  <button
+                    type="button"
+                    onClick={() => setAllProjects((v) => !v)}
+                    aria-expanded={allProjects}
+                    className="w-full h-11 px-4 flex items-center justify-center gap-0.5 text-[15px] text-[var(--accent)] font-medium active:bg-[#F4F4F5]"
+                  >
+                    {allProjects ? "收起沒有任務的專案" : "展開其他專案新增任務排程"}
+                    <Icon name={allProjects ? "expand_less" : "expand_more"} className="text-[20px]" />
                   </button>
                 )}
               </div>
@@ -448,7 +447,7 @@ export function ReminderPage({
   };
 
   return (
-    <div className="flex flex-col gap-3 pb-24">
+    <div className="flex flex-col gap-3">
       {slot ? createPortal(menuButton, slot) : <div className="flex justify-end">{menuButton}</div>}
 
       {/* 電腦：返回鍵在標題上方；手機在左下角 */}
@@ -947,7 +946,7 @@ export function ReminderTasks({
           新增分組
         </button>
       )}
-      {tapEmpty && <button type="button" aria-label="新增任務" onClick={() => { if (draft) return; primeKeyboard(); startDraft(); }} className="min-h-[120px] w-full cursor-text" />}
+      {/* 點清單下方空白處新增：每段最後已經有虛線圓點可以新增，不再保留一大塊空白點擊區（會讓頁面底部多出一大段空白） */}
 
       {menu && (
         <RowMenu
