@@ -163,8 +163,16 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
                   />
                 ))}
                 {(hiddenCount > 0 || allProjects) && (
-                  <button type="button" onClick={() => setAllProjects((v) => !v)} className="w-full h-11 text-[15px] text-[var(--accent)] font-medium">
-                    {allProjects ? "只顯示進行中的專案" : `顯示全部專案（另 ${hiddenCount} 個）`}
+                  // 公司的專案（拾壤CRM 名冊）都已經在這裡，只是沒有任務的先收起來；展開找到專案就能直接寫任務，不用另外新增專案
+                  <button type="button" onClick={() => setAllProjects((v) => !v)} className="w-full px-4 py-3 text-center active:bg-[#F4F4F5]">
+                    <span className="block text-[15px] text-[var(--accent)] font-medium">
+                      {allProjects ? "收起沒有任務的專案" : `展開其他 ${hiddenCount} 個專案`}
+                    </span>
+                    {!allProjects && (
+                      <span className="block mt-0.5 text-[12.5px] leading-relaxed text-[#A1A1AA]">
+                        公司的專案都已經在這裡，只是還沒有任務的先收起來。展開找到專案就能直接新增任務，不用另外建立專案。
+                      </span>
+                    )}
                   </button>
                 )}
               </div>

@@ -130,6 +130,17 @@ export function ProjectInfoSheet({
       footer={<SheetActions onSave={save} saving={saving} disabled={!dirty} saveLabel={errors.length ? errors[0] : isNew ? "建立專案" : "儲存"} />}
     >
       <div className="pb-6">
+        {/* 新增專案還沒接上拾壤CRM 名冊：只存在 APP 的資料庫 */}
+        {isNew && (
+          <div role="note" className="mx-4 mt-3 rounded-[14px] bg-[var(--accent-soft)] px-3.5 py-2.5 flex items-start gap-2">
+            <Icon name="warning" fill={1} className="text-[18px] text-[var(--accent-strong)] mt-px shrink-0" />
+            <p className="text-[13px] leading-relaxed text-[var(--accent-ink)]">
+              <b className="font-semibold">尚未連結 CRM 表單</b>
+              <br />
+              在這裡新增的專案只會存在 APP，不會寫進拾壤CRM 的名冊。
+            </p>
+          </div>
+        )}
         {(isNew || !p?.inCrm) && (
           <FieldGroup title="專案" hint={isNew ? "代碼建議與拾壤CRM 的編號規則一致（A＝裝修、B＝泥作…）。" : undefined}>
             {isNew && <TextField label="代碼" value={newCode} onChange={(v) => setNewCode(v.toUpperCase().slice(0, 12))} placeholder="例：B44" issues={codeTaken ? [{ field: "code", level: "error", message: "這個代碼已經有專案了" }] : undefined} />}
