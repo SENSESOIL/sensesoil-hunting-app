@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { addDays, diffDays, todayISO, toDay, WEEKDAYS } from "@/lib/project-ops";
 import { personColor, type Task } from "@/lib/pm/model";
 import { Icon } from "./ui";
@@ -355,6 +356,23 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
   // 行事曆只用清單：專心看任務、打勾完成（切換檢視、新增都拿掉）
   const view = "list" as View;
   const setView = (_v: View) => {};
+  // 右上角：公司（顯示公司目標橫條）／個人（只看自己的任務），點一下切換
+  const [scope, setScope] = useStored<"company" | "personal">("pm:cal:scope", "company");
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => setSlot(document.getElementById("pm-header-slot")), []);
+  const scopeButton = (
+    <button
+      type="button"
+      onClick={() => setScope(scope === "company" ? "personal" : "company")}
+      aria-label={scope === "company" ? "目前：公司（顯示公司目標），點一下換成個人" : "目前：個人（只看自己的任務），點一下換成公司"}
+      title={scope === "company" ? "公司" : "個人"}
+      className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
+    >
+      <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>
+        {scope === "company" ? "home" : "person"}
+      </span>
+    </button>
+  );
   const { today } = pm;
   const [day, setDay] = useState(today);
   const [weekStart, setWeekStart] = useState(() => mondayOf(today));
@@ -475,12 +493,13 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
         </button>
       )}
 
-      {/* 日期：週／月切換；公司目標以橫條顯示 */}
+      {slot && createPortal(scopeButton, slot)}
+      {/* 日期：週／月切換；公司模式才顯示公司目標橫條 */}
       <CalendarCard
         mode={calMode}
         setMode={setCalMode}
         mine={mine}
-        goals={pm.goals}
+        goals={scope === "company" ? pm.goals : []}
         today={today}
         day={smart === "day" && view === "list" ? day : null}
         weekStart={weekStart}
