@@ -57,6 +57,7 @@ export function ProjectInfoSheet({
   const [newCode, setNewCode] = useState("");
   const [folderText, setFolderText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
   // 可編輯的人（另外存，不走 project.save）
   const initialEditors = useMemo(() => p?.editors ?? [], [open, code]); // eslint-disable-line react-hooks/exhaustive-deps
   const [editors, setEditors] = useState<string[]>(initialEditors);
@@ -67,6 +68,7 @@ export function ProjectInfoSheet({
   useEffect(() => {
     if (!open) return;
     setD(initial);
+    setConfirmArchive(false);
     setEditors(initialEditors);
     setFolderText(initial.driveFolderId ? `https://drive.google.com/drive/folders/${initial.driveFolderId}` : "");
     if (isNew) setNewCode(suggestCode(codesRef.current));
@@ -221,6 +223,47 @@ export function ProjectInfoSheet({
         <FieldGroup title="近況">
           <TextField label="最新狀況" value={d.note} onChange={(v) => set("note", v)} placeholder="例：泥作打底完成，待乾燥後上面層" multiline />
         </FieldGroup>
+        {!isNew && p && (
+          <div className="px-4 pt-4">
+            {confirmArchive ? (
+              <div className="rounded-[16px] bg-white border border-[#F3D0D0] p-4">
+                <p className="text-[14px] font-semibold text-[#18181B]">{p.archived ? "取消封存這個專案？" : "封存這個專案？"}</p>
+                <p className="text-[12.5px] text-[#71717A] mt-1 leading-relaxed">
+                  {p.archived
+                    ? "專案會回到清單上。"
+                    : "專案會從任務追蹤、專案情報的清單上隱藏。任務、照片都會保留，之後可以在這裡取消封存。（拾壤CRM 名冊上的專案沒辦法真的刪除，請在 CRM 那邊處理。）"}
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <button type="button" onClick={() => setConfirmArchive(false)} className="flex-1 h-11 rounded-[12px] bg-[#F4F4F5] text-[15px] font-semibold text-[#3F3F46]">
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setConfirmArchive(false);
+                      const ok = await pm.saveProject(p.code, { archived: !p.archived });
+                      if (ok) {
+                        toast(p.archived ? "已取消封存" : `已封存 ${p.code}`);
+                        onClose();
+                      }
+                    }}
+                    className={`flex-1 h-11 rounded-[12px] text-[15px] font-semibold text-white ${p.archived ? "bg-[#18181B]" : "bg-[#E5484D]"}`}
+                  >
+                    {p.archived ? "取消封存" : "封存"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmArchive(true)}
+                className={`w-full h-11 rounded-[14px] bg-white border border-[#E4E4E7] text-[15px] font-medium ${p.archived ? "text-[#18181B]" : "text-[#E5484D]"}`}
+              >
+                {p.archived ? "取消封存專案" : "封存（刪除）專案"}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </Sheet>
   );

@@ -740,16 +740,20 @@ export default function HuntingManagementPage() {
   // 行事曆排在第一個，但一進來還是先看任務
   const [scheduleTab, setScheduleTab] = useState("任務");
   // 標題列的搜尋（分享鍵左邊）：指揮中心「團隊」與任務追蹤「清單」共用同一組狀態
-  const searchMode: "team" | "tasks" | "projects" | null =
+  // 任務追蹤的「任務」與「團隊」分頁都用標題列的搜尋（分開兩個值，換分頁時會清掉搜尋字）
+  const searchMode: "team" | "tasks" | "teamTasks" | "projects" | null =
     activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM
       ? "team"
       : activeNav === "tasks" && scheduleTab === "任務"
         ? "tasks"
-        : activeNav === "project_info"
-          ? "projects"
-          : null;
-  const searchPlaceholder = searchMode === "tasks" ? "搜尋任務、標籤" : searchMode === "projects" ? "搜尋代碼、名稱、業主" : "搜尋姓名、工項、電話";
-  const searchLabel = searchMode === "tasks" ? "搜尋任務" : searchMode === "projects" ? "搜尋專案" : "搜尋團隊";
+        : activeNav === "tasks" && scheduleTab === "團隊"
+          ? "teamTasks"
+          : activeNav === "project_info"
+            ? "projects"
+            : null;
+  const searchPlaceholder =
+    searchMode === "tasks" ? "搜尋任務、標籤" : searchMode === "teamTasks" ? "搜尋任務、專案、人" : searchMode === "projects" ? "搜尋代碼、名稱、業主" : "搜尋姓名、工項、電話";
+  const searchLabel = searchMode === "tasks" || searchMode === "teamTasks" ? "搜尋任務" : searchMode === "projects" ? "搜尋專案" : "搜尋團隊";
   // 換到別的頁面就收起搜尋、清掉搜尋字
   useEffect(() => {
     setTeamSearchOpen(false);

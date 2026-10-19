@@ -204,7 +204,20 @@ export default function TasksPage({
       ) : tab === "行事曆" ? (
         <MyTasks pm={pm} onOpen={open} onAdd={add} />
       ) : tab === "團隊" ? (
-        <AllTasks pm={pm} onOpen={open} onAdd={add} person={personFilter} setPerson={setPersonFilter} />
+        <>
+          {/* 手機：標題列放大鏡 → 跳出搜尋欄，結果列在下方；電腦：左側欄的搜尋框，直接篩選下面的清單 */}
+          <SearchOverlay open={searchOpen} query={searchQuery} onQuery={(v) => onSearchQuery?.(v)} onClose={() => onSearchClose?.()} placeholder="搜尋任務、專案、人" label="搜尋任務">
+            <TaskSearchResults
+              pm={pm}
+              query={searchQuery}
+              onOpen={(t) => {
+                onSearchClose?.();
+                open(t);
+              }}
+            />
+          </SearchOverlay>
+          <AllTasks pm={pm} onOpen={open} onAdd={add} person={personFilter} setPerson={setPersonFilter} query={searchQuery} />
+        </>
       ) : tab === "目標" ? (
         <GoalsPage pm={pm} onOpenTask={open} />
       ) : (
@@ -875,6 +888,7 @@ function AllTasks({
   onAdd,
   person,
   setPerson,
+  query,
 }: {
   pm: Pm;
   onOpen: (t: Task) => void;
@@ -882,11 +896,13 @@ function AllTasks({
   /** undefined＝全部人；null＝未指派 */
   person: string | null | undefined;
   setPerson: (v: string | null | undefined) => void;
+  /** 搜尋字（標題列／左側欄的搜尋框） */
+  query?: string;
 }) {
   const [view, setView] = useStored<View>("pm:all:view", "list");
   const [group, setGroup] = useStored<"project" | "date">("pm:all:group", "project");
   const [showDone, setShowDone] = useState(false);
-  const [q, setQ] = useState("");
+  const q = query ?? "";
 
   const filtered = useMemo(() => {
     const k = q.trim().toLowerCase();
@@ -973,22 +989,10 @@ function AllTasks({
         <Stat label="未確認" value={unacked} color={unacked ? "var(--accent-strong)" : undefined} />
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 min-w-0">
-          <Icon name="search" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[19px] text-[#A1A1AA]" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="搜尋任務、專案、人"
-            className="w-full h-11 rounded-full bg-white shadow-card pl-10 pr-4 text-[16px] text-[#18181B] outline-none focus:ring-2 focus:ring-[var(--accent)]/35 placeholder:text-[#A1A1AA]"
-          />
-        </div>
-        <AddButton onClick={() => onAdd(person ? { assigneeEmail: person } : undefined)} label="新增任務" />
-      </div>
-
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-[22px] font-bold tracking-tight text-[#18181B]">{who}</h2>
         <div className="flex items-center gap-2">
+          <AddButton onClick={() => onAdd(person ? { assigneeEmail: person } : undefined)} label="新增任務" />
           {view === "list" && (
             <Chip on={false} onClick={() => setGroup(group === "project" ? "date" : "project")}>
               <Icon name="swap_vert" className="text-[16px]" />

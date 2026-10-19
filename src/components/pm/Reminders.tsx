@@ -12,6 +12,7 @@ import { Sheet, toast } from "./Sheet";
 import { ProjectPicker } from "./TaskSheet";
 import { TaskGantt } from "./TaskGantt";
 import { ScheduleSheet } from "./ScheduleSheet";
+import { ProjectInfoSheet } from "./ProjectInfoSheet";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
 import { assigneeLabel, assigneePatch, canEditProject, isLate, personLabel, personMark, type Pm } from "./usePm";
@@ -91,8 +92,37 @@ export function TaskSearchResults({ pm, query, onOpen }: { pm: Pm; query: string
   );
 }
 
+/** 置頂的專案（存在這支裝置，依帳號分開） */
+function usePinned(email?: string): [string[], (code: string) => void] {
+  const key = `pm:pinned:${email ?? ""}`;
+  const [list, setList] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(key) ?? "[]");
+      setList(Array.isArray(v) ? v.filter((x) => typeof x === "string") : []);
+    } catch {
+      setList([]);
+    }
+  }, [key]);
+  const toggle = (code: string) =>
+    setList((cur) => {
+      const next = cur.includes(code) ? cur.filter((c) => c !== code) : [code, ...cur];
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        /* 無痕模式 */
+      }
+      return next;
+    });
+  return [list, toggle];
+}
+
 export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }) {
   const [allProjects, setAllProjects] = useState(false);
+  const [pinned, togglePin] = usePinned(pm.me?.email);
+  // 長按專案：置頂、編輯（刪除＝封存，在編輯裡面）
+  const [projMenu, setProjMenu] = useState<{ code: string; rect: DOMRect } | null>(null);
+  const [editCode, setEditCode] = useState<string | null>(null);
   const smartIds: SmartId[] = pm.isManager ? ["today", "scheduled", "all", "flagged", "mine", "done"] : ["today", "scheduled", "all", "flagged", "done"];
 
   const projects = useMemo(() => {
@@ -102,7 +132,10 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
       .sort((a, b) => Number(!!active(b)) - Number(!!active(a)) || b.openCount - a.openCount || b.code.localeCompare(a.code))
       .map((p) => ({ p, active: !!active(p) }));
   }, [pm]);
-  const shownProjects = allProjects ? projects : projects.filter((x) => x.active).slice(0, 12);
+  // 置頂的排最前面，而且一定顯示（不受「只顯示進行中」限制）
+  const pinnedRows = pinned.map((c) => projects.find((x) => x.p.code === c)).filter((x): x is (typeof projects)[number] => !!x);
+  const rest = projects.filter((x) => !pinned.includes(x.p.code));
+  const shownProjects = [...pinnedRows, ...(allProjects ? rest : rest.filter((x) => x.active).slice(0, 12))];
   const hiddenCount = projects.length - shownProjects.length;
 
   const tags = useMemo(() => {
@@ -144,7 +177,16 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
             {shownProjects.length ? (
               <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
                 {shownProjects.map(({ p }) => (
-                  <ListRow key={p.code} badge={p.code} color={personColor(p.code)} label={p.name} count={p.openCount} onClick={() => go({ kind: "project", code: p.code })} />
+                  <ListRow
+                    key={p.code}
+                    badge={p.code}
+                    color={personColor(p.code)}
+                    label={p.name}
+                    count={p.openCount}
+                    pinned={pinned.includes(p.code)}
+                    onClick={() => go({ kind: "project", code: p.code })}
+                    onLongPress={(rect) => setProjMenu({ code: p.code, rect })}
+                  />
                 ))}
                 {(hiddenCount > 0 || allProjects) && (
                   <button type="button" onClick={() => setAllProjects((v) => !v)} className="w-full h-11 text-[15px] text-[var(--accent)] font-medium">
@@ -172,14 +214,100 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
             </section>
           )}
       </>
+      {projMenu && (
+        <ProjectMenu
+          rect={projMenu.rect}
+          pinned={pinned.includes(projMenu.code)}
+          canEdit={pm.isManager}
+          onClose={() => setProjMenu(null)}
+          onPin={() => togglePin(projMenu.code)}
+          onEdit={() => setEditCode(projMenu.code)}
+        />
+      )}
+      {pm.isManager && <ProjectInfoSheet pm={pm} code={editCode} open={!!editCode} onClose={() => setEditCode(null)} />}
     </div>
   );
 }
 
 /** 清單列：左邊圓形圖示，或專案代碼方塊（badge，和專案情報一樣），名稱一行 */
-function ListRow({ icon, badge, color, label, hint, count, onClick }: { icon?: string; badge?: string; color: string; label: string; hint?: string; count?: number; onClick: () => void }) {
+function ListRow({
+  icon,
+  badge,
+  color,
+  label,
+  hint,
+  count,
+  pinned,
+  onClick,
+  onLongPress,
+}: {
+  icon?: string;
+  badge?: string;
+  color: string;
+  label: string;
+  hint?: string;
+  count?: number;
+  pinned?: boolean;
+  onClick: () => void;
+  /** 長按（或滑鼠右鍵）：叫出選單 */
+  onLongPress?: (rect: DOMRect) => void;
+}) {
+  const ref = useRef<HTMLButtonElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const fired = useRef(false);
+  const clear = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
   return (
-    <button type="button" onClick={onClick} className="w-full flex items-center gap-3 pl-3 pr-2.5 min-h-[54px] text-left active:bg-[#F4F4F5] group">
+    <button
+      ref={ref}
+      type="button"
+      onClick={() => {
+        if (fired.current) {
+          fired.current = false;
+          return;
+        }
+        onClick();
+      }}
+      onPointerDown={
+        onLongPress
+          ? (e) => {
+              if (e.pointerType === "mouse") return;
+              fired.current = false;
+              start.current = { x: e.clientX, y: e.clientY };
+              clear();
+              timer.current = setTimeout(() => {
+                fired.current = true;
+                window.getSelection()?.removeAllRanges();
+                try {
+                  navigator.vibrate?.(10);
+                } catch {
+                  /* iPhone 不支援震動 */
+                }
+                if (ref.current) onLongPress(ref.current.getBoundingClientRect());
+              }, 450);
+            }
+          : undefined
+      }
+      onPointerMove={(e) => {
+        if (start.current && (Math.abs(e.clientX - start.current.x) > 8 || Math.abs(e.clientY - start.current.y) > 8)) clear();
+      }}
+      onPointerUp={clear}
+      onPointerCancel={clear}
+      onContextMenu={
+        onLongPress
+          ? (e) => {
+              e.preventDefault();
+              clear();
+              if (ref.current) onLongPress(ref.current.getBoundingClientRect());
+            }
+          : undefined
+      }
+      style={onLongPress ? { WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" } : undefined}
+      className="w-full flex items-center gap-3 pl-3 pr-2.5 min-h-[54px] text-left active:bg-[#F4F4F5] group"
+    >
       {badge ? (
         <span className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white shrink-0 text-[11.5px] font-bold tracking-tight" style={{ background: color }}>
           {badge}
@@ -191,7 +319,10 @@ function ListRow({ icon, badge, color, label, hint, count, onClick }: { icon?: s
       )}
       <span className="flex-1 min-w-0 self-stretch flex items-center gap-2 border-b border-[#F0F0F2] group-last:border-b-0 pr-1">
         <span className="flex-1 min-w-0">
-          <span className="block text-[16px] text-[#18181B] truncate">{label}</span>
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span className="block text-[16px] text-[#18181B] truncate">{label}</span>
+            {pinned && <Icon name="keep" fill={1} className="text-[15px] text-[#A1A1AA] shrink-0" aria-label="已置頂" />}
+          </span>
           {hint && <span className="block text-[12px] text-[#A1A1AA] truncate -mt-0.5">{hint}</span>}
         </span>
         {count !== undefined && <span className="text-[16px] text-[#8E8E93] tabular-nums">{count}</span>}
@@ -1482,5 +1613,55 @@ function SectionHeader({
         <Icon name="expand_more" className={`text-[24px] transition-transform ${folded ? "-rotate-90" : ""}`} />
       </button>
     </div>
+  );
+}
+
+/** 專案長按選單（像提醒事項的清單選單）：置頂、編輯。刪除（封存）放在編輯裡，避免誤觸 */
+function ProjectMenu({
+  rect,
+  pinned,
+  canEdit,
+  onClose,
+  onPin,
+  onEdit,
+}: {
+  rect: DOMRect;
+  pinned: boolean;
+  canEdit: boolean;
+  onClose: () => void;
+  onPin: () => void;
+  onEdit: () => void;
+}) {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(true));
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+  const W = 240;
+  const left = Math.min(Math.max(12, rect.left + 24), window.innerWidth - W - 12);
+  const h = canEdit ? 108 : 56;
+  const below = rect.bottom + 8 + h < window.innerHeight - 12;
+  const top = below ? rect.bottom + 8 : Math.max(12, rect.top - 8 - h);
+  const run = (f: () => void) => () => {
+    onClose();
+    f();
+  };
+  return createPortal(
+    <div className="fixed inset-0 z-[160] font-sans select-none [-webkit-touch-callout:none]" role="dialog" aria-label="專案選單">
+      <div className={`absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
+      <div
+        className={`absolute rounded-[16px] bg-[#F7F7F8]/95 shadow-[0_16px_50px_rgba(0,0,0,0.22)] overflow-hidden py-1 transition-all duration-200 ${shown ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+        style={{ top, left, width: W }}
+      >
+        <MenuItem icon="keep" label={pinned ? "取消置頂" : "置頂"} onClick={run(onPin)} />
+        {canEdit && <MenuItem icon="edit" label="編輯專案…" onClick={run(onEdit)} />}
+      </div>
+    </div>,
+    document.body
   );
 }
