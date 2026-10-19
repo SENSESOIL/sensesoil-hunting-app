@@ -21,7 +21,8 @@ import { TaskSheet } from "./TaskSheet";
    ══════════════════════════════════════════════════════════ */
 
 // 「目標」＝公司目標（原本在任務追蹤，移到這裡）
-export const PROJECT_TABS = ["進行中", "全部", "目標"];
+// 「專案」：進行中／全部改成下方篩選膠囊；「目標」＝公司目標
+export const PROJECT_TABS = ["專案", "目標"];
 
 const ORDER: Stage[] = ["施工中", "驗收", "簽約", "報價", "洽談", "暫停", "保固", "結案"];
 
@@ -60,7 +61,8 @@ export default function ProjectsPage({
   const [attention, setAttention] = useState(false);
   const [stage, setStage] = useState<Stage | null>(null);
 
-  const all = activeTab === "全部";
+  // 進行中（預設）或全部：用篩選膠囊切換
+  const [all, setAll] = useState(false);
   const list = useMemo(() => {
     const k = q.trim().toLowerCase();
     return pm.projects.filter((p) => {
@@ -193,17 +195,29 @@ export default function ProjectsPage({
           ))}
       </SearchOverlay>
 
-      {/* 階段 */}
-      {stageCounts.length > 0 && (
+      {/* 篩選：進行中、全部、需要注意、各階段（一定顯示，才切得到「全部」） */}
+      {(
         <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 py-1 lg:mx-0 lg:px-0" {...stop}>
           <StageChip
-            on={!stage && !attention}
+            on={!all && !stage && !attention}
             onClick={() => {
+              setAll(false);
               setStage(null);
               setAttention(false);
             }}
           >
-            {all ? "全部" : "進行中"}
+            進行中
+          </StageChip>
+          <StageChip
+            on={all && !stage && !attention}
+            onClick={() => {
+              setAll(true);
+              setStage(null);
+              setAttention(false);
+            }}
+            count={pm.projects.length}
+          >
+            全部
           </StageChip>
           {attn.length > 0 && (
             <StageChip on={attention} onClick={() => setAttention(!attention)} dot={RED} count={attn.length}>
@@ -223,7 +237,7 @@ export default function ProjectsPage({
           <Empty
             icon="folder_open"
             title={q ? `找不到「${q}」` : stage ? `沒有「${stage}」的專案` : attention ? "沒有需要注意的專案" : all ? "沒有專案" : "沒有進行中的專案"}
-            hint={all || stage || attention ? undefined : "進行中＝簽約、施工中、驗收，或還有未完成任務的專案。切到「全部」可以看名冊上所有專案。"}
+            hint={all || stage || attention ? undefined : "進行中＝簽約、施工中、驗收，或還有未完成任務的專案。點上方的「全部」可以看名冊上所有專案。"}
           />
         </Group>
       ) : (
