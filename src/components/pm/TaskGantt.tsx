@@ -39,6 +39,7 @@ export function TaskGantt({
   showProject,
   onOpen,
   editable = false,
+  project: projectCode,
 }: {
   pm: Pm;
   tasks: Task[];
@@ -46,6 +47,8 @@ export function TaskGantt({
   onOpen: (t: Task) => void;
   /** 編輯模式：拖曳長條、拖兩端、點日期排入、點時間軸開「時間安排」。閱讀模式只能看、點了開細節（避免手滑） */
   editable?: boolean;
+  /** 單一專案的甘特圖：最上面加一列「專案工期」（開工日 → 預計完工），並畫出預計／實際完工線 */
+  project?: string;
 }) {
   const { today } = pm;
   const [schedId, setSchedId] = useState<string | null>(null);
@@ -108,11 +111,21 @@ export function TaskGantt({
   const hasDate = (t: Task) => !!(t.start || t.due || span.has(t.id));
   const undated = dated.filter((t) => !hasDate(t)).length;
 
+  // 專案資料裡的開工日、預計完工、實際完工
+  const proj = projectCode ? pm.projectBy.get(projectCode) : undefined;
+  const pStart = proj?.startAt;
+  const pDue = proj?.dueAt;
+  const pDone = proj?.doneAt;
   const range = useMemo(() => {
-    if (!dated.length) return null;
+    if (!dated.length && !pStart && !pDue) return null;
     let s = today;
     // 往後至少留一段（日：兩週、週：三週、月：三個月），沒有日期的任務才有地方點
     let e = addDays(today, Z.ahead);
+    for (const d of [pStart, pDue, pDone]) {
+      if (!d) continue;
+      if (d < s) s = d;
+      if (d > e) e = d;
+    }
     for (const t of dated) {
       if (!hasDate(t)) continue;
       const sp = span.get(t.id);
@@ -127,7 +140,7 @@ export function TaskGantt({
     // 月刻度：從那個月 1 號開始畫，月份標籤才會對齊、不會擠在一起
     return { from: zoom === "month" ? `${from.slice(0, 8)}01` : from, to: addDays(e, 4) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dated, span, today, Z.ahead, zoom]);
+  }, [dated, span, today, Z.ahead, zoom, pStart, pDue, pDone]);
 
   if (!range) {
     return (
@@ -161,10 +174,47 @@ export function TaskGantt({
         : [],
     };
   };
-  const rows: GanttRow[] = dated.flatMap((t) => {
-    const head = headBefore.get(t.id);
-    return head ? [headRow(head), taskRow(t)] : [taskRow(t)];
-  });
+  const md = (d?: string) => (d ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}` : "—");
+  const projRow: GanttRow[] =
+    proj && (pStart || pDue)
+      ? [
+          {
+            id: "project-span",
+            label: "專案工期",
+            sublabel: `${md(pStart)} → ${md(pDue)}${pDone ? `・完工 ${md(pDone)}` : ""}`,
+            heading: true,
+            bars: [
+              {
+                start: pStart ?? pDue!,
+                end: pDue ?? pStart!,
+                progress: pDone ? 100 : proj.view.ops?.progress ?? proj.progress ?? 0,
+                fill: pDone ? GREEN : ORANGE,
+                late: !pDone && !!pDue && pDue < today,
+                tip: (
+                  <>
+                    <b>專案工期</b>
+                    <br />
+                    開工 {md(pStart)}　預計完工 {md(pDue)}
+                    <br />
+                    {pDone ? `實際完工 ${md(pDone)}` : `進度 ${proj.view.ops?.progress ?? proj.progress ?? 0}%`}
+                  </>
+                ),
+              },
+            ],
+          },
+        ]
+      : [];
+  const markers = [
+    ...(pDue ? [{ date: pDue, color: ORANGE, dashed: true, label: `預計完工 ${md(pDue)}` }] : []),
+    ...(pDone ? [{ date: pDone, color: GREEN, label: `實際完工 ${md(pDone)}` }] : []),
+  ];
+  const rows: GanttRow[] = [
+    ...projRow,
+    ...dated.flatMap((t) => {
+      const head = headBefore.get(t.id);
+      return head ? [headRow(head), taskRow(t)] : [taskRow(t)];
+    }),
+  ];
   function taskRow(t: Task): GanttRow {
     const sp = span.get(t.id);
     const child = depthOf.get(t.id) === 1;
@@ -244,6 +294,7 @@ export function TaskGantt({
           dayWidth={16}
           labelWidth={132}
           rows={rows}
+          markers={markers}
           corner={
             // 同一個位置一顆按鈕：點一下換下一個刻度（日 → 週 → 月 → 日）
             <button

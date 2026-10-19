@@ -220,7 +220,7 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
                   <ReminderTasks pm={pm} tasks={shown.tasks} code={shown.code} showDone={showDone} onOpen={(t) => setSheet({ id: t.id })} addRow surface="white" />
                 )}
                 {view === "board" && <TaskBoard pm={pm} tasks={shown.tasks} onOpen={(t) => setSheet({ id: t.id })} onAdd={() => setSheet({ id: null, preset: { code: shown.code } })} />}
-                {view === "gantt" && <TaskGantt pm={pm} tasks={shown.tasks.filter((t) => showDone || t.status !== "done")} onOpen={(t) => setSheet({ id: t.id })} />}
+                {view === "gantt" && <TaskGantt pm={pm} tasks={shown.tasks.filter((t) => showDone || t.status !== "done")} onOpen={(t) => setSheet({ id: t.id })} project={shown.code} />}
               </>
             )}
             {section === "photos" && <Photos pm={pm} project={shown} onUpload={() => setUpload(true)} />}

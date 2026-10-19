@@ -382,7 +382,9 @@ function Chip({ on, onClick, children, count, tone }: { on: boolean; onClick: ()
 
 function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onAdd: (p?: Partial<Task>) => void }) {
   const [smart, setSmart] = useStored<Smart>("pm:my:smart2", "day");
-  const [view, setView] = useStored<View>("pm:my:view", "list");
+  // 行事曆只用清單：專心看任務、打勾完成（切換檢視、新增都拿掉）
+  const view = "list" as View;
+  const setView = (_v: View) => {};
   const { today } = pm;
   const [day, setDay] = useState(today);
   const [weekStart, setWeekStart] = useState(() => mondayOf(today));
@@ -478,7 +480,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
               <span className="truncate">{next.title}</span>
             </span>
           ) : (
-            <span className="mt-1.5 block text-[13px] text-[#A1A1AA]">{pm.isManager ? "按「＋」安排工作，指派給同事" : "有新任務會通知你"}</span>
+            <span className="mt-1.5 block text-[13px] text-[#A1A1AA]">{pm.isManager ? "到「任務」分頁安排工作，指派給同事" : "有新任務會通知你"}</span>
           )}
         </span>
       </button>
@@ -555,13 +557,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
         </Chip>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-[22px] font-bold tracking-tight text-[#18181B] truncate">{title}</h2>
-        <div className="flex items-center gap-2 shrink-0">
-          <SegmentedIcons label="檢視方式" value={view} options={VIEWS} onChange={setView} />
-          <AddButton onClick={() => onAdd(smart === "day" ? { due: day } : undefined)} />
-        </div>
-      </div>
+      <h2 className="text-[22px] font-bold tracking-tight text-[#18181B] truncate">{title}</h2>
 
       {view === "list" &&
         (list.length ? (
@@ -573,19 +569,16 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
             showDone={smart === "done"}
             hideSingleHeader={smart !== "done"}
             onOpen={onOpen}
-            onAdd={() => onAdd(smart === "day" ? { due: day } : undefined)}
           />
         ) : (
           <Group>
             <Empty
               icon={smart === "done" ? "task_alt" : "celebration"}
               title={smart === "day" ? `${shortDay}沒有要做的任務` : smart === "done" ? "最近 30 天還沒有完成的任務" : "沒有任務"}
-              hint={pm.isManager ? "按「＋」建立任務，指派給同事，對方的 APP 會收到通知。" : "主管指派任務給你時，會出現在這裡，也會收到通知。"}
+              hint={pm.isManager ? "到「任務」分頁的專案裡新增任務、指派給同事，對方的 APP 會收到通知。" : "主管指派任務給你時，會出現在這裡，也會收到通知。"}
             />
           </Group>
         ))}
-      {view === "board" && <TaskBoard pm={pm} tasks={list} showProject onOpen={onOpen} onAdd={() => onAdd()} />}
-      {view === "gantt" && <TaskGantt pm={pm} tasks={list} showProject onOpen={onOpen} />}
     </>
   );
 }

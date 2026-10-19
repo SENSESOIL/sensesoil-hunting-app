@@ -136,6 +136,7 @@ export default function Gantt({
   fit,
   anchor = 0.3,
   corner,
+  markers = [],
 }: {
   rows: GanttRow[];
   today: string;
@@ -151,6 +152,8 @@ export default function Gantt({
   anchor?: number;
   /** 表頭左上角（名稱欄上方）放的東西，例如日／週／月切換 */
   corner?: React.ReactNode;
+  /** 貫穿所有列的直線（畫在那天的結束處）：例如專案的預計完工（虛線）、實際完工 */
+  markers?: { date: string; color: string; dashed?: boolean; label: string }[];
 }) {
   const days = Math.max(1, diffDays(from, to) + 1);
   const scroller = useRef<HTMLDivElement>(null);
@@ -675,6 +678,22 @@ export default function Gantt({
               </div>
             ))}
 
+            {/* 專案日期：預計完工（虛線）、實際完工 */}
+            {markers
+              .filter((m) => m.date >= from && m.date <= to)
+              .map((m) => (
+                <div
+                  key={m.label + m.date}
+                  className="absolute top-0 bottom-0 z-[3] pointer-events-none"
+                  style={{
+                    left: labelWidth + x(m.date) + dayWidth - 1,
+                    width: 0,
+                    borderLeft: `1.5px ${m.dashed ? "dashed" : "solid"} ${m.color}`,
+                  }}
+                  title={m.label}
+                  aria-hidden
+                />
+              ))}
             {/* 今天：一條線貫穿所有列，壓在長條上、名稱欄下 */}
             {showToday && (
               <div

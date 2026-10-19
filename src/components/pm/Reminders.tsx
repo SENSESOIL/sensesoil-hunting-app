@@ -496,7 +496,7 @@ export function ReminderPage({
           {showDone ? "隱藏已完成" : `顯示已完成${doneCount ? `（${doneCount}）` : ""}`}
         </button>
       )}
-      {pageView === "gantt" && <TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} editable={ganttEdit && canGantt} />}
+      {pageView === "gantt" && <TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} editable={ganttEdit && canGantt} project={code} />}
 
       {/* 手機：返回（左下）與新增（右下）放在原本底部導覽列的位置 */}
       <button
