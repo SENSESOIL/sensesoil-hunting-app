@@ -818,6 +818,12 @@ export default function HuntingManagementPage() {
   const shareRefDesktop = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const tasksViewRef = useRef<HuntingTasksViewRef>(null);
+  // 分享鍵只在有內容可以分享的頁面出現：狩獵任務的每週任務（本週／下週任務）、領款（簽收單）、請假（請假公告）。
+  // 其他頁（專案情報、任務追蹤、指揮中心、專案任務）沒有分享內容，不顯示；以前在那些頁按下去會分享到狩獵任務的資料
+  const canShare = activeNav === "hunting_tasks" && (activeSubTab === "每週任務" || activeSubTab === "領款" || activeSubTab === "請假");
+  useEffect(() => {
+    if (!canShare) setIsShareOpen(false);
+  }, [canShare]);
   const leaveFormRef = useRef<LeaveFormRef>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
@@ -1561,6 +1567,7 @@ export default function HuntingManagementPage() {
                 </>
               )}
               {/* 分享（手機、電腦同一個位置：通知左邊）；電腦點了出下拉選單，手機出底部抽屜 */}
+              {canShare && (
               <div className="relative" ref={shareRefMobile}>
                 <button
                   onClick={() => {
@@ -1614,6 +1621,7 @@ export default function HuntingManagementPage() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* 通知：任務指派、改期、完成、收到 */}
               <NotificationBell onOpenTask={openTask} />

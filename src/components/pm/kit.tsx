@@ -221,27 +221,20 @@ export function SegmentedIcons<T extends string>({
   onChange: (v: T) => void;
   label: string;
 }) {
+  // 同一個位置一顆按鈕：顯示目前的檢視，點一下換下一個（清單 → 看板 → 甘特 → 清單）；不放文字、細線圖示
+  const i = Math.max(0, options.findIndex((o) => o.value === value));
+  const cur = options[i];
+  const next = options[(i + 1) % options.length];
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex p-1 rounded-full bg-white shadow-card">
-      {options.map((o) => {
-        const on = o.value === value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            onClick={() => onChange(o.value)}
-            className={`h-9 px-3 rounded-full flex items-center gap-1.5 text-[13px] font-semibold transition-colors ${
-              on ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#A1A1AA] active:text-[#52525B]"
-            }`}
-          >
-            <Icon name={o.icon} weight={on ? 500 : 300} className="text-[18px]" />
-            <span className="hidden sm:inline">{o.label}</span>
-          </button>
-        );
-      })}
-    </div>
+    <button
+      type="button"
+      onClick={() => onChange(next.value)}
+      aria-label={`${label}：${cur.label}，點一下換成${next.label}`}
+      title={`換成${next.label}`}
+      className="w-10 h-10 rounded-full bg-white shadow-card flex items-center justify-center text-[#52525B] active:bg-[#F4F4F5] transition-colors"
+    >
+      <Icon name={cur.icon} weight={200} className="text-[22px]" />
+    </button>
   );
 }
 

@@ -292,7 +292,7 @@ export function ReminderPage({
       title={ganttEdit ? "完成編輯" : "編輯"}
       className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${ganttEdit ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5]"}`}
     >
-      {ganttEdit ? <IconCheck size={20} stroke={1.5} /> : <IconPencil size={20} stroke={1.5} />}
+      {ganttEdit ? <IconCheck size={21} stroke={1.15} /> : <IconPencil size={21} stroke={1.15} />}
     </button>
   ) : null;
   const menuButton = code ? (
