@@ -381,10 +381,11 @@ function StageChip({ on, onClick, dot, count, children }: { on: boolean; onClick
       aria-pressed={on}
       onClick={onClick}
       className={`h-9 px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
-        on ? "bg-[#18181B] text-white" : "bg-white ring-1 ring-inset ring-black/[0.06] text-[#3F3F46] active:bg-[#F4F4F5]"
+        on ? "bg-[var(--accent)] text-white" : "bg-white ring-1 ring-inset ring-black/[0.06] text-[#3F3F46] active:bg-[#F4F4F5]"
       }`}
     >
-      {dot && <span className="w-2 h-2 rounded-full" style={{ background: dot }} aria-hidden />}
+      {/* 選中時底色是橘色：圓點改白色（施工中的橘點才看得到） */}
+      {dot && <span className="w-2 h-2 rounded-full" style={{ background: on ? "#fff" : dot }} aria-hidden />}
       {children}
       {count !== undefined && <span className={`text-[12px] tabular-nums ${on ? "text-white/70" : "text-[#A1A1AA]"}`}>{count}</span>}
     </button>

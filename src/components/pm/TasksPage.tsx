@@ -336,7 +336,7 @@ function Chip({ on, onClick, children, count, tone }: { on: boolean; onClick: ()
       aria-pressed={on}
       onClick={onClick}
       className={`h-9 px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
-        on ? "bg-[#18181B] text-white" : "bg-white ring-1 ring-inset ring-black/[0.06] text-[#3F3F46] active:bg-[#F4F4F5]"
+        on ? "bg-[var(--accent)] text-white" : "bg-white ring-1 ring-inset ring-black/[0.06] text-[#3F3F46] active:bg-[#F4F4F5]"
       }`}
     >
       {children}

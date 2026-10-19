@@ -35,10 +35,18 @@ export default function AnimatedTabs({
       );
     setIsMounted(true);
     measure();
-    // 字型晚一步載入時分頁寬度會變，指示塊要跟著重量，否則會跟文字對不齊
+    // 字型晚一步載入時分頁寬度會變，指示塊要跟著重量，否則會跟文字對不齊。
+    // 視窗縮放時分頁的左右留白會變（px-3 ↔ px-4），前面分頁變窄、目前分頁的位置跟著移，
+    // 只看內容寬度量不到 → 改量含留白的框，連整排分頁一起盯，視窗縮放也重量
     const ro = new ResizeObserver(measure);
-    ro.observe(activeEl);
-    return () => ro.disconnect();
+    ro.observe(activeEl, { box: "border-box" });
+    tabsRef.current.forEach((el) => el && el !== activeEl && ro.observe(el, { box: "border-box" }));
+    if (activeEl.parentElement) ro.observe(activeEl.parentElement, { box: "border-box" });
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, [activeIdx, tabs]);
 
   const select = (tab: string) => {
