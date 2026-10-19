@@ -20,7 +20,14 @@ html[data-theme="dark"][data-app="mgmt"] {
   --line: #2E2E33;
   --track: #26262A;
 }
-html[data-theme="dark"][data-app="mgmt"] body { background: #111113; }
+/* 頁面最底層的底色（上下滑過頭、iOS 回彈時露出來的那一塊）：跟著白天／夜晚走，
+   白天不會露出黑色、夜晚不會露出白色。
+   狩獵管理掛載時會在 body 上寫死淺灰（page.tsx），所以這裡要用 !important 蓋過去；
+   html 本身預設是黑色（globals.css），白天也要一起改成淺灰 */
+html[data-app="mgmt"],
+html[data-app="mgmt"] body { background-color: #FAFAFA !important; }
+html[data-theme="dark"][data-app="mgmt"],
+html[data-theme="dark"][data-app="mgmt"] body { background-color: #111113 !important; }
 
 /* 卡片陰影：深色底上改成細亮邊＋較深的投影 */
 html[data-theme="dark"][data-app="mgmt"] .shadow-card { box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 6px 20px rgba(0,0,0,0.35); }
