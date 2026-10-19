@@ -315,3 +315,20 @@ export function Spinner({ size = 16, color = "#A1A1AA" }: { size?: number; color
     />
   );
 }
+
+/** 顯示／隱藏已完成：只放圖示。眼睛＝已完成的有顯示；斜線眼睛＝隱藏中。點一下切換 */
+export function DoneToggle({ on, onChange, count }: { on: boolean; onChange: (v: boolean) => void; count?: number }) {
+  const n = count ? `（${count}）` : "";
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!on)}
+      aria-pressed={on}
+      aria-label={on ? `隱藏已完成${n}` : `顯示已完成${n}`}
+      title={on ? "隱藏已完成" : `顯示已完成${n}`}
+      className="w-10 h-10 rounded-full bg-white shadow-card flex items-center justify-center text-[#52525B] active:bg-[#F4F4F5] transition-colors"
+    >
+      <Icon name={on ? "visibility" : "visibility_off"} weight={200} className="text-[22px]" />
+    </button>
+  );
+}

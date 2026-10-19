@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { addDays, diffDays, todayISO, toDay, WEEKDAYS } from "@/lib/project-ops";
 import { personColor, type Task } from "@/lib/pm/model";
 import { Icon } from "./ui";
-import { Avatar, Empty, Group, ORANGE, RED, SegmentedIcons, Spinner } from "./kit";
+import { Avatar, DoneToggle, Empty, Group, ORANGE, RED, SegmentedIcons, Spinner } from "./kit";
 import { TaskList } from "./TaskList";
 import { TaskBoard } from "./TaskBoard";
 import { TaskGantt } from "./TaskGantt";
@@ -977,12 +977,7 @@ export function AllTasks({
               {group === "project" ? "依專案" : "依日期"}
             </Chip>
           )}
-          {view !== "board" && (
-            <Chip on={showDone} onClick={() => setShowDone(!showDone)}>
-              <Icon name="check" className="text-[16px]" />
-              已完成
-            </Chip>
-          )}
+          {view !== "board" && <DoneToggle on={showDone} onChange={setShowDone} />}
           <SegmentedIcons label="檢視方式" value={view} options={VIEWS} onChange={setView} />
         </div>
       </div>

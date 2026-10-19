@@ -374,6 +374,21 @@ export function ReminderPage({
   const [showDone, setShowDone] = useState(!!showDoneDefault);
   const [view, setView] = useStoredView();
   const [addSignal, setAddSignal] = useState(0);
+  // 返回鍵貼在主畫面的左下角：電腦要讓開側欄（側欄收合、展開寬度會變，跟著量）
+  const [mainLeft, setMainLeft] = useState(0);
+  useEffect(() => {
+    const main = document.querySelector("main");
+    if (!main) return;
+    const measure = () => setMainLeft(Math.max(0, Math.round(main.getBoundingClientRect().left)));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(main);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
   // 甘特圖：預設閱讀模式，按「編輯」才能拖曳調整（離開甘特圖就回到閱讀）
   const [ganttEdit, setGanttEdit] = useState(false);
   const pageView: PageView = code ? view : "list";
@@ -450,11 +465,6 @@ export function ReminderPage({
     <div className="flex flex-col gap-3">
       {slot ? createPortal(menuButton, slot) : <div className="flex justify-end">{menuButton}</div>}
 
-      {/* 電腦：返回鍵在標題上方；手機在左下角 */}
-      <button type="button" onClick={onBack} className="hidden md:flex items-center gap-1 self-start h-9 pr-3 text-[15px] text-[var(--accent)] font-medium">
-        <Icon name="chevron_left" weight={500} className="text-[24px]" />
-        任務追蹤
-      </button>
 
       <div className="px-1 pt-1">
         <h1 className="text-[32px] leading-[38px] font-bold tracking-tight" style={{ color }}>
@@ -484,8 +494,9 @@ export function ReminderPage({
         type="button"
         onClick={onBack}
         aria-label="返回"
-        className="md:hidden fixed z-40 left-5 w-14 h-14 rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.14)] flex items-center justify-center active:scale-95 transition-transform"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
+        title="返回"
+        className="fixed z-40 w-14 h-14 rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.14)] flex items-center justify-center active:scale-95 transition-transform"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)", left: mainLeft + 20 }}
       >
         <Icon name="chevron_left" weight={500} className="text-[28px] text-[#18181B]" />
       </button>

@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { fmtDate, fmtMoney, STAGES, type Stage } from "@/lib/project-ops";
 import { personColor, type PmPhoto, type Task } from "@/lib/pm/model";
 import { HealthBadge, Icon, ProgressBar, SubScreen } from "./ui";
-import { Avatar, AvatarStack, Empty, Group, ORANGE, SegmentedIcons, Spinner } from "./kit";
+import { Avatar, AvatarStack, Empty, Group, ORANGE, SegmentedIcons, Spinner, DoneToggle } from "./kit";
 import { ReminderTasks } from "./Reminders";
 import { TaskBoard } from "./TaskBoard";
 import { TaskGantt } from "./TaskGantt";
@@ -197,14 +197,7 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
             {section === "tasks" && (
               <>
                 <div className="flex items-center justify-between gap-2">
-                  <button
-                    onClick={() => setShowDone(!showDone)}
-                    aria-pressed={showDone}
-                    className={`h-9 px-3 rounded-full text-[13px] font-medium inline-flex items-center gap-1 ${showDone ? "bg-[#18181B] text-white" : "text-[#3F3F46] bg-white border border-[#E4E4E7]"}`}
-                  >
-                    <Icon name="check" className="text-[16px]" />
-                    顯示已完成（{shown.tasks.length - shown.openCount}）
-                  </button>
+                  <DoneToggle on={showDone} onChange={setShowDone} count={shown.tasks.length - shown.openCount} />
                   <SegmentedIcons
                     label="檢視方式"
                     value={view}
