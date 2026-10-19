@@ -1385,10 +1385,35 @@ export default function HuntingManagementPage() {
             </span>
             <input
               type="text"
-              placeholder=""
+              ref={deskSearchRef}
+              value={searchMode ? teamQuery : ""}
+              onChange={(e) => searchMode && setTeamQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setTeamQuery("");
+                  (e.target as HTMLInputElement).blur();
+                }
+              }}
+              placeholder={searchMode ? searchPlaceholder : "這一頁沒有搜尋"}
+              aria-label={searchMode ? searchLabel : "搜尋"}
+              disabled={!searchMode && !isSidebarCollapsed}
               className={`bg-transparent outline-none border-none text-[#18181B] text-[13px] h-full transition-all duration-300 placeholder:text-[#A1A1AA] absolute right-0 focus:ring-0 ${isSidebarCollapsed ? "w-0 opacity-0 pr-0" : "w-[calc(100%-38px)] opacity-100 pr-4"}`}
               readOnly={isSidebarCollapsed}
             />
+            {searchMode && teamQuery && !isSidebarCollapsed && (
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setTeamQuery("");
+                  deskSearchRef.current?.focus();
+                }}
+                aria-label="清除搜尋"
+                className="absolute right-2 w-6 h-6 rounded-full flex items-center justify-center text-[#A1A1AA] hover:bg-[#E4E4E7]"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -1532,61 +1557,6 @@ export default function HuntingManagementPage() {
                       search
                     </span>
                   </button>
-                  {/* 電腦：平常只是放大鏡；點下才展開成輸入框，清空後點別處就收回 */}
-                  <div
-                    className={`hidden md:flex relative items-center h-9 rounded-full overflow-hidden transition-[width,background-color,box-shadow] duration-200 ${
-                      deskSearchOpen || teamQuery ? "w-[280px] bg-white ring-1 ring-[#E4E4E7] focus-within:ring-2 focus-within:ring-[var(--accent)]/40" : "w-9 hover:bg-[#F4F4F5]"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeskSearchOpen(true);
-                        deskSearchRef.current?.focus();
-                      }}
-                      className="absolute left-0 top-0 w-9 h-9 flex items-center justify-center text-[#71717A] shrink-0"
-                      title="搜尋"
-                      aria-label={searchLabel}
-                      tabIndex={deskSearchOpen || teamQuery ? -1 : 0}
-                    >
-                      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
-                        search
-                      </span>
-                    </button>
-                    <input
-                      ref={deskSearchRef}
-                      value={teamQuery}
-                      onChange={(e) => setTeamQuery(e.target.value)}
-                      onBlur={() => !teamQuery && setDeskSearchOpen(false)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          setTeamQuery("");
-                          setDeskSearchOpen(false);
-                          (e.target as HTMLInputElement).blur();
-                        }
-                      }}
-                      placeholder={searchPlaceholder}
-                      aria-label={searchLabel}
-                      tabIndex={deskSearchOpen || teamQuery ? 0 : -1}
-                      className={`h-full bg-transparent pl-9 pr-8 text-[14px] text-[#18181B] outline-none placeholder:text-[#A1A1AA] transition-opacity ${
-                        deskSearchOpen || teamQuery ? "w-full opacity-100" : "w-0 opacity-0 pointer-events-none"
-                      }`}
-                    />
-                    {teamQuery && (
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          setTeamQuery("");
-                          deskSearchRef.current?.focus();
-                        }}
-                        aria-label="清除搜尋"
-                        className="absolute right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[#A1A1AA] hover:bg-[#E4E4E7]"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">close</span>
-                      </button>
-                    )}
-                  </div>
                 </>
               )}
               {/* 分享（手機、電腦同一個位置：通知左邊）；電腦點了出下拉選單，手機出底部抽屜 */}

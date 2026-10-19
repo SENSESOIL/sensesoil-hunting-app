@@ -259,7 +259,8 @@ export function ReminderPage({
   const [ganttEdit, setGanttEdit] = useState(false);
   const pageView: PageView = code ? view : "list";
   const doneCount = tasks.filter((t) => t.status === "done").length;
-  const canAdd = !!code || !!onAddFull;
+  // 專案頁：清單裡每段最後都有虛線圓點可以直接打字新增，不放右下「＋」；跨專案頁（今天、重要…）才用「＋」開完整表單
+  const canAdd = !code && !!onAddFull;
 
   // 檢視切換放進標題列分頁那一排的右邊（hunting-mgmt 的 #pm-header-slot）
   const [slot, setSlot] = useState<HTMLElement | null>(null);
@@ -794,6 +795,19 @@ export function ReminderTasks({
             )}
             <div className="overflow-hidden">
               {items}
+              {!addRow && code && !grouped && !draft && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    primeKeyboard();
+                    startDraft();
+                  }}
+                  aria-label="新增任務"
+                  className="w-full flex items-center gap-3 pl-1 pr-1 h-11 text-left active:bg-[#F2F2F4]"
+                >
+                  <span className="w-[22px] h-[22px] rounded-full border-[1.5px] border-dashed border-[#C7C7CC] shrink-0" />
+                </button>
+              )}
               {addRow && code && !draft && (
                 <button type="button" onClick={() => { primeKeyboard(); startDraft(); }} className="w-full flex items-center gap-3 pl-1 pr-1 h-12 text-left text-[15px] text-[#8E8E93] active:bg-[#F2F2F4]">
                   <Icon name="add_circle" className="text-[24px]" style={{ color }} />
@@ -801,7 +815,7 @@ export function ReminderTasks({
                 </button>
               )}
               {!rows.length && !draft && !addRow && (
-                <p className="px-4 py-8 text-center text-[14px] text-[#A1A1AA]">{code ? "還沒有任務。點下方空白處或「＋」開始輸入。" : "沒有任務"}</p>
+                <p className="px-4 py-8 text-center text-[14px] text-[#A1A1AA]">{code ? "還沒有任務。點虛線圓點開始輸入。" : "沒有任務"}</p>
               )}
             </div>
           </section>
