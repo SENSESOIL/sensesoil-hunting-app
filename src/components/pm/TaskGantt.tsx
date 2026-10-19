@@ -8,6 +8,7 @@ import { Empty, GREEN, ORANGE } from "./kit";
 import { isLate, personMark, type Pm } from "./usePm";
 import { taskAssignees } from "@/lib/pm/model";
 import { ScheduleSheet } from "./ScheduleSheet";
+import { ProjectInfoSheet } from "./ProjectInfoSheet";
 import { realSections, splitBySection, treeOrder } from "./tree";
 
 /* ══════════════════════════════════════════════════════════
@@ -52,6 +53,8 @@ export function TaskGantt({
 }) {
   const { today } = pm;
   const [schedId, setSchedId] = useState<string | null>(null);
+  // 點「預定工期」列：直接打開專案資料改日期（管理者）
+  const [infoOpen, setInfoOpen] = useState(false);
   const [zoom, setZoomState] = useState<Zoom>(() => {
     try {
       const v = localStorage.getItem(ZOOM_KEY);
@@ -180,7 +183,9 @@ export function TaskGantt({
       ? [
           {
             id: "project-span",
-            label: "專案工期",
+            label: "預定工期",
+            accent: true,
+            onClick: pm.isManager ? () => setInfoOpen(true) : undefined,
             sublabel: `${md(pStart)} → ${md(pDue)}${pDone ? `・完工 ${md(pDone)}` : ""}`,
             heading: true,
             bars: [
@@ -192,7 +197,7 @@ export function TaskGantt({
                 late: !pDone && !!pDue && pDue < today,
                 tip: (
                   <>
-                    <b>專案工期</b>
+                    <b>預定工期</b>
                     <br />
                     開工 {md(pStart)}　預計完工 {md(pDue)}
                     <br />
@@ -326,6 +331,7 @@ export function TaskGantt({
         </span>
       </div>
       <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
+      {pm.isManager && projectCode && <ProjectInfoSheet pm={pm} code={projectCode} open={infoOpen} onClose={() => setInfoOpen(false)} />}
     </div>
   );
 }
