@@ -1409,7 +1409,6 @@ function RowMenu({
               <TopAction icon="delete" label="刪除" onClick={run(onDelete)} disabled={!edit} danger />
             </div>
             <div className="py-1">
-              <MenuItem icon={done ? "radio_button_unchecked" : "check_circle"} label={done ? "標記為未完成" : "標記為完成"} onClick={run(onToggle)} disabled={!canToggle(pm, task)} />
               <MenuItem icon="event" label="期限 ›" onClick={() => setPage("due")} disabled={!edit} />
               <MenuItem icon="sell" label="標籤 ›" onClick={run(onTags)} disabled={!edit} />
               {pm.isManager && <MenuItem icon="person" label="指派 ›" onClick={() => setPage("assign")} />}
