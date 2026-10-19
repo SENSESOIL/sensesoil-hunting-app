@@ -170,7 +170,7 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
                     </span>
                     {!allProjects && (
                       <span className="block mt-0.5 text-[12.5px] leading-relaxed text-[#A1A1AA]">
-                        公司的專案都已經在這裡，只是還沒有任務的先收起來。展開找到專案就能直接新增任務，不用另外建立專案。
+                        展開其他專案新增任務排程
                       </span>
                     )}
                   </button>

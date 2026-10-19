@@ -25,10 +25,10 @@ import type { Task } from "@/lib/pm/model";
    ══════════════════════════════════════════════════════════ */
 
 // 「目標」＝公司目標（原本在任務追蹤，移到這裡）
-// 「專案」：進行中／全部改成下方篩選膠囊；「團隊」「工作量」（管理者）、「目標」＝公司目標
+// 「專案」：進行中／全部改成下方篩選膠囊；「量能」（管理者：團隊任務＋工作量）、「目標」＝公司目標
 export const PROJECT_TABS = ["專案", "目標"];
 // 「工作量」併進「團隊」：卡片右上角的圖示切換
-export const PROJECT_TABS_MANAGER = ["專案", "團隊", "目標"];
+export const PROJECT_TABS_MANAGER = ["專案", "量能", "目標"];
 
 const ORDER: Stage[] = ["施工中", "驗收", "簽約", "報價", "洽談", "暫停", "保固", "結案"];
 
@@ -53,7 +53,7 @@ export default function ProjectsPage({
   onSearchClose,
 }: {
   activeTab: string;
-  /** 工作量點某個人 → 跳到團隊分頁 */
+  /** 工作量點某個人 → 回到量能的團隊任務 */
   onTabChange?: (tab: string) => void;
   /** 標題列的搜尋（分享鍵左邊）：電腦直接篩選下方清單；手機跳出搜尋欄，結果列在搜尋欄下 */
   searchQuery?: string;
@@ -89,7 +89,7 @@ export default function ProjectsPage({
   }, [pm.projects, q, attention, all, stage]);
 
   // 公司目標、團隊、工作量分頁
-  if (pm.data && (activeTab === "目標" || (pm.isManager && activeTab === "團隊"))) {
+  if (pm.data && (activeTab === "目標" || (pm.isManager && activeTab === "量能"))) {
     const openTask = (t: Task) => setTaskId(t.id);
     // 同一個位置一顆按鈕：目前是任務清單就顯示團隊圖示、工作量就顯示長條圖示，點一下切換
     const modeButton = (
@@ -109,7 +109,7 @@ export default function ProjectsPage({
       <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
         <SetupNotice pm={pm} />
         {activeTab === "目標" && <GoalsPage pm={pm} onOpenTask={openTask} />}
-        {activeTab === "團隊" && teamMode === "load" && (
+        {activeTab === "量能" && teamMode === "load" && (
           <Workload
             pm={pm}
             headerAction={modeButton}
@@ -120,7 +120,7 @@ export default function ProjectsPage({
             }}
           />
         )}
-        {activeTab === "團隊" && teamMode === "tasks" && (
+        {activeTab === "量能" && teamMode === "tasks" && (
           <>
             {/* 手機：標題列放大鏡 → 跳出搜尋欄，結果列在下方；電腦：左側欄的搜尋框，直接篩選下面的清單 */}
             <SearchOverlay open={searchOpen} query={q} onQuery={(v) => onSearchQuery?.(v)} onClose={() => onSearchClose?.()} placeholder="搜尋任務、專案、人" label="搜尋任務">
