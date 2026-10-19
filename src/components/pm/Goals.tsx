@@ -85,10 +85,14 @@ export function GoalsPage({ pm, onOpenTask }: { pm: Pm; onOpenTask: (t: Task) =>
               type="button"
               onClick={() => setShowTasks((v) => !v)}
               aria-pressed={showTasks}
-              className={`h-9 px-3.5 rounded-full text-[14px] flex items-center gap-1.5 transition-colors ${showTasks ? "bg-[#18181B] text-white" : "bg-white text-[#52525B] shadow-card"}`}
+              aria-label={showTasks ? "隱藏目標底下的任務" : "顯示目標底下的任務"}
+              title={showTasks ? "隱藏任務" : "顯示任務"}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${showTasks ? "bg-[#18181B] text-white" : "bg-white text-[#52525B] shadow-card"}`}
             >
-              <Icon name="account_tree" weight={400} className="text-[17px]" />
-              顯示任務
+              {/* 任務圖示（和底部導覽列「任務追蹤」同一個） */}
+              <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>
+                checklist
+              </span>
             </button>
           </div>
           <GoalGantt pm={pm} goals={goals} showTasks={showTasks} today={today} onOpenGoal={(id) => setSheet({ id })} onOpenTask={onOpenTask} />

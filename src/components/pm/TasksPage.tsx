@@ -356,8 +356,8 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
   // 行事曆只用清單：專心看任務、打勾完成（切換檢視、新增都拿掉）
   const view = "list" as View;
   const setView = (_v: View) => {};
-  // 右上角：公司（顯示公司目標橫條）／個人（只看自己的任務），點一下切換
-  const [scope, setScope] = useStored<"company" | "personal">("pm:cal:scope", "company");
+  // 右上角：個人（預設，只看自己的任務）／公司（顯示公司目標橫條），點一下切換
+  const [scope, setScope] = useStored<"company" | "personal">("pm:cal:scope", "personal");
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => setSlot(document.getElementById("pm-header-slot")), []);
   const scopeButton = (

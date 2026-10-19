@@ -142,8 +142,8 @@ export default function ProjectsPage({
   const barStages = stageCounts.filter(([s]) => s !== "結案");
   const barTotal = barStages.reduce((n, [, c]) => n + c, 0);
 
-  // 分組：進行中依階段；全部、搜尋、篩選時依代碼
-  const flat = all || !!q || !!stage || attention;
+  // 依階段分組：篩階段、需要注意時也維持分組（版面不跳）；只有「全部」和搜尋改成依代碼排的一張清單
+  const flat = all || !!q;
   const groups: [string, ProjectItem[]][] = flat
     ? [["", [...list].sort((a, b) => b.code.localeCompare(a.code))]]
     : ORDER.map((s) => [s, list.filter((p) => (p.stage ?? "") === s).sort(byHealth)] as [string, ProjectItem[]])
@@ -340,9 +340,10 @@ function HeroStat({
       aria-pressed={onClick ? !!on : undefined}
       className={`px-3 py-3 text-left min-w-0 transition-colors ${on ? "bg-white/[0.12]" : ""} ${onClick ? "active:bg-white/[0.12]" : ""}`}
     >
-      <p className="text-[12px] text-white/55 flex items-center gap-1 whitespace-nowrap">
+      {/* 標籤列固定高度：篩選中多出的漏斗圖示不會把卡片撐高 */}
+      <p className="h-[18px] text-[12px] leading-[18px] text-white/55 flex items-center gap-1 whitespace-nowrap">
         {label}
-        {on && <Icon name="filter_alt" fill={1} className="text-[13px] text-white/70" />}
+        {on && <Icon name="filter_alt" fill={1} className="text-[13px] leading-none text-white/70" />}
       </p>
       <p className="mt-0.5 whitespace-nowrap">
         <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: tone ?? "#fff" }}>
