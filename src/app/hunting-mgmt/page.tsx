@@ -742,7 +742,7 @@ export default function HuntingManagementPage() {
   const searchMode: "team" | "tasks" | "projects" | null =
     activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM
       ? "team"
-      : activeNav === "tasks" && scheduleTab === "清單"
+      : activeNav === "tasks" && scheduleTab === "任務"
         ? "tasks"
         : activeNav === "project_info"
           ? "projects"
@@ -1589,8 +1589,8 @@ export default function HuntingManagementPage() {
                   </div>
                 </>
               )}
-              {/* Mobile Share Button (Hidden on Desktop) */}
-              <div className="relative md:hidden" ref={shareRefMobile}>
+              {/* 分享（手機、電腦同一個位置：通知左邊）；電腦點了出下拉選單，手機出底部抽屜 */}
+              <div className="relative" ref={shareRefMobile}>
                 <button
                   onClick={() => {
                     if (activeNav === "hunting_tasks" && activeSubTab === "領款") {
@@ -1609,6 +1609,39 @@ export default function HuntingManagementPage() {
                     ios_share
                   </span>
                 </button>
+                {isShareOpen && (
+                  <div className="hidden md:block absolute right-0 top-10 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50">
+                    <button
+                      onClick={handleCopy}
+                      className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
+                    >
+                      <span
+                        className="material-symbols-outlined text-[18px] text-[#A1A1AA]"
+                        style={{ fontVariationSettings: "'wght' 200" }}
+                      >
+                        content_copy
+                      </span>
+                      複製內容
+                    </button>
+                    <button
+                      onClick={handleShareLine}
+                      className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
+                    >
+                      <svg
+                        className="w-[18px] h-[18px] text-[#06C755]"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z" />
+                        <path
+                          fill="#FFFFFF"
+                          d="M7.75 12.83H6.18V8.45H5v5.44h2.75v-1.06zM9.46 13.89h-1.06V8.45h1.06v5.44zM14.54 13.89h-1.12l-1.92-3.18v3.18h-1.06V8.45h1.12l1.92 3.18V8.45h1.06v5.44zM18.89 9.51h-2.18v1.08h1.9v1.06h-1.9v1.18h2.18v1.06h-3.24V8.45h3.24v1.06z"
+                        />
+                      </svg>
+                      分享至 LINE
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 通知：任務指派、改期、完成、收到 */}
@@ -1680,61 +1713,6 @@ export default function HuntingManagementPage() {
                 </button>
               )}
 
-              {/* Desktop Share Button (Hidden on Mobile) */}
-              <div className="relative hidden md:block" ref={shareRefDesktop}>
-                <button
-                  onClick={() => {
-                    if (activeNav === "hunting_tasks" && activeSubTab === "領款") {
-                      receiptFormRef.current?.shareReceipt();
-                    } else {
-                      setIsShareOpen(!isShareOpen);
-                    }
-                  }}
-                  className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${isShareOpen ? "bg-[#F4F4F5] text-[#18181B]" : "hover:bg-[#F4F4F5] text-[#71717A]"}`}
-                  title="分享"
-                >
-                  <span
-                    className="material-symbols-outlined text-[20px]"
-                    style={{ fontVariationSettings: "'wght' 200" }}
-                  >
-                    ios_share
-                  </span>
-                </button>
-
-                {isShareOpen && (
-                  <div className="absolute right-0 top-10 w-48 bg-white border border-[#E4E4E7] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 z-50">
-                    <button
-                      onClick={handleCopy}
-                      className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
-                    >
-                      <span
-                        className="material-symbols-outlined text-[18px] text-[#A1A1AA]"
-                        style={{ fontVariationSettings: "'wght' 200" }}
-                      >
-                        content_copy
-                      </span>
-                      複製內容
-                    </button>
-                    <button
-                      onClick={handleShareLine}
-                      className="w-full text-left px-4 py-2.5 text-sm text-[#18181B] hover:bg-[#FAFAFA] flex items-center gap-3 transition-colors outline-none focus-visible:bg-[#FAFAFA]"
-                    >
-                      <svg
-                        className="w-[18px] h-[18px] text-[#06C755]"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 3.945 8.917 9.444 9.605.369.079.873.243.999.559.114.286.074.735.034 1.037l-.208 1.258c-.053.315-.246 1.206 1.056.657 1.303-.549 7.026-4.144 9.539-7.054 2.008-2.316 3.136-4.301 3.136-6.062z" />
-                        <path
-                          fill="#FFFFFF"
-                          d="M7.75 12.83H6.18V8.45H5v5.44h2.75v-1.06zM9.46 13.89h-1.06V8.45h1.06v5.44zM14.54 13.89h-1.12l-1.92-3.18v3.18h-1.06V8.45h1.12l1.92 3.18V8.45h1.06v5.44zM18.89 9.51h-2.18v1.08h1.9v1.06h-1.9v1.18h2.18v1.06h-3.24V8.45h3.24v1.06z"
-                        />
-                      </svg>
-                      分享至 LINE
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </header>

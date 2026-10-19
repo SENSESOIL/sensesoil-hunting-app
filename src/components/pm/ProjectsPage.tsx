@@ -100,7 +100,7 @@ export default function ProjectsPage({
   };
 
   return (
-    <div className="px-5 lg:px-10 pb-28 w-full max-w-5xl mx-auto flex flex-col gap-5">
+    <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
       <SetupNotice pm={pm} />
 
       {/* 總覽 */}
@@ -293,7 +293,7 @@ function StageChip({ on, onClick, dot, count, children }: { on: boolean; onClick
       aria-pressed={on}
       onClick={onClick}
       className={`h-9 px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
-        on ? "bg-[#18181B] text-white" : "bg-white shadow-card text-[#3F3F46] active:bg-[#F4F4F5]"
+        on ? "bg-[#18181B] text-white" : "bg-white ring-1 ring-inset ring-black/[0.06] text-[#3F3F46] active:bg-[#F4F4F5]"
       }`}
     >
       {dot && <span className="w-2 h-2 rounded-full" style={{ background: dot }} aria-hidden />}

@@ -29,8 +29,8 @@ import { tagKeys } from "@/lib/pm/tags";
    三種檢視：清單、看板、甘特圖（功能與資料都和原本相同，只換呈現）
    ══════════════════════════════════════════════════════════ */
 
-export const TASK_TABS_MANAGER = ["清單", "行事曆", "團隊", "目標", "工作量"];
-export const TASK_TABS_MEMBER = ["清單", "行事曆", "目標"];
+export const TASK_TABS_MANAGER = ["任務", "行事曆", "團隊", "目標", "工作量"];
+export const TASK_TABS_MEMBER = ["任務", "行事曆", "目標"];
 
 type View = "list" | "board" | "gantt";
 type Smart = "day" | "scheduled" | "all" | "done";
@@ -96,7 +96,7 @@ export default function TasksPage({
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [route]);
-  const listPage = activeTab === "清單" && (route.kind === "project" || route.kind === "smart" || route.kind === "tag");
+  const listPage = activeTab === "任務" && (route.kind === "project" || route.kind === "smart" || route.kind === "tag");
   useEffect(() => {
     onSubPage?.(listPage);
   }, [listPage, onSubPage]);
@@ -125,7 +125,7 @@ export default function TasksPage({
       ? activeTab
       : pm.isManager && (activeTab === "工作量" || activeTab === "團隊")
         ? activeTab
-        : "清單";
+        : "任務";
   const home = () => setRoute({ kind: "home" });
 
   const listView = () => {
@@ -352,7 +352,7 @@ function Chip({ on, onClick, children, count, tone }: { on: boolean; onClick: ()
       aria-pressed={on}
       onClick={onClick}
       className={`h-9 px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
-        on ? "bg-[#18181B] text-white" : "bg-white shadow-card text-[#3F3F46] active:bg-[#F4F4F5]"
+        on ? "bg-[#18181B] text-white" : "bg-white ring-1 ring-inset ring-black/[0.06] text-[#3F3F46] active:bg-[#F4F4F5]"
       }`}
     >
       {children}
