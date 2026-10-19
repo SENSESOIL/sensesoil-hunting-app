@@ -144,7 +144,7 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
             {shownProjects.length ? (
               <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
                 {shownProjects.map(({ p }) => (
-                  <ListRow key={p.code} icon="format_list_bulleted" color={personColor(p.code)} label={p.name} hint={p.code} count={p.openCount} onClick={() => go({ kind: "project", code: p.code })} />
+                  <ListRow key={p.code} badge={p.code} color={personColor(p.code)} label={p.name} count={p.openCount} onClick={() => go({ kind: "project", code: p.code })} />
                 ))}
                 {(hiddenCount > 0 || allProjects) && (
                   <button type="button" onClick={() => setAllProjects((v) => !v)} className="w-full h-11 text-[15px] text-[var(--accent)] font-medium">
@@ -176,12 +176,19 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
   );
 }
 
-function ListRow({ icon, color, label, hint, count, onClick }: { icon: string; color: string; label: string; hint?: string; count?: number; onClick: () => void }) {
+/** 清單列：左邊圓形圖示，或專案代碼方塊（badge，和專案情報一樣），名稱一行 */
+function ListRow({ icon, badge, color, label, hint, count, onClick }: { icon?: string; badge?: string; color: string; label: string; hint?: string; count?: number; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="w-full flex items-center gap-3 pl-3 pr-2.5 min-h-[54px] text-left active:bg-[#F4F4F5] group">
-      <span className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0" style={{ background: color }}>
-        <Icon name={icon} weight={500} className="text-[18px]" />
-      </span>
+      {badge ? (
+        <span className="w-9 h-9 rounded-[10px] flex items-center justify-center text-white shrink-0 text-[11.5px] font-bold tracking-tight" style={{ background: color }}>
+          {badge}
+        </span>
+      ) : (
+        <span className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0" style={{ background: color }}>
+          <Icon name={icon ?? "format_list_bulleted"} weight={500} className="text-[18px]" />
+        </span>
+      )}
       <span className="flex-1 min-w-0 self-stretch flex items-center gap-2 border-b border-[#F0F0F2] group-last:border-b-0 pr-1">
         <span className="flex-1 min-w-0">
           <span className="block text-[16px] text-[#18181B] truncate">{label}</span>

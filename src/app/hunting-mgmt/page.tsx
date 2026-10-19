@@ -737,7 +737,8 @@ export default function HuntingManagementPage() {
   }, [permsLoading, commandTabs, commandTab]);
   const [intelTab, setIntelTab] = useState(PROJECT_TABS[0]);
   const TASK_TABS = isPmManager ? TASK_TABS_MANAGER : TASK_TABS_MEMBER;
-  const [scheduleTab, setScheduleTab] = useState(TASK_TABS_MANAGER[0]);
+  // 行事曆排在第一個，但一進來還是先看任務
+  const [scheduleTab, setScheduleTab] = useState("任務");
   // 標題列的搜尋（分享鍵左邊）：指揮中心「團隊」與任務追蹤「清單」共用同一組狀態
   const searchMode: "team" | "tasks" | "projects" | null =
     activeNav === "command_center" && commandTab === COMMAND_TAB_TEAM

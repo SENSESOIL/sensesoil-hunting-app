@@ -29,8 +29,8 @@ import { tagKeys } from "@/lib/pm/tags";
    三種檢視：清單、看板、甘特圖（功能與資料都和原本相同，只換呈現）
    ══════════════════════════════════════════════════════════ */
 
-export const TASK_TABS_MANAGER = ["任務", "行事曆", "團隊", "目標", "工作量"];
-export const TASK_TABS_MEMBER = ["任務", "行事曆", "目標"];
+export const TASK_TABS_MANAGER = ["行事曆", "任務", "團隊", "目標", "工作量"];
+export const TASK_TABS_MEMBER = ["行事曆", "任務", "目標"];
 
 type View = "list" | "board" | "gantt";
 type Smart = "day" | "scheduled" | "all" | "done";
