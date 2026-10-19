@@ -217,7 +217,7 @@ export default function Gantt({
   const showToday = today >= from && today <= to;
 
   const scrollY = rows.length > SCROLL_ROWS;
-  const headH = dense ? 44 : 32;
+  const headH = 44;
 
   // 捲到「今天」落在可視區左側三分之一，前後都看得到。
   // 只在尺度或範圍改變時重新定位；使用者自己捲動不會被拉回來。

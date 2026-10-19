@@ -29,8 +29,8 @@ import { tagKeys } from "@/lib/pm/tags";
    三種檢視：清單、看板、甘特圖（功能與資料都和原本相同，只換呈現）
    ══════════════════════════════════════════════════════════ */
 
-export const TASK_TABS_MANAGER = ["清單", "目標", "工作量"];
-export const TASK_TABS_MEMBER = ["清單", "目標"];
+export const TASK_TABS_MANAGER = ["清單", "行事曆", "團隊", "目標", "工作量"];
+export const TASK_TABS_MEMBER = ["清單", "行事曆", "目標"];
 
 type View = "list" | "board" | "gantt";
 type Smart = "day" | "scheduled" | "all" | "done";
@@ -120,7 +120,12 @@ export default function TasksPage({
   const open = (t: Task) => setSheet({ id: t.id });
   const add = (preset?: Partial<Task>) => setSheet({ id: null, preset });
 
-  const tab = activeTab === "目標" ? "目標" : pm.isManager && activeTab === "工作量" ? "工作量" : "清單";
+  const tab =
+    activeTab === "目標" || activeTab === "行事曆"
+      ? activeTab
+      : pm.isManager && (activeTab === "工作量" || activeTab === "團隊")
+        ? activeTab
+        : "清單";
   const home = () => setRoute({ kind: "home" });
 
   const listView = () => {
@@ -132,7 +137,6 @@ export default function TasksPage({
             pm={pm}
             title={p?.name ?? route.code}
             color={personColor(route.code)}
-            subtitle={[route.code, p?.company].filter(Boolean).join("　")}
             tasks={pm.tasks.filter((t) => t.code === route.code)}
             code={route.code}
             onBack={home}
@@ -187,17 +191,20 @@ export default function TasksPage({
   };
 
   return (
-    <div className="px-5 lg:px-10 pb-28 w-full max-w-5xl mx-auto flex flex-col gap-5">
+    <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
       <SetupNotice pm={pm} />
       {tab === "工作量" ? (
         <Workload
           pm={pm}
           onPick={(email) => {
             setPersonFilter(email);
-            setRoute({ kind: "team" });
-            onTabChange("清單");
+            onTabChange("團隊");
           }}
         />
+      ) : tab === "行事曆" ? (
+        <MyTasks pm={pm} onOpen={open} onAdd={add} />
+      ) : tab === "團隊" ? (
+        <AllTasks pm={pm} onOpen={open} onAdd={add} person={personFilter} setPerson={setPersonFilter} />
       ) : tab === "目標" ? (
         <GoalsPage pm={pm} onOpenTask={open} />
       ) : (

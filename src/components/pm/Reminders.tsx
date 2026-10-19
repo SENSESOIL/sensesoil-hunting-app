@@ -1,5 +1,6 @@
 "use client";
 
+import { IconCheck, IconPencil } from "@tabler/icons-react";
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { addDays, toDay } from "@/lib/project-ops";
@@ -136,14 +137,6 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
               );
             })}
           </div>
-
-          {/* 其他檢視 */}
-          <section>
-            <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
-              <ListRow icon="calendar_view_month" color="#2E9E6B" label="行事曆" hint="週／月、公司目標" onClick={() => go({ kind: "calendar" })} />
-              {pm.isManager && <ListRow icon="groups" color="#0891B2" label="團隊" hint="每個人手上的任務" onClick={() => go({ kind: "team" })} />}
-            </div>
-          </section>
 
           {/* 專案 */}
           <section>
@@ -291,9 +284,7 @@ export function ReminderPage({
       title={ganttEdit ? "完成編輯" : "編輯"}
       className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${ganttEdit ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5]"}`}
     >
-      <span className="material-symbols-outlined text-[21px]" style={{ fontVariationSettings: "'wght' 200" }}>
-        {ganttEdit ? "check" : "edit_square"}
-      </span>
+      {ganttEdit ? <IconCheck size={20} stroke={1.5} /> : <IconPencil size={20} stroke={1.5} />}
     </button>
   ) : null;
   const menuButton = code ? (

@@ -27,9 +27,9 @@ import { realSections, splitBySection, treeOrder } from "./tree";
    日＝看得到每天的星期；週＝每週一一個刻度（預設）；月＝一次看好幾個月 */
 type Zoom = "day" | "week" | "month";
 const ZOOMS: { value: Zoom; label: string; icon: string; fit: { min: number; max: number }; dense: boolean; ahead: number }[] = [
-  { value: "day", label: "日", icon: "calendar_view_day", fit: { min: 30, max: 44 }, dense: true, ahead: 14 },
-  { value: "week", label: "週", icon: "calendar_view_week", fit: { min: 14, max: 26 }, dense: true, ahead: 21 },
-  { value: "month", label: "月", icon: "calendar_view_month", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
+  { value: "day", label: "日", icon: "D", fit: { min: 30, max: 44 }, dense: true, ahead: 14 },
+  { value: "week", label: "週", icon: "W", fit: { min: 14, max: 26 }, dense: true, ahead: 21 },
+  { value: "month", label: "月", icon: "M", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
 ];
 const ZOOM_KEY = "pm:gantt:zoom";
 
@@ -250,12 +250,13 @@ export function TaskGantt({
               type="button"
               onClick={() => setZoom(ZOOMS[(ZOOMS.indexOf(Z) + 1) % ZOOMS.length].value)}
               aria-label={`時間刻度：${Z.label}，點一下換成${ZOOMS[(ZOOMS.indexOf(Z) + 1) % ZOOMS.length].label}`}
-              className="h-8 pl-1.5 pr-2.5 rounded-full flex items-center gap-1 text-[#52525B] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
+              title={`${Z.label}（點一下換成${ZOOMS[(ZOOMS.indexOf(Z) + 1) % ZOOMS.length].label}）`}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-[#52525B] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
             >
-              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
+              {/* D／W／M 當圖示：細框小方塊裡一個字母 */}
+              <span className="w-[22px] h-[22px] rounded-[6px] border-[1.25px] border-current flex items-center justify-center text-[11.5px] font-semibold leading-none tracking-tight">
                 {Z.icon}
               </span>
-              <span className="text-[13px] font-medium">{Z.label}</span>
             </button>
           }
         />

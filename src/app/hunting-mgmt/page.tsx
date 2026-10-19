@@ -1631,8 +1631,8 @@ export default function HuntingManagementPage() {
           </div>
 
           {/* Row 2: Sub-tabs — aligned with sidebar search bar row */}
-          <div className="h-[48px] px-6 lg:px-10 flex items-center justify-between border-b border-[#E4E4E7]/60">
-            <div className="flex items-center">
+          <div className="h-[48px] px-6 lg:px-10 flex items-center justify-between gap-2 border-b border-[#E4E4E7]/60">
+            <div className="flex items-center min-w-0 overflow-x-auto scrollbar-hide -ml-1 pl-1">
               {/* 指揮中心的分頁列：與狩獵任務用同一組樣式與位置 */}
               {activeNav === "command_center" && (
                 <AnimatedTabs
@@ -1662,7 +1662,7 @@ export default function HuntingManagementPage() {
                   );
                 })()}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               {/* 任務追蹤的清單頁把「⋯」選單放在這裡（Reminders.tsx 用 portal 放進來） */}
               {activeNav === "tasks" && <div id="pm-header-slot" className="flex items-center" />}
               {activeNav === "hunting_tasks" && activeSubTab === "每週任務" && (
