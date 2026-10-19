@@ -682,6 +682,19 @@ export function ReminderTasks({
     if (!code || !n || cur === n) return;
     pm.saveSections(code, projSections.some((s) => s.id === key) ? projSections.map((s) => (s.id === key ? { ...s, name: n } : s)) : [...projSections, { id: key, name: n }]);
   };
+  // 分組長按選單：上移、下移、重新命名、刪除
+  const [secMenu, setSecMenu] = useState<{ id: string; rect: DOMRect } | null>(null);
+  const moveSection = (id: string, dir: -1 | 1) => {
+    if (!code) return;
+    const real = realSections(projSections);
+    const i = real.findIndex((x) => x.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= real.length) return;
+    const next = [...real];
+    [next[i], next[j]] = [next[j], next[i]];
+    // 「其他」的名稱設定（不是真的分組）接在後面保留
+    pm.saveSections(code, [...next, ...projSections.filter((x) => x.id === OTHER_SECTION)]);
+  };
   const deleteSection = (id: string) => {
     setRenaming(null);
     if (!code) return;
@@ -883,6 +896,7 @@ export function ReminderTasks({
                 onStartEdit={() => setRenaming(sec.sectionId || OTHER_SECTION)}
                 onRename={(name) => renameSection(sec.sectionId!, name)}
                 onDelete={() => deleteSection(sec.sectionId!)}
+                onMenu={pm.isManager ? (rect) => setSecMenu({ id: sec.sectionId!, rect }) : undefined}
               />
               {!folded && (
                 <div className="overflow-hidden">
@@ -970,6 +984,20 @@ export function ReminderTasks({
         />
       )}
       <TagSheet pm={pm} taskId={tagFor} open={!!tagFor} onClose={() => setTagFor(null)} />
+      {secMenu &&
+        (() => {
+          const real = realSections(projSections);
+          const isOther = secMenu.id === "";
+          const i = real.findIndex((x) => x.id === secMenu.id);
+          return (
+            <PopMenu rect={secMenu.rect} onClose={() => setSecMenu(null)} label="分組選單">
+              {!isOther && <MenuItem icon="arrow_upward" label="上移" disabled={i <= 0} onClick={() => { setSecMenu(null); moveSection(secMenu.id, -1); }} />}
+              {!isOther && <MenuItem icon="arrow_downward" label="下移" disabled={i < 0 || i >= real.length - 1} onClick={() => { setSecMenu(null); moveSection(secMenu.id, 1); }} />}
+              <MenuItem icon="edit" label="重新命名" onClick={() => { setSecMenu(null); setRenaming(secMenu.id || OTHER_SECTION); }} />
+              {!isOther && <MenuItem icon="delete" label="刪除分組" danger onClick={() => { setSecMenu(null); deleteSection(secMenu.id); }} />}
+            </PopMenu>
+          );
+        })()}
       <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
       <Sheet open={!!moveFor} title="移到專案" subtitle={moveFor?.title} onClose={() => setMoveFor(null)}>
         {moveFor && (
@@ -1530,6 +1558,7 @@ function SectionHeader({
   onStartEdit,
   onRename,
   onDelete,
+  onMenu,
 }: {
   name: string;
   muted?: boolean;
@@ -1543,8 +1572,59 @@ function SectionHeader({
   onStartEdit: () => void;
   onRename: (name: string) => void;
   onDelete: () => void;
+  /** 長按（手機）或右鍵（電腦）：叫出分組選單 */
+  onMenu?: (rect: DOMRect) => void;
 }) {
   const [v, setV] = useState(name);
+  const headRef = useRef<HTMLDivElement>(null);
+  const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
+  const fired = useRef(false);
+  const cancelPress = () => {
+    if (press.current) clearTimeout(press.current.timer);
+    press.current = null;
+  };
+  const gesture = onMenu
+    ? {
+        onPointerDown: (e: React.PointerEvent) => {
+          if (e.pointerType === "mouse") return;
+          fired.current = false;
+          cancelPress();
+          press.current = {
+            x: e.clientX,
+            y: e.clientY,
+            timer: setTimeout(() => {
+              fired.current = true;
+              window.getSelection()?.removeAllRanges();
+              try {
+                navigator.vibrate?.(10);
+              } catch {
+                /* iPhone 不支援震動 */
+              }
+              if (headRef.current) onMenu(headRef.current.getBoundingClientRect());
+            }, 450),
+          };
+        },
+        onPointerMove: (e: React.PointerEvent) => {
+          if (press.current && (Math.abs(e.clientX - press.current.x) > 8 || Math.abs(e.clientY - press.current.y) > 8)) cancelPress();
+        },
+        onPointerUp: cancelPress,
+        onPointerCancel: cancelPress,
+        onContextMenu: (e: React.MouseEvent) => {
+          e.preventDefault();
+          cancelPress();
+          if (headRef.current) onMenu(headRef.current.getBoundingClientRect());
+        },
+        // 長按放開後瀏覽器補的 click 不要觸發改名／收合
+        onClickCapture: (e: React.MouseEvent) => {
+          if (fired.current) {
+            fired.current = false;
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        },
+        style: { WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" } as React.CSSProperties,
+      }
+    : {};
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!editing) return;
@@ -1580,7 +1660,7 @@ function SectionHeader({
     );
   }
   return (
-    <div className="flex items-center gap-2 px-1 pb-2 min-h-[40px]">
+    <div ref={headRef} {...gesture} className="flex items-center gap-2 px-1 pb-2 min-h-[40px]">
       <button
         type="button"
         onClick={canEdit ? onStartEdit : onFold}
@@ -1640,6 +1720,41 @@ function ProjectMenu({
       >
         <MenuItem icon="keep" label={pinned ? "取消置頂" : "置頂"} onClick={run(onPin)} />
         {canEdit && <MenuItem icon="edit" label="編輯專案…" onClick={run(onEdit)} />}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+/** 長按出來的小選單：貼在那一列下方（放不下就往上），點外面關閉 */
+function PopMenu({ rect, onClose, label, children }: { rect: DOMRect; onClose: () => void; label: string; children: React.ReactNode }) {
+  const [shown, setShown] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const [top, setTop] = useState(rect.bottom + 6);
+  useLayoutEffect(() => {
+    const h = box.current?.offsetHeight ?? 200;
+    setTop(rect.bottom + 6 + h < window.innerHeight - 12 ? rect.bottom + 6 : Math.max(12, rect.top - 6 - h));
+  }, [rect]);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(true));
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+  const W = 240;
+  const left = Math.min(Math.max(12, rect.left + 8), window.innerWidth - W - 12);
+  return createPortal(
+    <div className="fixed inset-0 z-[160] font-sans select-none [-webkit-touch-callout:none]" role="dialog" aria-label={label}>
+      <div className={`absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
+      <div
+        ref={box}
+        className={`absolute rounded-[16px] bg-[#F7F7F8]/95 shadow-[0_16px_50px_rgba(0,0,0,0.22)] overflow-hidden py-1 transition-all duration-200 ${shown ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+        style={{ top, left, width: W }}
+      >
+        {children}
       </div>
     </div>,
     document.body
