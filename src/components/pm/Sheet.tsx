@@ -44,18 +44,31 @@ export function Sheet({
     if (!open) return;
     const vv = window.visualViewport;
     if (!vv) return;
+    // 只有「真的在打字」才算鍵盤開著：iPhone 上沒有鍵盤時 visualViewport 也可能比畫面矮
+    // （縮放、殘留的捲動位移），之前會誤判成鍵盤，把抽屜推到上半部、下面露出底下的頁面
+    const typing = () => {
+      const el = document.activeElement as HTMLElement | null;
+      return !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) && !!panel.current?.contains(el);
+    };
     const update = () => {
-      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setKb((cur) =>
-        Math.abs(cur.inset - inset) < 1 && Math.abs(cur.height - vv.height) < 1 ? cur : { inset, height: vv.height }
-      );
+      const raw = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      const zoomed = Math.abs((vv.scale ?? 1) - 1) > 0.01;
+      const inset = typing() && !zoomed && raw > 80 ? raw : 0;
+      const height = inset ? vv.height : 0;
+      setKb((cur) => (Math.abs(cur.inset - inset) < 1 && Math.abs(cur.height - height) < 1 ? cur : { inset, height }));
     };
     update();
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
+    // 焦點進出輸入框時也重算（鍵盤收起後抽屜要回到底部）
+    const later = () => setTimeout(update, 50);
+    document.addEventListener("focusin", later);
+    document.addEventListener("focusout", later);
     return () => {
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
+      document.removeEventListener("focusin", later);
+      document.removeEventListener("focusout", later);
     };
   }, [open]);
 
