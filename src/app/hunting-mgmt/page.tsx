@@ -748,7 +748,7 @@ export default function HuntingManagementPage() {
         ? "tasks"
         : activeNav === "tasks" && scheduleTab === "團隊"
           ? "teamTasks"
-          : activeNav === "project_info"
+          : activeNav === "project_info" && intelTab !== "目標"
             ? "projects"
             : null;
   const searchPlaceholder =

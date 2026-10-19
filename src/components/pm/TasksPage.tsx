@@ -13,7 +13,7 @@ import { TaskSheet } from "./TaskSheet";
 import { SetupNotice } from "./SetupNotice";
 import { isAssignee, taskAssignees } from "@/lib/pm/model";
 import { isLate, usePm, type GoalItem, type Pm } from "./usePm";
-import { GoalSheet, GoalsPage } from "./Goals";
+import { GoalSheet } from "./Goals";
 import { ReminderPage, RemindersHome, SMART, smartTasks, TaskSearchResults, type ListRoute } from "./Reminders";
 import { SearchOverlay } from "@/components/team/TeamPage";
 import { tagKeys } from "@/lib/pm/tags";
@@ -29,8 +29,9 @@ import { tagKeys } from "@/lib/pm/tags";
    三種檢視：清單、看板、甘特圖（功能與資料都和原本相同，只換呈現）
    ══════════════════════════════════════════════════════════ */
 
-export const TASK_TABS_MANAGER = ["行事曆", "任務", "團隊", "目標", "工作量"];
-export const TASK_TABS_MEMBER = ["行事曆", "任務", "目標"];
+// 「目標」（公司目標）移到專案情報的分頁
+export const TASK_TABS_MANAGER = ["行事曆", "任務", "團隊", "工作量"];
+export const TASK_TABS_MEMBER = ["行事曆", "任務"];
 
 type View = "list" | "board" | "gantt";
 type Smart = "day" | "scheduled" | "all" | "done";
@@ -121,7 +122,7 @@ export default function TasksPage({
   const add = (preset?: Partial<Task>) => setSheet({ id: null, preset });
 
   const tab =
-    activeTab === "目標" || activeTab === "行事曆"
+    activeTab === "行事曆"
       ? activeTab
       : pm.isManager && (activeTab === "工作量" || activeTab === "團隊")
         ? activeTab
@@ -218,8 +219,6 @@ export default function TasksPage({
           </SearchOverlay>
           <AllTasks pm={pm} onOpen={open} onAdd={add} person={personFilter} setPerson={setPersonFilter} query={searchQuery} />
         </>
-      ) : tab === "目標" ? (
-        <GoalsPage pm={pm} onOpenTask={open} />
       ) : (
         <>
           {/* 手機：放大鏡 → 跳出搜尋欄，結果列在下方；電腦：標題列輸入，結果取代清單 */}

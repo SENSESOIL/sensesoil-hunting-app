@@ -10,6 +10,8 @@ import { ProjectInfoSheet } from "./ProjectInfoSheet";
 import { SetupNotice } from "./SetupNotice";
 import { usePm, type Pm, type ProjectItem } from "./usePm";
 import { SearchOverlay } from "@/components/team/TeamPage";
+import { GoalsPage } from "./Goals";
+import { TaskSheet } from "./TaskSheet";
 
 /* ══════════════════════════════════════════════════════════
    專案情報（參考記帳 App：最上面一張總覽卡，下面是分類與明細）
@@ -18,7 +20,8 @@ import { SearchOverlay } from "@/components/team/TeamPage";
    每個專案一列：代碼頭像（專案色，和任務清單的色條一致）、階段、進度條、未完成任務數
    ══════════════════════════════════════════════════════════ */
 
-export const PROJECT_TABS = ["進行中", "全部"];
+// 「目標」＝公司目標（原本在任務追蹤，移到這裡）
+export const PROJECT_TABS = ["進行中", "全部", "目標"];
 
 const ORDER: Stage[] = ["施工中", "驗收", "簽約", "報價", "洽談", "暫停", "保固", "結案"];
 
@@ -51,6 +54,8 @@ export default function ProjectsPage({
   const pm = usePm();
   const [open, setOpen] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  // 目標分頁點任務：打開任務細節
+  const [taskId, setTaskId] = useState<string | null>(null);
   const q = searchQuery;
   const [attention, setAttention] = useState(false);
   const [stage, setStage] = useState<Stage | null>(null);
@@ -66,6 +71,17 @@ export default function ProjectsPage({
       return true;
     });
   }, [pm.projects, q, attention, all, stage]);
+
+  // 公司目標分頁
+  if (pm.data && activeTab === "目標") {
+    return (
+      <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
+        <SetupNotice pm={pm} />
+        <GoalsPage pm={pm} onOpenTask={(t) => setTaskId(t.id)} />
+        <TaskSheet pm={pm} open={!!taskId} taskId={taskId} onClose={() => setTaskId(null)} />
+      </div>
+    );
+  }
 
   if (!pm.data) {
     return (

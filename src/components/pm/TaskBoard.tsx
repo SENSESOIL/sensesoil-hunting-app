@@ -54,20 +54,21 @@ export function TaskBoard({
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="-mx-5 px-5 scroll-px-5 md:mx-0 md:px-0 overflow-x-auto scrollbar-hide snap-x snap-mandatory md:snap-none">
-        <div className="flex md:grid md:grid-cols-3 gap-3 pb-2 w-max md:w-auto">
+      {/* 三欄一次看完（手機也並排，不用左右滑）；手機上卡片與字小一號 */}
+      <div>
+        <div className="grid grid-cols-3 gap-1.5 md:gap-3 pb-2">
           {TASK_STATUSES.map((s) => {
             const list = s === "done" ? columns.done.slice(0, DONE_LIMIT) : columns[s];
             const meta = COLUMN_META[s];
             return (
-              <div key={s} className="snap-start w-[78vw] max-w-[320px] md:w-auto md:max-w-none bg-[#F2F2F4] rounded-[16px] p-2.5 flex flex-col">
-                <div className="flex items-center gap-2 px-1.5 pt-0.5 pb-2">
-                  <Icon name={meta.icon} fill={s === "done" ? 1 : 0} weight={500} className="text-[18px]" style={{ color: meta.color }} />
-                  <span className="text-[14px] font-bold text-[#18181B]">{STATUS_LABEL[s]}</span>
-                  <span className="text-[13px] text-[#A1A1AA] tabular-nums">{columns[s].length}</span>
+              <div key={s} className="min-w-0 bg-[#F2F2F4] rounded-[14px] md:rounded-[16px] p-1.5 md:p-2.5 flex flex-col">
+                <div className="flex items-center gap-1 md:gap-2 px-1 md:px-1.5 pt-0.5 pb-1.5 md:pb-2 min-h-[32px]">
+                  <Icon name={meta.icon} fill={s === "done" ? 1 : 0} weight={500} className="text-[16px] md:text-[18px] shrink-0" style={{ color: meta.color }} />
+                  <span className="text-[13px] md:text-[14px] font-bold text-[#18181B] whitespace-nowrap">{STATUS_LABEL[s]}</span>
+                  <span className="text-[12px] md:text-[13px] text-[#A1A1AA] tabular-nums">{columns[s].length}</span>
                   {s === "todo" && onAdd && (
-                    <button onClick={onAdd} className="ml-auto w-8 h-8 rounded-full flex items-center justify-center active:bg-white" aria-label="新增任務" style={{ color: ORANGE }}>
-                      <Icon name="add" weight={500} className="text-[22px]" />
+                    <button onClick={onAdd} className="ml-auto w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center active:bg-white shrink-0" aria-label="新增任務" style={{ color: ORANGE }}>
+                      <Icon name="add" weight={500} className="text-[20px] md:text-[22px]" />
                     </button>
                   )}
                 </div>
@@ -76,7 +77,7 @@ export function TaskBoard({
                     <div
                       ref={drop.innerRef}
                       {...drop.droppableProps}
-                      className={`flex flex-col gap-2 min-h-[120px] rounded-[12px] transition-colors ${snap.isDraggingOver ? "bg-[#E8E8EC]" : ""}`}
+                      className={`flex flex-col gap-1.5 md:gap-2 min-h-[120px] rounded-[12px] transition-colors ${snap.isDraggingOver ? "bg-[#E8E8EC]" : ""}`}
                     >
                       {list.map((t, i) => {
                         const canMove = pm.isManager || isAssignee(t, pm.me?.email);
@@ -88,7 +89,7 @@ export function TaskBoard({
                                 {...drag.draggableProps}
                                 {...drag.dragHandleProps}
                                 onClick={() => onOpen(t)}
-                                className={`bg-white rounded-[12px] p-3 border border-[#EBEBED] cursor-pointer select-none ${
+                                className={`bg-white rounded-[10px] md:rounded-[12px] p-2 md:p-3 border border-[#EBEBED] cursor-pointer select-none ${
                                   ds.isDragging ? "shadow-[0_12px_30px_rgba(0,0,0,0.18)] rotate-[1.5deg]" : "active:bg-[#FAFAFA]"
                                 }`}
                               >
@@ -100,10 +101,10 @@ export function TaskBoard({
                       })}
                       {drop.placeholder}
                       {!list.length && !snap.isDraggingOver && (
-                        <p className="text-center text-[12.5px] text-[#A1A1AA] py-6">{s === "done" ? "完成的任務會在這裡" : "拖曳卡片到這裡"}</p>
+                        <p className="text-center text-[11.5px] md:text-[12.5px] text-[#A1A1AA] py-6 px-1">{s === "done" ? "完成的任務會在這裡" : "拖曳卡片到這裡"}</p>
                       )}
                       {s === "done" && columns.done.length > DONE_LIMIT && (
-                        <p className="text-center text-[12px] text-[#A1A1AA] py-1">只顯示最近 {DONE_LIMIT} 件</p>
+                        <p className="text-center text-[11px] md:text-[12px] text-[#A1A1AA] py-1">只顯示最近 {DONE_LIMIT} 件</p>
                       )}
                     </div>
                   )}
@@ -130,25 +131,25 @@ function Card({ t, pm, showProject }: { t: Task; pm: Pm; showProject?: boolean }
             新
           </span>
         )}
-        <p className={`flex-1 text-[15px] leading-snug ${done ? "text-[#A1A1AA] line-through" : "text-[#18181B]"}`}>{t.title}</p>
+        <p className={`flex-1 min-w-0 text-[13.5px] md:text-[15px] leading-snug break-words ${done ? "text-[#A1A1AA] line-through" : "text-[#18181B]"}`}>{t.title}</p>
         {t.flagged && !done && <Icon name="flag" fill={1} className="text-[16px] mt-0.5" style={{ color: ORANGE }} />}
       </div>
-      {project && <p className="text-[12.5px] text-[#8E8E93] mt-1 truncate">{project.name}</p>}
+      {project && <p className="text-[11.5px] md:text-[12.5px] text-[#8E8E93] mt-1 truncate">{project.name}</p>}
       {t.status === "doing" && t.progress > 0 && (
         <div className="mt-2 h-1 rounded-full bg-[#F0F0F2] overflow-hidden">
           <div className="h-full rounded-full" style={{ width: `${t.progress}%`, background: ORANGE }} />
         </div>
       )}
-      <div className="flex items-center gap-2 mt-2">
+      <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-1.5 md:mt-2">
         {due ? (
-          <span className="text-[12.5px] font-medium flex items-center gap-1" style={{ color: due.color }}>
-            <Icon name="event" className="text-[14px]" />
+          <span className="text-[11.5px] md:text-[12.5px] font-medium flex items-center gap-0.5 md:gap-1 whitespace-nowrap" style={{ color: due.color }}>
+            <Icon name="event" className="text-[13px] md:text-[14px]" />
             {due.text}
           </span>
         ) : (
-          <span className="text-[12.5px] text-[#C7C7CC]">無期限</span>
+          <span className="text-[11.5px] md:text-[12.5px] text-[#C7C7CC]">無期限</span>
         )}
-        <span className="ml-auto flex items-center gap-1.5">
+        <span className="ml-auto flex items-center gap-1">
           {!done && t.assigneeEmail && !mine && pm.isManager && (
             <Icon
               name={t.ackAt ? "done_all" : t.seenAt ? "visibility" : "schedule"}
@@ -157,7 +158,7 @@ function Card({ t, pm, showProject }: { t: Task; pm: Pm; showProject?: boolean }
               style={{ color: t.ackAt ? GREEN : t.seenAt ? "#A1A1AA" : ORANGE }}
             />
           )}
-          {t.assigneeEmail && <AvatarStack people={taskAssignees(t).map((e) => ({ email: e, name: pm.personBy.get(e)?.name }))} max={3} size={22} label={assigneeLabel(pm, t)} />}
+          {t.assigneeEmail && <AvatarStack people={taskAssignees(t).map((e) => ({ email: e, name: pm.personBy.get(e)?.name }))} max={3} size={20} label={assigneeLabel(pm, t)} />}
         </span>
       </div>
     </>
