@@ -160,6 +160,18 @@ export default function Gantt({
   const days = Math.max(1, diffDays(from, to) + 1);
   const scroller = useRef<HTMLDivElement>(null);
   const tipApi = useRef<TipApi>(null);
+  // 表頭的「今天」圓點有一半壓在表頭外面，表頭的圖層又比各列的名稱欄高：
+  // 往左捲到今天躲進名稱欄後面時，那半顆會浮在名稱欄上 → 躲進去時就把圓點藏起來（直線本來就在名稱欄底下）
+  const todayDot = useRef<HTMLSpanElement>(null);
+  const todayXRef = useRef(0);
+  const syncTodayDot = () => {
+    const el = scroller.current;
+    const dot = todayDot.current;
+    if (!el || !dot) return;
+    dot.style.visibility = todayXRef.current - el.scrollLeft < 4 ? "hidden" : "visible";
+  };
+  // 寬度、範圍改變後（重繪）也要重算一次
+  useLayoutEffect(() => syncTodayDot());
   const [boxW, setBoxW] = useState(0);
   // 拖曳中的長條：畫面先跟著手指走，放開才存
   // active：真的進入拖曳（滑鼠按下就是；手指要長按）。timer：手指長按計時
@@ -219,6 +231,7 @@ export default function Gantt({
   const width = days * dayWidth;
   const x = (iso: string) => diffDays(from, iso) * dayWidth;
   const todayX = x(today) + dayWidth / 2;
+  todayXRef.current = todayX;
   const showToday = today >= from && today <= to;
 
   const scrollY = rows.length > SCROLL_ROWS;
@@ -231,6 +244,7 @@ export default function Gantt({
     if (!el) return;
     el.scrollLeft = Math.max(0, todayX - (el.clientWidth - labelWidth) * anchor);
     updateEdges();
+    syncTodayDot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayWidth, from, to, labelWidth]);
 
@@ -346,6 +360,7 @@ export default function Gantt({
         onScroll={() => {
           tipApi.current?.hide();
           updateEdges();
+          syncTodayDot();
         }}
       >
         <div style={{ width: labelWidth + width + TAIL }}>
@@ -386,6 +401,7 @@ export default function Gantt({
               ))}
               {showToday && (
                 <span
+                  ref={todayDot}
                   className="absolute bottom-0 translate-y-1/2 -translate-x-1/2 z-[4] w-[7px] h-[7px] rounded-full ring-2 ring-white"
                   style={{ left: todayX, background: ACCENT }}
                 />
