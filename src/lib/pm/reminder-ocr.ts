@@ -256,7 +256,9 @@ function findCircles(p: Px): Circle[] {
       }
     out.push({ cx, cy, r, done: inner / innerTot > 0.3, cut: touchesEdge });
   }
-  return out.sort((a, b) => a.cy - b.cy);
+  // 提醒事項的圓圈大小都一樣：和中位數差太多的（例如方框字「面」）不算
+  const med = out.map((c) => c.r).sort((a, b) => a - b)[out.length >> 1] ?? 0;
+  return out.filter((c) => Math.abs(c.r - med) <= med * 0.2).sort((a, b) => a.cy - b.cy);
 }
 
 /** 這一列最右邊有沒有橘色旗子 */
@@ -363,7 +365,8 @@ export async function readReminderShot(file: Blob, today: string, onProgress?: (
     const yc = (l.bbox.y0 + l.bbox.y1) / 2;
     const h = l.bbox.y1 - l.bbox.y0;
     const c = circles.find((c) => Math.abs(c.cy - yc) < Math.max(r0, h * 0.6) && c.cx + c.r < l.bbox.x1);
-    const words = l.words.filter((w) => !circles.some((c) => Math.abs(c.cy - (w.bbox.y0 + w.bbox.y1) / 2) < c.r * 1.2 && w.bbox.x1 <= c.cx + c.r * 1.3));
+    // 最右邊 10% 是旗子、ⓘ 圖示，不是字
+    const words = l.words.filter((w) => w.bbox.x0 < W * 0.9 && !circles.some((c) => Math.abs(c.cy - (w.bbox.y0 + w.bbox.y1) / 2) < c.r * 1.2 && w.bbox.x1 <= c.cx + c.r * 1.3));
     const text = tidy(words.map((w) => w.text).join(" "));
     if (!text) continue;
     const box = words.length ? { x0: Math.min(...words.map((w) => w.bbox.x0)), y0: l.bbox.y0, x1: Math.max(...words.map((w) => w.bbox.x1)), y1: l.bbox.y1 } : l.bbox;
@@ -390,7 +393,7 @@ export async function readReminderShot(file: Blob, today: string, onProgress?: (
       const left = r.circle ? r.circle.cx + r.circle.r * 1.25 : r.box.x0 - pad;
       const sx = Math.max(0, Math.round(Math.max(left, r.box.x0 - pad)));
       const sy = Math.max(0, Math.round(r.box.y0 - pad));
-      const sw = Math.min(W, Math.round(r.box.x1 + pad)) - sx;
+      const sw = Math.min(Math.round(W * 0.9), Math.round(r.box.x1 + pad)) - sx;
       const sh = Math.min(H, Math.round(r.box.y1 + pad)) - sy;
       if (sw < 4 || sh < 4) continue;
       const t = tidy(await ocrOneLine(prep(bmp, px.bg, sx, sy, sw, sh, 40 / h)));
