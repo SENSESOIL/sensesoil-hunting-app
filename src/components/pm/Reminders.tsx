@@ -288,12 +288,12 @@ export function ReminderPage({
       onClick={() => setGanttEdit((v) => !v)}
       aria-pressed={ganttEdit}
       aria-label={ganttEdit ? "完成編輯，回到閱讀模式" : "編輯甘特圖"}
-      className={`h-9 pl-2 pr-2.5 rounded-full flex items-center gap-1 transition-colors ${ganttEdit ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5]"}`}
+      title={ganttEdit ? "完成編輯" : "編輯"}
+      className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${ganttEdit ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5]"}`}
     >
       <span className="material-symbols-outlined text-[21px]" style={{ fontVariationSettings: "'wght' 200" }}>
-        {ganttEdit ? "check" : "edit"}
+        {ganttEdit ? "check" : "stylus"}
       </span>
-      <span className="text-[13px]">{ganttEdit ? "完成" : "編輯"}</span>
     </button>
   ) : null;
   const menuButton = code ? (
@@ -307,12 +307,11 @@ export function ReminderPage({
       }}
       aria-label={`檢視：${cur[2]}，點一下換成${next[2]}`}
       title={`換成${next[2]}`}
-      className="h-9 pl-2 pr-2.5 rounded-full flex items-center gap-1 text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
+      className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
     >
       <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>
         {cur[1]}
       </span>
-      <span className="text-[13px]">{cur[2]}</span>
     </button>
     </div>
   ) : (
