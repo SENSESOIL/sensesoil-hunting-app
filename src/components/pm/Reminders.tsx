@@ -767,14 +767,28 @@ export function ReminderTasks({
 
   /* ── 縮排 ── */
 
+  /** 任務自己的分組欄位改成 sid（"" = 其他）；沒變就不送 */
+  const withSection = (x: Task, sid: string): { meta?: Task["meta"] } => {
+    const cur = x.meta?.section ?? "";
+    if (cur === sid) return {};
+    const meta = { ...(x.meta ?? {}) };
+    if (sid) meta.section = sid;
+    else delete meta.section;
+    return { meta };
+  };
+
   const indent = (t: Task) => {
     if (!code) return;
-    const rows = treeOrder(projectAll);
+    // 只在「同一個分組」裡找上一個任務：畫面上它就在正上方。
+    // （以前是整個專案一起找，上一個可能在別的分組，縮排後任務就跟著上層跑到別組去）
+    const sec = secOf(t);
+    const rows = treeOrder(projectAll.filter((x) => secOf(x) === sec));
     const i = rows.findIndex((r) => r.task.id === t.id);
     const prevTop = rows.slice(0, i).reverse().find((r) => r.depth === 0 && r.task.id !== t.id);
-    if (!prevTop) return toast("上面沒有任務可以歸入");
+    if (!prevTop) return toast("同一組裡上面沒有任務可以歸入");
     if (rows[i]?.childCount) return toast("有子任務的項目不能再縮排");
-    pm.saveTask({ id: t.id, parentId: prevTop.task.id });
+    // 自己的分組欄位也對齊上層（取消縮排時才不會跑回舊的分組）
+    pm.saveTask({ id: t.id, parentId: prevTop.task.id, ...withSection(t, sec) });
     setCollapsed((s) => {
       const n = new Set(s);
       n.delete(prevTop.task.id);
@@ -792,7 +806,11 @@ export function ReminderTasks({
     while (at + 1 < without.length && without[at + 1].parentId === parent) at++;
     without.splice(at + 1, 0, t);
     const order = without.map((x) => x.id);
-    const p = pm.saveTask({ id: t.id, parentId: null });
+    // 子任務在畫面上跟著上層的分組；取消縮排後要留在同一組，所以把上層的分組寫回自己
+    // （以前沒寫，子任務自己的分組欄位是舊的或空的，取消縮排就跑到別組）
+    const parentTask = projectAll.find((x) => x.id === parent);
+    const sec = parentTask ? secOf(parentTask) : secOf(t);
+    const p = pm.saveTask({ id: t.id, parentId: null, ...withSection(t, sec) });
     pm.reorderTasks(order, { localOnly: true });
     p.then((saved) => saved && pm.reorderTasks(order));
   };
