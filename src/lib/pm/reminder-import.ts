@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════
    提醒事項截圖匯入：把多張截圖接成一份清單
-   - 每張截圖先由 /api/pm/import-shot 讀成「由上到下的列」
+   - 每張截圖先在瀏覽器裡辨識成「由上到下的列」（reminder-ocr.ts，Tesseract，免費）
    - 長清單要分好幾張截，相鄰兩張上下會有重複的幾列：
      找出「上一張的最後 k 列 ＝ 下一張的最前 k 列」中最大的 k，重疊的部分只留一份
    - 截圖順序：先試著用重疊自動排（從沒有人接在前面的那張開始一路接下去），
@@ -44,15 +44,45 @@ function lev(a: string, b: string): number {
   return prev[n];
 }
 
-/** 兩列是不是同一列（容許辨識時差一兩個字） */
-function sameRow(x: ShotItem, y: ShotItem): boolean {
-  if (x.kind !== y.kind) return false;
-  const a = normText(x.text);
-  const b = normText(y.text);
+/** 最長的連續相同字數 */
+export function lcsLen(a: string, b: string): number {
+  let best = 0;
+  let prev = new Array(b.length + 1).fill(0);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = new Array(b.length + 1).fill(0);
+    for (let j = 1; j <= b.length; j++) if (a[i - 1] === b[j - 1]) best = Math.max(best, (cur[j] = prev[j - 1] + 1));
+    prev = cur;
+  }
+  return best;
+}
+
+/** 兩段文字像不像（容許辨識時差一兩個字）：編輯距離或最長連續相同字數，取比較寬鬆的 */
+function similar(a: string, b: string): boolean {
   if (a === b) return true;
   const L = Math.max(a.length, b.length);
-  if (L <= 4) return false;
-  return 1 - lev(a, b) / L >= 0.85;
+  if (L <= 3) return false;
+  return 1 - lev(a, b) / L >= 0.8 || lcsLen(a, b) / L >= 0.7;
+}
+
+/** 兩列是不是同一列（OCR 有時把分組讀成任務、或反過來，所以種類不同也可以，只看字） */
+function sameRow(x: ShotItem, y: ShotItem): boolean {
+  return similar(normText(x.text), normText(y.text));
+}
+
+/**
+ * 從清單裡找名稱最像的一個（專案名稱比對用）：
+ * 先試完整包含；包含不到，再找「連續相同的字最多」的。同分就不選，留給使用者。
+ */
+export function bestMatch<T>(target: string, list: T[], names: (x: T) => string[]): T | undefined {
+  const t = normText(target);
+  if (!t) return undefined;
+  const inc = list.filter((x) => names(x).some((n) => (n = normText(n)) && (n.includes(t) || t.includes(n))));
+  if (inc.length === 1) return inc[0];
+  const pool = inc.length ? inc : list;
+  const score = pool.map((x) => Math.max(0, ...names(x).map((n) => lcsLen(t, normText(n)))));
+  const top = Math.max(0, ...score);
+  if (top < 2 || score.filter((v) => v === top).length !== 1) return undefined;
+  return pool[score.indexOf(top)];
 }
 
 /** 去掉上下緣被切一半的列 */

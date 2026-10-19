@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { newSectionId, newTaskId, personColor, type Section } from "@/lib/pm/model";
-import { buildPlan, mergeShots, normText, type PlanRow, type Shot } from "@/lib/pm/reminder-import";
+import { bestMatch, buildPlan, mergeShots, normText, type PlanRow, type Shot, type ShotItem } from "@/lib/pm/reminder-import";
+import { readReminderShot } from "@/lib/pm/reminder-ocr";
 import { Spinner } from "./kit";
 import { Sheet, SheetActions, toast } from "./Sheet";
 import { Icon } from "./ui";
@@ -11,8 +12,10 @@ import { canEditProject, type Pm } from "./usePm";
 /* ══════════════════════════════════════════════════════════
    從提醒事項截圖匯入（任務追蹤 → 任務 → 右上）
    1. 選要匯入哪個專案（從清單挑）
-   2. 選截圖：一份長清單可以分好幾張截，上下留一兩列重複，會自動接起來、順序不用管
-   3. 預覽：分組、縮排（子任務）、已完成、日期都會讀進來；不要的取消打勾；專案裡已有同名任務的預設不匯入
+   2. 選截圖：在手機／電腦的瀏覽器裡辨識（Tesseract，免費、截圖不上傳），一張約 5～15 秒；
+      一份長清單可以分好幾張截，上下留一兩列重複，會自動接起來、順序不用管
+   3. 預覽：分組、縮排（子任務）、已完成、日期、旗標都會讀進來；辨識偶爾會錯，每一列都可以改字、改縮排、改完成，
+      不要的取消打勾；專案裡已有同名任務的預設不匯入
    4. 匯入：缺的分組自動建立，任務照截圖的順序排在專案最後面
    ══════════════════════════════════════════════════════════ */
 
@@ -20,36 +23,11 @@ interface ShotFile {
   id: string;
   file: File;
   url: string;
-  status: "reading" | "ok" | "error";
+  status: "wait" | "reading" | "ok" | "error";
+  /** 0–1 */
+  progress?: number;
   shot?: Shot;
   error?: string;
-}
-
-const MAX_EDGE = 2400;
-
-async function toJpeg(file: File): Promise<string> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = new Image();
-    img.src = url;
-    await img.decode();
-    let edge = MAX_EDGE;
-    for (;;) {
-      const k = Math.min(1, edge / Math.max(img.naturalWidth, img.naturalHeight));
-      const c = document.createElement("canvas");
-      c.width = Math.round(img.naturalWidth * k);
-      c.height = Math.round(img.naturalHeight * k);
-      const ctx = c.getContext("2d")!;
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, c.width, c.height);
-      ctx.drawImage(img, 0, 0, c.width, c.height);
-      const data = c.toDataURL("image/jpeg", 0.85).split(",")[1];
-      if (data.length < 4_000_000 || edge < 1200) return data;
-      edge = Math.round(edge * 0.75);
-    }
-  } finally {
-    URL.revokeObjectURL(url);
-  }
 }
 
 export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: boolean; onClose: () => void; presetCode?: string }) {
@@ -57,6 +35,10 @@ export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: b
   const [files, setFiles] = useState<ShotFile[]>([]);
   // 使用者點過的列：true＝匯入、false＝不匯入（沒點過的照預設：同名任務不匯入，其他匯入）
   const [pick, setPick] = useState<Map<string, boolean>>(new Map());
+  // 預覽裡改過的列（依接好後的列序）：改字、改縮排、改完成
+  const [edits, setEdits] = useState<Map<number, Partial<ShotItem>>>(new Map());
+  // 辨識一次一張（共用同一個辨識程式），排隊做
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
   const [picking, setPicking] = useState(false);
   const [q, setQ] = useState("");
   const [saving, setSaving] = useState(false);
@@ -86,26 +68,22 @@ export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: b
     const add: ShotFile[] = [...list]
       .filter((f) => f.type.startsWith("image/"))
       .slice(0, 20)
-      .map((file) => ({ id: newTaskId(), file, url: URL.createObjectURL(file), status: "reading" }));
+      .map((file) => ({ id: newTaskId(), file, url: URL.createObjectURL(file), status: "wait" }));
     setFiles((cur) => [...cur, ...add]);
     add.forEach(read);
   };
-  const read = async (f: ShotFile) => {
+  const read = (f: ShotFile) => {
     const patch = (p: Partial<ShotFile>) => setFiles((cur) => cur.map((x) => (x.id === f.id ? { ...x, ...p } : x)));
-    patch({ status: "reading", error: undefined });
-    try {
-      const data = await toJpeg(f.file);
-      const r = await fetch("/api/pm/import-shot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data, mimeType: "image/jpeg", today: pm.today }),
-      });
-      const j = (await r.json().catch(() => ({}))) as Shot & { error?: string };
-      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
-      patch({ status: "ok", shot: { listTitle: j.listTitle, items: j.items ?? [] } });
-    } catch (e) {
-      patch({ status: "error", error: e instanceof Error ? e.message : String(e) });
-    }
+    patch({ status: "wait", error: undefined, progress: 0 });
+    queue.current = queue.current.then(async () => {
+      patch({ status: "reading" });
+      try {
+        const shot = await readReminderShot(f.file, pm.today, (p) => patch({ progress: p }));
+        patch({ status: "ok", shot });
+      } catch (e) {
+        patch({ status: "error", error: e instanceof Error ? e.message : String(e) });
+      }
+    });
   };
   const removeFile = (id: string) =>
     setFiles((cur) => {
@@ -115,16 +93,22 @@ export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: b
     });
 
   /* ── 接起來 → 預覽 ── */
-  const reading = files.some((f) => f.status === "reading");
+  const reading = files.some((f) => f.status === "reading" || f.status === "wait");
   const okFiles = useMemo(() => files.filter((f) => f.status === "ok" && f.shot).sort((a, b) => a.file.lastModified - b.file.lastModified), [files]);
   const merged = useMemo(() => (reading ? null : mergeShots(okFiles.map((f) => f.shot!))), [okFiles, reading]);
-  const plan = useMemo(() => (merged ? buildPlan(merged.items) : []), [merged]);
+  const plan = useMemo(() => (merged ? buildPlan(merged.items.map((it, i) => ({ ...it, ...edits.get(i) }))) : []), [merged, edits]);
+  // 截圖換了，列序就不一樣：之前的修改作廢
+  useEffect(() => {
+    setEdits(new Map());
+    setPick(new Map());
+  }, [merged]);
+  const edit = (r: PlanRow, p: Partial<ShotItem>) => setEdits((cur) => new Map(cur).set(+r.key.slice(1), { ...cur.get(+r.key.slice(1)), ...p }));
 
   // 清單名稱和專案名稱對得上就自動選
   useEffect(() => {
     if (touchedCode.current || !merged?.listTitle) return;
-    const t = normText(merged.listTitle);
-    const hit = projects.find((p) => t && (normText(p.name).includes(t) || t.includes(normText(p.name)) || t.includes(normText(p.code))));
+    // 先試完整包含，再找連續相同字最多的；同分就不選，留給使用者
+    const hit = bestMatch(merged.listTitle, projects, (p) => [p.name, p.code]);
     if (hit) setCode(hit.code);
   }, [merged?.listTitle, projects]);
 
@@ -290,8 +274,11 @@ export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: b
                 <img src={f.url} alt="" className="w-full h-full object-cover object-top" />
                 {f.status !== "ok" && (
                   <div className={`absolute inset-0 flex flex-col items-center justify-center gap-1 ${f.status === "error" ? "bg-[#E5484D]/80" : "bg-black/35"}`}>
-                    {f.status === "reading" ? (
-                      <Spinner size={20} color="#fff" />
+                    {f.status === "reading" || f.status === "wait" ? (
+                      <>
+                        <Spinner size={20} color="#fff" />
+                        <span className="text-white text-[11.5px] tabular-nums">{f.status === "wait" ? "排隊中" : `${Math.round((f.progress ?? 0) * 100)}%`}</span>
+                      </>
                     ) : (
                       <button type="button" onClick={() => read(f)} className="flex flex-col items-center text-white text-[12px]" title={f.error}>
                         <Icon name="refresh" className="text-[22px]" />
@@ -336,7 +323,7 @@ export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: b
             />
           </div>
           <p className="px-4 pt-1.5 text-[12.5px] leading-relaxed text-[#8E8E93]">
-            在提醒事項打開清單，從最上面開始截，往下滑時讓上下留一兩列重複，會自動接起來，順序不用管。分組、子任務（縮排）、已完成、日期都會讀進來。
+            在提醒事項打開清單，從最上面開始截，往下滑時讓上下留一兩列重複，會自動接起來，順序不用管。分組、子任務（縮排）、已完成、日期、旗標都會讀進來。辨識在這台裝置上進行，截圖不會上傳；第一次要先下載辨識資料，請稍等。
           </p>
           {files.some((f) => f.status === "error") && (
             <p className="px-4 pt-1 text-[12.5px] text-[#E5484D]">{files.find((f) => f.status === "error")?.error}</p>
@@ -348,7 +335,7 @@ export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: b
           <section className="px-4 pt-5">
             <h3 className="px-4 pb-1.5 text-[13px] text-[#8E8E93] flex justify-between">
               <span>預覽（{taskCount} 項{merged.listTitle ? `・${merged.listTitle}` : ""}）</span>
-              <span>點一下可以不匯入</span>
+              <span>讀錯的字可以直接改</span>
             </h3>
             {seamText && (
               <div className="mb-2 rounded-[12px] bg-[#FFF4E5] px-3.5 py-2.5 flex gap-2 text-[13px] leading-snug text-[#9A5B13]">
@@ -359,32 +346,68 @@ export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: b
             <div className="bg-white rounded-[14px] overflow-hidden">
               {plan.map((r) =>
                 r.kind === "section" ? (
-                  <div key={r.key} className="px-4 pt-4 pb-1.5 text-[17px] font-bold text-[#18181B] border-t border-[#F0F0F2] first:border-t-0">
-                    {r.text}
-                  </div>
-                ) : (
-                  <button
+                  <input
                     key={r.key}
-                    type="button"
-                    onClick={() => toggle(r)}
-                    className={`w-full flex items-start gap-2.5 pr-3 py-2.5 text-left active:bg-[#F2F2F4] ${r.depth ? "pl-11" : "pl-4"} ${isOn(r) ? "" : "opacity-40"}`}
-                  >
-                    <span
-                      className={`mt-0.5 w-[20px] h-[20px] rounded-full shrink-0 flex items-center justify-center ${isOn(r) ? "bg-[var(--accent)]" : "ring-[1.5px] ring-inset ring-[#C7C7CC]"}`}
-                      aria-hidden
+                    value={r.text}
+                    onChange={(e) => edit(r, { text: e.target.value })}
+                    aria-label="分組名稱"
+                    className="block w-full px-4 pt-4 pb-1.5 bg-transparent text-[17px] font-bold text-[#18181B] outline-none border-t border-[#F0F0F2] first:border-t-0"
+                  />
+                ) : (
+                  <div key={r.key} className={`flex items-start gap-1 pr-1.5 py-1.5 ${r.depth ? "pl-11" : "pl-4"} ${isOn(r) ? "" : "opacity-40"}`}>
+                    <button
+                      type="button"
+                      onClick={() => toggle(r)}
+                      aria-pressed={isOn(r)}
+                      aria-label={isOn(r) ? "不要匯入這一項" : "匯入這一項"}
+                      className="-ml-1.5 w-8 h-9 shrink-0 flex items-center justify-center"
                     >
-                      {isOn(r) && <Icon name="check" weight={700} className="text-[14px] text-white" />}
-                    </span>
-                    <span className="flex-1 min-w-0">
-                      <span className={`block text-[15.5px] leading-snug ${r.done ? "text-[#8E8E93] line-through" : "text-[#18181B]"}`}>{r.text}</span>
-                      {(r.dateText || r.note || dupKeys.has(r.key) || r.done) && (
+                      <span className={`w-[20px] h-[20px] rounded-full flex items-center justify-center ${isOn(r) ? "bg-[var(--accent)]" : "ring-[1.5px] ring-inset ring-[#C7C7CC]"}`}>
+                        {isOn(r) && <Icon name="check" weight={700} className="text-[14px] text-white" />}
+                      </span>
+                    </button>
+                    <span className="flex-1 min-w-0 pt-1.5">
+                      <input
+                        value={r.text}
+                        onChange={(e) => edit(r, { text: e.target.value })}
+                        aria-label="任務名稱"
+                        className={`block w-full bg-transparent text-[15.5px] leading-snug outline-none ${r.done ? "text-[#8E8E93] line-through" : "text-[#18181B]"}`}
+                      />
+                      {(r.dateText || r.note || dupKeys.has(r.key)) && (
                         <span className="block text-[12.5px] leading-snug text-[#8E8E93] mt-0.5 truncate">
-                          {[dupKeys.has(r.key) ? "專案裡已有同名任務" : "", r.done ? "已完成" : "", r.dateText ?? "", r.note && r.note !== r.dateText ? r.note : ""].filter(Boolean).join("・")}
+                          {[dupKeys.has(r.key) ? "專案裡已有同名任務" : "", r.due ? r.due.slice(5).replace("-", "/") : r.dateText ?? "", r.note && r.note !== r.dateText ? r.note : ""].filter(Boolean).join("・")}
                         </span>
                       )}
                     </span>
-                    {r.flagged && <Icon name="flag" fill={1} className="text-[16px] text-[var(--accent)] mt-0.5" />}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => edit(r, { indent: r.depth ? 0 : 1 })}
+                      aria-label={r.depth ? "取消縮排" : "縮排成子任務"}
+                      title={r.depth ? "取消縮排" : "縮排成子任務"}
+                      className="w-8 h-9 shrink-0 flex items-center justify-center text-[#A1A1AA] active:text-[#18181B]"
+                    >
+                      <Icon name={r.depth ? "format_indent_decrease" : "format_indent_increase"} weight={300} className="text-[20px]" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => edit(r, { done: !r.done })}
+                      aria-pressed={r.done}
+                      aria-label={r.done ? "改成未完成" : "改成已完成"}
+                      title={r.done ? "已完成" : "未完成"}
+                      className={`w-8 h-9 shrink-0 flex items-center justify-center ${r.done ? "text-[#30A46C]" : "text-[#D4D4D8]"}`}
+                    >
+                      <Icon name="task_alt" weight={r.done ? 500 : 300} className="text-[20px]" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => edit(r, { flagged: !r.flagged })}
+                      aria-pressed={r.flagged}
+                      aria-label={r.flagged ? "取消旗標" : "加上旗標"}
+                      className={`w-8 h-9 shrink-0 flex items-center justify-center ${r.flagged ? "text-[var(--accent)]" : "text-[#D4D4D8]"}`}
+                    >
+                      <Icon name="flag" fill={r.flagged ? 1 : 0} weight={300} className="text-[19px]" />
+                    </button>
+                  </div>
                 )
               )}
             </div>
