@@ -12,6 +12,10 @@ import { usePm, type Pm, type ProjectItem } from "./usePm";
 import { SearchOverlay } from "@/components/team/TeamPage";
 import { GoalsPage } from "./Goals";
 import { TaskSheet } from "./TaskSheet";
+import { AllTasks } from "./TasksPage";
+import { Workload } from "./Workload";
+import { TaskSearchResults } from "./Reminders";
+import type { Task } from "@/lib/pm/model";
 
 /* ══════════════════════════════════════════════════════════
    專案情報（參考記帳 App：最上面一張總覽卡，下面是分類與明細）
@@ -21,8 +25,9 @@ import { TaskSheet } from "./TaskSheet";
    ══════════════════════════════════════════════════════════ */
 
 // 「目標」＝公司目標（原本在任務追蹤，移到這裡）
-// 「專案」：進行中／全部改成下方篩選膠囊；「目標」＝公司目標
+// 「專案」：進行中／全部改成下方篩選膠囊；「團隊」「工作量」（管理者）、「目標」＝公司目標
 export const PROJECT_TABS = ["專案", "目標"];
+export const PROJECT_TABS_MANAGER = ["專案", "團隊", "工作量", "目標"];
 
 const ORDER: Stage[] = ["施工中", "驗收", "簽約", "報價", "洽談", "暫停", "保固", "結案"];
 
@@ -40,12 +45,15 @@ export const STAGE_COLOR: Record<Stage, string> = {
 
 export default function ProjectsPage({
   activeTab,
+  onTabChange,
   searchQuery = "",
   onSearchQuery,
   searchOpen = false,
   onSearchClose,
 }: {
   activeTab: string;
+  /** 工作量點某個人 → 跳到團隊分頁 */
+  onTabChange?: (tab: string) => void;
   /** 標題列的搜尋（分享鍵左邊）：電腦直接篩選下方清單；手機跳出搜尋欄，結果列在搜尋欄下 */
   searchQuery?: string;
   onSearchQuery?: (q: string) => void;
@@ -55,8 +63,11 @@ export default function ProjectsPage({
   const pm = usePm();
   const [open, setOpen] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  // 目標分頁點任務：打開任務細節
+  // 目標／團隊分頁點任務：打開任務細節；團隊分頁的「＋」：新增任務
   const [taskId, setTaskId] = useState<string | null>(null);
+  const [newTask, setNewTask] = useState<Partial<Task> | null>(null);
+  // 團隊分頁：只看某個人（undefined＝全部人；null＝未指派）
+  const [person, setPerson] = useState<string | null | undefined>(undefined);
   const q = searchQuery;
   const [attention, setAttention] = useState(false);
   const [stage, setStage] = useState<Stage | null>(null);
@@ -74,13 +85,40 @@ export default function ProjectsPage({
     });
   }, [pm.projects, q, attention, all, stage]);
 
-  // 公司目標分頁
-  if (pm.data && activeTab === "目標") {
+  // 公司目標、團隊、工作量分頁
+  if (pm.data && (activeTab === "目標" || (pm.isManager && (activeTab === "團隊" || activeTab === "工作量")))) {
+    const openTask = (t: Task) => setTaskId(t.id);
     return (
       <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
         <SetupNotice pm={pm} />
-        <GoalsPage pm={pm} onOpenTask={(t) => setTaskId(t.id)} />
+        {activeTab === "目標" && <GoalsPage pm={pm} onOpenTask={openTask} />}
+        {activeTab === "工作量" && (
+          <Workload
+            pm={pm}
+            onPick={(email) => {
+              setPerson(email);
+              onTabChange?.("團隊");
+            }}
+          />
+        )}
+        {activeTab === "團隊" && (
+          <>
+            {/* 手機：標題列放大鏡 → 跳出搜尋欄，結果列在下方；電腦：左側欄的搜尋框，直接篩選下面的清單 */}
+            <SearchOverlay open={searchOpen} query={q} onQuery={(v) => onSearchQuery?.(v)} onClose={() => onSearchClose?.()} placeholder="搜尋任務、專案、人" label="搜尋任務">
+              <TaskSearchResults
+                pm={pm}
+                query={q}
+                onOpen={(t) => {
+                  onSearchClose?.();
+                  openTask(t);
+                }}
+              />
+            </SearchOverlay>
+            <AllTasks pm={pm} onOpen={openTask} onAdd={(p) => setNewTask(p ?? {})} person={person} setPerson={setPerson} query={q} />
+          </>
+        )}
         <TaskSheet pm={pm} open={!!taskId} taskId={taskId} onClose={() => setTaskId(null)} />
+        <TaskSheet pm={pm} open={!!newTask} taskId={null} preset={newTask ?? undefined} onClose={() => setNewTask(null)} />
       </div>
     );
   }

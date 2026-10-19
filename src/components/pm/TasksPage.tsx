@@ -8,13 +8,12 @@ import { Avatar, Empty, Group, ORANGE, RED, SegmentedIcons, Spinner } from "./ki
 import { TaskList } from "./TaskList";
 import { TaskBoard } from "./TaskBoard";
 import { TaskGantt } from "./TaskGantt";
-import { Workload } from "./Workload";
 import { TaskSheet } from "./TaskSheet";
 import { SetupNotice } from "./SetupNotice";
 import { isAssignee, taskAssignees } from "@/lib/pm/model";
 import { isLate, usePm, type GoalItem, type Pm } from "./usePm";
 import { GoalSheet } from "./Goals";
-import { ReminderPage, RemindersHome, SMART, smartTasks, TaskSearchResults, type ListRoute } from "./Reminders";
+import { ReminderPage, RemindersHome, ReminderTasks, SMART, smartTasks, TaskSearchResults, type ListRoute } from "./Reminders";
 import { SearchOverlay } from "@/components/team/TeamPage";
 import { tagKeys } from "@/lib/pm/tags";
 
@@ -29,8 +28,8 @@ import { tagKeys } from "@/lib/pm/tags";
    三種檢視：清單、看板、甘特圖（功能與資料都和原本相同，只換呈現）
    ══════════════════════════════════════════════════════════ */
 
-// 「目標」（公司目標）移到專案情報的分頁
-export const TASK_TABS_MANAGER = ["行事曆", "任務", "團隊", "工作量"];
+// 「團隊」「工作量」「目標」移到專案情報的分頁
+export const TASK_TABS_MANAGER = ["行事曆", "任務"];
 export const TASK_TABS_MEMBER = ["行事曆", "任務"];
 
 type View = "list" | "board" | "gantt";
@@ -121,12 +120,7 @@ export default function TasksPage({
   const open = (t: Task) => setSheet({ id: t.id });
   const add = (preset?: Partial<Task>) => setSheet({ id: null, preset });
 
-  const tab =
-    activeTab === "行事曆"
-      ? activeTab
-      : pm.isManager && (activeTab === "工作量" || activeTab === "團隊")
-        ? activeTab
-        : "任務";
+  const tab = activeTab === "行事曆" ? activeTab : "任務";
   const home = () => setRoute({ kind: "home" });
 
   const listView = () => {
@@ -194,31 +188,8 @@ export default function TasksPage({
   return (
     <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
       <SetupNotice pm={pm} />
-      {tab === "工作量" ? (
-        <Workload
-          pm={pm}
-          onPick={(email) => {
-            setPersonFilter(email);
-            onTabChange("團隊");
-          }}
-        />
-      ) : tab === "行事曆" ? (
+      {tab === "行事曆" ? (
         <MyTasks pm={pm} onOpen={open} onAdd={add} />
-      ) : tab === "團隊" ? (
-        <>
-          {/* 手機：標題列放大鏡 → 跳出搜尋欄，結果列在下方；電腦：左側欄的搜尋框，直接篩選下面的清單 */}
-          <SearchOverlay open={searchOpen} query={searchQuery} onQuery={(v) => onSearchQuery?.(v)} onClose={() => onSearchClose?.()} placeholder="搜尋任務、專案、人" label="搜尋任務">
-            <TaskSearchResults
-              pm={pm}
-              query={searchQuery}
-              onOpen={(t) => {
-                onSearchClose?.();
-                open(t);
-              }}
-            />
-          </SearchOverlay>
-          <AllTasks pm={pm} onOpen={open} onAdd={add} person={personFilter} setPerson={setPersonFilter} query={searchQuery} />
-        </>
       ) : (
         <>
           {/* 手機：放大鏡 → 跳出搜尋欄，結果列在下方；電腦：標題列輸入，結果取代清單 */}
@@ -560,15 +531,8 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
 
       {view === "list" &&
         (list.length ? (
-          <TaskList
-            pm={pm}
-            tasks={list}
-            groupBy={smart === "done" ? "project" : "date"}
-            showProject
-            showDone={smart === "done"}
-            hideSingleHeader={smart !== "done"}
-            onOpen={onOpen}
-          />
+          // 和任務分頁同一套清單（提醒事項風格）：長按出選單（期限、標籤、指派、重要、刪除…）、左滑、打勾；依專案分組
+          <ReminderTasks pm={pm} tasks={list} grouped showDone={smart === "done"} onOpen={onOpen} />
         ) : (
           <Group>
             <Empty
@@ -874,7 +838,8 @@ function CalendarCard({
 
 /* ── 全部（管理者） ───────────────────────────────────── */
 
-function AllTasks({
+/** 團隊手上的任務（專案情報 → 團隊） */
+export function AllTasks({
   pm,
   onOpen,
   onAdd,

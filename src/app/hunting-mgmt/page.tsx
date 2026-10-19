@@ -13,7 +13,7 @@ import ReceiptForm, { ReceiptFormRef } from "@/components/ReceiptForm";
 import LeaveForm, { LeaveFormRef } from "@/components/LeaveForm";
 import VersionGuard from "@/components/VersionGuard";
 import AnimatedTabs from "@/components/AnimatedTabs";
-import ProjectsPage, { PROJECT_TABS } from "@/components/pm/ProjectsPage";
+import ProjectsPage, { PROJECT_TABS, PROJECT_TABS_MANAGER } from "@/components/pm/ProjectsPage";
 import TasksPage, { TASK_TABS_MANAGER, TASK_TABS_MEMBER } from "@/components/pm/TasksPage";
 import { NotificationBell } from "@/components/pm/Notifications";
 import { PhotoUpload } from "@/components/pm/PhotoUpload";
@@ -736,6 +736,8 @@ export default function HuntingManagementPage() {
     if (commandTabs.length && !commandTabs.includes(commandTab)) setCommandTab(commandTabs[0]);
   }, [permsLoading, commandTabs, commandTab]);
   const [intelTab, setIntelTab] = useState(PROJECT_TABS[0]);
+  // 專案情報：管理者多了「團隊」「工作量」
+  const INTEL_TABS = isPmManager ? PROJECT_TABS_MANAGER : PROJECT_TABS;
   const TASK_TABS = isPmManager ? TASK_TABS_MANAGER : TASK_TABS_MEMBER;
   // 行事曆排在第一個，但一進來還是先看任務
   const [scheduleTab, setScheduleTab] = useState("任務");
@@ -746,9 +748,9 @@ export default function HuntingManagementPage() {
       ? "team"
       : activeNav === "tasks" && scheduleTab === "任務"
         ? "tasks"
-        : activeNav === "tasks" && scheduleTab === "團隊"
+        : activeNav === "project_info" && intelTab === "團隊"
           ? "teamTasks"
-          : activeNav === "project_info" && intelTab !== "目標"
+          : activeNav === "project_info" && intelTab === "專案"
             ? "projects"
             : null;
   const searchPlaceholder =
@@ -1158,7 +1160,8 @@ export default function HuntingManagementPage() {
         if (currentScrollY < -80 && !isRefreshing) {
           setIsRefreshing(true);
           setTimeout(() => {
-            mutate(() => true, undefined, { revalidate: true });
+            // 只重新抓、不清掉現有資料：畫面上的內容先留著，不會再跑一次「載入中」（之前傳 undefined 會把所有快取清空，變成雙重 loading）
+            mutate(() => true);
             setTimeout(() => setIsRefreshing(false), 500); // Reset spinner after half a second
           }, 800);
         }
@@ -1658,7 +1661,7 @@ export default function HuntingManagementPage() {
                 />
               )}
               {activeNav === "project_info" && (
-                <AnimatedTabs tabs={PROJECT_TABS} activeTab={intelTab} onTabChange={setIntelTab} />
+                <AnimatedTabs tabs={INTEL_TABS} activeTab={INTEL_TABS.includes(intelTab) ? intelTab : INTEL_TABS[0]} onTabChange={setIntelTab} />
               )}
               {activeNav === "tasks" && (
                 <AnimatedTabs tabs={TASK_TABS} activeTab={TASK_TABS.includes(scheduleTab) ? scheduleTab : TASK_TABS[0]} onTabChange={setScheduleTab} />
@@ -1836,7 +1839,8 @@ export default function HuntingManagementPage() {
             />
           ) : (
             <ProjectsPage
-              activeTab={intelTab}
+              activeTab={INTEL_TABS.includes(intelTab) ? intelTab : INTEL_TABS[0]}
+              onTabChange={setIntelTab}
               searchQuery={teamQuery}
               onSearchQuery={setTeamQuery}
               searchOpen={teamSearchOpen}
