@@ -123,7 +123,6 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
   // 長按專案：置頂、編輯（刪除＝封存，在編輯裡面）
   const [projMenu, setProjMenu] = useState<{ code: string; rect: DOMRect } | null>(null);
   const [editCode, setEditCode] = useState<string | null>(null);
-  const smartIds: SmartId[] = pm.isManager ? ["today", "scheduled", "all", "flagged", "mine", "done"] : ["today", "scheduled", "all", "flagged", "done"];
 
   const projects = useMemo(() => {
     const active = (p: (typeof pm.projects)[number]) => p.tasks.length > 0 || (p.stage && ["簽約", "施工中", "驗收"].includes(p.stage));
@@ -147,33 +146,8 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
   return (
     <div className="flex flex-col gap-6 pt-1">
       <>
-          {/* 智慧清單 */}
-          <div className="grid grid-cols-2 gap-3">
-            {smartIds.map((id) => {
-              const s = SMART[id];
-              const n = smartTasks(pm, id).length;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => go({ kind: "smart", id })}
-                  className="bg-white rounded-[16px] shadow-card p-3 pb-2.5 text-left active:scale-[0.98] transition-transform"
-                >
-                  <span className="flex items-start justify-between">
-                    <span className="w-9 h-9 rounded-full flex items-center justify-center text-white" style={{ background: s.color }}>
-                      <Icon name={s.icon} weight={500} fill={id === "flagged" ? 1 : 0} className="text-[20px]" />
-                    </span>
-                    {id !== "done" && <span className="text-[26px] leading-none font-bold tabular-nums text-[#18181B]">{n}</span>}
-                  </span>
-                  <span className="block mt-2 text-[15px] font-semibold text-[#8E8E93]">{s.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* 專案 */}
+          {/* 專案（智慧清單已移到「行事曆」分頁的篩選，這裡直接列專案） */}
           <section>
-            <h2 className="px-1 pb-2 text-[22px] font-bold tracking-tight text-[#18181B]">專案</h2>
             {shownProjects.length ? (
               <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
                 {shownProjects.map(({ p }) => (
