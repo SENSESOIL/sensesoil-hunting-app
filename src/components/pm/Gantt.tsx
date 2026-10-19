@@ -247,7 +247,8 @@ export default function Gantt({
 
   /* ── 表頭：月份（專案層級）或日期（工項層級） ── */
   const header = useMemo(() => {
-    const marks: { x: number; label: string; strong?: boolean }[] = [];
+    // center：月刻度的月份字置中在分隔線上（月份第一天那條線）
+    const marks: { x: number; label: string; strong?: boolean; center?: boolean }[] = [];
     const ticks: number[] = [];
     const weekends: number[] = [];
     // 每天的星期字只有夠寬才畫；窄的時候畫了也擠成一團，還白白多出幾百個節點
@@ -274,10 +275,12 @@ export default function Gantt({
         if (showDays) dayLabels.push({ x: px, label: WEEKDAYS[dow], weekend, isToday: i === todayIdx });
       } else if (date === 1 || i === 0) {
         const m = d.getMonth() + 1;
+        // 只寫數字（11、12）；最左邊和每年 1 月帶年份（2026/10、2027/1）
         marks.push({
           x: px,
-          label: m === 1 || i === 0 ? `${d.getFullYear()} · ${m}月` : `${m}月`,
+          label: m === 1 || i === 0 ? `${d.getFullYear()}/${m}` : `${m}`,
           strong: true,
+          center: i !== 0,
         });
         if (i !== 0) ticks.push(px);
       }
@@ -291,11 +294,10 @@ export default function Gantt({
       const need = kept[0].label.length * 7 + 14;
       if (gap < need) {
         const first = kept.shift()!;
-        if (!dense && first.label.includes("·") && !kept[0].label.includes("·")) {
-          const year = first.label.split("·")[0].trim();
-          const m = Number(kept[0].label.replace("月", ""));
+        if (!dense && first.label.includes("/") && !kept[0].label.includes("/")) {
+          const year = first.label.split("/")[0];
           // 跨年時下一個標記本來就會帶年份；同年就把年份補上去
-          kept[0] = { ...kept[0], label: m === 1 ? kept[0].label : `${year} · ${kept[0].label}` };
+          kept[0] = { ...kept[0], label: `${year}/${kept[0].label}` };
         }
       }
     }
@@ -361,7 +363,7 @@ export default function Gantt({
                   className={`absolute top-2 text-[11px] whitespace-nowrap tabular-nums ${
                     m.strong ? "font-semibold text-[#52525B]" : "text-[#71717A]"
                   }`}
-                  style={{ left: m.x + 4 }}
+                  style={m.center ? { left: m.x, transform: "translateX(-50%)" } : { left: m.x + 4 }}
                 >
                   {m.label}
                 </span>
