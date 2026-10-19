@@ -210,7 +210,7 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
                     value={view}
                     onChange={setView}
                     options={[
-                      { value: "list", icon: "checklist", label: "清單" },
+                      { value: "list", icon: "format_list_bulleted", label: "清單" },
                       { value: "board", icon: "view_kanban", label: "看板" },
                       { value: "gantt", icon: "view_timeline", label: "甘特" },
                     ]}

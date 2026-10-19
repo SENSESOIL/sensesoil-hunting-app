@@ -380,7 +380,7 @@ export function ReminderPage({
 
   // 專案頁：清單／看板／甘特圖三個圖示直接切換（不用打開選單）；跨專案頁只有「顯示已完成」
   const VIEWS: [PageView, string, string][] = [
-    ["list", "checklist", "清單"],
+    ["list", "format_list_bulleted", "清單"],
     ["board", "view_kanban", "看板"],
     ["gantt", "view_timeline", "甘特圖"],
   ];

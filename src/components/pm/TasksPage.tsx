@@ -37,7 +37,7 @@ type View = "list" | "board" | "gantt";
 type Smart = "day" | "scheduled" | "all" | "done";
 
 const VIEWS: { value: View; icon: string; label: string }[] = [
-  { value: "list", icon: "checklist", label: "清單" },
+  { value: "list", icon: "format_list_bulleted", label: "清單" },
   { value: "board", icon: "view_kanban", label: "看板" },
   { value: "gantt", icon: "view_timeline", label: "甘特" },
 ];
@@ -865,6 +865,7 @@ export function AllTasks({
   person,
   setPerson,
   query,
+  headerAction,
 }: {
   pm: Pm;
   onOpen: (t: Task) => void;
@@ -874,6 +875,8 @@ export function AllTasks({
   setPerson: (v: string | null | undefined) => void;
   /** 搜尋字（標題列／左側欄的搜尋框） */
   query?: string;
+  /** 「團隊手上」卡片右上角的按鈕（專案情報：切換到工作量） */
+  headerAction?: React.ReactNode;
 }) {
   const [view, setView] = useStored<View>("pm:all:view", "list");
   const [group, setGroup] = useStored<"project" | "date">("pm:all:group", "project");
@@ -922,9 +925,9 @@ export function AllTasks({
     <>
       {/* 團隊 */}
       <section className="bg-white rounded-[22px] shadow-card pt-4 pb-3">
-        <div className="flex items-baseline justify-between px-4 pb-2">
+        <div className="flex items-center justify-between px-4 pb-2 min-h-[36px]">
           <h2 className="text-[17px] font-bold text-[#18181B]">團隊手上</h2>
-          <span className="text-[13px] text-[#A1A1AA]">點頭像只看那個人</span>
+          {headerAction ?? <span className="text-[13px] text-[#A1A1AA]">點頭像只看那個人</span>}
         </div>
         <div className="flex gap-1 overflow-x-auto scrollbar-hide px-2" {...stop}>
           <PersonBubble on={person === undefined} label="全部" sub={`${pm.tasks.filter((t) => t.status !== "done").length} 件`} onClick={() => setPerson(undefined)}>

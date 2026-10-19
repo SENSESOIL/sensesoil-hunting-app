@@ -237,7 +237,7 @@ export function TaskGantt({
       return {
         id: t.id,
         label: child ? `　${t.title}` : t.title,
-        sublabel: firstOfProject ? `● ${project?.name ?? t.code}` : "未排程",
+        sublabel: firstOfProject ? `${project?.name ?? t.code}` : "未排程",
         onClick: () => onOpen(t),
         bars: [],
         // 點哪天就從哪天開始；有填工期天數就一起算出期限
@@ -254,7 +254,7 @@ export function TaskGantt({
     return {
       id: t.id,
       label: child ? `　${t.title}` : t.title,
-      sublabel: firstOfProject ? `● ${project?.name ?? t.code}` : t.kind === "等待" ? "等待期" : who,
+      sublabel: firstOfProject ? `${project?.name ?? t.code}` : t.kind === "等待" ? "等待期" : who,
       onClick: () => onOpen(t),
       onTimeline: sp || !editable ? undefined : () => setSchedId(t.id),
       trailing: done ? undefined : t.progress > 0 ? `${t.progress}%` : late ? "逾期" : undefined,

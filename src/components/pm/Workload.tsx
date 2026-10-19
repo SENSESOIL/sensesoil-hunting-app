@@ -25,7 +25,7 @@ interface Load {
   daily: number[];
 }
 
-export function Workload({ pm, onPick }: { pm: Pm; onPick: (email: string | null) => void }) {
+export function Workload({ pm, onPick, headerAction }: { pm: Pm; onPick: (email: string | null) => void; headerAction?: React.ReactNode }) {
   const { today, tasks, people } = pm;
   const days = useMemo(() => Array.from({ length: DAYS }, (_, i) => addDays(today, i)), [today]);
 
@@ -67,6 +67,12 @@ export function Workload({ pm, onPick }: { pm: Pm; onPick: (email: string | null
 
   return (
     <div className="flex flex-col gap-3">
+      {headerAction && (
+        <div className="flex items-center justify-between px-1 min-h-[36px]">
+          <h2 className="text-[17px] font-bold text-[#18181B]">工作量</h2>
+          {headerAction}
+        </div>
+      )}
       <p className="text-[13px] text-[#8E8E93] px-1">未完成的任務；方格是接下來每天手上同時有幾件（不含等待期）。</p>
       <Group>
         {/* 日期表頭 */}

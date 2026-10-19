@@ -27,7 +27,8 @@ import type { Task } from "@/lib/pm/model";
 // 「目標」＝公司目標（原本在任務追蹤，移到這裡）
 // 「專案」：進行中／全部改成下方篩選膠囊；「團隊」「工作量」（管理者）、「目標」＝公司目標
 export const PROJECT_TABS = ["專案", "目標"];
-export const PROJECT_TABS_MANAGER = ["專案", "團隊", "工作量", "目標"];
+// 「工作量」併進「團隊」：卡片右上角的圖示切換
+export const PROJECT_TABS_MANAGER = ["專案", "團隊", "目標"];
 
 const ORDER: Stage[] = ["施工中", "驗收", "簽約", "報價", "洽談", "暫停", "保固", "結案"];
 
@@ -68,6 +69,8 @@ export default function ProjectsPage({
   const [newTask, setNewTask] = useState<Partial<Task> | null>(null);
   // 團隊分頁：只看某個人（undefined＝全部人；null＝未指派）
   const [person, setPerson] = useState<string | null | undefined>(undefined);
+  // 團隊分頁：任務清單 ↔ 工作量
+  const [teamMode, setTeamMode] = useState<"tasks" | "load">("tasks");
   const q = searchQuery;
   const [attention, setAttention] = useState(false);
   const [stage, setStage] = useState<Stage | null>(null);
@@ -86,22 +89,38 @@ export default function ProjectsPage({
   }, [pm.projects, q, attention, all, stage]);
 
   // 公司目標、團隊、工作量分頁
-  if (pm.data && (activeTab === "目標" || (pm.isManager && (activeTab === "團隊" || activeTab === "工作量")))) {
+  if (pm.data && (activeTab === "目標" || (pm.isManager && activeTab === "團隊"))) {
     const openTask = (t: Task) => setTaskId(t.id);
+    // 同一個位置一顆按鈕：目前是任務清單就顯示團隊圖示、工作量就顯示長條圖示，點一下切換
+    const modeButton = (
+      <button
+        type="button"
+        onClick={() => setTeamMode(teamMode === "tasks" ? "load" : "tasks")}
+        aria-label={teamMode === "tasks" ? "目前：團隊任務，點一下看工作量" : "目前：工作量，點一下看團隊任務"}
+        title={teamMode === "tasks" ? "看工作量" : "看團隊任務"}
+        className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center text-[#52525B] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
+      >
+        <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>
+          {teamMode === "tasks" ? "groups" : "equalizer"}
+        </span>
+      </button>
+    );
     return (
       <div className="px-5 lg:px-10 pb-28 w-full flex flex-col gap-5">
         <SetupNotice pm={pm} />
         {activeTab === "目標" && <GoalsPage pm={pm} onOpenTask={openTask} />}
-        {activeTab === "工作量" && (
+        {activeTab === "團隊" && teamMode === "load" && (
           <Workload
             pm={pm}
+            headerAction={modeButton}
             onPick={(email) => {
+              // 點某個人：回到任務清單、只看那個人
               setPerson(email);
-              onTabChange?.("團隊");
+              setTeamMode("tasks");
             }}
           />
         )}
-        {activeTab === "團隊" && (
+        {activeTab === "團隊" && teamMode === "tasks" && (
           <>
             {/* 手機：標題列放大鏡 → 跳出搜尋欄，結果列在下方；電腦：左側欄的搜尋框，直接篩選下面的清單 */}
             <SearchOverlay open={searchOpen} query={q} onQuery={(v) => onSearchQuery?.(v)} onClose={() => onSearchClose?.()} placeholder="搜尋任務、專案、人" label="搜尋任務">
@@ -114,7 +133,7 @@ export default function ProjectsPage({
                 }}
               />
             </SearchOverlay>
-            <AllTasks pm={pm} onOpen={openTask} onAdd={(p) => setNewTask(p ?? {})} person={person} setPerson={setPerson} query={q} />
+            <AllTasks pm={pm} onOpen={openTask} onAdd={(p) => setNewTask(p ?? {})} person={person} setPerson={setPerson} query={q} headerAction={modeButton} />
           </>
         )}
         <TaskSheet pm={pm} open={!!taskId} taskId={taskId} onClose={() => setTaskId(null)} />
