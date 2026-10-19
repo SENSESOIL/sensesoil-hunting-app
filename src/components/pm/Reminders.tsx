@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { addDays, toDay } from "@/lib/project-ops";
 import { isAssignee, newSectionId, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
@@ -292,7 +292,7 @@ export function ReminderPage({
       className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${ganttEdit ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5]"}`}
     >
       <span className="material-symbols-outlined text-[21px]" style={{ fontVariationSettings: "'wght' 200" }}>
-        {ganttEdit ? "check" : "stylus"}
+        {ganttEdit ? "check" : "edit_square"}
       </span>
     </button>
   ) : null;
@@ -435,6 +435,9 @@ interface Draft {
   section?: string;
 }
 
+/** 清單列的底色＝所在頁面的底色（像提醒事項一樣沒有卡片；滑動時要蓋住後面的按鈕） */
+const RowBg = createContext("bg-[#FAFAFA]");
+
 export function ReminderTasks({
   pm,
   tasks,
@@ -446,6 +449,7 @@ export function ReminderTasks({
   color = ORANGE,
   tapToAdd,
   addRow,
+  surface = "page",
 }: {
   pm: Pm;
   tasks: Task[];
@@ -460,6 +464,8 @@ export function ReminderTasks({
   tapToAdd?: boolean;
   /** 清單最後顯示「新增任務」列 */
   addRow?: boolean;
+  /** 放在哪種底色上：一般頁面（淺灰）或白底的子畫面 */
+  surface?: "page" | "white";
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -695,6 +701,7 @@ export function ReminderTasks({
   };
 
   return (
+    <RowBg.Provider value={surface === "white" ? "bg-white" : "bg-[#FAFAFA]"}>
     <div className="flex flex-col gap-5">
       {sections.map((sec) => {
         const project = pm.projectBy.get(sec.code);
@@ -767,7 +774,7 @@ export function ReminderTasks({
                 onDelete={() => deleteSection(sec.sectionId!)}
               />
               {!folded && (
-                <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
+                <div className="overflow-hidden">
                   {items}
                   {code && !(draft && (draft.section ?? "") === secKey) && (
                     <button
@@ -777,7 +784,7 @@ export function ReminderTasks({
                         startDraft(undefined, secKey);
                       }}
                       aria-label={`在「${sec.sectionName}」新增任務`}
-                      className="w-full flex items-center gap-3 pl-[14px] pr-3 h-11 text-left active:bg-[#FAFAFA]"
+                      className="w-full flex items-center gap-3 pl-1 pr-1 h-11 text-left active:bg-[#F2F2F4]"
                     >
                       <span className="w-[22px] h-[22px] rounded-full border-[1.5px] border-dashed border-[#C7C7CC] shrink-0" />
                     </button>
@@ -794,10 +801,10 @@ export function ReminderTasks({
                 {project?.name ?? sec.code}
               </h3>
             )}
-            <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
+            <div className="overflow-hidden">
               {items}
               {addRow && code && !draft && (
-                <button type="button" onClick={() => { primeKeyboard(); startDraft(); }} className="w-full flex items-center gap-3 pl-[14px] pr-3 h-12 text-left text-[15px] text-[#8E8E93] active:bg-[#FAFAFA]">
+                <button type="button" onClick={() => { primeKeyboard(); startDraft(); }} className="w-full flex items-center gap-3 pl-1 pr-1 h-12 text-left text-[15px] text-[#8E8E93] active:bg-[#F2F2F4]">
                   <Icon name="add_circle" className="text-[24px]" style={{ color }} />
                   新增任務
                 </button>
@@ -860,6 +867,7 @@ export function ReminderTasks({
         )}
       </Sheet>
     </div>
+    </RowBg.Provider>
   );
 }
 
@@ -910,6 +918,7 @@ function TaskRow({
   onLongPress: (rect: DOMRect) => void;
   linger: boolean;
 }) {
+  const rowBg = useContext(RowBg);
   const { today } = pm;
   const done = task.status === "done";
   const due = dueLabel(task.due, today, done);
@@ -1041,9 +1050,9 @@ function TaskRow({
       )}
 
       <div
-        className="relative bg-white flex items-start gap-3 pr-3"
+        className={`relative ${rowBg} flex items-start gap-3 pr-1`}
         style={{
-          paddingLeft: depth ? 48 : 14,
+          paddingLeft: depth ? 38 : 4,
           transform: offset ? `translateX(${offset}px)` : undefined,
           transition: dragging ? "none" : "transform 0.25s cubic-bezier(0.16,1,0.3,1)",
           touchAction: "pan-y",
@@ -1163,8 +1172,9 @@ function InlineInput({ initial, onCommit, placeholder }: { initial: string; onCo
 }
 
 function DraftRow({ depth, color, onCommit }: { depth: 0 | 1; color: string; onCommit: (title: string, next: boolean) => void }) {
+  const rowBg = useContext(RowBg);
   return (
-    <div className="relative bg-white flex items-start gap-3 pr-3" style={{ paddingLeft: depth ? 48 : 14 }}>
+    <div className={`relative ${rowBg} flex items-start gap-3 pr-1`} style={{ paddingLeft: depth ? 38 : 4 }}>
       <span className="pt-[11px]">
         <span className="block w-6 h-6 rounded-full border-2" style={{ borderColor: `color-mix(in srgb, ${color} 45%, #D4D4D8)` }} />
       </span>
