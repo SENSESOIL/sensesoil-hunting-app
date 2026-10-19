@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Icon } from "./ui";
 import { addDays, fmtDate } from "@/lib/project-ops";
 import { personColor, STATUS_LABEL, type Task } from "@/lib/pm/model";
 import Gantt, { type GanttRow } from "./Gantt";
@@ -27,10 +29,10 @@ import { realSections, splitBySection, treeOrder } from "./tree";
 /* 日／週／月：每天的寬度不同（放不下就左右捲動）
    日＝看得到每天的星期；週＝每週一一個刻度（預設）；月＝一次看好幾個月 */
 type Zoom = "day" | "week" | "month";
-const ZOOMS: { value: Zoom; label: string; icon: string; fit: { min: number; max: number }; dense: boolean; ahead: number }[] = [
-  { value: "day", label: "日", icon: "D", fit: { min: 30, max: 44 }, dense: true, ahead: 14 },
-  { value: "week", label: "週", icon: "W", fit: { min: 14, max: 26 }, dense: true, ahead: 21 },
-  { value: "month", label: "月", icon: "M", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
+const ZOOMS: { value: Zoom; label: string; hint: string; icon: string; fit: { min: number; max: number }; dense: boolean; ahead: number }[] = [
+  { value: "day", label: "日", hint: "看得到每一天", icon: "D", fit: { min: 30, max: 44 }, dense: true, ahead: 14 },
+  { value: "week", label: "週", hint: "以週排程（預設）", icon: "W", fit: { min: 14, max: 26 }, dense: true, ahead: 21 },
+  { value: "month", label: "月", hint: "一次看好幾個月", icon: "M", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
 ];
 const ZOOM_KEY = "pm:gantt:zoom";
 
@@ -300,21 +302,7 @@ export function TaskGantt({
           labelWidth={132}
           rows={rows}
           markers={markers}
-          corner={
-            // 同一個位置一顆按鈕：點一下換下一個刻度（日 → 週 → 月 → 日）
-            <button
-              type="button"
-              onClick={() => setZoom(ZOOMS[(ZOOMS.indexOf(Z) + 1) % ZOOMS.length].value)}
-              aria-label={`時間刻度：${Z.label}，點一下換成${ZOOMS[(ZOOMS.indexOf(Z) + 1) % ZOOMS.length].label}`}
-              title={`${Z.label}（點一下換成${ZOOMS[(ZOOMS.indexOf(Z) + 1) % ZOOMS.length].label}）`}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-[#52525B] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
-            >
-              {/* D／W／M 當圖示：細框小方塊裡一個字母 */}
-              <span className="w-[22px] h-[22px] rounded-[6px] border-[1.25px] border-current flex items-center justify-center text-[11.5px] font-semibold leading-none tracking-tight">
-                {Z.icon}
-              </span>
-            </button>
-          }
+          corner={<ZoomPicker value={zoom} onChange={setZoom} />}
         />
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[12px] text-[#8E8E93]">
@@ -345,5 +333,79 @@ function Legend({ color, dashed, children }: { color?: string; dashed?: boolean;
       />
       {children}
     </span>
+  );
+}
+
+/**
+ * 時間刻度（像 iOS 的下拉選單）：一顆淺灰膠囊寫著目前的刻度「週 ⌄」，
+ * 點了在下方跳出小選單（日／週／月，各一句說明，目前的打勾），選完自動收起。
+ * 選單掛在 body 上，不會被甘特圖的捲動框切掉。
+ */
+function ZoomPicker({ value, onChange }: { value: Zoom; onChange: (z: Zoom) => void }) {
+  const btn = useRef<HTMLButtonElement>(null);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const cur = ZOOMS.find((z) => z.value === value) ?? ZOOMS[1];
+  useEffect(() => {
+    if (!rect) return;
+    const close = () => setRect(null);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", close);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", close);
+    };
+  }, [rect]);
+  return (
+    <>
+      <button
+        ref={btn}
+        type="button"
+        onClick={() => setRect(rect ? null : btn.current?.getBoundingClientRect() ?? null)}
+        aria-haspopup="menu"
+        aria-expanded={!!rect}
+        aria-label={`時間刻度：${cur.label}`}
+        className={`h-8 pl-3 pr-2 rounded-full flex items-center gap-0.5 text-[14px] font-semibold text-[#18181B] transition-colors ${rect ? "bg-[#E4E4E7]" : "bg-[#F2F2F4] active:bg-[#E4E4E7]"}`}
+      >
+        {cur.label}
+        <Icon name="expand_more" weight={500} className={`text-[18px] text-[#71717A] transition-transform ${rect ? "rotate-180" : ""}`} />
+      </button>
+      {rect &&
+        createPortal(
+          <div className="fixed inset-0 z-[160] font-sans" onClick={() => setRect(null)}>
+            <div
+              role="menu"
+              aria-label="時間刻度"
+              onClick={(e) => e.stopPropagation()}
+              className="absolute w-[220px] rounded-[14px] bg-white/95 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.06] overflow-hidden py-1"
+              style={{ top: rect.bottom + 6, left: Math.min(rect.left, window.innerWidth - 232) }}
+            >
+              {ZOOMS.map((z) => {
+                const on = z.value === value;
+                return (
+                  <button
+                    key={z.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={on}
+                    onClick={() => {
+                      onChange(z.value);
+                      setRect(null);
+                    }}
+                    className="w-full flex items-center gap-2 pl-3 pr-4 h-12 text-left active:bg-[#F2F2F4]"
+                  >
+                    <span className="w-5 flex justify-center">{on && <Icon name="check" weight={600} className="text-[18px] text-[var(--accent)]" />}</span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[15px] text-[#18181B] leading-tight">{z.label}</span>
+                      <span className="block text-[12px] text-[#8E8E93] leading-tight mt-0.5">{z.hint}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }

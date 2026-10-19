@@ -374,15 +374,18 @@ export function ReminderPage({
   const [showDone, setShowDone] = useState(!!showDoneDefault);
   const [view, setView] = useStoredView();
   const [addSignal, setAddSignal] = useState(0);
-  // 返回鍵貼在主畫面的左下角：電腦要讓開側欄（側欄收合、展開寬度會變，跟著量）
-  const [mainLeft, setMainLeft] = useState(0);
+  // 返回鍵和內容（標題、卡片）的左緣對齊：電腦要讓開側欄，內容的左右留白也會依寬度變（側欄收合、展開跟著量）
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [contentLeft, setContentLeft] = useState(20);
   useEffect(() => {
+    const el = pageRef.current;
     const main = document.querySelector("main");
-    if (!main) return;
-    const measure = () => setMainLeft(Math.max(0, Math.round(main.getBoundingClientRect().left)));
+    if (!el) return;
+    const measure = () => setContentLeft(Math.max(0, Math.round(el.getBoundingClientRect().left)));
     measure();
     const ro = new ResizeObserver(measure);
-    ro.observe(main);
+    ro.observe(el);
+    if (main) ro.observe(main);
     window.addEventListener("resize", measure);
     return () => {
       ro.disconnect();
@@ -462,7 +465,7 @@ export function ReminderPage({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div ref={pageRef} className="flex flex-col gap-3">
       {slot ? createPortal(menuButton, slot) : <div className="flex justify-end">{menuButton}</div>}
 
 
@@ -496,7 +499,7 @@ export function ReminderPage({
         aria-label="返回"
         title="返回"
         className="fixed z-40 w-14 h-14 rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.14)] flex items-center justify-center active:scale-95 transition-transform"
-        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)", left: mainLeft + 20 }}
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)", left: contentLeft }}
       >
         <Icon name="chevron_left" weight={500} className="text-[28px] text-[#18181B]" />
       </button>
@@ -1350,7 +1353,7 @@ function DraftRow({ depth, color, onCommit }: { depth: 0 | 1; color: string; onC
 
 /* ── 長按選單（像提醒事項） ─────────────────────────────── */
 
-type MenuPage = "main" | "due" | "assign" | "section";
+type MenuPage = "main" | "due" | "progress" | "assign" | "section";
 
 function RowMenu({
   pm,
@@ -1449,6 +1452,8 @@ function RowMenu({
             </div>
             <div className="py-1">
               <MenuItem icon="event" label="期限 ›" onClick={() => setPage("due")} disabled={!edit} />
+              {/* 完成度：被指派的人也能改（和打勾一樣） */}
+              <MenuItem icon="donut_large" label={`完成度 ${task.progress}% ›`} onClick={() => setPage("progress")} disabled={!canToggle(pm, task)} />
               <MenuItem icon="sell" label="標籤 ›" onClick={run(onTags)} disabled={!edit} />
               {pm.isManager && <MenuItem icon="person" label="指派 ›" onClick={() => setPage("assign")} />}
             </div>
@@ -1476,6 +1481,23 @@ function RowMenu({
                 <MenuItem icon="add" label="新增分組並移入" onClick={run(() => onSection?.("new"))} />
               </>
             )}
+          </div>
+        )}
+        {page === "progress" && (
+          <div className="py-1">
+            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7]">
+              <Icon name="chevron_left" className="text-[22px]" />
+              完成度
+            </button>
+            {[0, 25, 50, 75, 100].map((p) => (
+              <MenuItem
+                key={p}
+                icon={p === 100 ? "check_circle" : "donut_large"}
+                label={p === 100 ? "100%（完成）" : `${p}%`}
+                checked={task.progress === p}
+                onClick={run(() => pm.saveTask({ id: task.id, progress: p }))}
+              />
+            ))}
           </div>
         )}
         {page === "due" && (

@@ -14,7 +14,7 @@ import type { Pm } from "./usePm";
    - 第一頁只有一張清單，每列左邊是項目、右邊灰字是目前的值 ›，一眼看完、不用捲很久
    - 點進去才是選項（打勾）；單選選完自動回上一頁，多選（工項、自訂）留在原頁
    - 狀態類（工法、工審…）右邊帶一個小圓點：橘＝還沒處理、綠＝已確認
-   - 工期（進場日、天數）最常改，直接放在第一頁
+   - 工期（進場日、天數）最常改，直接放在第一頁；完成度改到長按選單的「期限」下面
    - 點一下就存，不用按儲存
    ══════════════════════════════════════════════════════════ */
 
@@ -238,26 +238,6 @@ export function TagSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: string
             const v = statusValue(f);
             return <Nav key={f.key} label={f.label} value={v?.label ?? "未設定"} dot={v ? TONE[v.tone] : undefined} muted={!v} onClick={() => setPage(f.key)} />;
           })}
-          <div className="pl-4 pr-3 py-2.5">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[16px] text-[#18181B]">完成度</span>
-              <span className="text-[15px] text-[#8E8E93] tabular-nums">{task.progress}%</span>
-            </div>
-            <div className="grid grid-cols-5 gap-1 p-0.5 rounded-[10px] bg-[#F2F2F4]" role="radiogroup" aria-label="完成度">
-              {[0, 25, 50, 75, 100].map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  role="radio"
-                  aria-checked={task.progress === p}
-                  onClick={() => pm.saveTask({ id: task.id, progress: p })}
-                  className={`h-8 rounded-[8px] text-[13px] tabular-nums transition-colors ${task.progress === p ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] font-semibold text-[#18181B]" : "text-[#71717A]"}`}
-                >
-                  {p}%
-                </button>
-              ))}
-            </div>
-          </div>
           {start && task.due && days && diffDays(start, task.due) + 1 !== days ? (
             <p className="px-4 pb-2.5 text-[12px] text-[#A1A1AA]">目前排程是 {diffDays(start, task.due) + 1} 天（在甘特圖拖曳過）。</p>
           ) : null}
