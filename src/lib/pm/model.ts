@@ -115,6 +115,8 @@ export interface PmProject {
   driveFolderId?: string;
   /** 清單分組（像提醒事項的 Section），順序＝畫面順序 */
   sections?: Section[];
+  /** 可編輯的人（email）：甘特圖「編輯」、這個專案的任務都能改 */
+  editors?: string[];
   archived: boolean;
   version: number;
   updatedAt?: string;
@@ -332,6 +334,7 @@ export function rowToProject(r: Row): Omit<PmProject, "name" | "company" | "inCr
     note: s(r.note),
     driveFolderId: s(r.drive_folder_id),
     archived: r.archived === true,
+    editors: Array.isArray(r.editors) ? (r.editors as unknown[]).filter((x): x is string => typeof x === "string" && !!x) : [],
     sections: Array.isArray(r.sections)
       ? (r.sections as unknown[])
           .filter((x): x is { id: unknown; name: unknown } => !!x && typeof x === "object")

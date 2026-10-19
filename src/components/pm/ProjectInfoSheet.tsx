@@ -6,6 +6,8 @@ import { taskToWorkItem, type PmProject } from "@/lib/pm/model";
 import { Sheet, SheetActions, toast } from "./Sheet";
 import { DateField, FieldGroup, MoneyField, ProgressControl, Segmented, TextField } from "./fields";
 import type { Pm } from "./usePm";
+import { Avatar } from "./kit";
+import { Icon } from "./ui";
 
 /* ══════════════════════════════════════════════════════════
    專案資料（管理者）：建立新專案、或修改階段／日期／金額／人員／雲端資料夾
@@ -55,6 +57,9 @@ export function ProjectInfoSheet({
   const [newCode, setNewCode] = useState("");
   const [folderText, setFolderText] = useState("");
   const [saving, setSaving] = useState(false);
+  // 可編輯的人（另外存，不走 project.save）
+  const initialEditors = useMemo(() => p?.editors ?? [], [open, code]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [editors, setEditors] = useState<string[]>(initialEditors);
 
   // 只在打開時重設；資料在背景更新（每 30 秒）時不能蓋掉正在填的內容
   const codesRef = React.useRef<string[]>([]);
@@ -62,6 +67,7 @@ export function ProjectInfoSheet({
   useEffect(() => {
     if (!open) return;
     setD(initial);
+    setEditors(initialEditors);
     setFolderText(initial.driveFolderId ? `https://drive.google.com/drive/folders/${initial.driveFolderId}` : "");
     if (isNew) setNewCode(suggestCode(codesRef.current));
   }, [open, initial, isNew]);
@@ -76,7 +82,8 @@ export function ProjectInfoSheet({
     ...(isNew && !d.name?.trim() ? ["請輸入專案名稱"] : []),
     ...(folderText.trim() && !folderIdFrom(folderText) ? ["看不懂這個雲端資料夾連結"] : []),
   ];
-  const dirty = isNew || JSON.stringify(d) !== JSON.stringify(initial) || (folderIdFrom(folderText) ?? undefined) !== initial.driveFolderId;
+  const editorsChanged = [...editors].sort().join() !== [...initialEditors].sort().join();
+  const dirty = isNew || editorsChanged || JSON.stringify(d) !== JSON.stringify(initial) || (folderIdFrom(folderText) ?? undefined) !== initial.driveFolderId;
   const auto = p ? weightedProgress(p.tasks.map(taskToWorkItem)) : undefined;
   const by = (f: string) => issues.filter((i) => i.field === f);
 
@@ -100,7 +107,9 @@ export function ProjectInfoSheet({
     }
     setSaving(true);
     const target = isNew ? newCode.trim() : code!;
-    const ok = await pm.saveProject(target, patch);
+    const onlyEditors = !isNew && Object.keys(patch).length === 0;
+    const ok = onlyEditors ? true : await pm.saveProject(target, patch);
+    if (ok && editorsChanged) await pm.saveEditors(target, editors);
     setSaving(false);
     if (ok) {
       toast(isNew ? `已建立專案 ${target}` : "已儲存");
@@ -170,6 +179,39 @@ export function ProjectInfoSheet({
           <TextField label="工地主任" value={d.manager} onChange={(v) => set("manager", v)} placeholder="姓名" list={pm.people.map((x) => x.name)} />
           <TextField label="業主" value={d.client} onChange={(v) => set("client", v)} placeholder="姓名或公司" />
           <TextField label="工地地址" value={d.site} onChange={(v) => set("site", v)} placeholder="縣市區＋路名" />
+        </FieldGroup>
+
+        <FieldGroup title="可編輯的人（可複選）" hint="勾選的人可以在這個專案的甘特圖按「編輯」調整排程，也能修改、指派這個專案的任務。管理者本來就可以，不用勾。">
+          <div className="px-3 py-3 grid grid-cols-4 sm:grid-cols-6 gap-y-3 gap-x-1" role="group" aria-label="可編輯的人">
+            {pm.people.map((x) => {
+              const on = editors.includes(x.email);
+              return (
+                <button
+                  key={x.email}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={on}
+                  onClick={() => setEditors((list) => (on ? list.filter((e) => e !== x.email) : [...list, x.email]))}
+                  className="flex flex-col items-center gap-1 min-w-0 active:scale-95 transition-transform"
+                >
+                  <span className="relative rounded-full p-[3px]" style={{ background: on ? "var(--accent)" : "transparent" }}>
+                    <span className="block rounded-full ring-2 ring-white">
+                      <Avatar name={x.name} email={x.email} size={44} />
+                    </span>
+                    {on && (
+                      <span className="absolute -right-0.5 -bottom-0.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center bg-[var(--accent)]">
+                        <Icon name="check" weight={700} className="text-[13px] text-white" />
+                      </span>
+                    )}
+                  </span>
+                  <span className={`text-[12px] leading-tight truncate max-w-full ${on ? "font-bold text-[#18181B]" : "text-[#52525B]"}`}>
+                    {x.name}
+                  </span>
+                  {x.manager && <span className="text-[10px] leading-none text-[#A1A1AA]">管理者</span>}
+                </button>
+              );
+            })}
+          </div>
         </FieldGroup>
 
         <FieldGroup title="雲端資料夾" hint="工程照會上傳到這個資料夾裡的「工程照」子資料夾。沒填的話，第一次上傳時會依代碼自動尋找。">

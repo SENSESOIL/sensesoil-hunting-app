@@ -26,7 +26,20 @@ import { realSections, splitBySection, treeOrder } from "./tree";
 // 每天至少 14px：可以直接點日期、拖長條排程，放不下就左右捲動
 const FIT = { min: 14, max: 26 } as const;
 
-export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: Task[]; showProject?: boolean; onOpen: (t: Task) => void }) {
+export function TaskGantt({
+  pm,
+  tasks,
+  showProject,
+  onOpen,
+  editable = false,
+}: {
+  pm: Pm;
+  tasks: Task[];
+  showProject?: boolean;
+  onOpen: (t: Task) => void;
+  /** 編輯模式：拖曳長條、拖兩端、點日期排入、點時間軸開「時間安排」。閱讀模式只能看、點了開細節（避免手滑） */
+  editable?: boolean;
+}) {
   const { today } = pm;
   const [schedId, setSchedId] = useState<string | null>(null);
   // 依專案分組，組內依清單的層級順序；上層沒有日期時用子任務的期間
@@ -147,7 +160,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
         onClick: () => onOpen(t),
         bars: [],
         // 點哪天就從哪天開始；有填工期天數就一起算出期限
-        onPickDay: (day) => {
+        onPickDay: !editable ? undefined : (day) => {
           const n = t.meta?.days;
           pm.saveTask({ id: t.id, start: day, due: n && n > 1 ? addDays(day, n - 1) : day });
         },
@@ -162,7 +175,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
       label: child ? `　${t.title}` : t.title,
       sublabel: firstOfProject ? `● ${project?.name ?? t.code}` : t.kind === "等待" ? "等待期" : who,
       onClick: () => onOpen(t),
-      onTimeline: sp ? undefined : () => setSchedId(t.id),
+      onTimeline: sp || !editable ? undefined : () => setSchedId(t.id),
       trailing: done ? undefined : t.progress > 0 ? `${t.progress}%` : late ? "逾期" : undefined,
       bars: [
         {
@@ -173,7 +186,7 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
           dashed: t.kind === "等待",
           late,
           // 上層的總橫條是子任務算出來的，不能拖
-          onChange: sp ? undefined : (s, e) => pm.saveTask({ id: t.id, start: s, due: e }),
+          onChange: sp || !editable ? undefined : (s, e) => pm.saveTask({ id: t.id, start: s, due: e }),
           tip: (
             <>
               <b>{t.title}</b>
@@ -206,7 +219,9 @@ export function TaskGantt({ pm, tasks, showProject, onOpen }: { pm: Pm; tasks: T
           <span className="w-3 h-3 rounded-[3px]" style={{ background: "repeating-linear-gradient(135deg,#E5484D 0 2px,#fde2e2 2px 4px)" }} />
           逾期
         </span>
-        <span className="ml-auto">{undated > 0 ? `${undated} 件未排程，點日期排入` : "長按長條拖曳改日期，拖兩端改天數"}</span>
+        <span className="ml-auto">
+          {!editable ? (undated > 0 ? `${undated} 件未排程` : "") : undated > 0 ? `${undated} 件未排程，點日期排入` : "長按長條拖曳改日期，拖兩端改天數"}
+        </span>
       </div>
       <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
     </div>

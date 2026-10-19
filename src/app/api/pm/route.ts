@@ -205,12 +205,23 @@ export async function POST(req: Request) {
     return json({ error: "格式錯誤" }, 400);
   }
   const actor = { actor: user.email, actor_name: user.name, role: user.role };
+  // 專案的「可編輯的人」：在這個專案裡和管理者一樣（改任務、排程、指派）
+  const actorFor = async (q: { code?: string; task_id?: string }) => {
+    if (user.role === "manager") return actor;
+    try {
+      const ok = await rpc<boolean>("pm_project_can_edit", { actor: user.email, ...q });
+      return ok ? { ...actor, role: "manager" as const } : actor;
+    } catch {
+      return actor; // 20261022000000_pm_project_editors.sql 還沒執行
+    }
+  };
 
   try {
     switch (body.op) {
       case "task.save": {
         const t = body.task as Partial<Task> & { id: string };
         const bad = checkTask(t ?? {});
+        const act = await actorFor({ code: t?.code, task_id: t?.id });
         if (bad) return json({ error: bad }, 400);
         // 指派對象必須是權限表上的人；名字以權限表為準
         if (t.assigneeEmail) {
@@ -242,7 +253,7 @@ export async function POST(req: Request) {
         // meta 是 not null，一定要帶 {}。既有任務的 update 不會動 meta，所以帶了也沒關係
         if (!("meta" in row)) row.meta = {};
         const r = await rpc<{ status: string; task?: Record<string, unknown>; notify?: NotifyRow[] }>("pm_task_save", {
-          ...actor,
+          ...act,
           project_name: projectName,
           base_version: typeof body.baseVersion === "number" ? body.baseVersion : null,
           task: row,
@@ -251,7 +262,7 @@ export async function POST(req: Request) {
         let extraError: string | undefined;
         if (Object.keys(extra).length && r.task && ["ok", "created", "unchanged"].includes(r.status)) {
           try {
-            const x = await rpc<{ status: string; task?: Record<string, unknown>; notify?: NotifyRow[] }>("pm_task_set_extra", { ...actor, id: t.id, extra });
+            const x = await rpc<{ status: string; task?: Record<string, unknown>; notify?: NotifyRow[] }>("pm_task_set_extra", { ...act, id: t.id, extra });
             if (x.task) task = x.task;
             if (x.notify?.length) r.notify = [...(r.notify ?? []), ...x.notify];
             // 舊版函式不認得 co_assignees，會默默略過：提醒要先執行 SQL
@@ -271,13 +282,15 @@ export async function POST(req: Request) {
         );
       }
       case "task.delete": {
-        const r = await rpc<{ status: string; notify?: NotifyRow[] }>("pm_task_delete", { ...actor, id: String(body.id ?? "") });
+        const act = await actorFor({ task_id: String(body.id ?? "") });
+        const r = await rpc<{ status: string; notify?: NotifyRow[] }>("pm_task_delete", { ...act, id: String(body.id ?? "") });
         await pushNotifications(r.notify);
         return json({ status: r.status }, statusCode(r.status));
       }
       case "task.reorder": {
         const ids = Array.isArray(body.ids) ? body.ids.map(String).slice(0, 500) : [];
-        const r = await rpc<{ status: string }>("pm_task_reorder", { ...actor, ids });
+        const act = await actorFor({ task_id: ids[0] });
+        const r = await rpc<{ status: string }>("pm_task_reorder", { ...act, ids });
         return json(r, statusCode(r.status));
       }
       case "task.mark": {
@@ -304,6 +317,21 @@ export async function POST(req: Request) {
           patch: projectPatchToRow(patch),
         });
         return json({ status: r.status, project: r.project ? rowToProject(r.project) : undefined }, statusCode(r.status));
+      }
+      case "editors.save": {
+        if (user.role !== "manager") return json({ error: "只有管理者可以設定可編輯的人" }, 403);
+        const code = String(body.code ?? "").trim();
+        const list = Array.isArray(body.editors) ? [...new Set((body.editors as unknown[]).map((e) => String(e).trim().toLowerCase()).filter(Boolean))] : null;
+        if (!code || code.length > 32 || !list || list.length > 50) return json({ error: "格式不正確" }, 400);
+        const people = await listPeople();
+        if (list.some((e) => !people.some((p) => p.email === e))) return json({ error: "有人不在人員名單上" }, 400);
+        try {
+          const r = await rpc<{ status: string; editors?: string[] }>("pm_project_set_editors", { ...actor, code, editors: list });
+          return json(r, r.status === "forbidden" ? 403 : 200);
+        } catch (e) {
+          const msg = explainDbError(e);
+          return json({ error: msg.includes("資料庫還沒建立") ? "可編輯的人還沒啟用：請在 Supabase 執行 20261022000000_pm_project_editors.sql" : msg }, 500);
+        }
       }
       case "sections.save": {
         if (user.role !== "manager") return json({ error: "只有管理者可以調整分組" }, 403);

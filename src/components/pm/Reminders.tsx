@@ -13,7 +13,7 @@ import { TaskGantt } from "./TaskGantt";
 import { ScheduleSheet } from "./ScheduleSheet";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
-import { assigneeLabel, assigneePatch, isLate, personLabel, personMark, type Pm } from "./usePm";
+import { assigneeLabel, assigneePatch, canEditProject, isLate, personLabel, personMark, type Pm } from "./usePm";
 import { OTHER_SECTION, realSections, sectionOf, splitBySection, treeOrder, type TreeRow } from "./tree";
 
 export { treeOrder };
@@ -63,7 +63,7 @@ export function smartTasks(pm: Pm, id: SmartId): Task[] {
   }
 }
 
-const canEditAll = (pm: Pm, t: Task) => pm.isManager || t.createdBy === pm.me?.email;
+const canEditAll = (pm: Pm, t: Task) => canEditProject(pm, t.code) || t.createdBy === pm.me?.email;
 const canToggle = (pm: Pm, t: Task) => pm.isManager || isAssignee(t, pm.me?.email) || t.createdBy === pm.me?.email;
 
 /* ══════════════════════════════════════════════════════════
@@ -262,6 +262,8 @@ export function ReminderPage({
   const [showDone, setShowDone] = useState(!!showDoneDefault);
   const [view, setView] = useStoredView();
   const [addSignal, setAddSignal] = useState(0);
+  // 甘特圖：預設閱讀模式，按「編輯」才能拖曳調整（離開甘特圖就回到閱讀）
+  const [ganttEdit, setGanttEdit] = useState(false);
   const pageView: PageView = code ? view : "list";
   const doneCount = tasks.filter((t) => t.status === "done").length;
   const canAdd = !!code || !!onAddFull;
@@ -279,10 +281,30 @@ export function ReminderPage({
   const cur = VIEWS.find(([v]) => v === view) ?? VIEWS[0];
   const next = VIEWS[(VIEWS.indexOf(cur) + 1) % VIEWS.length];
   // 專案頁：同一個位置一顆按鈕，點一下換下一種檢視（清單 → 看板 → 甘特圖）；跨專案頁只有「顯示已完成」
-  const menuButton = code ? (
+  const canGantt = !!code && pageView === "gantt" && canEditProject(pm, code);
+  const editButton = canGantt ? (
     <button
       type="button"
-      onClick={() => setView(next[0])}
+      onClick={() => setGanttEdit((v) => !v)}
+      aria-pressed={ganttEdit}
+      aria-label={ganttEdit ? "完成編輯，回到閱讀模式" : "編輯甘特圖"}
+      className={`h-9 pl-2 pr-2.5 rounded-full flex items-center gap-1 transition-colors ${ganttEdit ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5]"}`}
+    >
+      <span className="material-symbols-outlined text-[21px]" style={{ fontVariationSettings: "'wght' 200" }}>
+        {ganttEdit ? "check" : "edit"}
+      </span>
+      <span className="text-[13px]">{ganttEdit ? "完成" : "編輯"}</span>
+    </button>
+  ) : null;
+  const menuButton = code ? (
+    <div className="flex items-center gap-1">
+    {editButton}
+    <button
+      type="button"
+      onClick={() => {
+        setGanttEdit(false);
+        setView(next[0]);
+      }}
       aria-label={`檢視：${cur[2]}，點一下換成${next[2]}`}
       title={`換成${next[2]}`}
       className="h-9 pl-2 pr-2.5 rounded-full flex items-center gap-1 text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
@@ -292,6 +314,7 @@ export function ReminderPage({
       </span>
       <span className="text-[13px]">{cur[2]}</span>
     </button>
+    </div>
   ) : (
     <button
       type="button"
@@ -344,7 +367,7 @@ export function ReminderPage({
           {showDone ? "隱藏已完成" : `顯示已完成${doneCount ? `（${doneCount}）` : ""}`}
         </button>
       )}
-      {pageView === "gantt" && <TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} />}
+      {pageView === "gantt" && <TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} editable={ganttEdit && canGantt} />}
 
       {/* 手機：返回（左下）與新增（右下）放在原本底部導覽列的位置 */}
       <button

@@ -364,6 +364,21 @@ export function usePm() {
     [enqueue, mutate]
   );
 
+  /** 設定專案的「可編輯的人」（只有管理者） */
+  const saveEditors = useCallback(
+    async (code: string, editors: string[]): Promise<boolean> => {
+      mutate((x) => x && { ...x, projects: x.projects.map((p) => (p.code === code ? { ...p, editors } : p)) }, { revalidate: false });
+      const res = await enqueue(`editors:${code}`, () => pmPost({ op: "editors.save", code, editors }));
+      if (!res.ok) {
+        toast(res.data.error || "可編輯的人儲存失敗", { tone: "error" });
+        await mutate();
+        return false;
+      }
+      return true;
+    },
+    [enqueue, mutate]
+  );
+
   /** 整份覆寫某個專案的清單分組（只有管理者） */
   const saveSections = useCallback(
     async (code: string, sections: Section[]): Promise<boolean> => {
@@ -451,6 +466,7 @@ export function usePm() {
     markTask,
     saveProject,
     saveSections,
+    saveEditors,
   };
 }
 
@@ -480,6 +496,13 @@ export function assigneeLabel(pm: Pm, t: Pick<Task, "assigneeEmail" | "assigneeN
 export function assigneePatch(pm: Pm, list: string[]): Pick<Task, "assigneeEmail" | "assigneeName" | "coAssignees"> {
   const [first, ...rest] = [...new Set(list)];
   return { assigneeEmail: first, assigneeName: first ? pm.personBy.get(first)?.name : undefined, coAssignees: rest };
+}
+
+/** 能不能編輯這個專案（甘特圖編輯、改任務）：管理者，或專案設定的「可編輯的人」 */
+export function canEditProject(pm: Pm, code?: string): boolean {
+  if (pm.isManager) return true;
+  const me = pm.me?.email;
+  return !!me && !!code && !!pm.projectBy.get(code)?.editors?.includes(me);
 }
 
 export type { Person };

@@ -7,7 +7,7 @@ import { Sheet, toast } from "./Sheet";
 import { fmtDateLong } from "./fields";
 import { Icon } from "./ui";
 import { Avatar, AvatarStack, dateShortcuts, GREEN, ORANGE, RED } from "./kit";
-import { assigneeLabel, assigneePatch, isLate, personLabel, type Pm } from "./usePm";
+import { assigneeLabel, assigneePatch, canEditProject, isLate, personLabel, type Pm } from "./usePm";
 import { GoalPicker } from "./Goals";
 import { TagSheet } from "./TagSheet";
 import { metaChips } from "@/lib/pm/tags";
@@ -57,7 +57,7 @@ export function TaskSheet({
   const isNew = !taskId;
   const me = pm.me?.email;
   const mine = !!task && isAssignee(task, me);
-  const canEditAll = pm.isManager || isNew || (!!task && task.createdBy === me && mine);
+  const canEditAll = pm.isManager || isNew || (!!task && canEditProject(pm, task.code)) || (!!task && task.createdBy === me && mine);
 
   const initial = useMemo<Draft>(
     () => (task ? toDraft(task) : { ...EMPTY, ...(pm.isManager ? {} : { assigneeEmail: me }), ...preset }),

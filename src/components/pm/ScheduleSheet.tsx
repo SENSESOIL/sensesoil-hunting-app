@@ -7,7 +7,7 @@ import { Sheet, SheetActions } from "./Sheet";
 import { DateField, FieldGroup, Row } from "./fields";
 import { Icon } from "./ui";
 import { dateShortcuts, RED } from "./kit";
-import type { Pm } from "./usePm";
+import { canEditProject, type Pm } from "./usePm";
 
 /* ══════════════════════════════════════════════════════════
    時間安排：只管開始日、期限、天數（甘特圖點時間軸、清單長按「自訂日期…」）
@@ -38,7 +38,7 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
   if (!task) return <Sheet open={false} title="時間安排" onClose={onClose}>{null}</Sheet>;
 
   const me = pm.me?.email;
-  const canEdit = pm.isManager || (task.createdBy === me && isAssignee(task, me));
+  const canEdit = canEditProject(pm, task.code) || (task.createdBy === me && isAssignee(task, me));
   const days = start && due ? diffDays(start, due) + 1 : start || due ? 1 : undefined;
   const dirty = (start ?? "") !== (task.start ?? "") || (due ?? "") !== (task.due ?? "");
   const bad = !!(start && due && due < start);
