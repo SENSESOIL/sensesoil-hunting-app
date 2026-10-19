@@ -73,7 +73,7 @@ export function GoalsPage({ pm, onOpenTask }: { pm: Pm; onOpenTask: (t: Task) =>
         </Group>
       ) : (
         <>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))]">
             {goals.map((g) => (
               <GoalCard key={g.id} g={g} pm={pm} onClick={() => setSheet({ id: g.id })} />
             ))}

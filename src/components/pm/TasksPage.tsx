@@ -971,7 +971,6 @@ export function AllTasks({
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-[22px] font-bold tracking-tight text-[#18181B]">{who}</h2>
         <div className="flex items-center gap-2">
-          <AddButton onClick={() => onAdd(person ? { assigneeEmail: person } : undefined)} label="新增任務" />
           {view === "list" && (
             <Chip on={false} onClick={() => setGroup(group === "project" ? "date" : "project")}>
               <Icon name="swap_vert" className="text-[16px]" />
@@ -993,7 +992,7 @@ export function AllTasks({
           <TaskList pm={pm} tasks={filtered} groupBy={group} showProject={group === "date"} showAssignee={!person} showDone={showDone} onOpen={onOpen} />
         ) : (
           <Group>
-            <Empty icon="checklist" title="沒有符合的任務" hint="換個人或關鍵字，或按「新增任務」。" />
+            <Empty icon="checklist" title="沒有符合的任務" hint="換個人或關鍵字試試。" />
           </Group>
         ))}
       {view === "board" && <TaskBoard pm={pm} tasks={filtered} showProject onOpen={onOpen} onAdd={() => onAdd()} />}
