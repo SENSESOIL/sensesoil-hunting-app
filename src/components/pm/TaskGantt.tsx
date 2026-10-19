@@ -23,8 +23,15 @@ import { realSections, splitBySection, treeOrder } from "./tree";
      有日期的長條可以直接拖曳平移、拖兩端改開始／結束日 —— 在甘特圖上就能排程
    ══════════════════════════════════════════════════════════ */
 
-// 每天至少 14px：可以直接點日期、拖長條排程，放不下就左右捲動
-const FIT = { min: 14, max: 26 } as const;
+/* 日／週／月：每天的寬度不同（放不下就左右捲動）
+   日＝看得到每天的星期；週＝每週一一個刻度（預設）；月＝一次看好幾個月 */
+type Zoom = "day" | "week" | "month";
+const ZOOMS: { value: Zoom; label: string; fit: { min: number; max: number }; dense: boolean; ahead: number }[] = [
+  { value: "day", label: "日", fit: { min: 30, max: 44 }, dense: true, ahead: 14 },
+  { value: "week", label: "週", fit: { min: 14, max: 26 }, dense: true, ahead: 21 },
+  { value: "month", label: "月", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
+];
+const ZOOM_KEY = "pm:gantt:zoom";
 
 export function TaskGantt({
   pm,
@@ -42,6 +49,23 @@ export function TaskGantt({
 }) {
   const { today } = pm;
   const [schedId, setSchedId] = useState<string | null>(null);
+  const [zoom, setZoomState] = useState<Zoom>(() => {
+    try {
+      const v = localStorage.getItem(ZOOM_KEY);
+      return v === "day" || v === "month" ? v : "week";
+    } catch {
+      return "week";
+    }
+  });
+  const setZoom = (z: Zoom) => {
+    setZoomState(z);
+    try {
+      localStorage.setItem(ZOOM_KEY, z);
+    } catch {
+      /* 無痕模式 */
+    }
+  };
+  const Z = ZOOMS.find((z) => z.value === zoom)!;
   // 依專案分組，組內依清單的層級順序；上層沒有日期時用子任務的期間
   const { rowsAll: dated, span, depthOf, headBefore } = useMemo(() => {
     const byCode = new Map<string, Task[]>();
@@ -87,8 +111,8 @@ export function TaskGantt({
   const range = useMemo(() => {
     if (!dated.length) return null;
     let s = today;
-    // 至少往後留三週，沒有日期的任務才有地方點
-    let e = addDays(today, 21);
+    // 往後至少留一段（日：兩週、週：三週、月：三個月），沒有日期的任務才有地方點
+    let e = addDays(today, Z.ahead);
     for (const t of dated) {
       if (!hasDate(t)) continue;
       const sp = span.get(t.id);
@@ -101,7 +125,7 @@ export function TaskGantt({
     const floor = addDays(today, -60);
     return { from: addDays(s < floor ? floor : s, -2), to: addDays(e, 4) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dated, span, today]);
+  }, [dated, span, today, Z.ahead]);
 
   if (!range) {
     return (
@@ -208,7 +232,33 @@ export function TaskGantt({
   return (
     <div className="flex flex-col gap-2">
       <div className="bg-white rounded-[14px] border border-[#EBEBED] overflow-hidden">
-        <Gantt dense fit={FIT} anchor={0.3} today={today} from={range.from} to={range.to} dayWidth={16} labelWidth={132} rows={rows} />
+        <Gantt
+          dense={Z.dense}
+          fit={Z.fit}
+          anchor={0.3}
+          today={today}
+          from={range.from}
+          to={range.to}
+          dayWidth={16}
+          labelWidth={132}
+          rows={rows}
+          corner={
+            <div className="flex w-full p-0.5 rounded-[9px] bg-[#F2F2F4]" role="radiogroup" aria-label="時間刻度">
+              {ZOOMS.map((z) => (
+                <button
+                  key={z.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={zoom === z.value}
+                  onClick={() => setZoom(z.value)}
+                  className={`flex-1 h-7 rounded-[7px] text-[12.5px] transition-colors ${zoom === z.value ? "bg-white shadow-[0_1px_2px_rgba(0,0,0,0.12)] font-semibold text-[#18181B]" : "text-[#8E8E93]"}`}
+                >
+                  {z.label}
+                </button>
+              ))}
+            </div>
+          }
+        />
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[12px] text-[#8E8E93]">
         <Legend color="#71717A">待辦</Legend>

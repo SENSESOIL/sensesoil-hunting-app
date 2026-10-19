@@ -135,6 +135,7 @@ export default function Gantt({
   dense = false,
   fit,
   anchor = 0.3,
+  corner,
 }: {
   rows: GanttRow[];
   today: string;
@@ -148,6 +149,8 @@ export default function Gantt({
   fit?: { min: number; max: number };
   /** 捲動時「今天」要落在可視區的哪個位置（0＝最左，1＝最右） */
   anchor?: number;
+  /** 表頭左上角（名稱欄上方）放的東西，例如日／週／月切換 */
+  corner?: React.ReactNode;
 }) {
   const days = Math.max(1, diffDays(from, to) + 1);
   const scroller = useRef<HTMLDivElement>(null);
@@ -308,7 +311,7 @@ export default function Gantt({
     <div className="relative">
       <div
         ref={scroller}
-        className={`${scrollY ? "overflow-auto" : "overflow-x-auto"} overscroll-x-contain scrollbar-hide`}
+        className={`${scrollY ? "overflow-auto" : "overflow-x-auto"} overscroll-x-none scrollbar-hide`}
         style={
           scrollY
             ? {
@@ -332,9 +335,11 @@ export default function Gantt({
             }`}
           >
             <div
-              className="sticky left-0 top-0 z-[6] bg-white shrink-0 border-r border-[#F0F0F2]"
+              className="sticky left-0 top-0 z-[6] bg-white shrink-0 border-r border-[#F0F0F2] flex items-center px-2"
               style={{ width: labelWidth, height: headH }}
-            />
+            >
+              {corner}
+            </div>
             <div className="relative shrink-0" style={{ width: width + TAIL, height: headH }}>
               {header.marks.map((m) => (
                 <span
