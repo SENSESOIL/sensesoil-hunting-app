@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Icon } from "./ui";
+import React, { useMemo, useState } from "react";
 import { addDays, fmtDate } from "@/lib/project-ops";
 import { personColor, STATUS_LABEL, type Task } from "@/lib/pm/model";
 import Gantt, { type GanttRow } from "./Gantt";
@@ -337,75 +335,21 @@ function Legend({ color, dashed, children }: { color?: string; dashed?: boolean;
 }
 
 /**
- * 時間刻度（像 iOS 的下拉選單）：一顆淺灰膠囊寫著目前的刻度「週 ⌄」，
- * 點了在下方跳出小選單（日／週／月，各一句說明，目前的打勾），選完自動收起。
- * 選單掛在 body 上，不會被甘特圖的捲動框切掉。
+ * 時間刻度：一顆淺灰膠囊寫著目前的刻度（日／週／月），點一下換下一個（日 → 週 → 月 → 日），不跳選單。
  */
 function ZoomPicker({ value, onChange }: { value: Zoom; onChange: (z: Zoom) => void }) {
-  const btn = useRef<HTMLButtonElement>(null);
-  const [rect, setRect] = useState<DOMRect | null>(null);
-  const cur = ZOOMS.find((z) => z.value === value) ?? ZOOMS[1];
-  useEffect(() => {
-    if (!rect) return;
-    const close = () => setRect(null);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("resize", close);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("resize", close);
-    };
-  }, [rect]);
+  const i = Math.max(0, ZOOMS.findIndex((z) => z.value === value));
+  const cur = ZOOMS[i];
+  const next = ZOOMS[(i + 1) % ZOOMS.length];
   return (
-    <>
-      <button
-        ref={btn}
-        type="button"
-        onClick={() => setRect(rect ? null : btn.current?.getBoundingClientRect() ?? null)}
-        aria-haspopup="menu"
-        aria-expanded={!!rect}
-        aria-label={`時間刻度：${cur.label}`}
-        className={`h-8 pl-3 pr-2 rounded-full flex items-center gap-0.5 text-[14px] font-semibold text-[#18181B] transition-colors ${rect ? "bg-[#E4E4E7]" : "bg-[#F2F2F4] active:bg-[#E4E4E7]"}`}
-      >
-        {cur.label}
-        <Icon name="expand_more" weight={500} className={`text-[18px] text-[#71717A] transition-transform ${rect ? "rotate-180" : ""}`} />
-      </button>
-      {rect &&
-        createPortal(
-          <div className="fixed inset-0 z-[160] font-sans" onClick={() => setRect(null)}>
-            <div
-              role="menu"
-              aria-label="時間刻度"
-              onClick={(e) => e.stopPropagation()}
-              className="absolute w-[220px] rounded-[14px] bg-white/95 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.06] overflow-hidden py-1"
-              style={{ top: rect.bottom + 6, left: Math.min(rect.left, window.innerWidth - 232) }}
-            >
-              {ZOOMS.map((z) => {
-                const on = z.value === value;
-                return (
-                  <button
-                    key={z.value}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={on}
-                    onClick={() => {
-                      onChange(z.value);
-                      setRect(null);
-                    }}
-                    className="w-full flex items-center gap-2 pl-3 pr-4 h-12 text-left active:bg-[#F2F2F4]"
-                  >
-                    <span className="w-5 flex justify-center">{on && <Icon name="check" weight={600} className="text-[18px] text-[var(--accent)]" />}</span>
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-[15px] text-[#18181B] leading-tight">{z.label}</span>
-                      <span className="block text-[12px] text-[#8E8E93] leading-tight mt-0.5">{z.hint}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>,
-          document.body
-        )}
-    </>
+    <button
+      type="button"
+      onClick={() => onChange(next.value)}
+      aria-label={`時間刻度：${cur.label}，點一下換成${next.label}`}
+      title={`換成${next.label}（${next.hint}）`}
+      className="h-8 min-w-[40px] px-3 rounded-full flex items-center justify-center text-[14px] font-semibold text-[#18181B] bg-[#F2F2F4] active:bg-[#E4E4E7] transition-colors select-none"
+    >
+      {cur.label}
+    </button>
   );
 }

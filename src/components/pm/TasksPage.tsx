@@ -12,7 +12,8 @@ import { TaskGantt } from "./TaskGantt";
 import { TaskSheet } from "./TaskSheet";
 import { SetupNotice } from "./SetupNotice";
 import { isAssignee, taskAssignees } from "@/lib/pm/model";
-import { isLate, usePm, type GoalItem, type Pm } from "./usePm";
+import { canEditProject, isLate, usePm, type GoalItem, type Pm } from "./usePm";
+import { ImportSheet } from "./ImportSheet";
 import { GoalSheet } from "./Goals";
 import { ReminderPage, RemindersHome, ReminderTasks, SMART, smartTasks, TaskSearchResults, type ListRoute } from "./Reminders";
 import { SearchOverlay } from "@/components/team/TeamPage";
@@ -93,6 +94,10 @@ export default function TasksPage({
   const [sheet, setSheet] = useState<{ id: string | null; preset?: Partial<Task> } | null>(null);
   const [personFilter, setPersonFilter] = useState<string | null | undefined>(undefined);
   const [route, setRoute] = useState<ListRoute>({ kind: "home" });
+  // 從提醒事項截圖匯入：按鈕放在標題列分頁那一排的右邊（#pm-header-slot）
+  const [importOpen, setImportOpen] = useState(false);
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => setSlot(document.getElementById("pm-header-slot")), []);
   // 換頁時回到頁首
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -122,6 +127,19 @@ export default function TasksPage({
   const add = (preset?: Partial<Task>) => setSheet({ id: null, preset });
 
   const tab = activeTab === "行事曆" ? activeTab : "任務";
+  const canImport = pm.isManager || pm.projects.some((p) => !p.archived && canEditProject(pm, p.code));
+  const importButton =
+    tab === "任務" && route.kind === "home" && canImport ? (
+      <button
+        type="button"
+        onClick={() => setImportOpen(true)}
+        aria-label="從提醒事項截圖匯入任務"
+        title="從截圖匯入"
+        className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
+      >
+        <Icon name="add_photo_alternate" weight={200} className="text-[22px]" />
+      </button>
+    ) : null;
   const home = () => setRoute({ kind: "home" });
 
   const listView = () => {
@@ -212,6 +230,8 @@ export default function TasksPage({
           <div className={searchQuery.trim() ? "md:hidden flex flex-col gap-5" : "contents"}>{listView()}</div>
         </>
       )}
+      {importButton && slot ? createPortal(importButton, slot) : null}
+      <ImportSheet pm={pm} open={importOpen} onClose={() => setImportOpen(false)} />
       <TaskSheet pm={pm} open={!!sheet} taskId={sheet?.id ?? null} preset={sheet?.preset} onClose={() => setSheet(null)} />
     </div>
   );

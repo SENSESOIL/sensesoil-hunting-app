@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { addDays, diffDays, toDay, WEEKDAYS } from "@/lib/project-ops";
+import React, { useEffect, useState } from "react";
 import { tradeColor } from "@/lib/pm/model";
 import { AREAS, metaChips, STATUS_FIELDS, TRADES, type StatusField, type TaskMeta } from "@/lib/pm/tags";
 import { Sheet } from "./Sheet";
@@ -14,7 +13,7 @@ import type { Pm } from "./usePm";
    - 第一頁只有一張清單，每列左邊是項目、右邊灰字是目前的值 ›，一眼看完、不用捲很久
    - 點進去才是選項（打勾）；單選選完自動回上一頁，多選（工項、自訂）留在原頁
    - 狀態類（工法、工審…）右邊帶一個小圓點：橘＝還沒處理、綠＝已確認
-   - 工期（進場日、天數）最常改，直接放在第一頁；完成度改到長按選單的「期限」下面
+   - 完成度在長按選單的「期限」下面；開始日／期限在任務細節或甘特圖改
    - 點一下就存，不用按儲存
    ══════════════════════════════════════════════════════════ */
 
@@ -50,22 +49,6 @@ export function TagSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: string
     if (v === undefined || (Array.isArray(v) && !v.length)) delete next[k];
     else next[k] = v;
     save(next);
-  };
-
-  // 工期：進場日＝任務開始日；天數 → 期限＝進場日＋天數－1
-  const days = meta.days;
-  const start = task.start;
-  const setDays = (d: number | undefined) => {
-    const next = { ...meta };
-    if (!d) delete next.days;
-    else next.days = d;
-    save(next, start && d ? { due: addDays(start, d - 1) } : {});
-  };
-  const setStart = (v: string | undefined) => {
-    const extra: Record<string, unknown> = { start: v };
-    if (v && days) extra.due = addDays(v, days - 1);
-    else if (v && task.due && task.due < v) extra.due = undefined;
-    pm.saveTask({ id: task.id, ...extra });
   };
 
   const addCustom = () => {
@@ -222,26 +205,13 @@ export function TagSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: string
         </Section>
 
         <Section title="確認與商務">
-          {STATUS_FIELDS.filter((f) => f.group !== "工期").map((f) => {
+          {/* 順序照 STATUS_FIELDS：…工料、廠商請款 */}
+          {STATUS_FIELDS.map((f) => {
             const v = statusValue(f);
             return <Nav key={f.key} label={f.label} value={v?.label ?? "未設定"} dot={v ? TONE[v.tone] : undefined} muted={!v} onClick={() => setPage(f.key)} />;
           })}
         </Section>
 
-        <Section title="工期" foot="進場日＝這個任務的開始日；填了天數會自動算出期限，甘特圖跟著排好。">
-          <DateRow label="廠商進場日" value={start} onChange={setStart} />
-          <div className="flex items-center gap-3 pl-4 pr-3 h-12">
-            <span className="flex-1 text-[16px] text-[#18181B]">預計天數</span>
-            <Stepper value={days} onChange={setDays} />
-          </div>
-          {STATUS_FIELDS.filter((f) => f.group === "工期").map((f) => {
-            const v = statusValue(f);
-            return <Nav key={f.key} label={f.label} value={v?.label ?? "未設定"} dot={v ? TONE[v.tone] : undefined} muted={!v} onClick={() => setPage(f.key)} />;
-          })}
-          {start && task.due && days && diffDays(start, task.due) + 1 !== days ? (
-            <p className="px-4 pb-2.5 text-[12px] text-[#A1A1AA]">目前排程是 {diffDays(start, task.due) + 1} 天（在甘特圖拖曳過）。</p>
-          ) : null}
-        </Section>
       </div>
     </Sheet>
   );
@@ -293,50 +263,5 @@ function Choice({ label, on, dot, onClick }: { label: string; on: boolean; dot?:
       <span className="flex-1 text-[16px] text-[#18181B]">{label}</span>
       {on && <Icon name="check" weight={600} className="text-[20px] text-[var(--accent)]" />}
     </button>
-  );
-}
-
-/** 天數：－ 數字 ＋ */
-function Stepper({ value, onChange }: { value?: number; onChange: (v: number | undefined) => void }) {
-  return (
-    <div className="flex items-center rounded-[9px] bg-[#F2F2F4] h-8">
-      <button type="button" onClick={() => onChange(value && value > 1 ? value - 1 : undefined)} disabled={!value} aria-label="少一天" className="w-10 h-8 flex items-center justify-center text-[#18181B] disabled:text-[#C7C7CC]">
-        <Icon name="remove" className="text-[18px]" />
-      </button>
-      <span className="w-12 text-center text-[15px] tabular-nums text-[#18181B] border-x border-[#E4E4E7]">{value ? `${value} 天` : "—"}</span>
-      <button type="button" onClick={() => onChange(Math.min(999, (value ?? 0) + 1))} aria-label="多一天" className="w-10 h-8 flex items-center justify-center text-[#18181B]">
-        <Icon name="add" className="text-[18px]" />
-      </button>
-    </div>
-  );
-}
-
-/** 日期列：右邊灰字顯示日期，點了跳出系統的日期選擇；有日期時可清除 */
-function DateRow({ label, value, onChange }: { label: string; value?: string; onChange: (v: string | undefined) => void }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const text = value ? (() => {
-    const d = toDay(value);
-    return `${d.getMonth() + 1}/${d.getDate()}（${WEEKDAYS[d.getDay()]}）`;
-  })() : "未設定";
-  return (
-    <div className="relative flex items-center gap-3 pl-4 pr-2.5 h-12">
-      <span className="text-[16px] text-[#18181B] shrink-0">{label}</span>
-      <span className={`flex-1 text-right text-[15px] ${value ? "text-[var(--accent)]" : "text-[#C7C7CC]"}`}>{text}</span>
-      {value && (
-        <button type="button" onClick={() => onChange(undefined)} aria-label={`清除${label}`} className="relative z-[2] w-8 h-8 rounded-full flex items-center justify-center text-[#C7C7CC] active:bg-[#F2F2F4]">
-          <Icon name="cancel" fill={1} className="text-[18px]" />
-        </button>
-      )}
-      {/* 整列都可以點：透明的日期輸入框蓋在上面，叫出系統日期選擇 */}
-      <input
-        ref={ref}
-        type="date"
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value || undefined)}
-        aria-label={label}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-        style={{ right: value ? 44 : 0 }}
-      />
-    </div>
   );
 }
