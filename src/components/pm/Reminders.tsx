@@ -10,6 +10,7 @@ import { Icon } from "./ui";
 import { Avatar, CheckCircle, dueLabel, ORANGE, RED, DueIcon, SectionTitle, T, UrgentIcon, VendorIcon } from "./kit";
 import { Sheet, toast } from "./Sheet";
 import { TaskGantt } from "./TaskGantt";
+import { ExportSheet } from "./ExportSheet";
 import { ProjectScreen } from "./ProjectScreen";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
@@ -433,6 +434,23 @@ export function ReminderPage({
   // 檢視切換放進標題列分頁那一排的右邊（hunting-mgmt 的 #pm-header-slot）
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => setSlot(document.getElementById("pm-header-slot")), []);
+  // 匯出：標題列搜尋左邊（#pm-export-slot），只有專案頁
+  const [exportSlot, setExportSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => setExportSlot(document.getElementById("pm-export-slot")), []);
+  const [exporting, setExporting] = useState(false);
+  const exportButton = code ? (
+    <button
+      type="button"
+      onClick={() => setExporting(true)}
+      className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[#F4F4F5] active:bg-[#F4F4F5] text-[#71717A]"
+      title="匯出"
+      aria-label={`匯出${pageView === "gantt" ? "甘特圖" : pageView === "board" ? "看板" : "清單"}`}
+    >
+      <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'wght' 200" }}>
+        ios_share
+      </span>
+    </button>
+  ) : null;
 
   // 專案頁：清單／看板／甘特圖三個圖示直接切換（不用打開選單）；跨專案頁只有「顯示已完成」
   const VIEWS: [PageView, string, string][] = [
@@ -500,6 +518,8 @@ export function ReminderPage({
   return (
     <div ref={pageRef} className="flex flex-col gap-3">
       {slot ? createPortal(menuButton, slot) : <div className="flex justify-end">{menuButton}</div>}
+      {exportSlot && exportButton && createPortal(exportButton, exportSlot)}
+      {code && <ExportSheet pm={pm} code={code} view={pageView} tasks={tasks} color={color} showDone={showDone} open={exporting} onClose={() => setExporting(false)} />}
 
 
       <div className="px-1 pt-1">

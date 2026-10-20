@@ -1564,6 +1564,8 @@ export default function HuntingManagementPage() {
               {/* 團隊：搜尋（分享鍵左邊），一次搜內部職員、外部職員、協力廠商、聯盟品牌
                   手機：放大鏡 → 跳出輸入欄（背景模糊，見 TeamPage 的 SearchOverlay）
                   電腦：標題列直接展開成輸入框，結果取代清單 */}
+              {/* 匯出（專案的清單／看板／甘特圖才有）：Reminders 的專案頁把按鈕放進來 */}
+              <span id="pm-export-slot" className="contents" />
               {searchMode && (
                 <>
                   <button

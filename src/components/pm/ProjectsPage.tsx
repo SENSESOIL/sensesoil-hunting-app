@@ -171,6 +171,14 @@ export default function ProjectsPage({
 
   // 依階段分組：篩階段、需要注意時也維持分組（版面不跳）；只有「全部」和搜尋改成依代碼排的一張清單
   const flat = all || !!q;
+  const pickStage = (s: Stage | null) => {
+    setStage(s);
+    setAttention(false);
+  };
+  const pickAttention = (v: boolean) => {
+    setAttention(v);
+    setStage(null);
+  };
   const groups: [string, ProjectItem[]][] = flat
     ? [["", [...list].sort((a, b) => b.code.localeCompare(a.code))]]
     : ORDER.map((s) => [s, list.filter((p) => (p.stage ?? "") === s).sort(byHealth)] as [string, ProjectItem[]])
@@ -215,21 +223,30 @@ export default function ProjectsPage({
                 <span key={s} className="first:rounded-l-full last:rounded-r-full" style={{ width: `${(n / barTotal) * 100}%`, background: STAGE_COLOR[s] }} />
               ))}
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1">
+            {/* 圖例＝各階段的篩選：點一下只看那個階段，再點一次取消 */}
+            <div className="mt-2 -mx-2 flex flex-wrap gap-y-0.5">
               {barStages.map(([s, n]) => (
-                <span key={s} className={`inline-flex items-center gap-1.5 ${T.caption} text-[#52525B]`}>
+                <button
+                  key={s}
+                  type="button"
+                  aria-pressed={stage === s}
+                  onClick={() => pickStage(stage === s ? null : s)}
+                  className={`h-7 px-2 rounded-full inline-flex items-center gap-1.5 ${T.caption} transition-colors ${
+                    stage === s ? "bg-[#F2F2F4] text-[#18181B] font-semibold" : "text-[#52525B] active:bg-[#F2F2F4]"
+                  }`}
+                >
                   <span className="w-2 h-2 rounded-full" style={{ background: STAGE_COLOR[s] }} aria-hidden />
                   {s}
-                  <span className="tabular-nums text-[#A1A1AA]">{n}</span>
-                </span>
+                  <span className="tabular-nums text-[#A1A1AA] font-normal">{n}</span>
+                </button>
               ))}
             </div>
           </>
         )}
 
         <div className={`mt-4 grid ${canMoney ? "grid-cols-3" : "grid-cols-2"} rounded-[14px] bg-[#F6F6F7] divide-x divide-black/[0.05] overflow-hidden`}>
-          <HeroStat label="施工中" value={building} unit="件" onClick={() => setStage(stage === "施工中" ? null : "施工中")} on={stage === "施工中"} />
-          <HeroStat label="需要注意" value={attn.length} unit="件" tone={attn.length ? RED : undefined} onClick={() => setAttention(!attention)} on={attention} />
+          <HeroStat label="施工中" value={building} unit="件" onClick={() => pickStage(stage === "施工中" ? null : "施工中")} on={stage === "施工中"} />
+          <HeroStat label="需要注意" value={attn.length} unit="件" tone={attn.length ? RED : undefined} onClick={() => pickAttention(!attention)} on={attention} />
           {canMoney && <HeroStat label="應收未收" value={fmtWan(receivable)} unit="萬" />}
         </div>
       </section>
@@ -260,42 +277,38 @@ export default function ProjectsPage({
           ))}
       </SearchOverlay>
 
-      {/* 篩選：進行中、全部、需要注意、各階段（一定顯示，才切得到「全部」） */}
-      {(
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 py-1 lg:mx-0 lg:px-0" {...stop}>
-          <Chip
-            on={!all && !stage && !attention}
-            onClick={() => {
-              setAll(false);
-              setStage(null);
-              setAttention(false);
-            }}
-          >
-            進行中
-          </Chip>
-          <Chip
-            on={all && !stage && !attention}
-            onClick={() => {
-              setAll(true);
-              setStage(null);
-              setAttention(false);
-            }}
-            count={pm.projects.length}
-          >
-            全部
-          </Chip>
-          {attn.length > 0 && (
-            <Chip on={attention} onClick={() => setAttention(!attention)} dot={RED} count={attn.length}>
-              需要注意
+      {/* 篩選：兩個字、不放數字，五個平均分配一排放得下（和任務追蹤的「今天、全部…」同一種）
+          其他階段（驗收、簽約、報價…）點上面總覽卡的圖例 */}
+      <div className="flex gap-1 py-1 lg:max-w-[420px]" {...stop}>
+        {(
+          [
+            ["active", "進行", "進行中", !all && !stage && !attention],
+            ["all", "全部", "全部專案", all && !stage && !attention],
+            ["attn", "注意", "需要注意", attention],
+            ["build", "施工", "施工中", stage === "施工中" && !attention],
+            ["closed", "結案", "結案", stage === "結案" && !attention],
+          ] as [string, string, string, boolean][]
+        ).map(([k, label, full, on]) => (
+          <span key={k} title={full} aria-label={full} className="contents">
+            <Chip
+              variant="tab"
+              fill
+              on={on}
+              onClick={() => {
+                if (k === "active" || k === "all") {
+                  setAll(k === "all");
+                  setStage(null);
+                  setAttention(false);
+                } else if (k === "attn") pickAttention(!attention);
+                else pickStage(k === "build" ? (stage === "施工中" ? null : "施工中") : stage === "結案" ? null : "結案");
+              }}
+            >
+              {label}
+              {k === "attn" && attn.length > 0 && <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: RED }} aria-hidden />}
             </Chip>
-          )}
-          {stageCounts.map(([s, n]) => (
-            <Chip key={s} on={stage === s} onClick={() => setStage(stage === s ? null : s)} dot={STAGE_COLOR[s]} count={n}>
-              {s}
-            </Chip>
-          ))}
-        </div>
-      )}
+          </span>
+        ))}
+      </div>
 
       {groups.length === 0 ? (
         <Group>
