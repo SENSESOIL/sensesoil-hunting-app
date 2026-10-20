@@ -3,7 +3,7 @@
 import { IconCheck, IconPencil } from "@tabler/icons-react";
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { addDays, toDay } from "@/lib/project-ops";
+import { addDays, fmtDate, toDay } from "@/lib/project-ops";
 import { isAssignee, newSectionId, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { metaChips, tagKeys } from "@/lib/pm/tags";
 import { Icon } from "./ui";
@@ -11,7 +11,6 @@ import { Avatar, CheckCircle, dueLabel, ORANGE, RED, SectionTitle, T } from "./k
 import { Sheet, toast } from "./Sheet";
 import { ProjectPicker } from "./TaskSheet";
 import { TaskGantt } from "./TaskGantt";
-import { ScheduleSheet } from "./ScheduleSheet";
 import { ProjectScreen } from "./ProjectScreen";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
@@ -603,7 +602,6 @@ export function ReminderTasks({
   const [swiped, setSwiped] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ task: Task; rect: DOMRect; depth: 0 | 1 } | null>(null);
   // 長按 → 期限 → 自訂日期…：時間安排
-  const [schedId, setSchedId] = useState<string | null>(null);
   const [tagFor, setTagFor] = useState<string | null>(null);
   const [moveFor, setMoveFor] = useState<Task | null>(null);
   // 分組：收合、改名中
@@ -1007,7 +1005,6 @@ export function ReminderTasks({
           inProject={!!code}
           onClose={() => setMenu(null)}
           onOpen={() => onOpen(menu.task)}
-          onSchedule={() => setSchedId(menu.task.id)}
           onToggle={() => toggleDone(menu.task)}
           onFlag={() => flag(menu.task)}
           onDelete={() => remove(menu.task)}
@@ -1033,7 +1030,6 @@ export function ReminderTasks({
             </PopMenu>
           );
         })()}
-      <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
       <Sheet open={!!moveFor} title="移到專案" subtitle={moveFor?.title} onClose={() => setMoveFor(null)}>
         {moveFor && (
           <div className="pb-4">
@@ -1384,7 +1380,6 @@ function RowMenu({
   inProject,
   onClose,
   onOpen,
-  onSchedule,
   onToggle,
   onFlag,
   onDelete,
@@ -1401,8 +1396,6 @@ function RowMenu({
   inProject: boolean;
   onClose: () => void;
   onOpen: () => void;
-  /** 「自訂日期…」：打開時間安排 */
-  onSchedule: () => void;
   onToggle: () => void;
   onFlag: () => void;
   onDelete: () => void;
@@ -1537,7 +1530,36 @@ function RowMenu({
                 })}
               />
             ))}
-            <MenuItem icon="edit_calendar" label="自訂日期…" onClick={run(onSchedule)} />
+            {/* 自訂日期：就在這一列叫出系統的日期選擇（不另外開頁面），選好就存 */}
+            {(() => {
+              const custom = !!task.due && !dues.some(([, v]) => v === task.due);
+              return (
+                <label className="relative w-full flex items-center gap-3 px-4 h-11 text-left text-[16px] text-[#18181B] active:bg-[#F4F4F5] cursor-pointer">
+                  <span className="w-5 flex justify-center">{custom && <Icon name="check" weight={600} className="text-[18px]" />}</span>
+                  <span className="flex-1">{custom ? fmtDate(task.due!, today) : "自訂日期…"}</span>
+                  <Icon name="edit_calendar" className="text-[20px] opacity-80" />
+                  <input
+                    type="date"
+                    value={task.due ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value || undefined;
+                      onClose();
+                      pm.saveTask({ id: task.id, due: v, ...(task.start && v && v < task.start ? { start: undefined } : {}) });
+                    }}
+                    onClick={(e) => {
+                      try {
+                        (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
+                      } catch {
+                        /* 不支援就用原生行為 */
+                      }
+                    }}
+                    aria-label="自訂期限"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    style={{ colorScheme: "light" }}
+                  />
+                </label>
+              );
+            })()}
           </div>
         )}
         {page === "vendor" && (
