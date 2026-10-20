@@ -14,7 +14,7 @@ import { ProjectScreen } from "./ProjectScreen";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
 import { VendorList } from "./VendorPicker";
-import { onTour, tourEmit, tourState } from "./tour/bus";
+import { codeLabel, onTour, tourEmit, tourState } from "./tour/bus";
 import { assigneeLabel, assigneePatch, canEditProject, isLate, personLabel, personMark, type Pm } from "./usePm";
 import { OTHER_SECTION, realSections, sectionOf, splitBySection, treeOrder, type TreeRow } from "./tree";
 
@@ -155,7 +155,7 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
                   <ListRow
                     key={p.code}
                     tourId={`list-${p.code}`}
-                    badge={p.code}
+                    badge={codeLabel(p.code)}
                     color={personColor(p.code)}
                     label={p.name}
                     count={p.openCount}

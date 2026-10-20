@@ -21,7 +21,7 @@ import { ToastHost } from "@/components/pm/Sheet";
 import { Avatar } from "@/components/pm/kit";
 import { SettingsSheet, START_NAV_KEY } from "@/components/SettingsSheet";
 import { TourHost } from "@/components/pm/tour/TourHost";
-import { onTour, tourEmit } from "@/components/pm/tour/bus";
+import { onTour, tourEmit, tourState } from "@/components/pm/tour/bus";
 import { enableAppTheme } from "@/lib/theme";
 import { disablePush, refreshPush } from "@/components/pm/push-client";
 import { isManagerRoles } from "@/lib/pm/model";
@@ -739,7 +739,10 @@ export default function HuntingManagementPage() {
   }, [permsLoading, commandTabs, commandTab]);
   const [intelTab, setIntelTab] = useState(PROJECT_TABS[0]);
   // 新手教學：告訴教學現在在哪一頁、搜尋了什麼；教學的「帶我過去」也從這裡換頁
-  useEffect(() => tourEmit("nav", activeNav), [activeNav]);
+  useEffect(() => {
+    tourState.nav = activeNav;
+    tourEmit("nav", activeNav);
+  }, [activeNav]);
   useEffect(() => tourEmit("search", teamQuery), [teamQuery]);
   useEffect(
     () =>
@@ -1447,7 +1450,10 @@ export default function HuntingManagementPage() {
                 <button
                   key={item.id}
                   data-tour={`nav-${item.id}`}
-                  onClick={() => setActiveNav(item.id)}
+                  onClick={() => {
+                    setActiveNav(item.id);
+                    tourEmit("nav", item.id);
+                  }}
                   className={`w-full flex items-center h-9 rounded-[12px] transition-colors relative outline-none shrink-0 ${
                     isActive
                       ? "bg-[#F4F4F5] text-[#18181B]"
@@ -1857,7 +1863,10 @@ export default function HuntingManagementPage() {
               <button
                 key={item.id}
                 data-tour={`nav-${item.id}`}
-                onClick={() => setActiveNav(item.id)}
+                onClick={() => {
+                  setActiveNav(item.id);
+                  tourEmit("nav", item.id);
+                }}
                 className={`w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none ${
                   isActive
                     ? "text-[var(--accent)]"

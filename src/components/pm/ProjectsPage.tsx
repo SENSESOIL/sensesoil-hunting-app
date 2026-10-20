@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { onTour, tourState } from "./tour/bus";
+import { codeLabel, onTour, tourState } from "./tour/bus";
 import { ACTIVE_STAGES, fmtDate, fmtWan, healthRank, type Stage } from "@/lib/project-ops";
 import { personColor } from "@/lib/pm/model";
 import { HEALTH_META, Icon } from "./ui";
@@ -399,7 +399,7 @@ function ProjectRow({ p, pm, last, showStage, onOpen }: { p: ProjectItem; pm: Pm
         className="w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0 text-white text-[12px] font-bold tracking-tight tabular-nums"
         style={{ background: personColor(p.code) }}
       >
-        {p.code}
+        {codeLabel(p.code)}
       </span>
       <span className="flex-1 min-w-0">
         <span className="flex items-center gap-1.5 min-w-0">

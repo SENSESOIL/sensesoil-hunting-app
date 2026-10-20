@@ -42,6 +42,16 @@ interface Step {
   goto?: (c: Ctx) => void;
   /** 只有符合的人才有這一步 */
   when?: (c: Ctx) => boolean;
+  /** 進到這一步時已經是這個狀態（例如本來就在那一頁）：直接算做到 */
+  already?: (c: Ctx) => boolean;
+  /** 這一步要在清單上操作：進來時先把還開著的抽屜、長按選單關掉（上一步可能還開著） */
+  clear?: boolean;
+}
+
+const LAYERS = '[data-pm-sheet], [role="dialog"][aria-label="任務選單"]';
+/** 關掉抽屜、長按選單（它們都聽 Esc） */
+function closeLayers() {
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
 }
 
 /** 畫面上看得到的第一個 */
@@ -80,6 +90,7 @@ const STEPS: Step[] = [
     body: "點房子圖示，到「專案情報」。",
     target: () => pick('[data-tour="nav-project_info"]'),
     until: (e) => e.type === "nav" && e.data === "project_info",
+    already: () => tourState.nav === "project_info",
     goto: () => go({ nav: "project_info", intelTab: "專案" }),
   },
   {
@@ -110,6 +121,7 @@ const STEPS: Step[] = [
     body: "點勾勾清單圖示，到「任務追蹤」。每天的工作都在這裡。",
     target: () => pick('[data-tour="nav-tasks"]'),
     until: (e) => e.type === "nav" && e.data === "tasks",
+    already: () => tourState.nav === "tasks",
     goto: () => go({ nav: "tasks", tab: "任務" }),
   },
   {
@@ -171,6 +183,7 @@ const STEPS: Step[] = [
   },
   {
     id: "swipe-left",
+    clear: true,
     title: "往左滑",
     body: "把任務往左滑，出現「重要｜緊急｜刪除」。按「緊急」試試。",
     target: (c) => taskRow(c, 0),
@@ -179,6 +192,7 @@ const STEPS: Step[] = [
   },
   {
     id: "swipe-right",
+    clear: true,
     title: "往右滑：變成子任務",
     body: "把第二個任務往右滑，它會縮排，變成上一個任務的子任務。再往右滑一次就取消。",
     target: (c) => taskRow(c, 1) ?? taskRow(c, 0),
@@ -188,6 +202,7 @@ const STEPS: Step[] = [
   /* ── 看板與甘特 ── */
   {
     id: "board",
+    clear: true,
     title: "換成看板",
     body: "右上這顆切換檢視：清單 → 看板 → 甘特圖。點一下換成看板。",
     target: () => pick('[data-tour="view-switch"]'),
@@ -203,6 +218,7 @@ const STEPS: Step[] = [
   },
   {
     id: "gantt",
+    clear: true,
     title: "換成甘特圖",
     body: "再點一下右上那顆，換成甘特圖。",
     target: () => pick('[data-tour="view-switch"]'),
@@ -227,6 +243,7 @@ const STEPS: Step[] = [
   /* ── 搜尋 ── */
   {
     id: "search",
+    clear: true,
     title: "搜尋",
     body: "點放大鏡，打任務名稱或標籤，例如「打底」，所有專案的任務都找得到。",
     target: () => pick('[data-tour="search"]'),
@@ -265,6 +282,8 @@ export function TourHost() {
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [covered, setCovered] = useState(false);
   const [lost, setLost] = useState(false);
+  // 按了提示卡的 ✕：先問一次，免得想關抽屜卻把教學整個關掉
+  const [askEnd, setAskEnd] = useState(false);
   const missingSince = useRef<number | null>(null);
   const scrolled = useRef<string | null>(null);
   const snap = useRef<unknown>(undefined);
@@ -352,9 +371,20 @@ export function TourHost() {
   useEffect(() => {
     if (!step || !ctx) return;
     snap.current = step.snapshot?.(ctx);
+    setAskEnd(false);
     missingSince.current = null;
     scrolled.current = null;
     setLost(false);
+    // 要在清單上操作：上一步的標籤、廠商抽屜或選單還開著就先關掉（關不掉的，提示卡會請人自己關）
+    if (step.clear) {
+      const timers = [150, 450, 800].map((ms) => setTimeout(() => document.querySelector(LAYERS) && closeLayers(), ms));
+      return () => timers.forEach(clearTimeout);
+    }
+    // 本來就在那一頁：停一下讓人看到提示，再自動往下
+    if (step.already?.(ctx)) {
+      const t = setTimeout(complete, 900);
+      return () => clearTimeout(t);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step?.id]);
 
@@ -387,7 +417,7 @@ export function TourHost() {
     const tick = () => {
       const el = step.target?.(ctx) ?? null;
       // 抽屜、長按選單打開時：拿掉遮罩，提示卡移到上面，不要蓋住選單
-      setCovered(!!document.querySelector('[data-pm-sheet], [role="dialog"][aria-label="任務選單"]'));
+      setCovered(!!document.querySelector(LAYERS));
       if (el) {
         missingSince.current = null;
         setLost(false);
@@ -493,12 +523,31 @@ export function TourHost() {
                 {success && <Icon name="check_circle" fill={1} weight={500} className="text-[20px] text-[#30A46C]" />}
                 {success ? "做到了" : step.title}
               </h3>
-              <button type="button" onClick={() => end(false)} aria-label="結束教學" title="結束教學" className="-mr-1.5 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F2F2F4]">
+              <button type="button" onClick={() => setAskEnd(true)} aria-label="結束教學" title="結束教學" className="-mr-1.5 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F2F2F4]">
                 <Icon name="close" className="text-[20px]" />
               </button>
             </div>
-            {!success && <p className="mt-1 text-[15px] leading-[22px] text-[#3F3F46]">{body}</p>}
-            {!success && (
+            {askEnd ? (
+              <>
+                <p className="mt-1 text-[15px] leading-[22px] text-[#3F3F46]">要結束新手教學嗎？練習專案會一起刪掉。只是想關掉後面的視窗的話，按「繼續教學」再關。</p>
+                <div className="mt-3 flex justify-end gap-2">
+                  <button type="button" onClick={() => setAskEnd(false)} className="h-9 px-4 rounded-full bg-[var(--accent)] text-white text-[14px] font-semibold active:opacity-85">
+                    繼續教學
+                  </button>
+                  <button type="button" onClick={() => end(false)} className="h-9 px-3.5 rounded-full text-[14px] text-[#E5484D] active:bg-[#F2F2F4]">
+                    結束教學
+                  </button>
+                </div>
+              </>
+            ) : (
+              !success && (
+                <p className="mt-1 text-[15px] leading-[22px] text-[#3F3F46]">
+                  {body}
+                  {step.clear && covered && <span className="block mt-1 text-[13px] text-[var(--accent-ink)]">先關掉後面的視窗（右上的 ✕ 或往下拉），再繼續。</span>}
+                </p>
+              )
+            )}
+            {!success && !askEnd && (
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-[12px] text-[#A1A1AA] tabular-nums mr-auto">
                   {i + 1} / {steps.length}
