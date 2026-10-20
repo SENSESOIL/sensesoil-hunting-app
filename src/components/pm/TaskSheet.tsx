@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { fmtDate, WORK_KINDS, type WorkKind } from "@/lib/project-ops";
+import { addDays, diffDays, fmtDate, WORK_KINDS, type WorkKind } from "@/lib/project-ops";
+import { endOf, predecessorOf, startAfter, wouldCycle } from "@/lib/pm/deps";
+import { treeOrder } from "./tree";
 import { isAssignee, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { Sheet, toast } from "./Sheet";
 import { fmtDateLong } from "./fields";
@@ -25,7 +27,7 @@ import { tourEmit } from "./tour/bus";
    ══════════════════════════════════════════════════════════ */
 
 type Draft = Pick<Task, "code" | "title" | "kind" | "status" | "progress" | "flagged" | "assigneeEmail" | "coAssignees" | "start" | "due" | "note" | "goalId">;
-type RowKey = null | "project" | "goal" | "due" | "start" | "assign" | "vendor" | "progress";
+type RowKey = null | "project" | "goal" | "due" | "start" | "assign" | "vendor" | "progress" | "after";
 
 const EMPTY: Draft = { code: "", title: "", kind: "施工", status: "todo", progress: 0, flagged: false, coAssignees: [] };
 
@@ -182,6 +184,20 @@ export function TaskSheet({
   const setProgress = (p: number) => change({ progress: p, status: p >= 100 ? "done" : p > 0 ? "doing" : "todo" }, true);
   const people = taskAssignees(v);
   const chips = task ? metaChips(task.meta).filter((c) => c.text !== task.meta?.vendor) : [];
+  // 前置任務（WBS）：接在哪個任務之後開始（和甘特圖的「時間安排」同一個設定）
+  const pred = task ? predecessorOf(pm.tasks, task) : undefined;
+  const setAfter = (p: Task | null) => {
+    if (!task) return;
+    const meta = { ...(task.meta ?? {}) };
+    if (p) meta.after = p.id;
+    else delete meta.after;
+    // 選了：從前一個結束的隔天開始，天數不變
+    const s = p ? startAfter(p) : undefined;
+    const n = task.start && task.due ? diffDays(task.start, task.due) : 0;
+    pm.saveTask({ id: task.id, meta, ...(s ? { start: s, due: addDays(s, n) } : {}) });
+    if (p) tourEmit("wbs-set", p.id);
+    setRow(null);
+  };
   const vendor = task?.meta?.vendor;
   const setVendor = (name: string | undefined) => {
     if (!task) return;
@@ -290,9 +306,38 @@ export function TaskSheet({
         </List>
 
         {/* 時間 */}
-        <List title="時間" foot={canEditAll ? "開始日是甘特圖的起點；沒填就只排在期限那一天。" : undefined}>
+        <List title="時間" foot={canEditAll ? (row === "after" ? "選了就從那個任務結束的隔天開始；它改日期，這個跟著移。" : "開始日是甘特圖的起點；沒填就只排在期限那一天。") : undefined}>
           <DateLine label="期限" value={v.due} min={v.start} today={pm.today} late={!!late} edit={canEditAll} open={row === "due"} onToggle={() => toggleRow("due")} onChange={(x) => change({ due: x })} />
           <DateLine label="開始" value={v.start} today={pm.today} edit={canEditAll} open={row === "start"} onToggle={() => toggleRow("start")} onChange={(x) => change({ start: x })} />
+          {task && (
+            <button type="button" disabled={!canEditAll} onClick={() => toggleRow("after")} className={`${lineCls} w-full text-left active:bg-[#F2F2F4] disabled:active:bg-transparent`} aria-expanded={row === "after"}>
+              <span className={labelCls}>接在之後</span>
+              <span className={`flex-1 min-w-0 text-right text-[16px] truncate ${pred ? "text-[#6E6E73]" : "text-[#C7C7CC]"}`}>{pred ? pred.title : "不接"}</span>
+              {canEditAll && <Icon name={row === "after" ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />}
+            </button>
+          )}
+          {task && row === "after" && canEditAll && (
+            <div className="max-h-[260px] overflow-y-auto overscroll-contain pb-1">
+              {pred && (
+                <button type="button" onClick={() => setAfter(null)} className="w-full px-4 min-h-[44px] text-left text-[15px] text-[#E5484D] active:bg-[#F2F2F4]">
+                  不接在任何任務後面
+                </button>
+              )}
+              {treeOrder(pm.tasks.filter((x) => x.code === task.code && x.id !== task.id))
+                .map((r) => r.task)
+                .filter((x) => !wouldCycle(pm.tasks, task.id, x.id))
+                .map((x) => {
+                  const e = endOf(x);
+                  return (
+                    <button key={x.id} type="button" onClick={() => setAfter(x)} className="w-full px-4 min-h-[44px] py-2 flex items-center gap-3 text-left active:bg-[#F2F2F4]">
+                      <span className={`flex-1 min-w-0 text-[15px] truncate ${x.parentId ? "pl-4" : ""} ${x.status === "done" ? "text-[#A1A1AA]" : "text-[#18181B]"}`}>{x.title || "（未命名）"}</span>
+                      <span className="text-[13px] text-[#8E8E93] tabular-nums shrink-0">{e ? `${fmtDate(e, pm.today)} 結束` : "未排程"}</span>
+                      {pred?.id === x.id && <Icon name="check" weight={500} className="text-[18px] text-[var(--accent)]" />}
+                    </button>
+                  );
+                })}
+            </div>
+          )}
         </List>
 
         {/* 負責人 */}

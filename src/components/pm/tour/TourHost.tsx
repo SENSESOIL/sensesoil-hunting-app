@@ -36,6 +36,10 @@ interface Ctx {
   typing: boolean;
   /** 實戰：選的專案原本沒有任何資料（可以放心示範刪除） */
   fresh: boolean;
+  /** 手機轉成橫的 */
+  landscape: boolean;
+  /** 手機（觸控、窄螢幕）：教學開始時判斷一次，轉橫轉直不會變 */
+  phone: boolean;
 }
 
 interface Step {
@@ -62,6 +66,12 @@ interface Step {
   blur?: boolean;
   /** 按「略過這步」：先幫忙做到，後面的步驟才有東西可以操作 */
   skip?: (c: Ctx) => void;
+  /** 只圈起來給人看，不能點（例如「新專案」：點進去會出不來） */
+  look?: boolean;
+  /** 進到這一步時先做（例如進入甘特圖編輯） */
+  enter?: () => void;
+  /** 提示卡不要蓋住這一塊（例如整張甘特圖）：放它上面，放不下才放下面 */
+  clearOf?: () => Element | null;
 }
 
 /** 蓋在清單上的東西：抽屜、長按選單、搜尋層 */
@@ -101,6 +111,20 @@ const toProject = (view = "list") => (c: Ctx) => {
 const toTasksHome = () => go({ nav: "tasks", tab: "任務", home: true });
 const toIntel = () => go({ nav: "project_info", intelTab: "專案" });
 const sheetOpen = () => !!pick("[data-pm-sheet]");
+/** 教學自己幫忙點的：畫面凍結不擋 */
+let bypass = false;
+const tap = (sel: string) => {
+  const el = pick(sel) as HTMLElement | null;
+  if (!el) return;
+  bypass = true;
+  try {
+    el.click();
+  } finally {
+    bypass = false;
+  }
+};
+/** 甘特圖要在編輯模式（點日期排入、拖曳、時間安排）：還沒進編輯就幫忙按鉛筆 */
+const ensureEdit = () => tap('[data-tour="gantt-edit"][aria-pressed="false"]');
 
 /* 略過時幫忙做的事 */
 const addTasks = (c: Ctx, n: number) => {
@@ -122,6 +146,8 @@ const sectionsUsed = (c: Ctx) => {
   return new Set(c.tasks.filter((t) => !t.parentId && valid.has(t.meta?.section ?? "")).map((t) => t.meta!.section)).size;
 };
 const renaming = () => !!pick('input[aria-label="分組名稱"]');
+/** 還沒排日期的任務（甘特圖教「點日期排入」用） */
+const undated = (c: Ctx) => tops(c).find((t) => !t.start && !t.due && t.status !== "done");
 const firstOpen = (c: Ctx) => tops(c).find((t) => t.status !== "done");
 /** WBS：最後一個任務（粉光）接在哪個後面——挑還沒完成的（完成的在甘特圖上藏起來了，看不到箭頭） */
 const wbsPair = (c: Ctx) => {
@@ -131,10 +157,12 @@ const wbsPair = (c: Ctx) => {
   return { a, b };
 };
 
-const STEPS: Step[] = [
+const ganttEl = () => pick('[data-tour="gantt"]');
+const STEPS_RAW: Step[] = [
   /* ── 介面 ── */
   {
     id: "nav",
+    look: true,
     title: "四個主頁",
     body: "這一排切換主頁。新手先學兩個：「專案情報」看專案的狀況，「任務追蹤」排任務和打勾完成。",
     target: () => pick('[data-tour="nav"]'),
@@ -218,7 +246,7 @@ const STEPS: Step[] = [
   {
     id: "add-1",
     title: "第一個任務",
-    body: (c) => (c.typing ? "打「放樣」，打完按鍵盤右下角的打勾（換行鍵）存起來。" : "點虛線圓圈，開始打第一個任務。"),
+    body: (c) => (c.typing ? "打「放樣」，打完按鍵盤上方右邊的 ✓ 存起來。" : "點虛線圓圈，開始打第一個任務。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 1,
     goto: toProject(),
@@ -228,7 +256,7 @@ const STEPS: Step[] = [
     id: "add-2",
     title: "接著打第二個",
     body: (c) =>
-      c.typing ? "存好後，下面自動多了一列。打「打底」，再按鍵盤右下角的打勾。" : "點虛線圓圈，打第二個任務「打底」，打完按鍵盤右下角的打勾。",
+      c.typing ? "打「打底」，打完按鍵盤上方右邊的 ✓。" : "存好了。再點虛線圓圈，打第二個任務「打底」。",
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 2,
     goto: toProject(),
@@ -238,7 +266,7 @@ const STEPS: Step[] = [
     id: "add-3",
     title: "再一個",
     body: (c) =>
-      c.typing ? "再打「粉光」，按右下角的打勾。最後多出來的空白列不用管，下一步會自動收起鍵盤。" : "點虛線圓圈，打第三個任務「粉光」。",
+      c.typing ? "打「粉光」，打完按鍵盤上方右邊的 ✓。" : "再點虛線圓圈，打第三個任務「粉光」。",
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 3,
     goto: toProject(),
@@ -275,6 +303,7 @@ const STEPS: Step[] = [
   },
   {
     id: "assign-info",
+    look: true,
     title: "被指派的任務",
     body: "主管會用選單裡的「指派」把任務交給你。收到通知後打開任務、按「收到」，對方就知道你看到了。",
     target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
@@ -327,30 +356,32 @@ const STEPS: Step[] = [
     clear: true,
     blur: true,
     title: "新增分組",
-    body: "工程通常分好幾個工種。點清單最下面的「新增分組」，取名「泥作」，按鍵盤的完成。",
-    target: () => pick('[data-tour="add-section"]'),
+    body: () => (renaming() ? "打「售票亭」，打完按鍵盤上方的 ✓。" : "分組用來分區域，例如售票亭、展售區、餐廳（工種用剛剛的標籤）。點清單最下面的「新增分組」。"),
+    // 點了「新增分組」之後：圈改名的輸入框（不然被暗掉、被提示卡蓋住）
+    target: () => pick('input[aria-label="分組名稱"]')?.parentElement ?? pick('[data-tour="add-section"]'),
     allow: 'input[aria-label="分組名稱"]',
     when: (c) => c.isManager,
     done: (c) => realSections(c.sections).length >= 1 && !renaming(),
     goto: toProject(),
-    skip: (c) => addSection(c, "泥作"),
+    skip: (c) => addSection(c, "售票亭"),
   },
   {
     id: "section-add-2",
     title: "再一個分組",
-    body: "再點一次「新增分組」，取名「油漆」。",
-    target: () => pick('[data-tour="add-section"]'),
+    body: () => (renaming() ? "打「展售區」，打完按鍵盤上方的 ✓。" : "再點一次「新增分組」，這個叫「展售區」。"),
+    // 點了「新增分組」之後：圈改名的輸入框（不然被暗掉、被提示卡蓋住）
+    target: () => pick('input[aria-label="分組名稱"]')?.parentElement ?? pick('[data-tour="add-section"]'),
     allow: 'input[aria-label="分組名稱"]',
     when: (c) => c.isManager,
     done: (c) => realSections(c.sections).length >= 2 && !renaming(),
     goto: toProject(),
-    skip: (c) => addSection(c, "油漆"),
+    skip: (c) => addSection(c, "展售區"),
   },
   {
     id: "section-move",
     blur: true,
     title: "把任務放進分組",
-    body: "長按「放樣」→「移到分組 ›」選「泥作」（子任務會跟著走）；再長按「粉光」放進「油漆」。兩組都有任務，甘特圖才看得出分組。",
+    body: "長按「放樣」→「移到分組 ›」選「售票亭」（子任務會跟著走）；再長按「粉光」放進「展售區」。兩組都有任務，甘特圖才看得出分組。",
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, sectionsUsed(c) ? tops(c).length - 1 : 0),
     when: (c) => c.isManager,
     done: (c) => sectionsUsed(c) >= 2,
@@ -416,9 +447,25 @@ const STEPS: Step[] = [
     title: "看懂甘特圖",
     body: (c) =>
       (realSections(c.sections).length
-        ? "淺灰底、深灰長條的是分組（泥作、油漆），從組內最早畫到最晚的任務；下面一般的列是任務，"
+        ? "淺灰底、深灰長條的是分組（售票亭、展售區），從組內最早畫到最晚的任務；下面一般的列是任務，"
         : "每一列是一個任務，") + "灰＝待辦、橘＝進行中、綠＝完成；橘色直線是今天。已完成的任務先藏起來了，下方「顯示已完成」可以打開。",
     target: () => pick('[data-tour="gantt"]'),
+    goto: toProject("gantt"),
+  },
+  {
+    id: "gantt-landscape",
+    title: "轉橫的看",
+    body: (c) =>
+      c.landscape ? "橫的一次看得到更多天、更多任務。看完把手機轉回直的。" : "甘特圖比較寬：把手機轉成橫的看看（先把手機的直向鎖定關掉）。",
+    target: () => pick('[data-tour="gantt"]'),
+    // 只有手機（觸控、窄螢幕）才教；電腦直接跳過
+    when: (c) => c.phone,
+    snapshot: () => ({ seen: false }),
+    done: (c, snap) => {
+      const s0 = snap as { seen: boolean };
+      if (c.landscape) s0.seen = true;
+      return s0.seen && !c.landscape;
+    },
     goto: toProject("gantt"),
   },
   {
@@ -442,20 +489,28 @@ const STEPS: Step[] = [
     target: () => pick('[data-tour="gantt-edit"]'),
     until: (e) => e.type === "gantt-edit" && e.data === true,
     goto: toProject("gantt"),
+    // 略過也要真的進入編輯，後面的拖曳、點日期排入才做得了
+    skip: ensureEdit,
   },
   {
-    id: "gantt-move",
-    title: "整條平移",
-    body: "按住一條色條的中間（手機先長按一下，震一下再拖），左右拖：開始和結束一起移，天數不變。",
-    target: () => pick('[data-tour="gantt"]'),
-    until: (e) => e.type === "gantt-drag" && e.data === "move",
+    id: "gantt-pick",
+    enter: ensureEdit,
+    title: "點日期排入",
+    body: (c) => `「${undated(c)?.title ?? "粉光"}」還沒排日期。在它那一列的時間軸上，點你要開始的那一天，就排進去了。`,
+    target: (c) => ganttRow(undated(c)) ?? pick('[data-tour="gantt"]'),
+    snapshot: (c) => undated(c)?.id,
+    done: (c, snap) => !snap || !!c.tasks.find((t) => t.id === snap && (t.start || t.due)),
     goto: toProject("gantt"),
-    skip: (c) => shift(c, firstOpen(c), 1, 1),
+    skip: (c) => {
+      const t = undated(c);
+      if (t) c.pm.saveTask({ id: t.id, start: addDays(c.today, 3), due: addDays(c.today, 5) }, { quiet: true });
+    },
   },
   {
     id: "gantt-start",
+    enter: ensureEdit,
     title: "拉開始日",
-    body: "拖色條「左端」的小把手：只改開始日，結束日不動。",
+    body: "按住色條「左端」的小把手，左右拖：只改開始日，結束日不動。（手機要先按住一下再拖，直接滑會變成捲動）",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "start",
     goto: toProject("gantt"),
@@ -463,18 +518,31 @@ const STEPS: Step[] = [
   },
   {
     id: "gantt-end",
+    enter: ensureEdit,
     title: "拉結束日",
-    body: "拖色條「右端」的小把手：只改結束日，天數跟著變。",
+    body: "按住色條「右端」的小把手，左右拖：只改結束日，天數跟著變。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "end",
     goto: toProject("gantt"),
     skip: (c) => shift(c, firstOpen(c), 0, 1),
   },
   {
+    id: "gantt-move",
+    enter: ensureEdit,
+    title: "整條移動",
+    body: "按住色條的中間，左右拖：開始和結束一起移，天數不變。",
+    target: () => pick('[data-tour="gantt"]'),
+    until: (e) => e.type === "gantt-drag" && e.data === "move",
+    goto: toProject("gantt"),
+    skip: (c) => shift(c, firstOpen(c), 1, 1),
+  },
+  {
     id: "wbs-open",
+    enter: ensureEdit,
     title: "前後任務（WBS）",
     body: "很多工序要等上一個做完才能開始。點「粉光」那一列的色條，打開時間安排。",
-    target: (c) => ganttRow(tops(c)[tops(c).length - 1]) ?? pick('[data-tour="gantt"]'),
+    // 只圈時間軸那一段（點名稱會打開任務細節，不是時間安排）
+    target: (c) => ganttRow(tops(c)[tops(c).length - 1])?.children[1] ?? pick('[data-tour="gantt"]'),
     until: (e) => e.type === "schedule-open",
     goto: toProject("gantt"),
   },
@@ -498,6 +566,7 @@ const STEPS: Step[] = [
   },
   {
     id: "wbs-line",
+    look: true,
     clear: true,
     title: "連起來了",
     body: (c) => {
@@ -514,6 +583,7 @@ const STEPS: Step[] = [
     target: () => pick('[data-tour="gantt-edit"]'),
     until: (e) => e.type === "gantt-edit" && e.data === false,
     goto: toProject("gantt"),
+    skip: () => tap('[data-tour="gantt-edit"][aria-pressed="true"]'),
   },
   /* ── 分享 ── */
   {
@@ -527,7 +597,7 @@ const STEPS: Step[] = [
   {
     id: "export-gantt-see",
     title: "選格式",
-    body: "上面是圖片預覽，按「存成圖片」就能傳 LINE；往下滑是文字排程表和「排程軟體」的檔案。看完按右上的 ✕ 關掉。",
+    body: "上面是圖片預覽，和畫面上的甘特圖一樣；按「存成圖片」就能傳 LINE。往下滑是「排程軟體」的檔案，最下面可以選要不要包含預定工期。看完按右上的 ✕ 關掉。",
     target: () => pick("[data-pm-sheet]"),
     done: () => !sheetOpen(),
     skip: closeLayers,
@@ -569,6 +639,9 @@ const STEPS: Step[] = [
   },
 ];
 
+/** 甘特圖的步驟：提示卡不要蓋住甘特圖 */
+const STEPS: Step[] = STEPS_RAW.map((st) => (st.id.startsWith("gantt") || st.id.startsWith("wbs-") ? { ...st, clearOf: ganttEl } : st));
+
 /* ── 實戰教學：正式的專案 ── */
 /** 實戰選的專案（只在這次教學用） */
 const realPick: { code: string | null; fresh: boolean } = { code: null, fresh: false };
@@ -590,6 +663,7 @@ const REAL_STEPS: Step[] = [
     title: "不用按「新專案」",
     body: "這顆是給拾壤CRM 名冊上沒有的案子用的，建了也不會回到 CRM。公司的專案都已經從 CRM 帶進來了，要排任務請到「任務追蹤」找那個專案。",
     target: () => pick('[data-tour="new-project"]'),
+    look: true,
     when: (c) => c.isManager,
     goto: toIntel,
   },
@@ -629,7 +703,7 @@ const REAL_STEPS: Step[] = [
     id: "real-add",
     title: "新增任務",
     body: (c) =>
-      c.typing ? "打好按鍵盤右下角的打勾，會接著出現下一列；全部打完，點一下空白處收起鍵盤。" : "點虛線圓圈，把這個專案接下來要做的事一項一項打進去。",
+      c.typing ? "打完按鍵盤上方右邊的 ✓ 存起來；要再打下一個，再點虛線圓圈。" : "點虛線圓圈，把這個專案接下來要做的事一項一項打進去。",
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     snapshot: (c) => c.tasks.length,
     done: (c, snap) => c.tasks.length > (snap as number) && !c.typing,
@@ -666,6 +740,7 @@ const REAL_STEPS: Step[] = [
   },
   {
     id: "real-delete-info",
+    look: true,
     clear: true,
     title: "刪除專案",
     body: "在專案頁最下面。「刪除專案」只會清掉任務追蹤裡的任務、排程、分組；拾壤CRM 名冊上的案名、業主、合約都不會動。這個專案原本就有資料，這次不要真的刪，看過位置就好。",
@@ -718,6 +793,15 @@ export function TourHost() {
   const [covered, setCovered] = useState(false);
   const [lost, setLost] = useState(false);
   const [typing, setTyping] = useState(false);
+  const [landscape, setLandscape] = useState(false);
+  const phoneRef = useRef(false);
+  const checkPhone = () => {
+    phoneRef.current = window.matchMedia("(pointer: coarse)").matches && Math.min(window.innerWidth, window.innerHeight) < 600;
+  };
+  // 提示卡要讓開的區塊、提示卡實際的高度（決定放上面還是下面）
+  const [clearRect, setClearRect] = useState<DOMRect | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardH, setCardH] = useState(170);
   // 按了提示卡的 ✕：先問一次，免得想關抽屜卻把教學整個關掉
   const [askEnd, setAskEnd] = useState(false);
   const missingSince = useRef<number | null>(null);
@@ -746,10 +830,12 @@ export function TourHost() {
       pm,
       typing,
       fresh: realPick.fresh,
+      landscape,
+      phone: phoneRef.current,
     };
     // pm 每次重繪都是新物件：只看用得到的欄位
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, mode, code, activeCode, pm.isManager, pm.tasks, pm.projectBy, pm.today, typing]);
+  }, [phase, mode, code, activeCode, pm.isManager, pm.tasks, pm.projectBy, pm.today, typing, landscape]);
   const all = mode === "real" ? REAL_STEPS : STEPS;
   const steps = useMemo(() => (ctx ? all.filter((s) => !s.when || s.when(ctx)) : all), [ctx, all]);
   const step = phase === "running" ? steps[i] : undefined;
@@ -776,6 +862,7 @@ export function TourHost() {
 
   const start = async () => {
     if (busy.current) return;
+    checkPhone();
     busy.current = true;
     setPhase("starting");
     const r = await pmPost<{ status: string; code?: string }>({ op: "tutorial.start" });
@@ -810,6 +897,7 @@ export function TourHost() {
 
   const end = async (finished: boolean) => {
     completing.current = false;
+    tourState.lockSchedule = false;
     const wasReal = mode === "real";
     setPhase("idle");
     setRect(null);
@@ -825,6 +913,7 @@ export function TourHost() {
   };
 
   const startReal = async () => {
+    checkPhone();
     await dropPractice();
     realPick.code = null;
     realPick.fresh = false;
@@ -877,6 +966,9 @@ export function TourHost() {
     scrolled.current = null;
     setLost(false);
     // 收起還開著的輸入列（空白的那一列按 Esc 就消失、鍵盤收起）
+    if (step.enter) setTimeout(step.enter, 300);
+    // 甘特圖的步驟（前後任務那兩步除外）：點長條不打開時間安排
+    tourState.lockSchedule = !!step.clearOf && step.id !== "wbs-open" && step.id !== "wbs-pick";
     if (step.blur) {
       const ta = document.querySelector<HTMLTextAreaElement>('[data-tour="draft-row"] textarea');
       if (ta && !ta.value.trim()) ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
@@ -890,10 +982,11 @@ export function TourHost() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step?.id, mode]);
 
-  // 建好任務之後：幫還沒有日期的任務排上日期，看板、甘特圖才有東西可以拖
+  // 建好任務之後：幫還沒有日期的任務排上日期，看板、甘特圖才有東西可以拖（最後一個留著，教「點日期排入」）
   useEffect(() => {
     if (!ctx || mode !== "practice" || step?.id !== "longpress") return;
-    tops(ctx).forEach((t, n) => {
+    tops(ctx).forEach((t, n, all) => {
+      if (n === all.length - 1 && all.length > 2) return;
       if (!t.start && !t.due) pm.saveTask({ id: t.id, start: addDays(ctx.today, n * 2), due: addDays(ctx.today, n * 2 + 2) }, { quiet: true });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -917,7 +1010,7 @@ export function TourHost() {
       return allowEls.current.some((a) => a.contains(el));
     };
     const block = (e: Event) => {
-      if (ok(e.target)) return;
+      if (bypass || ok(e.target)) return;
       e.stopPropagation();
       if (e.cancelable) e.preventDefault();
     };
@@ -932,9 +1025,14 @@ export function TourHost() {
     if (phase !== "running" || !step || !ctx) return;
     const tick = () => {
       const el = step.target?.(ctx) ?? null;
-      allowEls.current = el ? [el] : [];
+      allowEls.current = el && !step.look ? [el] : [];
       allowSel.current = step.allow;
       setTyping(!!pick('[data-tour="draft-row"]'));
+      setLandscape(window.innerWidth > window.innerHeight);
+      const cr = step.clearOf?.()?.getBoundingClientRect() ?? null;
+      setClearRect((p) => (!cr ? null : p && p.top === cr.top && p.bottom === cr.bottom ? p : cr));
+      const ch = cardRef.current?.offsetHeight;
+      if (ch) setCardH((p) => (Math.abs(p - ch) > 2 ? ch : p));
       const layer = document.querySelector(LAYERS);
       // 抽屜、長按選單打開、目標不在裡面：拿掉圈圈，提示卡移到上面，不要蓋住選單
       setCovered(!!layer && !(el && el.closest(LAYERS)));
@@ -1044,7 +1142,12 @@ export function TourHost() {
 
   /* ── 進行中：暗化畫面（點不到）、目標保持亮白、深色提示卡帶小箭頭指著目標 ── */
   const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  // 看得到的範圍：iPhone 打開鍵盤時只剩鍵盤上面那一塊（visualViewport）
+  const vv = window.visualViewport;
+  const vTop = vv?.offsetTop ?? 0;
+  const vh = vv?.height ?? window.innerHeight;
+  const sx = window.scrollX;
+  const sy = window.scrollY;
   const pad = 6;
   const hole = rect && !covered ? { x: rect.left - pad, y: rect.top - pad, w: rect.width + pad * 2, h: rect.height + pad * 2 } : null;
   const waits = !!(step.until || step.done) && !revisit.current;
@@ -1056,32 +1159,50 @@ export function TourHost() {
   const cardW = Math.min(vw - 24, 400);
   const NEED = 200;
   let place: { top?: number; bottom?: number; left: number; caret?: { side: "top" | "bottom"; x: number } } = { left: (vw - cardW) / 2 };
-  if (hole) {
+  const avoid = clearRect && !covered ? clearRect : null;
+  if (hole && avoid) {
+    // 要讓開的區塊（含圈圈）：先放上面，放不下放下面；都放不下貼在空間比較大的那一邊
     const cx = hole.x + hole.w / 2;
     const left = Math.max(12, Math.min(cx - cardW / 2, vw - cardW - 12));
     const caretX = Math.max(22, Math.min(cx - left, cardW - 22));
-    const above = hole.y - 12;
-    const below = vh - (hole.y + hole.h) - 12;
-    const preferAbove = hole.y + hole.h / 2 > vh / 2;
-    if ((preferAbove && above >= NEED) || (!preferAbove && below < NEED && above >= NEED)) place = { bottom: vh - hole.y + 12, left, caret: { side: "bottom", x: caretX } };
+    const top = Math.min(avoid.top, hole.y);
+    const bottom = Math.max(avoid.bottom, hole.y + hole.h);
+    const above = top - vTop - 12;
+    const below = vTop + vh - bottom - 12;
+    if (above >= cardH) place = { bottom: top - 12, left, ...(hole.y - top < 40 ? { caret: { side: "bottom" as const, x: caretX } } : {}) };
+    else if (below >= cardH) place = { top: bottom + 12, left, ...(bottom - (hole.y + hole.h) < 40 ? { caret: { side: "top" as const, x: caretX } } : {}) };
+    else if (above > below) place = { top: vTop + 12, left: (vw - cardW) / 2 };
+    else place = { bottom: vTop + vh - 16, left: (vw - cardW) / 2 };
+  } else if (hole) {
+    const cx = hole.x + hole.w / 2;
+    const left = Math.max(12, Math.min(cx - cardW / 2, vw - cardW - 12));
+    const caretX = Math.max(22, Math.min(cx - left, cardW - 22));
+    const above = hole.y - vTop - 12;
+    const below = vTop + vh - (hole.y + hole.h) - 12;
+    const preferAbove = hole.y - vTop + hole.h / 2 > vh / 2;
+    if ((preferAbove && above >= NEED) || (!preferAbove && below < NEED && above >= NEED)) place = { bottom: hole.y - 12, left, caret: { side: "bottom", x: caretX } };
     else if (below >= NEED) place = { top: hole.y + hole.h + 12, left, caret: { side: "top", x: caretX } };
   }
   if (place.top === undefined && place.bottom === undefined) {
     // 目標貼著畫面底部（例如抽屜）：卡片放上面，不要蓋住
-    if (covered || (hole && hole.y + hole.h > vh - NEED)) place.top = 12;
-    else place.bottom = 16;
+    if (covered || (hole && hole.y + hole.h > vTop + vh - NEED)) place.top = vTop + 12;
+    else place.bottom = vTop + vh - 16;
   }
+  // 換成整頁座標；bottom＝卡片的下緣（往上長）
+  const cardStyle: React.CSSProperties =
+    place.top !== undefined
+      ? { width: cardW, left: place.left + sx, top: place.top + sy }
+      : { width: cardW, left: place.left + sx, top: place.bottom! + sy, transform: "translateY(-100%)" };
 
   return createPortal(
     <>
       {/* 暗化：圓角的洞（目標保持原本的亮度）。點擊由「畫面凍結」擋，這層只是視覺 */}
       {hole ? (
-        <div className="fixed inset-0 z-[170] pointer-events-none overflow-hidden tour-fade" aria-hidden>
-          <div
-            className="absolute rounded-[16px] transition-all duration-300 ease-out"
-            style={{ left: hole.x, top: hole.y, width: hole.w, height: hole.h, boxShadow: "0 0 0 9999px rgba(17,17,20,0.55), inset 0 0 0 1.5px rgba(255,255,255,0.9)" }}
-          />
-        </div>
+        <div
+          className="absolute z-[170] pointer-events-none rounded-[16px] transition-[left,top,width,height] duration-300 ease-out tour-fade"
+          aria-hidden
+          style={{ left: hole.x + sx, top: hole.y + sy, width: hole.w, height: hole.h, boxShadow: "0 0 0 9999px rgba(17,17,20,0.55), inset 0 0 0 1.5px rgba(255,255,255,0.9)" }}
+        />
       ) : (
         !covered && <div className="fixed inset-0 z-[170] pointer-events-none bg-[rgba(17,17,20,0.55)] tour-fade" aria-hidden />
       )}
@@ -1091,9 +1212,11 @@ export function TourHost() {
         role="dialog"
         aria-live="polite"
         aria-label={`新手教學：${step.title}`}
-        className="fixed z-[175] font-sans pointer-events-auto tour-rise"
-        style={{ width: cardW, left: place.left, top: place.top, bottom: place.bottom }}
+        ref={cardRef}
+        className="absolute z-[175] font-sans pointer-events-auto"
+        style={cardStyle}
       >
+        <div className="relative tour-rise">
         {/* 小箭頭：指著目標 */}
         {place.caret && (
           <span
@@ -1138,7 +1261,12 @@ export function TourHost() {
               <>
                 <p className="mt-1 text-[15px] leading-[22px] text-white/90">
                   {body}
-                  {step.clear && covered && <span className="block mt-1 text-[13px] text-[var(--accent)]">先關掉後面的視窗（右上的 ✕ 或往下拉），再繼續。</span>}
+                  {covered && (
+                    <button type="button" onClick={closeLayers} className="mt-2 h-8 px-3 rounded-full bg-white/10 text-[13px] font-semibold text-[var(--accent)] flex w-fit items-center gap-1 active:bg-white/15">
+                      <Icon name="close" className="text-[16px]" />
+                      關掉後面的視窗
+                    </button>
+                  )}
                 </p>
                 <div className="mt-3.5 flex items-center gap-2">
                   {/* ←：回上一步再看一次 */}
@@ -1177,6 +1305,7 @@ export function TourHost() {
               </>
             )
           )}
+        </div>
         </div>
       </div>
       <TourStyles />

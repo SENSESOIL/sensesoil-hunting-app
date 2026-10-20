@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { tourEmit } from "./tour/bus";
-import { addDays, fmtDate } from "@/lib/project-ops";
+import { tourEmit, tourState } from "./tour/bus";
+import { addDays, diffDays, fmtDate } from "@/lib/project-ops";
 import { personColor, STATUS_LABEL, type Task } from "@/lib/pm/model";
 import Gantt, { type GanttRow } from "./Gantt";
-import { Empty, GREEN, ORANGE } from "./kit";
+import { Empty, GREEN, ORANGE, T } from "./kit";
 import { isLate, personMark, type Pm } from "./usePm";
 import { taskAssignees } from "@/lib/pm/model";
 import { ScheduleSheet } from "./ScheduleSheet";
@@ -36,6 +36,8 @@ const ZOOMS: { value: Zoom; label: string; hint: string; icon: string; fit: { mi
   { value: "month", label: "月", hint: "一次看好幾個月", icon: "M", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
 ];
 const ZOOM_KEY = "pm:gantt:zoom";
+/** 拾壤 logo（匯出圖片右上角） */
+export const LOGO = encodeURI("/Logo｜Orange.svg");
 
 export function TaskGantt({
   pm,
@@ -44,6 +46,7 @@ export function TaskGantt({
   onOpen,
   editable = false,
   project: projectCode,
+  exportFrame,
 }: {
   pm: Pm;
   tasks: Task[];
@@ -53,6 +56,8 @@ export function TaskGantt({
   editable?: boolean;
   /** 單一專案的甘特圖：最上面加一列「專案工期」（開工日 → 預計完工），並畫出預計／實際完工線 */
   project?: string;
+  /** 匯出圖片：整張攤開（不捲動），上面專案名稱＋拾壤 logo，下面圖例＋匯出日期 */
+  exportFrame?: { title: string; color: string; includeProject: boolean };
 }) {
   const { today } = pm;
   const [schedId, setSchedId] = useState<string | null>(null);
@@ -183,7 +188,7 @@ export function TaskGantt({
   };
   const md = (d?: string) => (d ? `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}` : "—");
   const projRow: GanttRow[] =
-    proj && (pStart || pDue)
+    proj && (pStart || pDue) && (!exportFrame || exportFrame.includeProject)
       ? [
           {
             id: "project-span",
@@ -213,7 +218,7 @@ export function TaskGantt({
           },
         ]
       : [];
-  const markers = [
+  const markers = exportFrame && !exportFrame.includeProject ? [] : [
     ...(pDue ? [{ date: pDue, color: ORANGE, dashed: true, label: `預計完工 ${md(pDue)}` }] : []),
     ...(pDone ? [{ date: pDone, color: GREEN, label: `實際完工 ${md(pDone)}` }] : []),
   ];
@@ -261,6 +266,7 @@ export function TaskGantt({
       sublabel: firstOfProject ? `${project?.name ?? t.code}` : t.kind === "等待" ? "等待期" : who,
       onClick: () => onOpen(t),
       onTimeline: sp || !editable ? undefined : () => {
+        if (tourState.lockSchedule) return;
         setSchedId(t.id);
         tourEmit("schedule-open", t.id);
       },
@@ -299,6 +305,37 @@ export function TaskGantt({
     .map((t) => ({ t, p: predecessorOf(pm.tasks, t) }))
     .filter((v) => v.p && dated.some((d) => d.id === v.p!.id) && hasDate(v.p))
     .map((v) => ({ from: v.p!.id, to: v.t.id }));
+
+  if (exportFrame) {
+    // 整段放得下（每天至少是這個刻度的最窄寬度），最少 1100 寬
+    const days = diffDays(range.from, range.to) + 1;
+    const W = Math.max(1100, Math.ceil(132 + days * Z.fit.min + 56) + 2);
+    return (
+      <div className="bg-[#FAFAFA] p-8 font-sans" style={{ width: W + 64 }}>
+        <div className="flex items-center justify-between gap-6 pb-5 px-1">
+          <h1 className={T.largeTitle} style={{ color: exportFrame.color }}>
+            {exportFrame.title}
+          </h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LOGO} alt="拾壤" className="h-10 w-auto shrink-0" />
+        </div>
+        <div className="bg-white rounded-[14px] border border-[#EBEBED] overflow-hidden" style={{ width: W }}>
+          <Gantt still dense={Z.dense} fit={Z.fit} anchor={0} today={today} from={range.from} to={range.to} dayWidth={16} labelWidth={132} rows={rows} markers={markers} links={links} />
+        </div>
+        <div className="mt-2.5 flex items-center gap-x-4 px-1 text-[12px] text-[#8E8E93]">
+          <Legend color="#71717A">待辦</Legend>
+          <Legend color={ORANGE}>進行中</Legend>
+          <Legend color={GREEN}>完成</Legend>
+          <Legend dashed>等待期</Legend>
+          <span className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-[3px]" style={{ background: "repeating-linear-gradient(135deg,#E5484D 0 2px,#fde2e2 2px 4px)" }} />
+            逾期
+          </span>
+          <span className="ml-auto tabular-nums">{today.replace(/-/g, "/")} 匯出</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">

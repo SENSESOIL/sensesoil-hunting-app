@@ -142,6 +142,7 @@ export default function Gantt({
   corner,
   markers = [],
   links = [],
+  still = false,
 }: {
   rows: GanttRow[];
   today: string;
@@ -161,8 +162,10 @@ export default function Gantt({
   markers?: { date: string; color: string; dashed?: boolean; label: string }[];
   /** 前置任務：from 列結束後接 to 列（列的 id），畫一條折線箭頭 */
   links?: { from: string; to: string }[];
+  /** 匯出圖片用：整張攤開（不上下捲、沒有邊緣陰影） */
+  still?: boolean;
 }) {
-  const days = Math.max(1, diffDays(from, to) + 1);
+  let days = Math.max(1, diffDays(from, to) + 1);
   const scroller = useRef<HTMLDivElement>(null);
   const tipApi = useRef<TipApi>(null);
   // 表頭的「今天」圓點有一半壓在表頭外面，表頭的圖層又比各列的名稱欄高：
@@ -197,6 +200,8 @@ export default function Gantt({
   previewRef.current = preview;
   // 拖完放開時，瀏覽器還會補一個 click：不要因此打開細節
   const justDragged = useRef(false);
+  // 按下長條的時間：按超過 0.3 秒（長按要拖）放開時，瀏覽器補的 click 不算點一下，不打開時間安排
+  const downAt = useRef(0);
   // 觸控裝置：兩端把手一直顯示、抓取範圍放大
   const [coarse, setCoarse] = useState(false);
   useLayoutEffect(() => setCoarse(window.matchMedia("(pointer: coarse)").matches), []);
@@ -232,6 +237,8 @@ export default function Gantt({
   }, [fit?.min, fit?.max]);
   if (fit && boxW) {
     dayWidth = Math.max(fit.min, Math.min(fit.max, (boxW - labelWidth - TAIL) / days));
+    // 每天已經是最寬、框還有剩（月刻度常見）：往右多畫幾天，格線、表頭、列的底線一路畫到框的右緣，不會留一塊空白
+    days += Math.max(0, Math.floor((boxW - labelWidth - TAIL - days * dayWidth) / dayWidth));
   }
   const width = days * dayWidth;
   const x = (iso: string) => diffDays(from, iso) * dayWidth;
@@ -239,7 +246,7 @@ export default function Gantt({
   todayXRef.current = todayX;
   const showToday = today >= from && today <= to;
 
-  const scrollY = rows.length > SCROLL_ROWS;
+  const scrollY = !still && rows.length > SCROLL_ROWS;
   const headH = 44;
 
   // 捲到「今天」落在可視區左側三分之一，前後都看得到。
@@ -351,7 +358,7 @@ export default function Gantt({
     <div className="relative">
       <div
         ref={scroller}
-        className={`${scrollY ? "overflow-auto" : "overflow-x-auto"} overscroll-x-none scrollbar-hide`}
+        className={still ? "overflow-hidden" : `${scrollY ? "overflow-auto" : "overflow-x-auto"} overscroll-x-none scrollbar-hide`}
         style={
           scrollY
             ? {
@@ -473,7 +480,9 @@ export default function Gantt({
                       : row.onTimeline
                         ? (e) => {
                             e.stopPropagation();
-                            if (justDragged.current) {
+                            const held = downAt.current ? Date.now() - downAt.current : 0;
+                            downAt.current = 0;
+                            if (justDragged.current || held > 300) {
                               justDragged.current = false;
                               return;
                             }
@@ -517,6 +526,7 @@ export default function Gantt({
                     const down = (mode: DragMode) => (e: React.PointerEvent) => {
                       if (e.button !== 0) return;
                       e.stopPropagation();
+                      downAt.current = Date.now();
                       tipApi.current?.hide();
                       if (drag.current?.timer) clearTimeout(drag.current.timer);
                       const touch = e.pointerType !== "mouse";
@@ -792,19 +802,19 @@ export default function Gantt({
         </div>
       </div>
 
-      {edges.left && (
+      {!still && edges.left && (
         <div
           className="absolute top-0 bottom-0 w-5 pointer-events-none z-[7] bg-gradient-to-r from-black/[0.07] to-transparent"
           style={{ left: labelWidth }}
         />
       )}
-      {edges.right && (
+      {!still && edges.right && (
         <div className="absolute top-0 bottom-0 right-0 w-5 pointer-events-none z-[7] bg-gradient-to-l from-black/[0.07] to-transparent" />
       )}
-      {edges.bottom && (
+      {!still && edges.bottom && (
         <div className="absolute left-0 right-0 bottom-0 h-5 pointer-events-none z-[7] bg-gradient-to-t from-black/[0.06] to-transparent" />
       )}
-      <GanttTip api={tipApi} />
+      {!still && <GanttTip api={tipApi} />}
     </div>
   );
 }

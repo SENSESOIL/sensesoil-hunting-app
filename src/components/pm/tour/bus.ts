@@ -24,7 +24,7 @@ export function onTour(f: (e: TourEvent) => void): () => void {
 }
 
 /** 目前教學用的練習專案代碼（沒在教學中＝null）；任務首頁會把它固定顯示出來 */
-export const tourState: { code: string | null; nav: string | null; route: string | null; pendingView: string | null; pendingProject: string | null; pendingOpen: string | null } = {
+export const tourState: { code: string | null; nav: string | null; route: string | null; pendingView: string | null; pendingProject: string | null; pendingOpen: string | null; lockSchedule: boolean } = {
   code: null,
   /** 現在在哪個主頁（已經在那一頁時，「點房子」這類步驟直接算做到） */
   nav: null,
@@ -34,6 +34,8 @@ export const tourState: { code: string | null; nav: string | null; route: string
   pendingView: null,
   pendingProject: null,
   pendingOpen: null,
+  /** 教學在教甘特圖拖曳：點長條不要打開「時間安排」（會蓋住甘特圖、跟提示卡對不起來） */
+  lockSchedule: false,
 };
 
 /** 練習專案的代碼前綴（伺服器用 email 算出後面那段） */
