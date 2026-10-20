@@ -365,6 +365,20 @@ export function usePm() {
     [enqueue, mutate]
   );
 
+  /** 刪除專案（只有管理者）：任務、排程、照片紀錄、專案資料全部清掉，只留案名；CRM 名冊不動 */
+  const purgeProject = useCallback(
+    async (code: string): Promise<{ tasks: number; photos: number } | null> => {
+      const res = await pmPost<{ status: string; tasks?: number; photos?: number }>({ op: "project.purge", code });
+      if (!res.ok || res.data.status !== "ok") {
+        toast(res.data.error || "刪除失敗", { tone: "error" });
+        return null;
+      }
+      await mutate();
+      return { tasks: res.data.tasks ?? 0, photos: res.data.photos ?? 0 };
+    },
+    [mutate]
+  );
+
   /** 設定專案的「可編輯的人」（只有管理者） */
   const saveEditors = useCallback(
     async (code: string, editors: string[]): Promise<boolean> => {
@@ -468,6 +482,7 @@ export function usePm() {
     saveProject,
     saveSections,
     saveEditors,
+    purgeProject,
   };
 }
 

@@ -318,6 +318,19 @@ export async function POST(req: Request) {
         });
         return json({ status: r.status, project: r.project ? rowToProject(r.project) : undefined }, statusCode(r.status));
       }
+      case "project.purge": {
+        // 刪除專案：APP 裡的任務、排程、照片紀錄、通知、專案資料全部清掉，只留案名（CRM 名冊不動）
+        if (user.role !== "manager") return json({ error: "只有管理者可以刪除專案" }, 403);
+        const code = String(body.code ?? "").trim();
+        if (!code || code.length > 32) return json({ error: "專案代碼不正確" }, 400);
+        try {
+          const r = await rpc<{ status: string; tasks?: number; photos?: number }>("pm_project_purge", { ...actor, code });
+          return json(r, r.status === "forbidden" ? 403 : 200);
+        } catch (e) {
+          const msg = explainDbError(e);
+          return json({ error: msg.includes("資料庫還沒建立") ? "刪除專案還沒啟用：請在 Supabase 執行 20261023000000_pm_project_purge.sql" : msg }, 500);
+        }
+      }
       case "editors.save": {
         if (user.role !== "manager") return json({ error: "只有管理者可以設定可編輯的人" }, 403);
         const code = String(body.code ?? "").trim();

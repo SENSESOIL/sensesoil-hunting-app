@@ -8,7 +8,7 @@ import { Empty, GREEN, ORANGE } from "./kit";
 import { isLate, personMark, type Pm } from "./usePm";
 import { taskAssignees } from "@/lib/pm/model";
 import { ScheduleSheet } from "./ScheduleSheet";
-import { ProjectInfoSheet } from "./ProjectInfoSheet";
+import { ProjectScreen } from "./ProjectScreen";
 import { realSections, splitBySection, treeOrder } from "./tree";
 
 /* ══════════════════════════════════════════════════════════
@@ -317,7 +317,7 @@ export function TaskGantt({
         </span>
       </div>
       <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
-      {pm.isManager && projectCode && <ProjectInfoSheet pm={pm} code={projectCode} open={infoOpen} onClose={() => setInfoOpen(false)} />}
+      {pm.isManager && projectCode && <ProjectScreen pm={pm} code={infoOpen ? projectCode : null} onClose={() => setInfoOpen(false)} />}
     </div>
   );
 }

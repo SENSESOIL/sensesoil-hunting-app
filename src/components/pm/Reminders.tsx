@@ -12,7 +12,7 @@ import { Sheet, toast } from "./Sheet";
 import { ProjectPicker } from "./TaskSheet";
 import { TaskGantt } from "./TaskGantt";
 import { ScheduleSheet } from "./ScheduleSheet";
-import { ProjectInfoSheet } from "./ProjectInfoSheet";
+import { ProjectScreen } from "./ProjectScreen";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
 import { VendorList } from "./VendorPicker";
@@ -40,7 +40,7 @@ export type ListRoute =
 
 export const SMART: Record<SmartId, { label: string; icon: string; color: string }> = {
   today: { label: "今天", icon: "today", color: "#2F7FD8" },
-  scheduled: { label: "已排程", icon: "calendar_month", color: "#E5484D" },
+  scheduled: { label: "排程", icon: "calendar_month", color: "#E5484D" },
   all: { label: "全部", icon: "inbox", color: "#3F3F46" },
   flagged: { label: "重要", icon: "flag", color: "#F39C12" },
   mine: { label: "指派給我", icon: "person", color: "#7C3AED" },
@@ -208,7 +208,8 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
           onEdit={() => setEditCode(projMenu.code)}
         />
       )}
-      {pm.isManager && <ProjectInfoSheet pm={pm} code={editCode} open={!!editCode} onClose={() => setEditCode(null)} />}
+      {/* 編輯專案：和專案情報點進專案是同一頁（資料直接改、自動存） */}
+      {pm.isManager && <ProjectScreen pm={pm} code={editCode} onClose={() => setEditCode(null)} />}
     </div>
   );
 }

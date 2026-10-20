@@ -7,7 +7,7 @@ import { personColor, taskToWorkItem, type PmPhoto, type PmProject } from "@/lib
 import { HealthBadge, Icon, ProgressBar, SubScreen } from "./ui";
 import { Avatar, AvatarStack, Empty, Group, Spinner } from "./kit";
 import { fmtDateLong } from "./fields";
-import { folderIdFrom } from "./ProjectInfoSheet";
+import { DeleteProject, folderIdFrom } from "./ProjectInfoSheet";
 import { toast } from "./Sheet";
 import type { Pm, ProjectItem } from "./usePm";
 
@@ -147,7 +147,7 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
             ))}
           </div>
 
-          {section === "info" ? <Details pm={pm} p={shown} commit={commit} onArchived={onClose} /> : <Photos pm={pm} project={shown} />}
+          {section === "info" ? <Details pm={pm} p={shown} commit={commit} onDeleted={onClose} /> : <Photos pm={pm} project={shown} />}
         </div>
       )}
     </SubScreen>
@@ -165,12 +165,11 @@ function Stat({ label, value, warn }: { label: string; value: string; warn?: boo
 
 /* ── 資料（直接改） ─────────────────────────────────────── */
 
-function Details({ pm, p, commit, onArchived }: { pm: Pm; p: ProjectItem; commit: (patch: Partial<PmProject>) => Promise<boolean>; onArchived: () => void }) {
+function Details({ pm, p, commit, onDeleted }: { pm: Pm; p: ProjectItem; commit: (patch: Partial<PmProject>) => Promise<boolean>; onDeleted: () => void }) {
   const edit = pm.isManager;
   const auto = useMemo(() => weightedProgress(p.tasks.map(taskToWorkItem)), [p.tasks]);
   const warns = validateRecord(p as never, pm.today).filter((i) => i.level === "warn");
   const folder = p.driveFolderId ? `https://drive.google.com/drive/folders/${p.driveFolderId}` : undefined;
-  const [confirmArchive, setConfirmArchive] = useState(false);
 
   return (
     <div className="flex flex-col gap-6">
@@ -252,41 +251,7 @@ function Details({ pm, p, commit, onArchived }: { pm: Pm; p: ProjectItem; commit
         )}
       </List>
 
-      {pm.isManager && (
-        <div className="bg-white rounded-[14px] overflow-hidden">
-          {confirmArchive ? (
-            <div className="p-4">
-              <p className="text-[15px] font-semibold text-[#18181B]">{p.archived ? "取消封存這個專案？" : "封存這個專案？"}</p>
-              <p className="text-[13px] text-[#71717A] mt-1 leading-relaxed">
-                {p.archived ? "專案會回到清單上。" : "專案會從任務追蹤、專案情報的清單上隱藏。任務、照片都會保留，之後可以在這裡取消封存。"}
-              </p>
-              <div className="flex gap-2 mt-3">
-                <button type="button" onClick={() => setConfirmArchive(false)} className="flex-1 h-11 rounded-[12px] bg-[#F4F4F5] text-[15px] font-semibold text-[#3F3F46]">
-                  取消
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setConfirmArchive(false);
-                    const wasArchived = p.archived;
-                    if (await commit({ archived: !wasArchived })) {
-                      toast(wasArchived ? "已取消封存" : `已封存 ${p.code}`);
-                      if (!wasArchived) onArchived();
-                    }
-                  }}
-                  className={`flex-1 h-11 rounded-[12px] text-[15px] font-semibold text-white ${p.archived ? "bg-[#18181B]" : "bg-[#E5484D]"}`}
-                >
-                  {p.archived ? "取消封存" : "封存"}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button type="button" onClick={() => setConfirmArchive(true)} className={`w-full h-12 text-[16px] active:bg-[#F2F2F4] ${p.archived ? "text-[var(--accent)]" : "text-[#E5484D]"}`}>
-              {p.archived ? "取消封存專案" : "封存專案"}
-            </button>
-          )}
-        </div>
-      )}
+      {pm.isManager && <DeleteProject pm={pm} p={p} onDone={onDeleted} />}
     </div>
   );
 }

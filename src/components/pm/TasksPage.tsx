@@ -420,7 +420,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
         : smart === "day"
           ? dayLabel(day, today)
           : smart === "scheduled"
-            ? "已排程"
+            ? "排程"
             : smart === "all"
               ? "全部任務"
               : "已完成";
@@ -522,7 +522,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
           }}
           count={sets.scheduled.length}
         >
-          已排程
+          排程
         </Chip>
         <Chip
           on={smart === "all" && view === "list"}
