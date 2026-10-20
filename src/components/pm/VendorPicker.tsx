@@ -49,9 +49,15 @@ export function VendorList({
   const [q, setQ] = useState("");
   const list = useMemo(() => {
     const k = q.trim().toLowerCase();
+    // 搜尋時依「符合的地方」排：簡稱 → 工項 → 全名 → 聯絡人（只符合全名時，下面會顯示全名，才看得出為什麼列出來）
+    const has = (x: string | undefined) => !!x && x.toLowerCase().includes(k);
+    const rank = (v: VendorOption) => (!k ? 0 : has(v.name) ? 0 : has(v.trade) ? 1 : has(v.full) ? 2 : has(v.contact) ? 3 : 9);
+    const sameTrade = (v: VendorOption) => Number(!!trade && !!v.trade?.includes(trade));
     return vendors
-      .filter((v) => !k || [v.name, v.full, v.trade, v.contact].some((x) => x?.toLowerCase().includes(k)))
-      .sort((a, b) => Number(!!trade && b.trade?.includes(trade)) - Number(!!trade && a.trade?.includes(trade)) || (a.trade ?? "").localeCompare(b.trade ?? "") || a.name.localeCompare(b.name));
+      .map((v) => ({ v, r: rank(v) }))
+      .filter((x) => x.r < 9)
+      .sort((a, b) => a.r - b.r || sameTrade(b.v) - sameTrade(a.v) || (a.v.trade ?? "").localeCompare(b.v.trade ?? "") || a.v.name.localeCompare(b.v.name))
+      .map((x) => ({ ...x.v, viaFull: x.r === 2 }));
   }, [vendors, q, trade]);
   const menu = variant === "menu";
   const row = `w-full flex items-center gap-3 px-4 h-12 text-left ${menu ? "active:bg-[#EDEDF0]" : "active:bg-[#F2F2F4]"}`;
@@ -85,7 +91,9 @@ export function VendorList({
             <button key={v.name + (v.full ?? "")} type="button" onClick={() => onPick(v.name)} className={row}>
               <span className="flex-1 min-w-0">
                 <span className="block text-[16px] text-[#18181B] truncate">{v.name}</span>
-                {(v.trade || v.contact) && <span className="block text-[12px] text-[#8E8E93] truncate">{[v.trade, v.contact].filter(Boolean).join("・")}</span>}
+                {(v.trade || v.contact || v.viaFull) && (
+                  <span className="block text-[12px] text-[#8E8E93] truncate">{[v.trade, v.viaFull ? v.full : v.contact].filter(Boolean).join("・")}</span>
+                )}
               </span>
               {value === v.name && <Icon name="check" weight={600} className="text-[18px] text-[var(--accent)]" />}
             </button>

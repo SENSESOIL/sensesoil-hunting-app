@@ -6,6 +6,7 @@ import { AREAS, metaChips, STATUS_FIELDS, TRADES, type StatusField, type TaskMet
 import { Sheet } from "./Sheet";
 import { Icon } from "./ui";
 import type { Pm } from "./usePm";
+import { VendorList } from "./VendorPicker";
 
 /* ══════════════════════════════════════════════════════════
    標籤（長按任務 →「標籤」，或任務細節裡的「標籤」）
@@ -17,7 +18,7 @@ import type { Pm } from "./usePm";
    - 點一下就存，不用按儲存
    ══════════════════════════════════════════════════════════ */
 
-type Page = null | "trade" | "areas" | "custom" | StatusField["key"];
+type Page = null | "trade" | "areas" | "custom" | "vendor" | StatusField["key"];
 
 const TONE = { warn: "#E8833A", ok: "#2E9E6B", muted: "#A1A1AA" } as const;
 
@@ -64,7 +65,7 @@ export function TagSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: string
   /* ── 子頁 ── */
   if (page) {
     const field = STATUS_FIELDS.find((f) => f.key === page);
-    const title = page === "trade" ? "工種" : page === "areas" ? "工項" : page === "custom" ? "自訂標籤" : field?.label ?? "";
+    const title = page === "trade" ? "工種" : page === "areas" ? "工項" : page === "custom" ? "自訂標籤" : page === "vendor" ? "廠商" : field?.label ?? "";
     return (
       <Sheet open={open} title="標籤" subtitle={task.title} onClose={onClose}>
         <div className="pb-8">
@@ -139,6 +140,22 @@ export function TagSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: string
             </>
           )}
 
+          {/* 廠商：和長按選單的「廠商」同一個欄位（meta.vendor），兩邊互通 */}
+          {page === "vendor" && (
+            <div className="px-4 pt-3">
+              <div className="rounded-[14px] overflow-hidden">
+                <VendorList
+                  value={meta.vendor}
+                  trade={meta.trade}
+                  onPick={(name) => {
+                    set("vendor", name);
+                    setPage(null);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           {page === "custom" && (
             <>
               <List>
@@ -208,7 +225,16 @@ export function TagSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: string
           {/* 順序照 STATUS_FIELDS：…工料、廠商請款 */}
           {STATUS_FIELDS.map((f) => {
             const v = statusValue(f);
-            return <Nav key={f.key} label={f.label} value={v?.label ?? "未設定"} dot={v ? TONE[v.tone] : undefined} muted={!v} onClick={() => setPage(f.key)} />;
+            const row = <Nav key={f.key} label={f.label} value={v?.label ?? "未設定"} dot={v ? TONE[v.tone] : undefined} muted={!v} onClick={() => setPage(f.key)} />;
+            // 工責下面接「廠商」：協力廠商名單（和長按選單同步）
+            return f.key === "duty" ? (
+              <React.Fragment key={f.key}>
+                {row}
+                <Nav label="廠商" value={meta.vendor ?? "未設定"} muted={!meta.vendor} onClick={() => setPage("vendor")} />
+              </React.Fragment>
+            ) : (
+              row
+            );
           })}
         </Section>
 
