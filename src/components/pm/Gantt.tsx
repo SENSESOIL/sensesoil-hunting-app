@@ -56,6 +56,8 @@ export interface GanttRow {
   heading?: boolean;
   /** 專案的預定工期列：淡橘底、橘字，和分組標題分得開 */
   accent?: boolean;
+  /** 子任務：字不加粗、往內縮，和上層任務分得開 */
+  sub?: boolean;
 }
 
 type DragMode = "move" | "start" | "end";
@@ -460,7 +462,7 @@ export default function Gantt({
                   className={`sticky left-0 z-[4] ${row.accent ? "bg-[var(--accent-soft)]" : row.heading ? "bg-[#F7F7F8]" : "bg-white"} shrink-0 border-r border-[#F0F0F2] border-b border-b-[#F4F4F5] flex flex-col justify-center px-3 group-hover:bg-[#FAFAFA] group-focus-visible:bg-[#F4F4F5] transition-colors before:absolute before:left-0 before:inset-y-0 before:w-[3px] before:content-[''] group-focus-visible:before:bg-[var(--accent)]`}
                   style={{ width: labelWidth }}
                 >
-                  <span className={`truncate leading-tight ${row.accent ? "text-[14px] font-bold text-[var(--accent-ink)]" : row.heading ? "text-[14px] font-bold text-[#18181B]" : "text-[13px] font-semibold text-[#18181B]"}`}>{row.label}</span>
+                  <span className={`truncate leading-tight ${row.accent ? "text-[14px] font-bold text-[var(--accent-ink)]" : row.heading ? "text-[14px] font-bold text-[#18181B]" : row.sub ? "text-[13px] font-normal text-[#52525B] pl-3" : "text-[13px] font-semibold text-[#18181B]"}`}>{row.label}</span>
                   {row.sublabel && (
                     <span className="text-[11px] text-[#71717A] truncate leading-tight mt-0.5">{row.sublabel}</span>
                   )}

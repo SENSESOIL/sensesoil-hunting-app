@@ -36,6 +36,14 @@ const ZOOMS: { value: Zoom; label: string; hint: string; icon: string; fit: { mi
   { value: "month", label: "月", hint: "一次看好幾個月", icon: "M", fit: { min: 3, max: 8 }, dense: false, ahead: 90 },
 ];
 const ZOOM_KEY = "pm:gantt:zoom";
+/* 顯示到哪一層：只看分組／分組＋主任務（子任務收起來）／全部 */
+type Level = "section" | "task" | "all";
+const LEVEL_KEY = "pm:gantt:level";
+const LEVELS: { value: Level; label: string }[] = [
+  { value: "section", label: "只看分組" },
+  { value: "task", label: "分組和主任務" },
+  { value: "all", label: "全部（含子任務）" },
+];
 /** 拾壤 logo（匯出圖片右上角） */
 export const LOGO = encodeURI("/Logo｜Orange.svg");
 
@@ -80,6 +88,22 @@ export function TaskGantt({
     }
   };
   const Z = ZOOMS.find((z) => z.value === zoom)!;
+  const [level, setLevelState] = useState<Level>(() => {
+    try {
+      const v = localStorage.getItem(LEVEL_KEY);
+      return v === "section" || v === "task" ? v : "all";
+    } catch {
+      return "all";
+    }
+  });
+  const setLevel = (l: Level) => {
+    setLevelState(l);
+    try {
+      localStorage.setItem(LEVEL_KEY, l);
+    } catch {
+      /* 無痕模式 */
+    }
+  };
   // 依專案分組，組內依清單的層級順序；上層沒有日期時用子任務的期間
   const { rowsAll: dated, span, depthOf, headBefore } = useMemo(() => {
     const byCode = new Map<string, Task[]>();
@@ -179,7 +203,6 @@ export function TaskGantt({
     return {
       id: `h:${h.key}`,
       label: h.name,
-      sublabel: `${h.tasks.length} 項`,
       heading: true,
       bars: ranges.length
         ? [{ start: ranges.map((r) => r[0]).sort()[0], end: ranges.map((r) => r[1]).sort().pop()!, progress: done, fill: "#3F3F46" }]
@@ -222,11 +245,16 @@ export function TaskGantt({
     ...(pDue ? [{ date: pDue, color: ORANGE, dashed: true, label: `預計完工 ${md(pDue)}` }] : []),
     ...(pDone ? [{ date: pDone, color: GREEN, label: `實際完工 ${md(pDone)}` }] : []),
   ];
+  // 沒有分組的專案：「只看分組」沒東西可看，當成「分組和主任務」
+  const hasSections = headBefore.size > 0;
+  const shown: Level = level === "section" && !hasSections ? "task" : level;
   const rows: GanttRow[] = [
     ...projRow,
     ...dated.flatMap((t) => {
       const head = headBefore.get(t.id);
-      return head ? [headRow(head), taskRow(t)] : [taskRow(t)];
+      const out = head ? [headRow(head)] : [];
+      if (shown === "all" || (shown === "task" && depthOf.get(t.id) !== 1)) out.push(taskRow(t));
+      return out;
     }),
   ];
   function taskRow(t: Task): GanttRow {
@@ -245,8 +273,10 @@ export function TaskGantt({
     if (!hasDate(t)) {
       return {
         id: t.id,
-        label: child ? `　${t.title}` : t.title,
-        sublabel: firstOfProject ? `${project?.name ?? t.code}` : "未排程",
+        label: t.title,
+        sub: child,
+        // 名稱底下不放小字（負責人、未排程…），清爽；跨專案時每段第一列標專案名稱
+        sublabel: firstOfProject ? `${project?.name ?? t.code}` : undefined,
         onClick: () => onOpen(t),
         bars: [],
         // 點哪天就從哪天開始；有填工期天數就一起算出期限
@@ -262,8 +292,9 @@ export function TaskGantt({
     const done = t.status === "done";
     return {
       id: t.id,
-      label: child ? `　${t.title}` : t.title,
-      sublabel: firstOfProject ? `${project?.name ?? t.code}` : t.kind === "等待" ? "等待期" : who,
+      label: t.title,
+      sub: child,
+      sublabel: firstOfProject ? `${project?.name ?? t.code}` : undefined,
       onClick: () => onOpen(t),
       onTimeline: sp || !editable ? undefined : () => {
         if (tourState.lockSchedule) return;
@@ -352,7 +383,12 @@ export function TaskGantt({
           rows={rows}
           markers={markers}
           links={links}
-          corner={<ZoomPicker value={zoom} onChange={setZoom} />}
+          corner={
+            <div className="flex items-center gap-1.5">
+              <ZoomPicker value={zoom} onChange={setZoom} />
+              <LevelPicker value={shown} onChange={setLevel} skipSection={!hasSections} />
+            </div>
+          }
         />
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[12px] text-[#8E8E93]">
@@ -371,6 +407,50 @@ export function TaskGantt({
       <ScheduleSheet pm={pm} taskId={schedId} open={!!schedId} onClose={() => setSchedId(null)} />
       {pm.isManager && projectCode && <ProjectScreen pm={pm} code={infoOpen ? projectCode : null} onClose={() => setInfoOpen(false)} />}
     </div>
+  );
+}
+
+/**
+ * 顯示層級：和日／週／月同一種淺灰膠囊，點一下換下一個（只看分組 → 分組和主任務 → 全部）。
+ * 圖示是一疊橫線：越往內縮的線越多，代表看得越細
+ */
+function LevelPicker({ value, onChange, skipSection }: { value: Level; onChange: (l: Level) => void; skipSection: boolean }) {
+  const list = skipSection ? LEVELS.filter((l) => l.value !== "section") : LEVELS;
+  const i = Math.max(0, list.findIndex((l) => l.value === value));
+  const cur = list[i];
+  const next = list[(i + 1) % list.length];
+  // 每條線：[起點 x, y]；終點都是 20
+  const lines: Record<Level, [number, number][]> = {
+    section: [
+      [4, 8],
+      [4, 16],
+    ],
+    task: [
+      [4, 6],
+      [9, 12],
+      [9, 18],
+    ],
+    all: [
+      [4, 5],
+      [9, 10],
+      [14, 15],
+      [9, 20],
+    ],
+  };
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(next.value)}
+      aria-label={`顯示：${cur.label}，點一下換成${next.label}`}
+      title={`換成${next.label}`}
+      className="h-8 min-w-[40px] px-2.5 rounded-full flex items-center justify-center text-[#18181B] bg-[#F2F2F4] active:bg-[#E4E4E7] transition-colors select-none"
+    >
+      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" aria-hidden>
+        {lines[cur.value].map(([x, y]) => (
+          <path key={`${x}-${y}`} d={`M${x} ${y}H20`} />
+        ))}
+      </svg>
+    </button>
   );
 }
 
