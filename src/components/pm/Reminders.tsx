@@ -7,7 +7,7 @@ import { addDays, toDay } from "@/lib/project-ops";
 import { isAssignee, newSectionId, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { metaChips, tagKeys } from "@/lib/pm/tags";
 import { Icon } from "./ui";
-import { Avatar, CheckCircle, dueLabel, ORANGE, RED } from "./kit";
+import { Avatar, CheckCircle, dueLabel, ORANGE, RED, SectionTitle, T } from "./kit";
 import { Sheet, toast } from "./Sheet";
 import { ProjectPicker } from "./TaskSheet";
 import { TaskGantt } from "./TaskGantt";
@@ -15,6 +15,7 @@ import { ScheduleSheet } from "./ScheduleSheet";
 import { ProjectInfoSheet } from "./ProjectInfoSheet";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
+import { VendorList } from "./VendorPicker";
 import { assigneeLabel, assigneePatch, canEditProject, isLate, personLabel, personMark, type Pm } from "./usePm";
 import { OTHER_SECTION, realSections, sectionOf, splitBySection, treeOrder, type TreeRow } from "./tree";
 
@@ -149,7 +150,7 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
           {/* 專案（智慧清單已移到「行事曆」分頁的篩選，這裡直接列專案） */}
           <section>
             {shownProjects.length ? (
-              <div className="bg-white rounded-[16px] shadow-card overflow-hidden">
+              <div className="bg-white rounded-[20px] shadow-card overflow-hidden">
                 {shownProjects.map(({ p }) => (
                   <ListRow
                     key={p.code}
@@ -183,12 +184,14 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
           {/* 標籤 */}
           {tags.length > 0 && (
             <section>
-              <h2 className="px-1 pb-2 text-[22px] font-bold tracking-tight text-[#18181B]">標籤</h2>
-              <div className="bg-white rounded-[16px] shadow-card p-3 flex flex-wrap gap-2">
+              <div className="pb-2">
+                <SectionTitle title="標籤" />
+              </div>
+              <div className="bg-white rounded-[20px] shadow-card p-3 flex flex-wrap gap-2">
                 {tags.map(([k, n]) => (
-                  <button key={k} type="button" onClick={() => go({ kind: "tag", tag: k })} className="h-9 px-3.5 rounded-full bg-[#F2F2F4] text-[15px] text-[#3F3F46] active:bg-[#E4E4E7]">
+                  <button key={k} type="button" onClick={() => go({ kind: "tag", tag: k })} className="h-[34px] px-3.5 rounded-full bg-[#F2F2F4] text-[14px] text-[#3F3F46] active:bg-[#E4E4E7]">
                     {k.startsWith("#") ? k : `#${k}`}
-                    <span className="ml-1.5 text-[12px] text-[#A1A1AA] tabular-nums">{n}</span>
+                    <span className="ml-1.5 text-[13px] text-[#A1A1AA] tabular-nums">{n}</span>
                   </button>
                 ))}
               </div>
@@ -470,7 +473,7 @@ export function ReminderPage({
 
 
       <div className="px-1 pt-1">
-        <h1 className="text-[32px] leading-[38px] font-bold tracking-tight" style={{ color }}>
+        <h1 className={T.largeTitle} style={{ color }}>
           {title}
         </h1>
         {subtitle && <p className="text-[13px] text-[#8E8E93] mt-0.5">{subtitle}</p>}
@@ -1007,7 +1010,6 @@ export function ReminderTasks({
           onToggle={() => toggleDone(menu.task)}
           onFlag={() => flag(menu.task)}
           onDelete={() => remove(menu.task)}
-          onIndent={() => (menu.depth ? outdent(menu.task) : indent(menu.task))}
           onTags={() => setTagFor(menu.task.id)}
           onMove={() => setMoveFor(menu.task)}
           sections={code && !grouped ? realSections(projSections) : undefined}
@@ -1371,7 +1373,7 @@ function DraftRow({ depth, color, onCommit }: { depth: 0 | 1; color: string; onC
 
 /* ── 長按選單（像提醒事項） ─────────────────────────────── */
 
-type MenuPage = "main" | "due" | "progress" | "assign" | "section";
+type MenuPage = "main" | "due" | "progress" | "assign" | "vendor" | "section";
 
 function RowMenu({
   pm,
@@ -1385,7 +1387,6 @@ function RowMenu({
   onToggle,
   onFlag,
   onDelete,
-  onIndent,
   onTags,
   onMove,
   sections,
@@ -1404,7 +1405,6 @@ function RowMenu({
   onToggle: () => void;
   onFlag: () => void;
   onDelete: () => void;
-  onIndent: () => void;
   onTags: () => void;
   onMove: () => void;
   /** 專案頁：分組清單（沒有＝不顯示「移到分組」） */
@@ -1430,7 +1430,7 @@ function RowMenu({
   };
   const vh = window.innerHeight;
   const vw = window.innerWidth;
-  const MENU_H = page === "assign" ? 380 : 420;
+  const MENU_H = page === "assign" || page === "vendor" ? 400 : 420;
   // 預覽卡停在原位；下面放不下選單時整組往上移
   const previewTop = Math.max(16, Math.min(rect.top, vh - MENU_H - 90));
   const menuTop = previewTop + Math.min(rect.height, 90) + 10;
@@ -1474,10 +1474,10 @@ function RowMenu({
               <MenuItem icon="donut_large" label={`完成度 ${task.progress}% ›`} onClick={() => setPage("progress")} disabled={!canToggle(pm, task)} />
               <MenuItem icon="sell" label="標籤 ›" onClick={run(onTags)} disabled={!edit} />
               {pm.isManager && <MenuItem icon="person" label="指派 ›" onClick={() => setPage("assign")} />}
+              <MenuItem icon="storefront" label={task.meta?.vendor ? `廠商：${task.meta.vendor} ›` : "廠商 ›"} onClick={() => setPage("vendor")} disabled={!edit} />
             </div>
             <div className="h-px bg-[#E4E4E7]" />
             <div className="py-1">
-              {inProject && <MenuItem icon={depth ? "format_indent_decrease" : "format_indent_increase"} label={depth ? "取消縮排" : "縮排"} onClick={run(onIndent)} disabled={!edit} />}
               {sections && (sections.length > 0 || pm.isManager) && <MenuItem icon="segment" label="移到分組 ›" onClick={() => setPage("section")} disabled={!edit} />}
               <MenuItem icon="drive_file_move" label="移到專案 ›" onClick={run(onMove)} disabled={!edit} />
             </div>
@@ -1537,6 +1537,26 @@ function RowMenu({
               />
             ))}
             <MenuItem icon="edit_calendar" label="自訂日期…" onClick={run(onSchedule)} />
+          </div>
+        )}
+        {page === "vendor" && (
+          <div className="py-1 max-h-[380px] overflow-y-auto">
+            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 z-[1] bg-[#F7F7F8]">
+              <Icon name="chevron_left" className="text-[22px]" />
+              廠商
+            </button>
+            <VendorList
+              variant="menu"
+              value={task.meta?.vendor}
+              trade={task.meta?.trade}
+              onPick={(name) => {
+                onClose();
+                const meta = { ...(task.meta ?? {}) };
+                if (name) meta.vendor = name;
+                else delete meta.vendor;
+                pm.saveTask({ id: task.id, meta });
+              }}
+            />
           </div>
         )}
         {page === "assign" && (
@@ -1697,7 +1717,7 @@ function SectionHeader({
           }}
           maxLength={40}
           aria-label="分組名稱"
-          className="flex-1 min-w-0 h-10 text-[22px] font-bold text-[#18181B] bg-transparent border-b-2 border-[var(--accent)] outline-none"
+          className={`flex-1 min-w-0 h-10 ${T.title} text-[#18181B] bg-transparent border-b-2 border-[var(--accent)] outline-none`}
         />
         {canDelete && <button
           type="button"
@@ -1715,7 +1735,7 @@ function SectionHeader({
       <button
         type="button"
         onClick={canEdit ? onStartEdit : onFold}
-        className={`flex-1 min-w-0 text-left text-[22px] font-bold truncate ${muted && name === "其他" ? "text-[#AEAEB2]" : "text-[#18181B]"}`}
+        className={`flex-1 min-w-0 text-left ${T.title} truncate ${muted && name === "其他" ? "text-[#AEAEB2]" : "text-[#18181B]"}`}
       >
         {name}
       </button>

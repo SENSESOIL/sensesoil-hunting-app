@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { fmtDate, WORK_KINDS, type WorkKind } from "@/lib/project-ops";
-import { isAssignee, STATUS_LABEL, TASK_STATUSES, newTaskId, personColor, taskAssignees, type Task, type TaskStatus } from "@/lib/pm/model";
+import { isAssignee, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { Sheet, toast } from "./Sheet";
 import { fmtDateLong } from "./fields";
 import { Icon } from "./ui";
@@ -11,6 +11,7 @@ import { assigneeLabel, assigneePatch, canEditProject, isLate, personLabel, type
 import { GoalPicker } from "./Goals";
 import { TagSheet } from "./TagSheet";
 import { metaChips } from "@/lib/pm/tags";
+import { VendorList } from "./VendorPicker";
 
 /* ══════════════════════════════════════════════════════════
    任務細節（新增／編輯），和專案頁同一套 iPhone「設定」樣式：
@@ -23,7 +24,7 @@ import { metaChips } from "@/lib/pm/tags";
    ══════════════════════════════════════════════════════════ */
 
 type Draft = Pick<Task, "code" | "title" | "kind" | "status" | "progress" | "flagged" | "assigneeEmail" | "coAssignees" | "start" | "due" | "note" | "goalId">;
-type RowKey = null | "project" | "goal" | "due" | "start" | "assign" | "progress";
+type RowKey = null | "project" | "goal" | "due" | "start" | "assign" | "vendor" | "progress";
 
 const EMPTY: Draft = { code: "", title: "", kind: "施工", status: "todo", progress: 0, flagged: false, coAssignees: [] };
 
@@ -177,10 +178,18 @@ export function TaskSheet({
     toast("已回覆收到，指派的人會看到");
   };
 
-  const setStatus = (s: TaskStatus) => change({ status: s, progress: s === "done" ? 100 : v.status === "done" ? 0 : v.progress });
-  const setProgress = (p: number) => change({ progress: p, status: p >= 100 ? "done" : p > 0 ? "doing" : v.status === "doing" ? "todo" : v.status }, true);
+  const setProgress = (p: number) => change({ progress: p, status: p >= 100 ? "done" : p > 0 ? "doing" : "todo" }, true);
   const people = taskAssignees(v);
-  const chips = task ? metaChips(task.meta) : [];
+  const chips = task ? metaChips(task.meta).filter((c) => c.text !== task.meta?.vendor) : [];
+  const vendor = task?.meta?.vendor;
+  const setVendor = (name: string | undefined) => {
+    if (!task) return;
+    const meta = { ...(task.meta ?? {}) };
+    if (name) meta.vendor = name;
+    else delete meta.vendor;
+    pm.saveTask({ id: task.id, meta });
+    setRow(null);
+  };
 
   return (
     <Sheet
@@ -232,50 +241,28 @@ export function TaskSheet({
           />
         </div>
 
-        {/* 狀態 */}
-        <List title="狀態">
-          <div className="px-3 py-2.5">
-            <div role="radiogroup" aria-label="狀態" className="grid grid-cols-3 gap-1 p-[3px] rounded-[10px] bg-[#EEEEF0]">
-              {TASK_STATUSES.map((s) => {
-                const on = v.status === s;
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    onClick={() => setStatus(s)}
-                    className={`h-9 rounded-[8px] text-[14px] font-semibold transition-all flex items-center justify-center gap-1 ${on ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] text-[#18181B]" : "text-[#71717A]"}`}
-                  >
-                    {s === "done" && on && <Icon name="check_circle" fill={1} weight={400} className="text-[17px]" style={{ color: GREEN }} />}
-                    {STATUS_LABEL[s as TaskStatus]}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          {v.status !== "done" && v.kind === "施工" && (
-            <>
-              <Line label="完成度" value={`${v.progress}%`} open={row === "progress"} onClick={() => toggleRow("progress")} />
-              {row === "progress" && (
-                <div className="px-4 pb-3.5">
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {[0, 25, 50, 75, 100].map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setProgress(n)}
-                        className={`h-9 rounded-[9px] text-[13px] font-semibold tabular-nums ${v.progress === n ? "bg-[#18181B] text-white" : "bg-[#F2F2F4] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                  <input type="range" min={0} max={100} step={5} value={v.progress} onChange={(e) => setProgress(+e.target.value)} className="w-full mt-3 accent-[var(--accent)] h-6" aria-label="完成度" />
+        {/* 完成度、重要（狀態跟著完成度走：0%＝待辦、1–99%＝進行中、100%＝完成） */}
+        <List>
+          <div>
+            <Line label="完成度" value={v.status === "done" ? "100%・完成" : `${v.progress}%`} open={row === "progress"} onClick={() => toggleRow("progress")} />
+            {row === "progress" && (
+              <div className="px-4 pb-3.5">
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[0, 25, 50, 75, 100].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setProgress(n)}
+                      className={`h-9 rounded-[9px] text-[13px] font-semibold tabular-nums ${v.progress === n ? "bg-[#18181B] text-white" : "bg-[#F2F2F4] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
+                    >
+                      {n}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </>
-          )}
+                <input type="range" min={0} max={100} step={5} value={v.progress} onChange={(e) => setProgress(+e.target.value)} className="w-full mt-3 accent-[var(--accent)] h-6" aria-label="完成度" />
+              </div>
+            )}
+          </div>
           {canEditAll && (
             <label className={`${lineCls} cursor-pointer`}>
               <span className={labelCls}>重要</span>
@@ -309,6 +296,15 @@ export function TaskSheet({
               <AssigneeGrid pm={pm} value={people} onChange={(list) => change(assigneePatch(pm, list), true)} />
             </div>
           )}
+          {/* 廠商：協力廠商名單（廠商CRM）；既有任務才有，新任務存好後再選 */}
+          {task && (
+            <button type="button" disabled={!canEditAll} onClick={() => toggleRow("vendor")} className={`${lineCls} w-full text-left active:bg-[#F2F2F4] disabled:active:bg-transparent`} aria-expanded={row === "vendor"}>
+              <span className={labelCls}>廠商</span>
+              <span className={`flex-1 min-w-0 text-right text-[16px] truncate ${vendor ? "text-[#6E6E73]" : "text-[#C7C7CC]"}`}>{vendor ?? "未指定"}</span>
+              {canEditAll && <Icon name={row === "vendor" ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />}
+            </button>
+          )}
+          {task && row === "vendor" && canEditAll && <VendorList value={vendor} trade={task.meta?.trade} onPick={setVendor} />}
           {task?.assigneeEmail && task.assigneeEmail !== me && task.status !== "done" && (
             <div className="px-4 py-2.5">
               <Receipt task={task} pm={pm} />

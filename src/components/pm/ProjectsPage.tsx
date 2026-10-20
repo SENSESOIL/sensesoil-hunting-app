@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { ACTIVE_STAGES, fmtDate, fmtWan, healthRank, type Stage } from "@/lib/project-ops";
 import { personColor } from "@/lib/pm/model";
 import { HEALTH_META, Icon } from "./ui";
-import { AvatarStack, Empty, Group, ORANGE, RED, Spinner } from "./kit";
+import { AvatarStack, Chip, Empty, Group, IconButton, ORANGE, RED, Spinner, T } from "./kit";
 import { ProjectScreen } from "./ProjectScreen";
 import { ProjectInfoSheet } from "./ProjectInfoSheet";
 import { SetupNotice } from "./SetupNotice";
@@ -93,17 +93,12 @@ export default function ProjectsPage({
     const openTask = (t: Task) => setTaskId(t.id);
     // 同一個位置一顆按鈕：目前是任務清單就顯示團隊圖示、工作量就顯示長條圖示，點一下切換
     const modeButton = (
-      <button
-        type="button"
-        onClick={() => setTeamMode(teamMode === "tasks" ? "load" : "tasks")}
-        aria-label={teamMode === "tasks" ? "目前：團隊任務，點一下看工作量" : "目前：工作量，點一下看團隊任務"}
+      <IconButton
+        icon={teamMode === "tasks" ? "groups" : "equalizer"}
+        label={teamMode === "tasks" ? "目前：團隊任務，點一下看工作量" : "目前：工作量，點一下看團隊任務"}
         title={teamMode === "tasks" ? "看工作量" : "看團隊任務"}
-        className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center text-[#52525B] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
-      >
-        <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>
-          {teamMode === "tasks" ? "groups" : "equalizer"}
-        </span>
-      </button>
+        onClick={() => setTeamMode(teamMode === "tasks" ? "load" : "tasks")}
+      />
     );
     return (
       <div className="px-5 lg:px-10 pb-6 w-full flex flex-col gap-5">
@@ -179,19 +174,19 @@ export default function ProjectsPage({
       <SetupNotice pm={pm} />
 
       {/* 總覽 */}
-      <section className="rounded-[26px] bg-[#1C1C1F] text-white p-5 pb-4 shadow-[0_18px_40px_-22px_rgba(24,24,27,0.7)]">
+      <section className="rounded-[20px] bg-white shadow-card p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[13px] text-white/55">進行中專案</p>
-            <p className="mt-1 flex items-baseline gap-1.5">
-              <span className="text-[44px] leading-none font-bold tabular-nums tracking-tight">{active.length}</span>
-              <span className="text-[15px] text-white/55">個</span>
+            <p className={`${T.foot} text-[#8E8E93]`}>進行中專案</p>
+            <p className="mt-1.5 flex items-baseline gap-1.5">
+              <span className={`${T.hero} text-[#18181B]`}>{active.length}</span>
+              <span className={`${T.sub} text-[#8E8E93]`}>個</span>
             </p>
           </div>
           {pm.isManager && pm.data.configured && !pm.data.dbError && (
             <button
               onClick={() => setCreating(true)}
-              className="h-10 pl-3 pr-4 rounded-full text-white text-[14px] font-semibold inline-flex items-center gap-1 shrink-0 active:scale-95 transition-transform"
+              className="h-9 pl-2.5 pr-3.5 rounded-full text-white text-[14px] font-semibold inline-flex items-center gap-1 shrink-0 active:opacity-85 transition-opacity"
               style={{ background: ORANGE }}
             >
               <Icon name="add" weight={500} className="text-[20px]" />
@@ -202,26 +197,26 @@ export default function ProjectsPage({
 
         {barTotal > 0 && (
           <>
-            <div className="mt-4 flex h-2.5 rounded-full overflow-hidden gap-[2px]" aria-hidden>
+            <div className="mt-4 flex h-2 rounded-full overflow-hidden gap-[2px]" aria-hidden>
               {barStages.map(([s, n]) => (
                 <span key={s} className="first:rounded-l-full last:rounded-r-full" style={{ width: `${(n / barTotal) * 100}%`, background: STAGE_COLOR[s] }} />
               ))}
             </div>
             <div className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1">
               {barStages.map(([s, n]) => (
-                <span key={s} className="inline-flex items-center gap-1.5 text-[12px] text-white/70">
+                <span key={s} className={`inline-flex items-center gap-1.5 ${T.caption} text-[#52525B]`}>
                   <span className="w-2 h-2 rounded-full" style={{ background: STAGE_COLOR[s] }} aria-hidden />
                   {s}
-                  <span className="tabular-nums text-white/45">{n}</span>
+                  <span className="tabular-nums text-[#A1A1AA]">{n}</span>
                 </span>
               ))}
             </div>
           </>
         )}
 
-        <div className={`mt-4 grid ${canMoney ? "grid-cols-3" : "grid-cols-2"} rounded-[18px] bg-white/[0.06] divide-x divide-white/10 overflow-hidden`}>
+        <div className={`mt-4 grid ${canMoney ? "grid-cols-3" : "grid-cols-2"} rounded-[14px] bg-[#F6F6F7] divide-x divide-black/[0.05] overflow-hidden`}>
           <HeroStat label="施工中" value={building} unit="件" onClick={() => setStage(stage === "施工中" ? null : "施工中")} on={stage === "施工中"} />
-          <HeroStat label="需要注意" value={attn.length} unit="件" tone={attn.length ? "#FF8A8D" : undefined} onClick={() => setAttention(!attention)} on={attention} />
+          <HeroStat label="需要注意" value={attn.length} unit="件" tone={attn.length ? RED : undefined} onClick={() => setAttention(!attention)} on={attention} />
           {canMoney && <HeroStat label="應收未收" value={fmtWan(receivable)} unit="萬" />}
         </div>
       </section>
@@ -255,7 +250,7 @@ export default function ProjectsPage({
       {/* 篩選：進行中、全部、需要注意、各階段（一定顯示，才切得到「全部」） */}
       {(
         <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 py-1 lg:mx-0 lg:px-0" {...stop}>
-          <StageChip
+          <Chip
             on={!all && !stage && !attention}
             onClick={() => {
               setAll(false);
@@ -264,8 +259,8 @@ export default function ProjectsPage({
             }}
           >
             進行中
-          </StageChip>
-          <StageChip
+          </Chip>
+          <Chip
             on={all && !stage && !attention}
             onClick={() => {
               setAll(true);
@@ -275,16 +270,16 @@ export default function ProjectsPage({
             count={pm.projects.length}
           >
             全部
-          </StageChip>
+          </Chip>
           {attn.length > 0 && (
-            <StageChip on={attention} onClick={() => setAttention(!attention)} dot={RED} count={attn.length}>
+            <Chip on={attention} onClick={() => setAttention(!attention)} dot={RED} count={attn.length}>
               需要注意
-            </StageChip>
+            </Chip>
           )}
           {stageCounts.map(([s, n]) => (
-            <StageChip key={s} on={stage === s} onClick={() => setStage(stage === s ? null : s)} dot={STAGE_COLOR[s]} count={n}>
+            <Chip key={s} on={stage === s} onClick={() => setStage(stage === s ? null : s)} dot={STAGE_COLOR[s]} count={n}>
               {s}
-            </StageChip>
+            </Chip>
           ))}
         </div>
       )}
@@ -304,7 +299,7 @@ export default function ProjectsPage({
             <section key={title || "all"}>
               {title && (
                 <div className="flex items-center justify-between px-1 pb-2">
-                  <h3 className="text-[14px] font-semibold text-[#52525B] flex items-center gap-2">
+                  <h3 className={`${T.sub} font-semibold text-[#3F3F46] flex items-center gap-2`}>
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: STAGE_COLOR[title as Stage] ?? "#D4D4D8" }} aria-hidden />
                     {title}
                   </h3>
@@ -357,38 +352,20 @@ function HeroStat({
     <Tag
       onClick={onClick}
       aria-pressed={onClick ? !!on : undefined}
-      className={`px-3 py-3 text-left min-w-0 transition-colors ${on ? "bg-white/[0.12]" : ""} ${onClick ? "active:bg-white/[0.12]" : ""}`}
+      className={`px-3 py-2.5 text-left min-w-0 transition-colors ${on ? "bg-[var(--accent-soft)]" : ""} ${onClick ? "active:bg-black/[0.04]" : ""}`}
     >
       {/* 標籤列固定高度：篩選中多出的漏斗圖示不會把卡片撐高 */}
-      <p className="h-[18px] text-[12px] leading-[18px] text-white/55 flex items-center gap-1 whitespace-nowrap">
+      <p className={`h-[18px] ${T.foot} text-[#8E8E93] flex items-center gap-1 whitespace-nowrap`}>
         {label}
-        {on && <Icon name="filter_alt" fill={1} className="text-[13px] leading-none text-white/70" />}
+        {on && <Icon name="filter_alt" fill={1} className="text-[13px] leading-none text-[var(--accent-ink)]" />}
       </p>
       <p className="mt-0.5 whitespace-nowrap">
-        <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: tone ?? "#fff" }}>
+        <span className={T.stat} style={{ color: tone ?? "#18181B" }}>
           {value}
         </span>
-        <span className="text-[12px] ml-1 text-white/45">{unit}</span>
+        <span className={`${T.foot} ml-1 text-[#A1A1AA]`}>{unit}</span>
       </p>
     </Tag>
-  );
-}
-
-function StageChip({ on, onClick, dot, count, children }: { on: boolean; onClick: () => void; dot?: string; count?: number; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
-      className={`h-9 px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
-        on ? "bg-[var(--accent)] text-white" : "bg-white ring-1 ring-inset ring-black/[0.06] text-[#3F3F46] active:bg-[#F4F4F5]"
-      }`}
-    >
-      {/* 選中時底色是橘色：圓點改白色（施工中的橘點才看得到） */}
-      {dot && <span className="w-2 h-2 rounded-full" style={{ background: on ? "#fff" : dot }} aria-hidden />}
-      {children}
-      {count !== undefined && <span className={`text-[12px] tabular-nums ${on ? "text-white/70" : "text-[#A1A1AA]"}`}>{count}</span>}
-    </button>
   );
 }
 

@@ -39,6 +39,8 @@ export interface TaskMeta {
   tags?: string[];
   /** 清單分組（專案 sections 裡的 id） */
   section?: string;
+  /** 廠商：協力廠商（廠商CRM）的簡稱 */
+  vendor?: string;
 }
 
 export const TRADES = ["打除", "水電", "泥作", "防水", "木作", "系統櫃", "油漆", "鐵件", "玻璃", "空調", "地板", "石材", "燈具", "衛浴", "清潔", "景觀", "其他"];
@@ -171,6 +173,7 @@ export function metaChips(meta?: TaskMeta): MetaChip[] {
     );
   }
   for (const t of meta.tags ?? []) out.push({ text: `#${t}`, color: "#2F7FD8", bg: "#EAF2FC" });
+  if (meta.vendor) out.unshift({ text: meta.vendor, color: "#7C5CBF", bg: "#F1ECFA" });
   return out;
 }
 
@@ -202,5 +205,7 @@ export function cleanMeta(raw: unknown): TaskMeta {
   if (tags?.length) out.tags = tags;
   const section = str(r.section, 40);
   if (section) out.section = section;
+  const vendor = str(r.vendor, 40);
+  if (vendor) out.vendor = vendor;
   return out;
 }

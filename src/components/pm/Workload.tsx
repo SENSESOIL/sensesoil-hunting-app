@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import { addDays, toDay, WEEKDAYS } from "@/lib/project-ops";
 import { isAssignee, type Task } from "@/lib/pm/model";
 import { Icon } from "./ui";
-import { Avatar, Group, GREEN, ORANGE, RED } from "./kit";
+import { Avatar, Group, GREEN, ORANGE, RED, T } from "./kit";
 import { isLate, type Pm } from "./usePm";
 
 /* ══════════════════════════════════════════════════════════
@@ -69,7 +69,7 @@ export function Workload({ pm, onPick, headerAction }: { pm: Pm; onPick: (email:
     <div className="flex flex-col gap-3">
       {headerAction && (
         <div className="flex items-center justify-between px-1 min-h-[36px]">
-          <h2 className="text-[17px] font-bold text-[#18181B]">工作量</h2>
+          <h2 className={`${T.title} text-[#18181B]`}>工作量</h2>
           {headerAction}
         </div>
       )}

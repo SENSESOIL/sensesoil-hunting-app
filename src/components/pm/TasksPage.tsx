@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { addDays, diffDays, todayISO, toDay, WEEKDAYS } from "@/lib/project-ops";
 import { personColor, type Task } from "@/lib/pm/model";
 import { Icon } from "./ui";
-import { Avatar, DoneToggle, Empty, Group, ORANGE, RED, SegmentedIcons, Spinner } from "./kit";
+import { Avatar, Chip, DoneToggle, Empty, Group, ORANGE, RED, SectionTitle, SegmentedIcons, Spinner, StatTile, T } from "./kit";
 import { TaskList } from "./TaskList";
 import { TaskBoard } from "./TaskBoard";
 import { TaskGantt } from "./TaskGantt";
@@ -245,7 +245,7 @@ function SubPage({ title, onBack, children }: { title: string; onBack: () => voi
         <button type="button" onClick={onBack} aria-label="返回" className="w-11 h-11 rounded-full bg-white shadow-card flex items-center justify-center active:scale-95 transition-transform shrink-0">
           <Icon name="chevron_left" weight={500} className="text-[26px] text-[#18181B]" />
         </button>
-        <h1 className="text-[22px] font-bold tracking-tight text-[#18181B]">{title}</h1>
+        <h1 className={`${T.title} text-[#18181B]`}>{title}</h1>
       </div>
       {children}
     </>
@@ -349,26 +349,6 @@ function AddButton({ onClick, label }: { onClick: () => void; label?: string }) 
 }
 
 /** 篩選膠囊（附數字） */
-function Chip({ on, onClick, children, count, tone }: { on: boolean; onClick: () => void; children: React.ReactNode; count?: number; tone?: string }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
-      className={`h-9 px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
-        on ? "bg-[var(--accent)] text-white" : "bg-white ring-1 ring-inset ring-black/[0.06] text-[#3F3F46] active:bg-[#F4F4F5]"
-      }`}
-    >
-      {children}
-      {count !== undefined && (
-        <span className={`text-[12px] tabular-nums ${on ? "text-white/70" : "text-[#A1A1AA]"}`} style={!on && tone ? { color: tone } : undefined}>
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
-
 /* ── 我的 ─────────────────────────────────────────────── */
 
 function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onAdd: (p?: Partial<Task>) => void }) {
@@ -450,14 +430,14 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
     <>
       {/* 問候 */}
       <header className="pt-1">
-        <p className="text-[13px] font-medium tracking-wide" style={{ color: ORANGE }}>
+        <p className={`${T.foot} font-semibold`} style={{ color: ORANGE }}>
           {MONTH_DAY(today)}　{WEEKDAY(today)}
         </p>
-        <h1 className="mt-1 text-[28px] leading-[34px] font-bold tracking-tight text-[#18181B]">
+        <h1 className={`mt-0.5 ${T.largeTitle} text-[#18181B]`}>
           {greeting()}
           {callName ? `，${callName}` : ""}
         </h1>
-        <p className="mt-1 text-[14px] leading-[20px] text-[#71717A]">
+        <p className={`mt-1 ${T.sub} text-[#6E6E73]`}>
           {todayOpen.length === 0 ? (doneToday ? `今天的事都完成了，共 ${doneToday} 件` : "今天沒有排定的任務") : `今天還有 ${todayOpen.length} 件`}
           {lateCount > 0 && <span style={{ color: RED }}>，其中 {lateCount} 件已逾期</span>}
         </p>
@@ -470,16 +450,16 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
           setWeekStart(mondayOf(today));
           pick(today);
         }}
-        className="w-full bg-white rounded-[22px] shadow-card p-4 pr-5 flex items-center gap-4 text-left active:scale-[0.99] transition-transform"
+        className="w-full bg-white rounded-[20px] shadow-card p-4 pr-5 flex items-center gap-4 text-left active:scale-[0.99] transition-transform"
       >
         <Ring value={totalToday ? doneToday / totalToday : 0}>
           <span className="text-[17px] font-bold tabular-nums text-[#18181B]">{totalToday ? Math.round((doneToday / totalToday) * 100) : 0}%</span>
         </Ring>
         <span className="flex-1 min-w-0">
-          <span className="block text-[13px] text-[#A1A1AA]">今日進度</span>
-          <span className="block text-[20px] font-bold tabular-nums text-[#18181B] leading-tight mt-0.5">
+          <span className={`block ${T.foot} text-[#8E8E93]`}>今日進度</span>
+          <span className={`block ${T.stat} text-[#18181B] mt-0.5`}>
             {doneToday}
-            <span className="text-[14px] font-normal text-[#A1A1AA]"> / {totalToday} 完成</span>
+            <span className={`${T.sub} font-normal text-[#8E8E93]`}> / {totalToday} 完成</span>
           </span>
           {next ? (
             <span className="mt-1.5 flex items-center gap-1.5 min-w-0 text-[13px] text-[#52525B]">
@@ -500,7 +480,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
             setSmart("all");
             setView("list");
           }}
-          className="w-full rounded-[18px] px-4 py-3 flex items-center gap-3 text-left bg-[var(--accent-soft)] active:opacity-80"
+          className="w-full rounded-[20px] px-4 py-3 flex items-center gap-3 text-left bg-[var(--accent-soft)] active:opacity-80"
         >
           <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white" style={{ background: ORANGE }}>
             <Icon name="notifications_active" weight={500} className="text-[19px]" />
@@ -566,7 +546,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
         </Chip>
       </div>
 
-      <h2 className="text-[22px] font-bold tracking-tight text-[#18181B] truncate">{title}</h2>
+      <SectionTitle title={title} />
 
       {view === "list" &&
         (list.length ? (
@@ -944,9 +924,9 @@ export function AllTasks({
   return (
     <>
       {/* 團隊 */}
-      <section className="bg-white rounded-[22px] shadow-card pt-4 pb-3">
+      <section className="bg-white rounded-[20px] shadow-card pt-3.5 pb-3">
         <div className="flex items-center justify-between px-4 pb-2 min-h-[36px]">
-          <h2 className="text-[17px] font-bold text-[#18181B]">團隊手上</h2>
+          <h2 className={`${T.headline} text-[#18181B]`}>團隊手上</h2>
           {headerAction ?? <span className="text-[13px] text-[#A1A1AA]">點頭像只看那個人</span>}
         </div>
         <div className="flex gap-1 overflow-x-auto scrollbar-hide px-2" {...stop}>
@@ -983,14 +963,13 @@ export function AllTasks({
 
       {/* 數字 */}
       <div className="grid grid-cols-3 gap-2.5">
-        <Stat label="未完成" value={openCount} />
-        <Stat label="逾期" value={lateCount} color={lateCount ? RED : undefined} />
-        <Stat label="未確認" value={unacked} color={unacked ? "var(--accent-strong)" : undefined} />
+        <StatTile label="未完成" value={openCount} />
+        <StatTile label="逾期" value={lateCount} color={lateCount ? RED : undefined} />
+        <StatTile label="未確認" value={unacked} color={unacked ? "var(--accent-strong)" : undefined} />
       </div>
 
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2 className="text-[22px] font-bold tracking-tight text-[#18181B]">{who}</h2>
-        <div className="flex items-center gap-2">
+      <SectionTitle title={who}>
+        <>
           {view === "list" && (
             <Chip on={false} onClick={() => setGroup(group === "project" ? "date" : "project")}>
               <Icon name="swap_vert" className="text-[16px]" />
@@ -999,8 +978,8 @@ export function AllTasks({
           )}
           {view !== "board" && <DoneToggle on={showDone} onChange={setShowDone} />}
           <SegmentedIcons label="檢視方式" value={view} options={VIEWS} onChange={setView} />
-        </div>
-      </div>
+        </>
+      </SectionTitle>
 
       {view === "list" &&
         (filtered.some((t) => showDone || t.status !== "done") ? (
@@ -1056,16 +1035,5 @@ function PersonBubble({
       <span className={`text-[13px] leading-[16px] max-w-full truncate ${on ? "font-semibold text-[#18181B]" : "text-[#3F3F46]"}`}>{label}</span>
       <span className="text-[11px] leading-[14px] text-[#A1A1AA] tabular-nums">{sub}</span>
     </button>
-  );
-}
-
-function Stat({ label, value, color }: { label: string; value: number; color?: string }) {
-  return (
-    <div className="bg-white rounded-[18px] shadow-card px-3.5 py-3">
-      <p className="text-[12px] text-[#A1A1AA]">{label}</p>
-      <p className="mt-0.5 text-[24px] font-bold tabular-nums leading-tight" style={{ color: color ?? "#18181B" }}>
-        {value}
-      </p>
-    </div>
   );
 }

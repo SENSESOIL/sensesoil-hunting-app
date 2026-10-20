@@ -16,6 +16,139 @@ export const GREEN = "#30A46C";
 export const INK = "var(--ink, #18181B)"; // 夜晚模式自動換成淺色字
 export const GRAY = "#8E8E93";
 
+/* ══════════════════════════════════════════════════════════
+   版面規格（全 APP 共用，對照 iPhone 系統字級）。新畫面一律從這裡挑，不要自己寫字級：
+   - largeTitle 28：一頁最多一個（行事曆的「早安」、清單頁的清單名稱）
+   - title 20：區塊標題（今天、標籤、排程、全部人、公司目標…）
+   - headline 17：卡片標題
+   - body 16 內文、sub 15 次要、foot 13 註腳、caption 12 說明
+   - hero 40：摘要卡的主數字（一頁一個）；stat 22：數字格
+   - 卡片：白底、圓角 20、淡陰影；圓形圖示鈕 36px；篩選膠囊高 34px
+   ══════════════════════════════════════════════════════════ */
+export const T = {
+  largeTitle: "text-[28px] leading-[34px] font-bold tracking-tight",
+  title: "text-[20px] leading-[26px] font-bold tracking-tight",
+  headline: "text-[17px] leading-[22px] font-semibold",
+  body: "text-[16px] leading-[22px]",
+  sub: "text-[15px] leading-[20px]",
+  foot: "text-[13px] leading-[18px]",
+  caption: "text-[12px] leading-[16px]",
+  hero: "text-[40px] leading-none font-bold tabular-nums tracking-tight",
+  stat: "text-[22px] leading-[26px] font-bold tabular-nums",
+} as const;
+
+/** 區塊標題：左邊標題（＋一行說明），右邊放圖示鈕 */
+export function SectionTitle({ title, sub, children, color }: { title: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode; color?: string }) {
+  return (
+    <div className="flex items-end justify-between gap-3 px-1 min-h-[36px]">
+      <div className="min-w-0">
+        <h2 className={`${T.title} truncate`} style={{ color: color ?? INK }}>
+          {title}
+        </h2>
+        {sub && <p className={`${T.foot} text-[#8E8E93] mt-0.5`}>{sub}</p>}
+      </div>
+      {children && <div className="flex items-center gap-2 shrink-0">{children}</div>}
+    </div>
+  );
+}
+
+/** 圓形圖示鈕（36px）：一般＝白底細線圖示；on＝切換中（淡橘底）；primary＝主要動作（橘底白色） */
+export function IconButton({
+  icon,
+  label,
+  onClick,
+  on,
+  primary,
+  title,
+}: {
+  icon: string;
+  label: string;
+  onClick: () => void;
+  on?: boolean;
+  primary?: boolean;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={on === undefined ? undefined : on}
+      title={title ?? label}
+      className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center transition-colors ${
+        primary
+          ? "bg-[var(--accent)] text-white active:opacity-85"
+          : on
+            ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]"
+            : "bg-white shadow-card text-[#52525B] active:bg-[#F4F4F5]"
+      }`}
+    >
+      <Icon name={icon} weight={primary ? 500 : 300} className={primary ? "text-[22px]" : "text-[20px]"} />
+    </button>
+  );
+}
+
+/** 篩選膠囊（高 34）：選中＝橘底白字；dot＝前面的色點；count＝後面的數字 */
+export function Chip({
+  on,
+  onClick,
+  children,
+  count,
+  dot,
+  tone,
+}: {
+  on: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  count?: number;
+  dot?: string;
+  /** 數字的顏色（例如逾期紅） */
+  tone?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={`h-[34px] px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
+        on ? "bg-[var(--accent)] text-white font-semibold" : "bg-white shadow-card text-[#3F3F46] active:bg-[#F4F4F5]"
+      }`}
+    >
+      {/* 選中時底色是橘色：圓點改白色（橘點才看得到） */}
+      {dot && <span className="w-2 h-2 rounded-full" style={{ background: on ? "#fff" : dot }} aria-hidden />}
+      {children}
+      {count !== undefined && (
+        <span className={`text-[13px] font-normal tabular-nums ${on ? "text-white/75" : "text-[#A1A1AA]"}`} style={!on && tone ? { color: tone } : undefined}>
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/** 數字格：上面一行小字、下面數字 */
+export function StatTile({ label, value, unit, color, onClick, on }: { label: string; value: React.ReactNode; unit?: string; color?: string; onClick?: () => void; on?: boolean }) {
+  const Tag = onClick ? "button" : "div";
+  return (
+    <Tag
+      onClick={onClick}
+      aria-pressed={onClick ? !!on : undefined}
+      className={`rounded-[16px] px-3.5 py-3 text-left min-w-0 transition-colors ${on ? "bg-[var(--accent-soft)]" : "bg-white shadow-card"} ${onClick ? "active:bg-[#F4F4F5]" : ""}`}
+    >
+      <p className={`${T.foot} text-[#8E8E93] flex items-center gap-1 whitespace-nowrap`}>
+        {label}
+        {on && <Icon name="filter_alt" fill={1} className="text-[13px] leading-none" />}
+      </p>
+      <p className="mt-1 whitespace-nowrap">
+        <span className={T.stat} style={{ color: color ?? INK }}>
+          {value}
+        </span>
+        {unit && <span className={`${T.foot} ml-1 text-[#A1A1AA]`}>{unit}</span>}
+      </p>
+    </Tag>
+  );
+}
+
 /* ── 大頭照目錄：團隊頁上傳的照片，全 APP 的頭像共用 ───────── */
 
 const avatarStore = { map: new Map<string, string>(), v: 0, subs: new Set<() => void>() };
@@ -201,7 +334,7 @@ export function Group({ children, className = "" }: { children: React.ReactNode;
 export function GroupTitle({ children, right, color }: { children: React.ReactNode; right?: React.ReactNode; color?: string }) {
   return (
     <div className="flex items-end justify-between px-1 pb-2 pt-1">
-      <h3 className="text-[20px] font-bold tracking-tight" style={{ color: color ?? INK }}>
+      <h3 className={T.title} style={{ color: color ?? INK }}>
         {children}
       </h3>
       {right}
@@ -231,9 +364,9 @@ export function SegmentedIcons<T extends string>({
       onClick={() => onChange(next.value)}
       aria-label={`${label}：${cur.label}，點一下換成${next.label}`}
       title={`換成${next.label}`}
-      className="w-10 h-10 rounded-full bg-white shadow-card flex items-center justify-center text-[#52525B] active:bg-[#F4F4F5] transition-colors"
+      className="w-9 h-9 rounded-full bg-white shadow-card flex items-center justify-center text-[#52525B] active:bg-[#F4F4F5] transition-colors"
     >
-      <Icon name={cur.icon} weight={200} className="text-[22px]" />
+      <Icon name={cur.icon} weight={300} className="text-[20px]" />
     </button>
   );
 }
@@ -295,7 +428,7 @@ export function Pill({
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={`h-9 px-3.5 rounded-full text-[13px] font-medium whitespace-nowrap inline-flex items-center gap-1.5 transition-colors shrink-0 ${
+      className={`h-[34px] px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 transition-colors shrink-0 ${
         on ? "text-white" : "bg-white shadow-card text-[#3F3F46] active:bg-[#F4F4F5]"
       }`}
       style={on ? { background: color ?? INK } : undefined}
@@ -326,9 +459,9 @@ export function DoneToggle({ on, onChange, count }: { on: boolean; onChange: (v:
       aria-pressed={on}
       aria-label={on ? `隱藏已完成${n}` : `顯示已完成${n}`}
       title={on ? "隱藏已完成" : `顯示已完成${n}`}
-      className="w-10 h-10 rounded-full bg-white shadow-card flex items-center justify-center text-[#52525B] active:bg-[#F4F4F5] transition-colors"
+      className="w-9 h-9 rounded-full bg-white shadow-card flex items-center justify-center text-[#52525B] active:bg-[#F4F4F5] transition-colors"
     >
-      <Icon name={on ? "visibility" : "visibility_off"} weight={200} className="text-[22px]" />
+      <Icon name={on ? "visibility" : "visibility_off"} weight={300} className="text-[20px]" />
     </button>
   );
 }

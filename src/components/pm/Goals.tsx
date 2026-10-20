@@ -7,7 +7,7 @@ import Gantt, { type GanttRow } from "./Gantt";
 import { Sheet, toast } from "./Sheet";
 import { DateField, FieldGroup, Row, TextField } from "./fields";
 import { Icon } from "./ui";
-import { Avatar, Empty, GREEN, Group, ORANGE, RED } from "./kit";
+import { Avatar, Empty, GREEN, Group, IconButton, ORANGE, RED, SectionTitle, T } from "./kit";
 import { assigneeLabel, isLate, personLabel, type GoalItem, type Pm } from "./usePm";
 
 /* ══════════════════════════════════════════════════════════
@@ -43,25 +43,9 @@ export function GoalsPage({ pm, onOpenTask }: { pm: Pm; onOpenTask: (t: Task) =>
 
   return (
     <>
-      <div className="flex items-end justify-between gap-3 pt-1">
-        <div className="min-w-0">
-          <h1 className="text-[28px] leading-[34px] font-bold tracking-tight text-[#18181B]">公司目標</h1>
-          <p className="mt-1 text-[14px] text-[#71717A]">
-            {goals.length ? `${goals.length} 個目標・${linked} 件任務連結中` : "把公司的大目標排出來，任務再連到目標"}
-          </p>
-        </div>
-        {pm.isManager && (
-          <button
-            type="button"
-            onClick={() => setSheet({ id: null })}
-            aria-label="新增目標"
-            className="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-white shadow-[0_6px_16px_rgba(243,156,18,0.35)] active:scale-95 transition-transform"
-            style={{ background: ORANGE }}
-          >
-            <Icon name="add" weight={500} className="text-[26px]" />
-          </button>
-        )}
-      </div>
+      <SectionTitle title="公司目標" sub={goals.length ? `${goals.length} 個目標・${linked} 件任務連結中` : "把公司的大目標排出來，任務再連到目標"}>
+        {pm.isManager && <IconButton primary icon="add" label="新增目標" onClick={() => setSheet({ id: null })} />}
+      </SectionTitle>
 
       {!goals.length ? (
         <Group>
@@ -79,21 +63,11 @@ export function GoalsPage({ pm, onOpenTask }: { pm: Pm; onOpenTask: (t: Task) =>
             ))}
           </div>
 
-          <div className="flex items-center justify-between gap-2 pt-2">
-            <h2 className="text-[22px] font-bold tracking-tight text-[#18181B]">排程</h2>
-            <button
-              type="button"
-              onClick={() => setShowTasks((v) => !v)}
-              aria-pressed={showTasks}
-              aria-label={showTasks ? "隱藏目標底下的任務" : "顯示目標底下的任務"}
-              title={showTasks ? "隱藏任務" : "顯示任務"}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${showTasks ? "bg-[#18181B] text-white" : "bg-white text-[#52525B] shadow-card"}`}
-            >
-              {/* 任務圖示（和底部導覽列「任務追蹤」同一個） */}
-              <span className="material-symbols-outlined text-[22px]" style={{ fontVariationSettings: "'wght' 200" }}>
-                checklist
-              </span>
-            </button>
+          <div className="pt-2">
+            <SectionTitle title="排程">
+              {/* 任務圖示（和底部導覽列「任務追蹤」同一個）；淡橘底＝目前有顯示任務 */}
+              <IconButton icon="checklist" on={showTasks} label={showTasks ? "隱藏目標底下的任務" : "顯示目標底下的任務"} title={showTasks ? "隱藏任務" : "顯示任務"} onClick={() => setShowTasks((v) => !v)} />
+            </SectionTitle>
           </div>
           <GoalGantt pm={pm} goals={goals} showTasks={showTasks} today={today} onOpenGoal={(id) => setSheet({ id })} onOpenTask={onOpenTask} />
         </>
@@ -335,7 +309,7 @@ export function GoalSheet({
             <div className="bg-white rounded-[16px] border border-[#E4E4E7]/70 p-4">
               <div className="flex items-end justify-between">
                 <span className="text-[13px] text-[#8E8E93]">進度（依連結任務自動計算）</span>
-                <span className="text-[24px] font-bold tabular-nums text-[#18181B]">{goal.progress}%</span>
+                <span className={`${T.stat} text-[#18181B]`}>{goal.progress}%</span>
               </div>
               <div className="h-2.5 rounded-full bg-[#F2F2F4] overflow-hidden mt-2">
                 <div className="h-full rounded-full" style={{ width: `${goal.progress}%`, background: goal.progress >= 100 ? GREEN : goal.color }} />
