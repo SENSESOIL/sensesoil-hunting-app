@@ -246,7 +246,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "add-1",
     title: "第一個任務",
-    body: (c) => (c.typing ? "打「放樣」，打完按鍵盤上方右邊的 ✓ 存起來。" : "點虛線圓圈，開始打第一個任務。"),
+    body: (c) => (c.typing ? "打「放樣」，打完按鍵盤上方右邊的 ✓ 存起來。" : "點虛線圓圈，打第一個任務「放樣」。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 1,
     goto: toProject(),
