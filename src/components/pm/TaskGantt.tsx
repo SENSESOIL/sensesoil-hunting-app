@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { tourEmit } from "./tour/bus";
 import { addDays, fmtDate } from "@/lib/project-ops";
 import { personColor, STATUS_LABEL, type Task } from "@/lib/pm/model";
 import Gantt, { type GanttRow } from "./Gantt";
@@ -259,7 +260,10 @@ export function TaskGantt({
       label: child ? `　${t.title}` : t.title,
       sublabel: firstOfProject ? `${project?.name ?? t.code}` : t.kind === "等待" ? "等待期" : who,
       onClick: () => onOpen(t),
-      onTimeline: sp || !editable ? undefined : () => setSchedId(t.id),
+      onTimeline: sp || !editable ? undefined : () => {
+        setSchedId(t.id);
+        tourEmit("schedule-open", t.id);
+      },
       trailing: done ? undefined : t.progress > 0 ? `${t.progress}%` : late ? "逾期" : undefined,
       bars: [
         {
@@ -355,7 +359,11 @@ function ZoomPicker({ value, onChange }: { value: Zoom; onChange: (z: Zoom) => v
   return (
     <button
       type="button"
-      onClick={() => onChange(next.value)}
+      onClick={() => {
+        onChange(next.value);
+        tourEmit("gantt-zoom", next.value);
+      }}
+      data-tour="gantt-zoom"
       aria-label={`時間刻度：${cur.label}，點一下換成${next.label}`}
       title={`換成${next.label}（${next.hint}）`}
       className="h-8 min-w-[40px] px-3 rounded-full flex items-center justify-center text-[14px] font-semibold text-[#18181B] bg-[#F2F2F4] active:bg-[#E4E4E7] transition-colors select-none"

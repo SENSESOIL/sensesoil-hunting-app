@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { tourEmit } from "./tour/bus";
 import { newSectionId, newTaskId, personColor, type Section } from "@/lib/pm/model";
 import { bestMatch, buildPlan, mergeShots, normText, type PlanRow, type Shot, type ShotItem } from "@/lib/pm/reminder-import";
 import { readReminderShot } from "@/lib/pm/reminder-ocr";
@@ -177,7 +178,10 @@ export function ImportSheet({ pm, open, onClose, presetCode }: { pm: Pm; open: b
         `已匯入 ${ok} 項到 ${project.name}` + (fail ? `，${fail} 項失敗` : "") + (lost ? `（${lost} 項的分組要管理者建立，先放在「其他」）` : ""),
         { tone: fail ? "error" : "ok" }
       );
-      if (ok) onClose();
+      if (ok) {
+        tourEmit("import-done", project.code);
+        onClose();
+      }
     } finally {
       setSaving(false);
     }

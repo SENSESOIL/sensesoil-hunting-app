@@ -425,7 +425,7 @@ export function SearchOverlay({
   }, [open]);
   if (!open || typeof document === "undefined") return null;
   return createPortal(
-    <div className="md:hidden fixed inset-0 z-[140] flex flex-col bg-[#FAFAFA]/70 backdrop-blur-xl" role="dialog" aria-label={label}>
+    <div data-tour-layer className="md:hidden fixed inset-0 z-[140] flex flex-col bg-[#FAFAFA]/70 backdrop-blur-xl" role="dialog" aria-label={label}>
       <div className="shrink-0 px-4 pb-3 flex items-center gap-2" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
         <div className="relative flex-1 min-w-0">
           <IconSearch size={18} stroke={1.5} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A1A1AA] pointer-events-none" />

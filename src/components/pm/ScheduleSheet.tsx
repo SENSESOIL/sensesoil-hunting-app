@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { tourEmit } from "./tour/bus";
 import { addDays, diffDays, toDay, WEEKDAYS } from "@/lib/project-ops";
 import { isAssignee, type Task } from "@/lib/pm/model";
 import { endOf, predecessorOf, startAfter, wouldCycle } from "@/lib/pm/deps";
@@ -105,6 +106,7 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
     if (after) meta.after = after;
     else delete meta.after;
     pm.saveTask({ id: task.id, start, due, ...(JSON.stringify(meta) !== JSON.stringify(task.meta ?? {}) ? { meta } : {}) });
+    if (after) tourEmit("wbs-set", after);
     onClose();
   };
 
@@ -162,6 +164,7 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
             </Row>
           </FieldGroup>
 
+          <div data-tour="wbs">
           <FieldGroup title="接在哪個任務之後開始" hint={pred ? "前一個任務改日期時，這個任務會跟著平移同樣的天數。" : "選了就從那個任務結束的隔天開始，之後也會跟著它移動。"}>
             {pred && (
               <div className="px-4 py-3 flex items-center gap-3">
@@ -234,6 +237,7 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
               </div>
             )}
           </FieldGroup>
+          </div>
 
           <FieldGroup title="期限快選">
             <div className="px-3 py-3 flex flex-wrap gap-2">

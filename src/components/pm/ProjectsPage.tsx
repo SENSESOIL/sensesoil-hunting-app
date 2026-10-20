@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { codeLabel, onTour, tourState } from "./tour/bus";
+import { codeLabel, onTour, tourEmit, tourState } from "./tour/bus";
 import { ACTIVE_STAGES, fmtDate, fmtWan, healthRank, type Stage } from "@/lib/project-ops";
 import { personColor } from "@/lib/pm/model";
 import { HEALTH_META, Icon } from "./ui";
@@ -206,6 +206,7 @@ export default function ProjectsPage({
           </div>
           {pm.isManager && pm.data.configured && !pm.data.dbError && (
             <button
+              data-tour="new-project"
               onClick={() => setCreating(true)}
               className="h-9 pl-2.5 pr-3.5 rounded-full text-white text-[14px] font-semibold inline-flex items-center gap-1 shrink-0 active:opacity-85 transition-opacity"
               style={{ background: ORANGE }}
@@ -293,8 +294,10 @@ export default function ProjectsPage({
             <Chip
               variant="tab"
               fill
+              tour={`intel-${k}`}
               on={on}
               onClick={() => {
+                tourEmit("intel-filter", k);
                 if (k === "active" || k === "all") {
                   setAll(k === "all");
                   setStage(null);

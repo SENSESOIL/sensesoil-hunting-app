@@ -108,8 +108,10 @@ export default function TasksPage({
     };
     if (tourState.pendingProject) take(tourState.pendingProject);
     return onTour((e) => {
-      const g = e.type === "goto" ? (e.data as { project?: string }) : null;
+      const g = e.type === "goto" ? (e.data as { project?: string; home?: boolean }) : null;
       if (g?.project) take(g.project);
+      // 新手教學：回到任務首頁（專案清單）
+      else if (g?.home) setRoute({ kind: "home" });
     });
   }, []);
   // 從提醒事項截圖匯入：按鈕放在標題列分頁那一排的右邊（#pm-header-slot）
@@ -150,7 +152,11 @@ export default function TasksPage({
     tab === "任務" && route.kind === "home" && canImport ? (
       <button
         type="button"
-        onClick={() => setImportOpen(true)}
+        onClick={() => {
+          setImportOpen(true);
+          tourEmit("import-open");
+        }}
+        data-tour="import"
         aria-label="從提醒事項截圖匯入任務"
         title="從截圖匯入"
         className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"

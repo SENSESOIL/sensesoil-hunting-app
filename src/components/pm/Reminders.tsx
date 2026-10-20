@@ -151,7 +151,7 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
           {/* 專案（智慧清單已移到「行事曆」分頁的篩選，這裡直接列專案） */}
           <section>
             {shownProjects.length ? (
-              <div className="bg-white rounded-[20px] shadow-card overflow-hidden">
+              <div data-tour="home-projects" className="bg-white rounded-[20px] shadow-card overflow-hidden">
                 {shownProjects.map(({ p }) => (
                   <ListRow
                     key={p.code}
@@ -169,8 +169,12 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
                   // 公司的專案（拾壤CRM 名冊）都已經在這裡，只是沒有任務的先收起來；展開找到專案就能直接寫任務，不用另外新增專案
                   <button
                     type="button"
-                    onClick={() => setAllProjects((v) => !v)}
+                    onClick={() => {
+                      setAllProjects((v) => !v);
+                      tourEmit("home-expand", !allProjects);
+                    }}
                     aria-expanded={allProjects}
+                    data-tour="expand-projects"
                     className="w-full h-11 px-4 flex items-center justify-center gap-0.5 text-[15px] text-[var(--accent)] font-medium active:bg-[#F4F4F5]"
                   >
                     {allProjects ? "收起沒有任務的專案" : "展開其他專案新增任務排程"}
@@ -442,6 +446,7 @@ export function ReminderPage({
     <button
       type="button"
       onClick={() => setExporting(true)}
+      data-tour="export"
       className="w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[#F4F4F5] active:bg-[#F4F4F5] text-[#71717A]"
       title="匯出"
       aria-label={`匯出${pageView === "gantt" ? "甘特圖" : pageView === "board" ? "看板" : "清單"}`}
@@ -771,6 +776,7 @@ export function ReminderTasks({
     const key = id || OTHER_SECTION;
     const cur = projSections.find((s) => s.id === key)?.name ?? (key === OTHER_SECTION ? "其他" : "");
     if (!code || !n || cur === n) return;
+    tourEmit("section-renamed", n);
     pm.saveSections(code, projSections.some((s) => s.id === key) ? projSections.map((s) => (s.id === key ? { ...s, name: n } : s)) : [...projSections, { id: key, name: n }]);
   };
   // 分組長按選單：上移、下移、重新命名、刪除
@@ -1084,7 +1090,7 @@ export function ReminderTasks({
         );
       })}
       {code && !grouped && pm.isManager && (
-        <button type="button" onClick={addSection} className="self-start h-9 px-3 rounded-full text-[14px] font-medium inline-flex items-center gap-1 active:bg-[#F4F4F5]" style={{ color }}>
+        <button type="button" onClick={addSection} data-tour="add-section" className="self-start h-9 px-3 rounded-full text-[14px] font-medium inline-flex items-center gap-1 active:bg-[#F4F4F5]" style={{ color }}>
           <Icon name="add" weight={500} className="text-[19px]" />
           新增分組
         </button>
@@ -1447,7 +1453,7 @@ function InlineInput({ initial, onCommit, placeholder }: { initial: string; onCo
 function DraftRow({ depth, color, onCommit }: { depth: 0 | 1; color: string; onCommit: (title: string, next: boolean) => void }) {
   const rowBg = useContext(RowBg);
   return (
-    <div className={`relative ${rowBg} flex items-start gap-3 pr-1`} style={{ paddingLeft: depth ? 38 : 4 }}>
+    <div data-tour="draft-row" className={`relative ${rowBg} flex items-start gap-3 pr-1`} style={{ paddingLeft: depth ? 38 : 4 }}>
       <span className="pt-[11px]">
         <span className="block w-6 h-6 rounded-full border-2" style={{ borderColor: `color-mix(in srgb, ${color} 45%, #D4D4D8)` }} />
       </span>
@@ -1504,6 +1510,7 @@ function RowMenu({
   const [shown, setShown] = useState(false);
   // 新手教學：選單打開了（只在打開那一次說）
   useEffect(() => tourEmit("menu-open"), []);
+  useEffect(() => tourEmit("menu-page", page), [page]);
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -1581,7 +1588,7 @@ function RowMenu({
         )}
         {page === "section" && sections && (
           <div className="py-1 max-h-[360px] overflow-y-auto">
-            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 bg-[#F7F7F8]">
+            <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 bg-[#F7F7F8]">
               <Icon name="chevron_left" className="text-[22px]" />
               移到分組
             </button>
@@ -1599,7 +1606,7 @@ function RowMenu({
         )}
         {page === "progress" && (
           <div className="py-1">
-            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7]">
+            <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7]">
               <Icon name="chevron_left" className="text-[22px]" />
               完成度
             </button>
@@ -1616,7 +1623,7 @@ function RowMenu({
         )}
         {page === "due" && (
           <div className="py-1">
-            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7]">
+            <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7]">
               <Icon name="chevron_left" className="text-[22px]" />
               期限
             </button>
@@ -1674,7 +1681,7 @@ function RowMenu({
             .slice(0, k ? 50 : 30);
           return (
             <div className="py-1 max-h-[380px] overflow-y-auto">
-              <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 z-[1] bg-[#F7F7F8]">
+              <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 z-[1] bg-[#F7F7F8]">
                 <Icon name="chevron_left" className="text-[22px]" />
                 移到專案
               </button>
@@ -1709,7 +1716,7 @@ function RowMenu({
         })()}
         {page === "vendor" && (
           <div className="py-1 max-h-[380px] overflow-y-auto">
-            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 z-[1] bg-[#F7F7F8]">
+            <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 z-[1] bg-[#F7F7F8]">
               <Icon name="chevron_left" className="text-[22px]" />
               廠商
             </button>
@@ -1729,7 +1736,7 @@ function RowMenu({
         )}
         {page === "assign" && (
           <div className="py-1 max-h-[360px] overflow-y-auto">
-            <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 bg-[#F7F7F8]">
+            <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 bg-[#F7F7F8]">
               <Icon name="chevron_left" className="text-[22px]" />
               指派
             </button>

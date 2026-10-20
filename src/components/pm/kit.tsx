@@ -154,6 +154,7 @@ export function Chip({
   tone,
   variant = "pill",
   fill = false,
+  tour,
 }: {
   on: boolean;
   onClick: () => void;
@@ -165,6 +166,8 @@ export function Chip({
   variant?: "pill" | "tab";
   /** tab：一排平均分配寬度（一排放得下、不用左右捲） */
   fill?: boolean;
+  /** 新手教學圈的目標 */
+  tour?: string;
 }) {
   if (variant === "tab") {
     return (
@@ -172,6 +175,7 @@ export function Chip({
         type="button"
         aria-pressed={on}
         onClick={onClick}
+        data-tour={tour}
         className={`h-[32px] rounded-[9px] text-[14px] font-semibold whitespace-nowrap inline-flex items-center justify-center gap-1.5 transition-colors ${fill ? "flex-1 min-w-0 px-1" : "shrink-0 px-3.5"} ${
           on ? "bg-white text-[#18181B] shadow-[0_1px_3px_rgba(0,0,0,0.08)]" : "text-[#71717A] active:bg-black/[0.04]"
         }`}

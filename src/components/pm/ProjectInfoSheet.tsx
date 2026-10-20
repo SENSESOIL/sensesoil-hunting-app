@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { tourEmit } from "./tour/bus";
 import { CATEGORIES, STAGES, fmtMoney, validateRecord, weightedProgress, type Risk, type Stage } from "@/lib/project-ops";
 import { taskToWorkItem, type PmProject } from "@/lib/pm/model";
 import { Sheet, SheetActions, toast } from "./Sheet";
@@ -257,11 +258,12 @@ export function DeleteProject({ pm, p, onDone }: { pm: Pm; p: PmProject; onDone:
     setConfirm(false);
     if (r) {
       toast(`已刪除 ${p.code} 的資料${r.tasks ? `（${r.tasks} 項任務）` : ""}，案名保留`);
+      tourEmit("project-purged", p.code);
       onDone();
     }
   };
   return (
-    <div className="bg-white rounded-[14px] overflow-hidden">
+    <div data-tour="project-delete" className="bg-white rounded-[14px] overflow-hidden">
       {confirm ? (
         <div className="p-4">
           <p className="text-[15px] font-semibold text-[#18181B]">刪除「{p.name || p.code}」的資料？</p>

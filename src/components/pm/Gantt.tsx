@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { tourEmit } from "./tour/bus";
 import { addDays, diffDays, toDay, WEEKDAYS } from "@/lib/project-ops";
 import { ACCENT, STATUS, TRACK } from "./ui";
 
@@ -582,7 +583,11 @@ export default function Gantt({
                         // 保險：萬一瀏覽器沒有補 click，下一次點擊不要被吃掉
                         setTimeout(() => (justDragged.current = false), 400);
                         const p = previewRef.current?.key === key ? previewRef.current : null;
-                        if (p && (p.start !== d.start || p.end !== d.end)) d.bar.onChange?.(p.start, p.end);
+                        if (p && (p.start !== d.start || p.end !== d.end)) {
+                          d.bar.onChange?.(p.start, p.end);
+                          // 新手教學：整條平移、拉開始日、拉結束日各算一種
+                          tourEmit("gantt-drag", d.mode);
+                        }
                       }
                       setPreview(null);
                     };

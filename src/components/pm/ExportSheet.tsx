@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { tourEmit } from "./tour/bus";
 import type { Task } from "@/lib/pm/model";
 import { Sheet, toast } from "./Sheet";
 import { FieldGroup } from "./fields";
@@ -48,6 +49,7 @@ export function ExportSheet({
     // 看板本來就有「完成」欄：預設包含已完成；清單、甘特圖跟著畫面上的「顯示已完成」
     setWithDone(view === "board" || showDone);
     setSnap({ pm, tasks });
+    tourEmit("export-open", view);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
