@@ -2,25 +2,27 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
-import { fmtDate, fmtMoney, STAGES, type Stage } from "@/lib/project-ops";
-import { personColor, type PmPhoto, type Task } from "@/lib/pm/model";
+import { CATEGORIES, STAGES, fmtDate, fmtMoney, parseMoney, validateRecord, weightedProgress, type Risk, type Stage } from "@/lib/project-ops";
+import { personColor, taskToWorkItem, type PmPhoto, type PmProject } from "@/lib/pm/model";
 import { HealthBadge, Icon, ProgressBar, SubScreen } from "./ui";
-import { Avatar, AvatarStack, Empty, Group, ORANGE, SegmentedIcons, Spinner, DoneToggle } from "./kit";
-import { ReminderTasks } from "./Reminders";
-import { TaskBoard } from "./TaskBoard";
-import { TaskGantt } from "./TaskGantt";
-import { TaskSheet } from "./TaskSheet";
-import { ProjectInfoSheet } from "./ProjectInfoSheet";
-import { PhotoUpload } from "./PhotoUpload";
+import { Avatar, AvatarStack, Empty, Group, Spinner } from "./kit";
+import { fmtDateLong } from "./fields";
+import { folderIdFrom } from "./ProjectInfoSheet";
 import { toast } from "./Sheet";
 import type { Pm, ProjectItem } from "./usePm";
 
 /* ══════════════════════════════════════════════════════════
-   專案頁：一個專案的全部 —— 任務（清單／看板／甘特）、照片、資料
+   專案頁：看一眼就知道專案的狀況，資料直接在這頁改
+   - 上面：摘要卡（階段、健康度、進度、工期、參與者），只看不改
+   - 下面：「資料｜照片」
+     資料像 iPhone「設定」：左邊項目、右邊目前的值，點右邊直接改，改完自動存（不用按編輯、儲存）
+     沒有管理權限的人只看得到值
+   - 任務在「任務追蹤」看、照片從底部「＋」上傳，這頁不放新增按鈕
    ══════════════════════════════════════════════════════════ */
 
-type Section = "tasks" | "photos" | "info";
-type View = "list" | "board" | "gantt";
+type Section = "info" | "photos";
+type SaveState = "idle" | "saving" | "saved";
+const RISKS: Risk[] = ["正常", "注意", "異常"];
 
 export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | null; onClose: () => void }) {
   const p = code ? pm.projectBy.get(code) : undefined;
@@ -28,204 +30,127 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
   if (p) last.current = p;
   const shown = p ?? last.current;
 
-  const [section, setSection] = useState<Section>("tasks");
-  const [view, setView] = useState<View>("list");
-  const [sheet, setSheet] = useState<{ id: string | null; preset?: Partial<Task> } | null>(null);
-  const [editInfo, setEditInfo] = useState(false);
-  const [upload, setUpload] = useState(false);
-  const [stageMenu, setStageMenu] = useState(false);
-  const [showDone, setShowDone] = useState(false);
+  const [section, setSection] = useState<Section>("info");
   const [showPeople, setShowPeople] = useState(false);
+  const [save, setSave] = useState<SaveState>("idle");
+  const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
-    setSection("tasks");
-    setStageMenu(false);
-    setShowDone(false);
+    setSection("info");
     setShowPeople(false);
+    setSave("idle");
   }, [code]);
 
-  const setStage = async (s: Stage) => {
-    setStageMenu(false);
-    if (!shown || s === shown.stage) return;
-    const ok = await pm.saveProject(shown.code, { stage: s });
-    if (ok) toast(`階段改為「${s}」`);
+  /** 改一個（或幾個）欄位就存；日期前後矛盾之類的錯誤不存、跳提示，畫面會回到原本的值 */
+  const commit = async (patch: Partial<PmProject>): Promise<boolean> => {
+    if (!shown) return false;
+    const keys = Object.keys(patch);
+    const bad = validateRecord({ ...shown, ...patch } as never, pm.today).find((i) => i.level === "error" && keys.includes(i.field));
+    if (bad) {
+      toast(bad.message, { tone: "error" });
+      return false;
+    }
+    clearTimeout(savedTimer.current);
+    setSave("saving");
+    const ok = await pm.saveProject(shown.code, patch);
+    setSave(ok ? "saved" : "idle");
+    if (ok) savedTimer.current = setTimeout(() => setSave("idle"), 1600);
+    return ok;
   };
 
   return (
-    <>
-      <SubScreen
-        open={!!p}
-        title={shown?.name ?? ""}
-        subtitle={shown ? `${shown.code}　·　${shown.company || "APP 新建"}` : undefined}
-        onClose={onClose}
-        scrollKey={code ?? ""}
-        headerAction={
-          shown && pm.isManager ? (
-            <button onClick={() => setEditInfo(true)} className="h-11 px-3 rounded-full text-[15px] font-semibold text-[#18181B] active:bg-[#F4F4F5]">
-              編輯
-            </button>
-          ) : undefined
-        }
-        bottomBar={
-          shown ? (
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setSheet({ id: null, preset: { code: shown.code } })}
-                className="h-[52px] rounded-[14px] text-white text-[15px] font-semibold inline-flex items-center justify-center gap-1.5 active:opacity-85"
-                style={{ background: ORANGE }}
-              >
-                <Icon name="add_task" weight={400} className="text-[21px]" />
-                新增任務
-              </button>
-              <button
-                onClick={() => setUpload(true)}
-                className="h-[52px] rounded-[14px] bg-[#F4F4F5] text-[#18181B] text-[15px] font-semibold inline-flex items-center justify-center gap-1.5 active:bg-[#E4E4E7]"
-              >
-                <Icon name="add_a_photo" weight={400} className="text-[21px]" />
-                上傳照片
-              </button>
+    <SubScreen
+      open={!!p}
+      title={shown?.name ?? ""}
+      subtitle={shown?.code}
+      onClose={onClose}
+      scrollKey={code ?? ""}
+      headerAction={
+        save !== "idle" ? (
+          <span className="px-3 text-[13px] text-[#8E8E93] inline-flex items-center gap-1" aria-live="polite">
+            {save === "saving" ? <Spinner size={13} /> : <Icon name="check" weight={500} className="text-[16px] text-[#30A46C]" />}
+            {save === "saving" ? "儲存中" : "已儲存"}
+          </span>
+        ) : undefined
+      }
+    >
+      {shown && (
+        <div className="px-4 sm:px-5 pt-4 pb-10 max-w-2xl mx-auto flex flex-col gap-4">
+          {/* 摘要：只看 */}
+          <Group className="p-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="h-8 px-3 rounded-full bg-[#F4F4F5] text-[14px] font-semibold text-[#18181B] inline-flex items-center">{shown.stage ?? "未設定階段"}</span>
+              <HealthBadge health={shown.view.health} />
             </div>
-          ) : undefined
-        }
-      >
-        {shown && (
-          <div className="px-5 py-5 max-w-3xl mx-auto flex flex-col gap-4">
-            {/* 摘要 */}
-            <Group className="p-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="relative">
-                  <button
-                    disabled={!pm.isManager}
-                    onClick={() => setStageMenu((v) => !v)}
-                    className="h-9 pl-3 pr-2 rounded-full bg-[#F4F4F5] text-[14px] font-semibold text-[#18181B] inline-flex items-center gap-0.5 disabled:pr-3"
-                  >
-                    {shown.stage ?? "未設定階段"}
-                    {pm.isManager && <Icon name="expand_more" className="text-[18px]" />}
-                  </button>
-                  {stageMenu && (
-                    <div className="absolute z-10 top-11 left-0 w-44 bg-white rounded-[14px] border border-[#E4E4E7] shadow-[0_12px_30px_rgba(0,0,0,0.12)] py-1">
-                      {STAGES.map((s) => (
-                        <button key={s} onClick={() => setStage(s)} className="w-full h-10 px-4 text-left text-[15px] text-[#18181B] flex items-center justify-between active:bg-[#F4F4F5]">
-                          {s}
-                          {s === shown.stage && <Icon name="check" weight={500} className="text-[18px]" style={{ color: ORANGE }} />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <HealthBadge health={shown.view.health} />
-                {shown.photoCount > 0 && (
-                  <button onClick={() => setSection("photos")} className="h-7 px-2.5 rounded-full bg-[#F4F4F5] text-[12px] text-[#52525B] inline-flex items-center gap-1">
-                    <Icon name="photo_library" className="text-[15px]" />
-                    {shown.photoCount}
-                  </button>
-                )}
+            {shown.view.reason && <p className="text-[13px] text-[#71717A] mt-2">{shown.view.reason}</p>}
+            <div className="mt-4">
+              <div className="flex items-baseline justify-between mb-1.5">
+                <span className="text-[13px] text-[#8E8E93]">進度</span>
+                <span className="text-[13px] text-[#8E8E93]">
+                  <b className="text-[22px] font-bold text-[#18181B] tabular-nums">{shown.view.ops?.progress ?? 0}</b>%
+                  {shown.view.plannedPct !== undefined && <span className="ml-2">計畫 {shown.view.plannedPct}%</span>}
+                </span>
               </div>
-              {shown.view.reason && <p className="text-[13px] text-[#71717A] mt-2">{shown.view.reason}</p>}
-              <div className="mt-4">
-                <div className="flex items-baseline justify-between mb-1.5">
-                  <span className="text-[13px] text-[#8E8E93]">進度</span>
-                  <span className="text-[13px] text-[#8E8E93]">
-                    <b className="text-[22px] font-bold text-[#18181B] tabular-nums">{shown.view.ops?.progress ?? 0}</b>%
-                    {shown.view.plannedPct !== undefined && <span className="ml-2">計畫 {shown.view.plannedPct}%</span>}
-                  </span>
-                </div>
-                <ProgressBar actual={shown.view.ops?.progress} planned={shown.view.plannedPct} health={shown.view.health} height={8} />
-              </div>
-              <div className="grid grid-cols-3 gap-2 mt-4 text-center">
-                <Stat label="開工" value={shown.startAt ? fmtDate(shown.startAt, pm.today) : "—"} />
-                <Stat label="預計完工" value={shown.dueAt ? fmtDate(shown.dueAt, pm.today) : "—"} />
-                <Stat
-                  label={shown.view.daysLeft !== undefined && shown.view.daysLeft < 0 ? "已逾期" : "剩餘"}
-                  value={shown.view.daysLeft === undefined ? "—" : `${Math.abs(shown.view.daysLeft)} 天`}
-                  warn={shown.view.daysLeft !== undefined && shown.view.daysLeft < 0}
-                />
-              </div>
-              {shown.note && (
-                <p className="mt-4 text-[14px] text-[#3F3F46] bg-[#FAFAFA] rounded-[12px] px-3 py-2.5 leading-relaxed">
-                  <span className="text-[12px] text-[#A1A1AA] block mb-0.5">近況</span>
-                  {shown.note}
-                </p>
-              )}
-              {/* 參與者：小頭像疊在一起，點開看每個人手上幾件 */}
-              <div className="mt-4 pt-3 border-t border-[#F2F2F4] flex items-center justify-between gap-2">
-                {shown.participants.length ? (
-                  <button onClick={() => setShowPeople((v) => !v)} className="flex items-center gap-2 min-h-[40px] -ml-1 pl-1 pr-2 rounded-full active:bg-[#F4F4F5] shrink-0" aria-expanded={showPeople}>
-                    <AvatarStack people={shown.participants} max={5} size={30} label={`${shown.participants.length} 位參與者`} />
-                    <span className="text-[13px] text-[#71717A] whitespace-nowrap">{shown.participants.length} 位參與</span>
-                    <Icon name={showPeople ? "expand_less" : "expand_more"} className="text-[18px] text-[#A1A1AA]" />
-                  </button>
-                ) : (
-                  <span className="text-[13px] text-[#A1A1AA]">還沒有指派任何人</span>
-                )}
-                {shown.manager && <span className="text-[12.5px] text-[#8E8E93] truncate min-w-0">主任 {shown.manager}</span>}
-              </div>
-              {showPeople && (
-                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
-                  {shown.participants.map((u) => (
-                    <div key={u.email} className="flex items-center gap-2.5 px-1 py-1.5">
-                      <Avatar name={u.name} email={u.email} size={34} />
-                      <span className="flex-1 min-w-0 text-[14px] text-[#18181B] truncate">{u.email === pm.me?.email ? `${u.name}（我）` : u.name}</span>
-                      <span className="text-[12.5px] text-[#8E8E93] tabular-nums">{u.open ? `${u.open} 件進行中` : "已完成"}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Group>
-
-            {/* 分段 */}
-            <div role="tablist" className="grid grid-cols-3 p-[3px] rounded-[12px] bg-[#EEEEF0]">
-              {(
-                [
-                  ["tasks", `任務 ${shown.openCount || ""}`],
-                  ["photos", `照片 ${shown.photoCount || ""}`],
-                  ["info", "資料"],
-                ] as [Section, string][]
-              ).map(([k, label]) => (
-                <button
-                  key={k}
-                  role="tab"
-                  aria-selected={section === k}
-                  onClick={() => setSection(k)}
-                  className={`h-9 rounded-[9px] text-[14px] font-semibold transition-all ${section === k ? "bg-white text-[#18181B] shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-[#71717A]"}`}
-                >
-                  {label.trim()}
+              <ProgressBar actual={shown.view.ops?.progress} planned={shown.view.plannedPct} health={shown.view.health} height={8} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-4 text-center">
+              <Stat label="開工" value={shown.startAt ? fmtDate(shown.startAt, pm.today) : "—"} />
+              <Stat label="預計完工" value={shown.dueAt ? fmtDate(shown.dueAt, pm.today) : "—"} />
+              <Stat
+                label={shown.view.daysLeft !== undefined && shown.view.daysLeft < 0 ? "已逾期" : "剩餘"}
+                value={shown.view.daysLeft === undefined ? "—" : `${Math.abs(shown.view.daysLeft)} 天`}
+                warn={shown.view.daysLeft !== undefined && shown.view.daysLeft < 0}
+              />
+            </div>
+            <div className="mt-4 pt-3 border-t border-[#F2F2F4] flex items-center justify-between gap-2">
+              {shown.participants.length ? (
+                <button onClick={() => setShowPeople((v) => !v)} className="flex items-center gap-2 min-h-[40px] -ml-1 pl-1 pr-2 rounded-full active:bg-[#F4F4F5] shrink-0" aria-expanded={showPeople}>
+                  <AvatarStack people={shown.participants} max={5} size={30} label={`${shown.participants.length} 位參與者`} />
+                  <span className="text-[13px] text-[#71717A] whitespace-nowrap">{shown.participants.length} 位參與</span>
+                  <Icon name={showPeople ? "expand_less" : "expand_more"} className="text-[18px] text-[#A1A1AA]" />
                 </button>
-              ))}
+              ) : (
+                <span className="text-[13px] text-[#A1A1AA]">還沒有指派任何人</span>
+              )}
+              {shown.openCount > 0 && <span className="text-[12.5px] text-[#8E8E93] whitespace-nowrap">{shown.openCount} 項任務進行中</span>}
             </div>
-
-            {section === "tasks" && (
-              <>
-                <div className="flex items-center justify-between gap-2">
-                  <DoneToggle on={showDone} onChange={setShowDone} count={shown.tasks.length - shown.openCount} />
-                  <SegmentedIcons
-                    label="檢視方式"
-                    value={view}
-                    onChange={setView}
-                    options={[
-                      { value: "list", icon: "format_list_bulleted", label: "清單" },
-                      { value: "board", icon: "view_kanban", label: "看板" },
-                      { value: "gantt", icon: "view_timeline", label: "甘特" },
-                    ]}
-                  />
-                </div>
-                {view === "list" && (
-                  <ReminderTasks pm={pm} tasks={shown.tasks} code={shown.code} showDone={showDone} onOpen={(t) => setSheet({ id: t.id })} addRow surface="white" />
-                )}
-                {view === "board" && <TaskBoard pm={pm} tasks={shown.tasks} onOpen={(t) => setSheet({ id: t.id })} onAdd={() => setSheet({ id: null, preset: { code: shown.code } })} />}
-                {view === "gantt" && <TaskGantt pm={pm} tasks={shown.tasks.filter((t) => showDone || t.status !== "done")} onOpen={(t) => setSheet({ id: t.id })} project={shown.code} />}
-              </>
+            {showPeople && (
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                {shown.participants.map((u) => (
+                  <div key={u.email} className="flex items-center gap-2.5 px-1 py-1.5">
+                    <Avatar name={u.name} email={u.email} size={34} />
+                    <span className="flex-1 min-w-0 text-[14px] text-[#18181B] truncate">{u.email === pm.me?.email ? `${u.name}（我）` : u.name}</span>
+                    <span className="text-[12.5px] text-[#8E8E93] tabular-nums">{u.open ? `${u.open} 件進行中` : "已完成"}</span>
+                  </div>
+                ))}
+              </div>
             )}
-            {section === "photos" && <Photos pm={pm} project={shown} onUpload={() => setUpload(true)} />}
-            {section === "info" && <Info pm={pm} project={shown} onEdit={() => setEditInfo(true)} />}
-          </div>
-        )}
-      </SubScreen>
+          </Group>
 
-      <TaskSheet pm={pm} open={!!sheet} taskId={sheet?.id ?? null} preset={sheet?.preset} onClose={() => setSheet(null)} />
-      {shown && pm.isManager && <ProjectInfoSheet pm={pm} code={shown.code} open={editInfo} onClose={() => setEditInfo(false)} />}
-      {shown && <PhotoUpload open={upload} onClose={() => setUpload(false)} presetCode={shown.code} />}
-    </>
+          {/* 資料｜照片 */}
+          <div role="tablist" className="grid grid-cols-2 p-[3px] rounded-[12px] bg-[#EEEEF0]">
+            {(
+              [
+                ["info", "資料"],
+                ["photos", shown.photoCount ? `照片 ${shown.photoCount}` : "照片"],
+              ] as [Section, string][]
+            ).map(([k, label]) => (
+              <button
+                key={k}
+                role="tab"
+                aria-selected={section === k}
+                onClick={() => setSection(k)}
+                className={`h-9 rounded-[9px] text-[14px] font-semibold transition-all ${section === k ? "bg-white text-[#18181B] shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-[#71717A]"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {section === "info" ? <Details pm={pm} p={shown} commit={commit} onArchived={onClose} /> : <Photos pm={pm} project={shown} />}
+        </div>
+      )}
+    </SubScreen>
   );
 }
 
@@ -238,7 +163,483 @@ function Stat({ label, value, warn }: { label: string; value: string; warn?: boo
   );
 }
 
-/* ── 照片 ─────────────────────────────────────────────── */
+/* ── 資料（直接改） ─────────────────────────────────────── */
+
+function Details({ pm, p, commit, onArchived }: { pm: Pm; p: ProjectItem; commit: (patch: Partial<PmProject>) => Promise<boolean>; onArchived: () => void }) {
+  const edit = pm.isManager;
+  const auto = useMemo(() => weightedProgress(p.tasks.map(taskToWorkItem)), [p.tasks]);
+  const warns = validateRecord(p as never, pm.today).filter((i) => i.level === "warn");
+  const folder = p.driveFolderId ? `https://drive.google.com/drive/folders/${p.driveFolderId}` : undefined;
+  const [confirmArchive, setConfirmArchive] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* APP 新建的專案才能改名稱；CRM 名冊上的以 CRM 為準 */}
+      {!p.inCrm && (
+        <List title="專案">
+          <TextLine label="名稱" value={p.name} edit={edit} placeholder="專案名稱" onCommit={(v) => (v ? commit({ name: v }) : (toast("名稱不能空白", { tone: "error" }), Promise.resolve(false)))} />
+          <TextLine label="單位" value={p.company} edit={edit} placeholder="例：拾壤" onCommit={(v) => commit({ company: v })} />
+        </List>
+      )}
+
+      <List title="狀態">
+        <PickLine label="階段" value={p.stage} options={STAGES} edit={edit} onCommit={(v) => commit({ stage: v as Stage })} />
+        <PickLine label="風險" value={p.risk} options={RISKS} edit={edit} allowEmpty onCommit={(v) => commit({ risk: v as Risk | undefined })} />
+        <ProgressLine value={p.progress} auto={auto} edit={edit} onCommit={(v) => commit({ progress: v })} />
+      </List>
+
+      <List title="時程" foot={warns.filter((w) => /At$/.test(w.field)).map((w) => w.message).join("　")}>
+        <DateLine label="簽約日" value={p.signedAt} today={pm.today} edit={edit} onCommit={(v) => commit({ signedAt: v })} />
+        <DateLine label="開工日" value={p.startAt} today={pm.today} edit={edit} onCommit={(v) => commit({ startAt: v })} />
+        <DateLine label="預計完工" value={p.dueAt} today={pm.today} edit={edit} min={p.startAt} onCommit={(v) => commit({ dueAt: v })} />
+        <DateLine label="實際完工" value={p.doneAt} today={pm.today} edit={edit} onCommit={(v) => commit({ doneAt: v })} />
+      </List>
+
+      {pm.isManager && (
+        <List
+          title="合約與請款"
+          foot={
+            p.contract !== undefined || p.billed !== undefined
+              ? `合約合計 ${fmtMoney((p.contract ?? 0) + (p.variation ?? 0))}　·　應收未收 ${fmtMoney((p.billed ?? 0) - (p.collected ?? 0))}`
+              : "金額可以寫 185萬 或 1850000"
+          }
+        >
+          <MoneyLine label="合約金額" value={p.contract} onCommit={(v) => commit({ contract: v })} />
+          <MoneyLine label="追加減" value={p.variation} signed onCommit={(v) => commit({ variation: v })} />
+          <MoneyLine label="已請款" value={p.billed} onCommit={(v) => commit({ billed: v })} />
+          <MoneyLine label="已收款" value={p.collected} onCommit={(v) => commit({ collected: v })} />
+        </List>
+      )}
+
+      <List title="人員與地點">
+        <PickLine label="工程類別" value={p.category ?? p.view.category} options={CATEGORIES} edit={edit} allowEmpty onCommit={(v) => commit({ category: v })} />
+        <TextLine label="工地主任" value={p.manager} edit={edit} placeholder="姓名" list={pm.people.map((x) => x.name)} onCommit={(v) => commit({ manager: v })} />
+        <TextLine label="業主" value={p.client} edit={edit} placeholder="姓名或公司" onCommit={(v) => commit({ client: v })} />
+        <TextLine label="工地地址" value={p.site} edit={edit} placeholder="縣市區＋路名" onCommit={(v) => commit({ site: v })} />
+      </List>
+
+      <List title="近況">
+        <NoteLine value={p.note} edit={edit} onCommit={(v) => commit({ note: v })} />
+      </List>
+
+      {pm.isManager && <EditorsLine pm={pm} p={p} />}
+
+      <List title="雲端資料夾" foot={edit ? "工程照會上傳到這個資料夾裡的「工程照」。沒填的話，第一次上傳時會依代碼自動尋找。" : undefined}>
+        {folder && (
+          <a href={folder} target="_blank" rel="noreferrer" className="flex items-center gap-3 pl-4 pr-3 h-12 active:bg-[#F2F2F4]">
+            <Icon name="folder" fill={1} className="text-[22px]" style={{ color: personColor(p.code) }} />
+            <span className="flex-1 text-[16px] text-[#18181B]">打開專案資料夾</span>
+            <Icon name="open_in_new" className="text-[18px] text-[#C7C7CC]" />
+          </a>
+        )}
+        {edit ? (
+          <TextLine
+            label={folder ? "換一個" : "資料夾連結"}
+            value={folder}
+            edit
+            placeholder="貼上 Google Drive 網址"
+            onCommit={(v) => {
+              const id = v ? folderIdFrom(v) : undefined;
+              if (v && !id) {
+                toast("看不懂這個雲端資料夾連結", { tone: "error" });
+                return Promise.resolve(false);
+              }
+              return commit({ driveFolderId: id });
+            }}
+          />
+        ) : (
+          !folder && <p className="px-4 py-3 text-[14px] text-[#8E8E93]">還沒連結</p>
+        )}
+      </List>
+
+      {pm.isManager && (
+        <div className="bg-white rounded-[14px] overflow-hidden">
+          {confirmArchive ? (
+            <div className="p-4">
+              <p className="text-[15px] font-semibold text-[#18181B]">{p.archived ? "取消封存這個專案？" : "封存這個專案？"}</p>
+              <p className="text-[13px] text-[#71717A] mt-1 leading-relaxed">
+                {p.archived ? "專案會回到清單上。" : "專案會從任務追蹤、專案情報的清單上隱藏。任務、照片都會保留，之後可以在這裡取消封存。"}
+              </p>
+              <div className="flex gap-2 mt-3">
+                <button type="button" onClick={() => setConfirmArchive(false)} className="flex-1 h-11 rounded-[12px] bg-[#F4F4F5] text-[15px] font-semibold text-[#3F3F46]">
+                  取消
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setConfirmArchive(false);
+                    const wasArchived = p.archived;
+                    if (await commit({ archived: !wasArchived })) {
+                      toast(wasArchived ? "已取消封存" : `已封存 ${p.code}`);
+                      if (!wasArchived) onArchived();
+                    }
+                  }}
+                  className={`flex-1 h-11 rounded-[12px] text-[15px] font-semibold text-white ${p.archived ? "bg-[#18181B]" : "bg-[#E5484D]"}`}
+                >
+                  {p.archived ? "取消封存" : "封存"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setConfirmArchive(true)} className={`w-full h-12 text-[16px] active:bg-[#F2F2F4] ${p.archived ? "text-[var(--accent)]" : "text-[#E5484D]"}`}>
+              {p.archived ? "取消封存專案" : "封存專案"}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── 設定風格的列 ── */
+
+function List({ title, foot, children }: { title?: string; foot?: string; children: React.ReactNode }) {
+  return (
+    <section>
+      {title && <h3 className="px-4 pb-1.5 text-[13px] text-[#8E8E93]">{title}</h3>}
+      <div className="bg-white rounded-[14px] overflow-hidden divide-y divide-[#F0F0F2]">{children}</div>
+      {foot && <p className="px-4 pt-1.5 text-[12.5px] leading-relaxed text-[#8E8E93]">{foot}</p>}
+    </section>
+  );
+}
+
+const lineCls = "relative flex items-center gap-3 pl-4 pr-3 min-h-[48px]";
+const labelCls = "text-[16px] text-[#18181B] shrink-0";
+const valueCls = "flex-1 min-w-0 text-right text-[16px] text-[#6E6E73] bg-transparent outline-none placeholder:text-[#C7C7CC] truncate";
+
+/** 文字：右邊直接打字，離開輸入框（或按完成）就存 */
+function TextLine({
+  label,
+  value,
+  edit,
+  placeholder,
+  list,
+  onCommit,
+}: {
+  label: string;
+  value?: string;
+  edit: boolean;
+  placeholder?: string;
+  list?: string[];
+  onCommit: (v: string | undefined) => Promise<boolean>;
+}) {
+  const [t, setT] = useState(value ?? "");
+  const focused = useRef(false);
+  const id = React.useId();
+  useEffect(() => {
+    if (!focused.current) setT(value ?? "");
+  }, [value]);
+  if (!edit) {
+    return (
+      <div className={lineCls}>
+        <span className={labelCls}>{label}</span>
+        <span className={`${valueCls} ${value ? "" : "!text-[#C7C7CC]"}`}>{value || "未填"}</span>
+      </div>
+    );
+  }
+  const done = async () => {
+    focused.current = false;
+    const v = t.trim() || undefined;
+    if ((v ?? "") === (value ?? "")) return;
+    if (!(await onCommit(v))) setT(value ?? "");
+  };
+  return (
+    <label className={`${lineCls} cursor-text`}>
+      <span className={labelCls}>{label}</span>
+      <input
+        value={t}
+        onChange={(e) => setT(e.target.value)}
+        onFocus={() => (focused.current = true)}
+        onBlur={done}
+        onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && (e.target as HTMLInputElement).blur()}
+        placeholder={placeholder}
+        enterKeyHint="done"
+        autoComplete="off"
+        list={list?.length ? id : undefined}
+        className={valueCls}
+      />
+      {list && list.length > 0 && (
+        <datalist id={id}>
+          {list.map((x) => (
+            <option key={x} value={x} />
+          ))}
+        </datalist>
+      )}
+    </label>
+  );
+}
+
+/** 金額：平常顯示「185 萬」，點進去才是數字；追加減左邊有「追加／追減」切換（iOS 數字鍵盤沒有負號） */
+function MoneyLine({ label, value, signed, onCommit }: { label: string; value?: number; signed?: boolean; onCommit: (v: number | undefined) => Promise<boolean> }) {
+  const [focus, setFocus] = useState(false);
+  const [t, setT] = useState("");
+  const neg = (value ?? 0) < 0;
+  const done = async () => {
+    setFocus(false);
+    if (t.trim() === "") {
+      if (value !== undefined) await onCommit(undefined);
+      return;
+    }
+    const n = parseMoney(t);
+    if (n === undefined || n < 0) return toast("看不懂這個金額，例：185萬 或 1850000", { tone: "error" });
+    const v = signed && neg ? -n : n;
+    if (v !== value) await onCommit(v);
+  };
+  return (
+    <label className={`${lineCls} cursor-text`}>
+      <span className={labelCls}>{label}</span>
+      {signed && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            if (value) onCommit(-value);
+          }}
+          disabled={!value}
+          className="h-7 px-2.5 rounded-full bg-[#F2F2F4] text-[13px] font-semibold text-[#3F3F46] disabled:text-[#C7C7CC]"
+          aria-label="切換追加或追減"
+        >
+          {neg ? "追減" : "追加"}
+        </button>
+      )}
+      <input
+        inputMode="decimal"
+        value={focus ? t : value === undefined ? "" : fmtMoney(Math.abs(value))}
+        onFocus={() => {
+          setT(value === undefined ? "" : String(Math.abs(value)));
+          setFocus(true);
+        }}
+        onChange={(e) => setT(e.target.value)}
+        onBlur={done}
+        onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+        placeholder="未填"
+        enterKeyHint="done"
+        autoComplete="off"
+        className={`${valueCls} tabular-nums`}
+      />
+    </label>
+  );
+}
+
+/** 日期：右邊顯示 10/3（六），整列點了叫出系統的日期選擇；有值時右邊有 × 可以清掉 */
+function DateLine({
+  label,
+  value,
+  today,
+  min,
+  edit,
+  onCommit,
+}: {
+  label: string;
+  value?: string;
+  today: string;
+  min?: string;
+  edit: boolean;
+  onCommit: (v: string | undefined) => Promise<boolean>;
+}) {
+  return (
+    <div className={lineCls}>
+      <span className={labelCls}>{label}</span>
+      <span className={`flex-1 text-right text-[16px] tabular-nums ${value ? (edit ? "text-[var(--accent-ink)]" : "text-[#6E6E73]") : "text-[#C7C7CC]"}`}>
+        {value ? fmtDateLong(value, today) : "未設定"}
+      </span>
+      {edit && (
+        <>
+          <input
+            type="date"
+            value={value ?? ""}
+            min={min}
+            onChange={(e) => onCommit(e.target.value || undefined)}
+            onClick={(e) => {
+              try {
+                (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
+              } catch {
+                /* 某些瀏覽器不允許 */
+              }
+            }}
+            aria-label={label}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            style={{ colorScheme: "light", right: value ? 44 : 0 }}
+          />
+          {value && (
+            <button type="button" onClick={() => onCommit(undefined)} aria-label={`清除${label}`} className="relative z-[1] -mr-1 w-8 h-8 rounded-full flex items-center justify-center text-[#C7C7CC] active:bg-[#F2F2F4]">
+              <Icon name="cancel" fill={1} className="text-[19px]" />
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** 選一個：右邊目前的值 ⌃⌄，點了跳出系統選單（iPhone 是滾輪） */
+function PickLine({
+  label,
+  value,
+  options,
+  edit,
+  allowEmpty,
+  onCommit,
+}: {
+  label: string;
+  value?: string;
+  options: readonly string[];
+  edit: boolean;
+  allowEmpty?: boolean;
+  onCommit: (v: string | undefined) => Promise<boolean>;
+}) {
+  return (
+    <div className={lineCls}>
+      <span className={labelCls}>{label}</span>
+      <span className={`flex-1 text-right text-[16px] ${value ? "text-[#6E6E73]" : "text-[#C7C7CC]"}`}>{value ?? "未設定"}</span>
+      {edit && (
+        <>
+          <Icon name="unfold_more" className="text-[18px] text-[#C7C7CC] -ml-1.5" />
+          <select
+            value={value ?? ""}
+            onChange={(e) => onCommit(e.target.value || undefined)}
+            aria-label={label}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          >
+            {(allowEmpty || !value) && <option value="">未設定</option>}
+            {options.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** 進度：預設依任務自動算；點開可以手動調（－／＋ 5%、滑桿），也可以改回自動 */
+function ProgressLine({ value, auto, edit, onCommit }: { value?: number; auto?: number; edit: boolean; onCommit: (v: number | undefined) => Promise<boolean> }) {
+  const [open, setOpen] = useState(false);
+  const [v, setV] = useState(value ?? auto ?? 0);
+  useEffect(() => setV(value ?? auto ?? 0), [value, auto]);
+  const manual = value !== undefined;
+  const set = (n: number) => setV(Math.max(0, Math.min(100, Math.round(n))));
+  return (
+    <div>
+      <button type="button" disabled={!edit} onClick={() => setOpen((o) => !o)} className={`${lineCls} w-full text-left active:bg-[#F2F2F4] disabled:active:bg-transparent`} aria-expanded={open}>
+        <span className={labelCls}>進度</span>
+        <span className="flex-1 text-right text-[16px] text-[#6E6E73] tabular-nums">
+          {value ?? auto ?? 0}%<span className="ml-1.5 text-[13px] text-[#A1A1AA]">{manual ? "手動" : "依任務"}</span>
+        </span>
+        {edit && <Icon name={open ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />}
+      </button>
+      {open && edit && (
+        <div className="px-4 pb-3.5">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => set(v - 5)} className="w-10 h-10 rounded-full bg-[#F2F2F4] flex items-center justify-center active:bg-[#E4E4E7]" aria-label="減少 5%">
+              <Icon name="remove" className="text-[20px]" />
+            </button>
+            <input type="range" min={0} max={100} step={5} value={v} onChange={(e) => set(+e.target.value)} className="flex-1 accent-[var(--accent)] h-6" aria-label="進度" />
+            <button type="button" onClick={() => set(v + 5)} className="w-10 h-10 rounded-full bg-[#F2F2F4] flex items-center justify-center active:bg-[#E4E4E7]" aria-label="增加 5%">
+              <Icon name="add" className="text-[20px]" />
+            </button>
+          </div>
+          <div className="flex gap-2 mt-3">
+            {manual && auto !== undefined && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (await onCommit(undefined)) setOpen(false);
+                }}
+                className="flex-1 h-10 rounded-[12px] bg-[#F2F2F4] text-[14px] font-semibold text-[#3F3F46]"
+              >
+                改回依任務 {auto}%
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={v === (value ?? auto ?? 0) && manual}
+              onClick={async () => {
+                if (await onCommit(v)) setOpen(false);
+              }}
+              className="flex-1 h-10 rounded-[12px] bg-[#18181B] text-white text-[14px] font-semibold disabled:opacity-35"
+            >
+              設為 {v}%
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 近況：整塊文字框，離開就存 */
+function NoteLine({ value, edit, onCommit }: { value?: string; edit: boolean; onCommit: (v: string | undefined) => Promise<boolean> }) {
+  const [t, setT] = useState(value ?? "");
+  const focused = useRef(false);
+  useEffect(() => {
+    if (!focused.current) setT(value ?? "");
+  }, [value]);
+  if (!edit) return <p className={`px-4 py-3 text-[15px] leading-relaxed whitespace-pre-wrap ${value ? "text-[#18181B]" : "text-[#C7C7CC]"}`}>{value || "還沒有寫"}</p>;
+  return (
+    <textarea
+      value={t}
+      onChange={(e) => setT(e.target.value)}
+      onFocus={() => (focused.current = true)}
+      onBlur={async () => {
+        focused.current = false;
+        const v = t.trim() || undefined;
+        if ((v ?? "") !== (value ?? "") && !(await onCommit(v))) setT(value ?? "");
+      }}
+      placeholder="例：泥作打底完成，待乾燥後上面層"
+      rows={3}
+      className="block w-full px-4 py-3 bg-transparent text-[16px] leading-relaxed text-[#18181B] outline-none resize-none placeholder:text-[#C7C7CC]"
+    />
+  );
+}
+
+/** 可以編輯的人：點開是頭像，點一下勾選／取消，馬上存 */
+function EditorsLine({ pm, p }: { pm: Pm; p: ProjectItem }) {
+  const [open, setOpen] = useState(false);
+  const editors = p.editors ?? [];
+  const names = editors.map((e) => pm.personBy.get(e)?.name ?? e.split("@")[0]);
+  const toggle = (email: string) => {
+    const next = editors.includes(email) ? editors.filter((e) => e !== email) : [...editors, email];
+    pm.saveEditors(p.code, next);
+  };
+  return (
+    <List title="權限" foot="勾選的人可以調整這個專案的甘特圖排程，也能修改、指派這個專案的任務。管理者本來就可以。">
+      <button type="button" onClick={() => setOpen((o) => !o)} className={`${lineCls} w-full text-left active:bg-[#F2F2F4]`} aria-expanded={open}>
+        <span className={labelCls}>可以編輯的人</span>
+        <span className={`flex-1 min-w-0 text-right text-[16px] truncate ${names.length ? "text-[#6E6E73]" : "text-[#C7C7CC]"}`}>{names.length ? names.join("、") : "只有管理者"}</span>
+        <Icon name={open ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />
+      </button>
+      {open && (
+        <div className="px-3 py-3 grid grid-cols-4 sm:grid-cols-6 gap-y-3 gap-x-1" role="group" aria-label="可以編輯的人">
+          {pm.people
+            .filter((x) => !x.manager)
+            .map((x) => {
+              const on = editors.includes(x.email);
+              return (
+                <button key={x.email} type="button" role="checkbox" aria-checked={on} onClick={() => toggle(x.email)} className="flex flex-col items-center gap-1 min-w-0 active:scale-95 transition-transform">
+                  <span className="relative rounded-full p-[3px]" style={{ background: on ? "var(--accent)" : "transparent" }}>
+                    <span className="block rounded-full ring-2 ring-white">
+                      <Avatar name={x.name} email={x.email} size={44} />
+                    </span>
+                    {on && (
+                      <span className="absolute -right-0.5 -bottom-0.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center bg-[var(--accent)]">
+                        <Icon name="check" weight={700} className="text-[13px] text-white" />
+                      </span>
+                    )}
+                  </span>
+                  <span className={`text-[12px] leading-tight truncate max-w-full ${on ? "font-bold text-[#18181B]" : "text-[#52525B]"}`}>{x.name}</span>
+                </button>
+              );
+            })}
+        </div>
+      )}
+    </List>
+  );
+}
+
+/* ── 照片（只看；上傳從底部「＋」） ─────────────────────── */
 
 const photoFetcher = async (url: string): Promise<PmPhoto[]> => {
   const r = await fetch(url, { cache: "no-store" });
@@ -247,7 +648,7 @@ const photoFetcher = async (url: string): Promise<PmPhoto[]> => {
   return j.items;
 };
 
-function Photos({ pm, project, onUpload }: { pm: Pm; project: ProjectItem; onUpload: () => void }) {
+function Photos({ pm, project }: { pm: Pm; project: ProjectItem }) {
   const { data, error, isLoading } = useSWR(`/api/pm/photos?code=${encodeURIComponent(project.code)}&n=${project.photoCount}`, photoFetcher, {
     revalidateOnFocus: false,
   });
@@ -263,18 +664,12 @@ function Photos({ pm, project, onUpload }: { pm: Pm; project: ProjectItem; onUpl
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <button onClick={onUpload} className="h-10 px-4 rounded-full text-white text-[14px] font-semibold inline-flex items-center gap-1.5" style={{ background: ORANGE }}>
-          <Icon name="add_a_photo" weight={400} className="text-[18px]" />
-          上傳照片
-        </button>
-        {folder && (
-          <a href={folder} target="_blank" rel="noreferrer" className="h-10 px-4 rounded-full bg-white border border-[#E4E4E7] text-[14px] font-semibold text-[#18181B] inline-flex items-center gap-1.5">
-            <Icon name="folder_open" className="text-[18px]" />
-            雲端資料夾
-          </a>
-        )}
-      </div>
+      {folder && (
+        <a href={folder} target="_blank" rel="noreferrer" className="self-start h-9 px-3.5 rounded-full bg-white text-[14px] font-semibold text-[#18181B] inline-flex items-center gap-1.5 active:bg-[#F2F2F4]">
+          <Icon name="folder_open" className="text-[18px]" />
+          雲端資料夾
+        </a>
+      )}
       {isLoading && !data ? (
         <div className="flex justify-center py-10">
           <Spinner size={20} />
@@ -283,7 +678,7 @@ function Photos({ pm, project, onUpload }: { pm: Pm; project: ProjectItem; onUpl
         <p className="text-[14px] text-[#71717A]">{String(error.message)}</p>
       ) : !data?.length ? (
         <Group>
-          <Empty icon="photo_camera" title="還沒有工程照" hint="用下方「上傳照片」或底部的「＋」拍照，照片會自動放進這個專案雲端資料夾的「工程照」。" />
+          <Empty icon="photo_camera" title="還沒有工程照" hint="用畫面底部的「＋」拍照上傳，照片會自動放進這個專案雲端資料夾的「工程照」。" />
         </Group>
       ) : (
         groups.map(([day, list]) => (
@@ -311,69 +706,6 @@ function Photos({ pm, project, onUpload }: { pm: Pm; project: ProjectItem; onUpl
             </div>
           </section>
         ))
-      )}
-    </div>
-  );
-}
-
-/* ── 資料 ─────────────────────────────────────────────── */
-
-function Info({ pm, project: p, onEdit }: { pm: Pm; project: ProjectItem; onEdit: () => void }) {
-  const rows: [string, React.ReactNode][] = [
-    ["工程類別", p.view.category],
-    ["工地主任", p.manager],
-    ["業主", p.client],
-    ["工地地址", p.site],
-    ["簽約日", p.signedAt && fmtDate(p.signedAt, pm.today)],
-    ["開工日", p.startAt && fmtDate(p.startAt, pm.today)],
-    ["預計完工", p.dueAt && fmtDate(p.dueAt, pm.today)],
-    ["實際完工", p.doneAt && fmtDate(p.doneAt, pm.today)],
-  ];
-  const money: [string, React.ReactNode][] = pm.isManager
-    ? [
-        ["合約金額", p.contract !== undefined && fmtMoney(p.contract)],
-        ["追加減", p.variation !== undefined && fmtMoney(p.variation)],
-        ["已請款", p.billed !== undefined && fmtMoney(p.billed)],
-        ["已收款", p.collected !== undefined && fmtMoney(p.collected)],
-        ["應收未收", p.view.receivable !== undefined && fmtMoney(p.view.receivable)],
-      ]
-    : [];
-  const Block = ({ title, list }: { title: string; list: [string, React.ReactNode][] }) => (
-    <section>
-      <h3 className="text-[13px] font-bold text-[#8E8E93] px-1 mb-1.5">{title}</h3>
-      <Group>
-        {list.map(([k, v], i) => (
-          <div key={k} className={`flex gap-4 px-4 py-3 ${i ? "border-t border-[#F2F2F4]" : ""}`}>
-            <span className="w-[76px] shrink-0 text-[14px] text-[#8E8E93]">{k}</span>
-            <span className="flex-1 min-w-0 text-[15px] text-[#18181B] break-words">{v || <span className="text-[#C7C7CC]">未填</span>}</span>
-          </div>
-        ))}
-      </Group>
-    </section>
-  );
-  return (
-    <div className="flex flex-col gap-4">
-      <Block title="基本資料" list={rows} />
-      {money.length > 0 && <Block title="合約與請款" list={money} />}
-      <section>
-        <h3 className="text-[13px] font-bold text-[#8E8E93] px-1 mb-1.5">雲端資料夾</h3>
-        <Group>
-          {p.driveFolderId ? (
-            <a href={`https://drive.google.com/drive/folders/${p.driveFolderId}`} target="_blank" rel="noreferrer" className="flex items-center gap-3 px-4 h-12 text-[15px] text-[#18181B]">
-              <Icon name="folder" fill={1} className="text-[22px]" style={{ color: personColor(p.code) }} />
-              開啟專案資料夾
-              <Icon name="open_in_new" className="text-[17px] text-[#A1A1AA] ml-auto" />
-            </a>
-          ) : (
-            <p className="px-4 py-3 text-[13px] text-[#8E8E93]">還沒連結。第一次上傳工程照時會依代碼自動找到資料夾，或在「編輯」貼上連結。</p>
-          )}
-        </Group>
-      </section>
-      {pm.isManager && (
-        <button onClick={onEdit} className="h-12 rounded-[14px] bg-white border border-[#E4E4E7] text-[15px] font-semibold text-[#18181B] inline-flex items-center justify-center gap-1.5">
-          <Icon name="edit" className="text-[18px]" />
-          編輯專案資料
-        </button>
       )}
     </div>
   );

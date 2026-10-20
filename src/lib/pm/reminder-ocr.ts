@@ -359,7 +359,9 @@ export async function readReminderShot(file: Blob, today: string, onProgress?: (
   const r0 = circles.length ? circles.map((c) => c.r).sort((a, b) => a - b)[circles.length >> 1] : W * 0.028;
 
   // 3) 每一行：去掉壓在圓圈上的字（Tesseract 常把圓圈讀成 @、O），配對圓圈
-  type L = { text: string; box: TBox; circle?: Circle; ink: number };
+  //    一行裡的字依左右間距分群：右邊的旗子、⌄、ⓘ 會被讀成 v、~、較 之類，和文字隔很遠，丟掉
+  //    最上面的導覽列（‹ 清單名稱 分享 ⋯）：取最靠近正中間的那一群當清單名稱（iOS 26 的樣式）
+  type L = { text: string; box: TBox; circle?: Circle; ink: number; nav?: boolean };
   const rows: L[] = [];
   for (const l of lines1) {
     const yc = (l.bbox.y0 + l.bbox.y1) / 2;
@@ -367,10 +369,21 @@ export async function readReminderShot(file: Blob, today: string, onProgress?: (
     const c = circles.find((c) => Math.abs(c.cy - yc) < Math.max(r0, h * 0.6) && c.cx + c.r < l.bbox.x1);
     // 最右邊 10% 是旗子、ⓘ 圖示，不是字
     const words = l.words.filter((w) => w.bbox.x0 < W * 0.9 && !circles.some((c) => Math.abs(c.cy - (w.bbox.y0 + w.bbox.y1) / 2) < c.r * 1.2 && w.bbox.x1 <= c.cx + c.r * 1.3));
-    const text = tidy(words.map((w) => w.text).join(" "));
+    const groups: TWord[][] = [];
+    for (const w of [...words].sort((a, b) => a.bbox.x0 - b.bbox.x0)) {
+      const g = groups[groups.length - 1];
+      if (g && w.bbox.x0 - g[g.length - 1].bbox.x1 < h * 1.6) g.push(w);
+      else groups.push([w]);
+    }
+    // 舊版 iOS 的大標題靠左、沒有置中的群：當一般的行處理（後面會認成清單名稱）
+    const centered = yc < H * 0.13 && !c ? groups.find((g) => Math.abs((g[0].bbox.x0 + g[g.length - 1].bbox.x1) / 2 - W / 2) < W * 0.12) : undefined;
+    const nav = !!centered;
+    const pickG = centered ?? groups[0];
+    if (!pickG) continue;
+    const text = tidy(pickG.map((w) => w.text).join(" "));
     if (!text) continue;
-    const box = words.length ? { x0: Math.min(...words.map((w) => w.bbox.x0)), y0: l.bbox.y0, x1: Math.max(...words.map((w) => w.bbox.x1)), y1: l.bbox.y1 } : l.bbox;
-    rows.push({ text, box, circle: c, ink: inkOf(px, box) });
+    const box = { x0: pickG[0].bbox.x0, y0: l.bbox.y0, x1: pickG[pickG.length - 1].bbox.x1, y1: l.bbox.y1 };
+    rows.push({ text, box, circle: c, ink: inkOf(px, box), nav });
   }
   rows.sort((a, b) => a.box.y0 - b.box.y0);
 
@@ -422,6 +435,11 @@ export async function readReminderShot(file: Blob, today: string, onProgress?: (
   for (const r of rows) {
     const yc = (r.box.y0 + r.box.y1) / 2;
     const h = r.box.y1 - r.box.y0;
+    if (r.nav) {
+      // 導覽列正中間＝清單名稱；左右的按鈕已經在上面丟掉了
+      if (!listTitle && yc >= H * 0.045 && !UI_TEXT.test(r.text)) listTitle = r.text;
+      continue;
+    }
     if (yc < H * 0.06) continue; // 狀態列（時間、電池）
     if (UI_TEXT.test(r.text)) continue;
 
