@@ -130,6 +130,7 @@ const STEPS: Step[] = [
     body: "右邊的數字是還沒完成的件數。點「新手練習」。",
     target: (c) => pick(`[data-tour="list-${c.code}"]`),
     until: (e, c) => e.type === "route" && e.data === c.code,
+    already: (c) => tourState.nav === "tasks" && tourState.route === c.code,
     goto: toProject,
   },
   {
@@ -442,44 +443,41 @@ export function TourHost() {
 
   if (typeof document === "undefined" || phase === "idle") return null;
 
-  /* ── 開始前、結束後：置中的卡片 ── */
+  /* ── 開始前、結束後：深色卡片（和步驟提示同一種） ── */
   if (phase === "welcome" || phase === "starting" || phase === "finish") {
     const fin = phase === "finish";
     return createPortal(
-      <div className="fixed inset-0 z-[175] flex items-end sm:items-center justify-center p-3 bg-black/40 tour-fade font-sans" role="dialog" aria-modal="true" aria-label="新手教學">
-        <div className="w-full max-w-[400px] bg-white rounded-[22px] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.35)] p-5 pb-4 tour-rise">
-          <div className="w-12 h-12 rounded-[14px] bg-[var(--accent-soft)] flex items-center justify-center">
-            <Icon name={fin ? "task_alt" : "school"} weight={400} className="text-[28px] text-[var(--accent-strong)]" />
+      <div className="fixed inset-0 z-[175] flex items-end sm:items-center justify-center p-3 bg-[rgba(17,17,20,0.55)] tour-fade font-sans" role="dialog" aria-modal="true" aria-label="新手教學">
+        <div className="w-full max-w-[400px] bg-[#1C1C22] rounded-[20px] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.55)] p-5 pb-4 tour-rise">
+          <div className="w-11 h-11 rounded-[13px] bg-[color-mix(in_srgb,var(--accent)_18%,transparent)] flex items-center justify-center">
+            <Icon name={fin ? "task_alt" : "school"} weight={300} className="text-[26px] text-[var(--accent)]" />
           </div>
-          <h2 className="mt-3 text-[22px] leading-[28px] font-bold tracking-tight text-[#18181B]">{fin ? "完成了" : "新手教學"}</h2>
-          <p className="mt-1.5 text-[15px] leading-[22px] text-[#52525B]">
+          <h2 className="mt-3 text-[22px] leading-[28px] font-bold tracking-tight text-white">{fin ? "完成了" : "新手教學"}</h2>
+          <p className="mt-1.5 text-[15px] leading-[22px] text-white/75">
             {fin
               ? "你已經會建立任務、長按、滑動、看板、甘特圖、指派、廠商、標籤和搜尋。之後隨時可以從頭像 →「新手教學」再看一次。"
               : "大約 5 分鐘，一步一步帶你用「專案情報」和「任務追蹤」：建立任務、長按與滑動、看板、甘特圖、指派、廠商、標籤、搜尋。"}
           </p>
-          {!fin && (
-            <p className="mt-3 rounded-[12px] bg-[#F6F6F7] px-3 py-2.5 text-[13px] leading-[19px] text-[#6E6E73]">
-              會建立一個只給你練習的專案，結束或中途離開都會自動刪掉，不會動到正式資料。
-            </p>
-          )}
+          {!fin && <p className="mt-3 rounded-[12px] bg-white/[0.07] px-3 py-2.5 text-[13px] leading-[19px] text-white/60">會建立一個只給你練習的專案，結束或中途離開都會自動刪掉，不會動到正式資料。</p>}
           <div className="mt-5 flex gap-2">
             {fin ? (
-              <button type="button" onClick={() => end(true)} className="flex-1 h-12 rounded-[14px] bg-[#18181B] text-white text-[16px] font-semibold active:opacity-85">
+              <button type="button" onClick={() => end(true)} className="flex-1 h-12 rounded-[14px] bg-white text-[#18181B] text-[16px] font-semibold active:opacity-85">
                 結束並刪除練習專案
               </button>
             ) : (
               <>
-                <button type="button" onClick={() => setPhase("idle")} disabled={phase === "starting"} className="h-12 px-5 rounded-[14px] bg-[#F2F2F4] text-[16px] font-semibold text-[#3F3F46] active:bg-[#E4E4E7]">
+                <button type="button" onClick={() => setPhase("idle")} disabled={phase === "starting"} className="h-12 px-5 rounded-[14px] bg-white/10 text-[16px] font-semibold text-white active:bg-white/15">
                   {invite ? "之後再說" : "取消"}
                 </button>
                 <button type="button" onClick={start} disabled={phase === "starting"} className="flex-1 h-12 rounded-[14px] bg-[var(--accent)] text-white text-[16px] font-semibold active:opacity-85 disabled:opacity-70 inline-flex items-center justify-center gap-2">
                   {phase === "starting" && <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" aria-hidden />}
                   {phase === "starting" ? "準備練習專案…" : "開始"}
+                  {phase !== "starting" && <Icon name="arrow_forward" weight={400} className="text-[20px]" />}
                 </button>
               </>
             )}
           </div>
-          {invite && !fin && <p className="mt-3 text-center text-[12px] text-[#A1A1AA]">之後可以從頭像 →「新手教學」開始</p>}
+          {invite && !fin && <p className="mt-3 text-center text-[12px] text-white/40">之後可以從頭像 →「新手教學」開始</p>}
         </div>
         <TourStyles />
       </div>,
@@ -489,86 +487,123 @@ export function TourHost() {
 
   if (!step || !ctx) return null;
 
-  /* ── 進行中：聚光燈＋提示卡 ── */
+  /* ── 進行中：暗化畫面、目標保持亮白、深色提示卡帶小箭頭指著目標 ── */
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
   const pad = 6;
   const hole = rect && !covered ? { x: rect.left - pad, y: rect.top - pad, w: rect.width + pad * 2, h: rect.height + pad * 2 } : null;
-  const cardTop = covered || (rect ? rect.top + rect.height / 2 > window.innerHeight * 0.55 : false);
   const waits = !!(step.until || step.done);
   const body = typeof step.body === "function" ? step.body(ctx) : step.body;
+  const chapter = chapterOf(steps, i);
+
+  // 提示卡位置：放在目標的上面或下面，小箭頭指著目標；上下都放不下（目標很大）就貼在畫面底部
+  const cardW = Math.min(vw - 24, 400);
+  const NEED = 190;
+  let place: { top?: number; bottom?: number; left: number; caret?: { side: "top" | "bottom"; x: number } } = { left: (vw - cardW) / 2 };
+  if (hole) {
+    const cx = hole.x + hole.w / 2;
+    const left = Math.max(12, Math.min(cx - cardW / 2, vw - cardW - 12));
+    const caretX = Math.max(22, Math.min(cx - left, cardW - 22));
+    const above = hole.y - 12;
+    const below = vh - (hole.y + hole.h) - 12;
+    const preferAbove = hole.y + hole.h / 2 > vh / 2;
+    if ((preferAbove && above >= NEED) || (!preferAbove && below < NEED && above >= NEED)) place = { bottom: vh - hole.y + 12, left, caret: { side: "bottom", x: caretX } };
+    else if (below >= NEED) place = { top: hole.y + hole.h + 12, left, caret: { side: "top", x: caretX } };
+  }
+  if (place.top === undefined && place.bottom === undefined) {
+    if (covered) place.top = 12;
+    else place.bottom = 16;
+  }
 
   return createPortal(
     <>
-      {/* 暗色遮罩（只是視覺，不擋點擊）：四塊圍出一個洞 */}
+      {/* 暗化：一個圓角的洞（目標保持原本的亮度），只是視覺，不擋點擊 */}
       {hole && (
-        <div className="fixed inset-0 z-[135] pointer-events-none tour-fade" aria-hidden>
-          <div className="absolute left-0 right-0 top-0 bg-black/40" style={{ height: Math.max(0, hole.y) }} />
-          <div className="absolute left-0 right-0 bottom-0 bg-black/40" style={{ top: hole.y + hole.h }} />
-          <div className="absolute left-0 bg-black/40" style={{ top: hole.y, height: hole.h, width: Math.max(0, hole.x) }} />
-          <div className="absolute right-0 bg-black/40" style={{ top: hole.y, height: hole.h, left: hole.x + hole.w }} />
-          <div className="absolute rounded-[14px] tour-ring" style={{ left: hole.x, top: hole.y, width: hole.w, height: hole.h }} />
+        <div className="fixed inset-0 z-[135] pointer-events-none overflow-hidden tour-fade" aria-hidden>
+          <div
+            className="absolute rounded-[16px] transition-all duration-300 ease-out"
+            style={{ left: hole.x, top: hole.y, width: hole.w, height: hole.h, boxShadow: "0 0 0 9999px rgba(17,17,20,0.55), inset 0 0 0 1.5px rgba(255,255,255,0.9)" }}
+          />
         </div>
       )}
-      {/* 提示卡：目標在下半部就放上面，反之放下面；選單或抽屜打開時放上面 */}
       <div
-        className="fixed left-0 right-0 z-[175] px-3 flex justify-center pointer-events-none font-sans"
-        style={cardTop ? { top: "calc(env(safe-area-inset-top, 0px) + 10px)" } : { bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
+        key={step.id}
+        role="dialog"
+        aria-live="polite"
+        aria-label={`新手教學：${step.title}`}
+        className="fixed z-[175] font-sans pointer-events-auto tour-rise"
+        style={{ width: cardW, left: place.left, top: place.top, bottom: place.bottom }}
       >
-        <div key={step.id} role="dialog" aria-live="polite" aria-label={`新手教學：${step.title}`} className="pointer-events-auto w-full max-w-[420px] bg-white rounded-[18px] shadow-[0_16px_44px_-10px_rgba(0,0,0,0.32)] overflow-hidden tour-rise">
-          <div className="h-[3px] bg-[#F0F0F2]">
-            <div className="h-full bg-[var(--accent)] transition-[width] duration-500 ease-out" style={{ width: `${((i + (success ? 1 : 0)) / steps.length) * 100}%` }} />
-          </div>
-          <div className="px-4 pt-3 pb-3">
-            <div className="flex items-start gap-2">
-              <h3 className="flex-1 text-[17px] leading-[22px] font-semibold text-[#18181B] flex items-center gap-1.5">
-                {success && <Icon name="check_circle" fill={1} weight={500} className="text-[20px] text-[#30A46C]" />}
-                {success ? "做到了" : step.title}
-              </h3>
-              <button type="button" onClick={() => setAskEnd(true)} aria-label="結束教學" title="結束教學" className="-mr-1.5 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F2F2F4]">
-                <Icon name="close" className="text-[20px]" />
+        {/* 小箭頭：指著目標 */}
+        {place.caret && (
+          <span
+            aria-hidden
+            className="absolute w-0 h-0"
+            style={
+              place.caret.side === "top"
+                ? { top: -9, left: place.caret.x - 10, borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderBottom: "10px solid #1C1C22" }
+                : { bottom: -9, left: place.caret.x - 10, borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderTop: "10px solid #1C1C22" }
+            }
+          />
+        )}
+        <div className="bg-[#1C1C22] rounded-[18px] shadow-[0_18px_44px_-12px_rgba(0,0,0,0.55)] px-4 pt-3.5 pb-3">
+          <div className="flex items-start gap-2">
+            <h3 className="flex-1 text-[15px] leading-[21px] font-semibold text-[var(--accent)] flex items-center gap-1.5">
+              {success && <Icon name="check_circle" fill={1} weight={500} className="text-[18px]" />}
+              {success ? "做到了" : askEnd ? "要結束新手教學嗎？" : step.title}
+            </h3>
+            {!askEnd && !success && (
+              <button type="button" onClick={() => setAskEnd(true)} aria-label="結束教學" title="結束教學" className="-mr-1.5 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-white/45 active:bg-white/10">
+                <Icon name="close" className="text-[19px]" />
               </button>
-            </div>
-            {askEnd ? (
+            )}
+          </div>
+
+          {askEnd ? (
+            <>
+              <p className="mt-1 text-[15px] leading-[22px] text-white/85">練習專案會一起刪掉。只是想關掉後面的視窗的話，按「繼續教學」再關。</p>
+              <div className="mt-3 flex justify-end gap-2">
+                <button type="button" onClick={() => end(false)} className="h-9 px-3.5 rounded-full text-[14px] text-[#FF6B6E] active:bg-white/10">
+                  結束教學
+                </button>
+                <button type="button" onClick={() => setAskEnd(false)} className="h-9 px-4 rounded-full bg-white text-[#18181B] text-[14px] font-semibold active:opacity-85">
+                  繼續教學
+                </button>
+              </div>
+            </>
+          ) : (
+            !success && (
               <>
-                <p className="mt-1 text-[15px] leading-[22px] text-[#3F3F46]">要結束新手教學嗎？練習專案會一起刪掉。只是想關掉後面的視窗的話，按「繼續教學」再關。</p>
-                <div className="mt-3 flex justify-end gap-2">
-                  <button type="button" onClick={() => setAskEnd(false)} className="h-9 px-4 rounded-full bg-[var(--accent)] text-white text-[14px] font-semibold active:opacity-85">
-                    繼續教學
-                  </button>
-                  <button type="button" onClick={() => end(false)} className="h-9 px-3.5 rounded-full text-[14px] text-[#E5484D] active:bg-[#F2F2F4]">
-                    結束教學
+                <p className="mt-1 text-[15px] leading-[22px] text-white/90">
+                  {body}
+                  {step.clear && covered && <span className="block mt-1 text-[13px] text-[var(--accent)]">先關掉後面的視窗（右上的 ✕ 或往下拉），再繼續。</span>}
+                </p>
+                <div className="mt-3.5 flex items-center gap-2">
+                  {/* 進度：每一章一個點，現在這一章是長條 */}
+                  <span className="mr-auto flex items-center gap-1.5" aria-label={`第 ${i + 1} 步，共 ${steps.length} 步`}>
+                    {CHAPTERS.map((c, n) => (
+                      <span key={c} className={`h-[5px] rounded-full transition-all duration-300 ${n === chapter ? "w-5 bg-white" : n < chapter ? "w-[5px] bg-white/70" : "w-[5px] bg-white/25"}`} />
+                    ))}
+                  </span>
+                  {lost && step.goto && (
+                    <button type="button" onClick={() => step.goto!(ctx)} className="h-9 px-3 rounded-full text-[14px] font-semibold text-[var(--accent)] active:bg-white/10">
+                      帶我過去
+                    </button>
+                  )}
+                  {/* 箭頭：下一步（要動手的步驟＝略過這步，所以是淡一點的外框） */}
+                  <button
+                    type="button"
+                    onClick={() => !completing.current && advance()}
+                    aria-label={waits ? "略過這步" : i + 1 >= steps.length ? "完成" : "下一步"}
+                    title={waits ? "略過這步" : "下一步"}
+                    className={`w-9 h-9 rounded-[11px] flex items-center justify-center transition-opacity active:opacity-75 ${waits ? "bg-white/12 text-white ring-1 ring-inset ring-white/25" : "bg-white text-[#18181B]"}`}
+                  >
+                    <Icon name="arrow_forward" weight={500} className="text-[20px]" />
                   </button>
                 </div>
               </>
-            ) : (
-              !success && (
-                <p className="mt-1 text-[15px] leading-[22px] text-[#3F3F46]">
-                  {body}
-                  {step.clear && covered && <span className="block mt-1 text-[13px] text-[var(--accent-ink)]">先關掉後面的視窗（右上的 ✕ 或往下拉），再繼續。</span>}
-                </p>
-              )
-            )}
-            {!success && !askEnd && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-[12px] text-[#A1A1AA] tabular-nums mr-auto">
-                  {i + 1} / {steps.length}
-                </span>
-                {lost && step.goto && (
-                  <button type="button" onClick={() => step.goto!(ctx)} className="h-9 px-3.5 rounded-full bg-[var(--accent-soft)] text-[14px] font-semibold text-[var(--accent-ink)] active:opacity-80">
-                    帶我過去
-                  </button>
-                )}
-                {waits ? (
-                  <button type="button" onClick={() => !completing.current && advance()} className="h-9 px-3 rounded-full text-[14px] text-[#8E8E93] active:bg-[#F2F2F4]">
-                    略過這步
-                  </button>
-                ) : (
-                  <button type="button" onClick={() => !completing.current && advance()} className="h-9 px-4 rounded-full bg-[var(--accent)] text-white text-[14px] font-semibold active:opacity-85">
-                    {i + 1 >= steps.length ? "完成" : "下一步"}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+            )
+          )}
         </div>
       </div>
       <TourStyles />
@@ -577,17 +612,26 @@ export function TourHost() {
   );
 }
 
-/** 聚光燈的呼吸光圈、提示卡進場：只有這一個動態；系統設定「減少動態」就關掉 */
+/** 章：介面、建立任務、長按與滑動、看板與甘特、搜尋（每章第一步的 id） */
+const CHAPTERS = ["nav", "nav-tasks", "longpress", "board", "search"];
+function chapterOf(steps: Step[], i: number): number {
+  let c = 0;
+  for (let n = 0; n <= i && n < steps.length; n++) {
+    const k = CHAPTERS.indexOf(steps[n].id);
+    if (k >= 0) c = k;
+  }
+  return c;
+}
+
+/** 提示卡進場、遮罩淡入：只有這兩個動態；系統設定「減少動態」就關掉 */
 function TourStyles() {
   return (
     <style>{`
-      .tour-ring { box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px color-mix(in srgb, var(--accent) 28%, transparent); animation: tour-breathe 1.8s cubic-bezier(0.16,1,0.3,1) infinite; }
-      @keyframes tour-breathe { 0%,100% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent); } 50% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 11px color-mix(in srgb, var(--accent) 0%, transparent); } }
       .tour-rise { animation: tour-rise 0.42s cubic-bezier(0.16,1,0.3,1) both; }
-      @keyframes tour-rise { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+      @keyframes tour-rise { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
       .tour-fade { animation: tour-fade 0.25s ease-out both; }
       @keyframes tour-fade { from { opacity: 0; } to { opacity: 1; } }
-      @media (prefers-reduced-motion: reduce) { .tour-ring, .tour-rise, .tour-fade { animation: none; } }
+      @media (prefers-reduced-motion: reduce) { .tour-rise, .tour-fade { animation: none; } }
     `}</style>
   );
 }

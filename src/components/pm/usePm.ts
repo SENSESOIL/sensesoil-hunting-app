@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import useSWR from "swr";
 import {
+  addDays,
   buildSiteGroups,
+  diffDays,
   deriveProject,
   todayISO,
   type ProjectView,
@@ -24,6 +26,7 @@ import {
   type Person,
   type Task,
 } from "@/lib/pm/model";
+import { endOf, successorsOf } from "@/lib/pm/deps";
 import { toast } from "./Sheet";
 import { setAvatarDirectory } from "./kit";
 
@@ -222,12 +225,15 @@ export function usePm() {
     [mutate]
   );
 
+  type SaveOpts = { quiet?: boolean; chain?: Set<string> };
+  const saveRef = useRef<((patch: Partial<Task> & { id?: string }, opts?: SaveOpts) => Promise<Task | null>) | null>(null);
+
   /**
    * 新增或修改任務。patch 只要帶改了的欄位（新任務要帶 code、title）。
    * 回傳伺服器存好的任務；失敗回傳 null（畫面已還原、已提示）。
    */
   const saveTask = useCallback(
-    async (patch: Partial<Task> & { id?: string }, opts: { quiet?: boolean } = {}): Promise<Task | null> => {
+    async (patch: Partial<Task> & { id?: string }, opts: SaveOpts = {}): Promise<Task | null> => {
       const d = latest.current;
       if (!d) return null;
       const id = patch.id ?? newTaskId();
@@ -251,6 +257,27 @@ export function usePm() {
       }
       const optimistic = applyRules(prev, { ...base, ...patch, id } as Task, d.me.email);
       replaceTask(optimistic);
+
+      // 前置任務（WBS）：結束日移了 → 接在後面的任務整段平移同樣的天數（間隔不變），一路往後接
+      const oldEnd = prev ? endOf(prev) : undefined;
+      const newEnd = endOf(optimistic);
+      if (prev && newEnd && oldEnd !== newEnd) {
+        const chain = new Set(opts.chain ?? []);
+        chain.add(id);
+        let moved = 0;
+        for (const s of successorsOf(d.tasks, optimistic)) {
+          if (chain.has(s.id) || s.status === "done" || !(s.start || s.due)) continue;
+          // 前一個原本沒日期：直接排到它結束的隔天
+          const delta = oldEnd ? diffDays(oldEnd, newEnd) : diffDays((s.start ?? s.due)!, addDays(newEnd, 1));
+          if (!delta) continue;
+          moved++;
+          saveRef.current?.(
+            { id: s.id, ...(s.start ? { start: addDays(s.start, delta) } : {}), ...(s.due ? { due: addDays(s.due, delta) } : {}) },
+            { quiet: true, chain }
+          );
+        }
+        if (moved && !opts.chain) toast(`接在後面的 ${moved} 個任務也一起移了`);
+      }
 
       return enqueue(id, async () => {
         const cur = latest.current?.tasks.find((t) => t.id === id);
@@ -278,6 +305,7 @@ export function usePm() {
     },
     [enqueue, mutate, replaceTask]
   );
+  saveRef.current = saveTask;
 
   const deleteTask = useCallback(
     async (id: string) => {

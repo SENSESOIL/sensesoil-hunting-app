@@ -10,6 +10,7 @@ import { taskAssignees } from "@/lib/pm/model";
 import { ScheduleSheet } from "./ScheduleSheet";
 import { ProjectScreen } from "./ProjectScreen";
 import { realSections, splitBySection, treeOrder } from "./tree";
+import { predecessorOf } from "@/lib/pm/deps";
 
 /* ══════════════════════════════════════════════════════════
    甘特圖（排程）：每個任務一條
@@ -20,6 +21,7 @@ import { realSections, splitBySection, treeOrder } from "./tree";
    - 點名稱＝任務細節；點時間軸（長條或空白處）＝時間安排（只改日期）
    - 專案有分組（Section）時：先分組、再任務；分組標題列畫一條涵蓋組內任務的總橫條
    - 負責人用代表字（軍、恒…），名稱欄比較放得下
+   - 前置任務（時間安排裡的「接在哪個任務之後開始」）：兩條長條之間畫折線箭頭
    - 沒有日期的任務也列出來（像清單一樣），點時間軸上的某一天就排進去；
      有日期的長條可以直接拖曳平移、拖兩端改開始／結束日 —— 在甘特圖上就能排程
    ══════════════════════════════════════════════════════════ */
@@ -287,6 +289,13 @@ export function TaskGantt({
     };
   }
 
+  // 前置任務的連線：兩邊都有畫長條才連
+  const links = dated
+    .filter((t) => t.meta?.after && hasDate(t))
+    .map((t) => ({ t, p: predecessorOf(pm.tasks, t) }))
+    .filter((v) => v.p && dated.some((d) => d.id === v.p!.id) && hasDate(v.p))
+    .map((v) => ({ from: v.p!.id, to: v.t.id }));
+
   return (
     <div className="flex flex-col gap-2">
       <div className="bg-white rounded-[14px] border border-[#EBEBED] overflow-hidden">
@@ -301,6 +310,7 @@ export function TaskGantt({
           labelWidth={132}
           rows={rows}
           markers={markers}
+          links={links}
           corner={<ZoomPicker value={zoom} onChange={setZoom} />}
         />
       </div>

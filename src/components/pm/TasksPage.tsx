@@ -96,7 +96,11 @@ export default function TasksPage({
   const [personFilter, setPersonFilter] = useState<string | null | undefined>(undefined);
   const [route, setRoute] = useState<ListRoute>({ kind: "home" });
   // 新手教學：現在打開哪個專案的清單；「帶我過去」直接打開
-  useEffect(() => tourEmit("route", route.kind === "project" ? route.code : route.kind), [route]);
+  useEffect(() => {
+    tourState.route = route.kind === "project" ? route.code : route.kind;
+    tourEmit("route", tourState.route);
+  }, [route]);
+  useEffect(() => () => void (tourState.route = null), []);
   useEffect(() => {
     const take = (code: string) => {
       tourState.pendingProject = null;
@@ -524,21 +528,22 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
       />
       <GoalSheet pm={pm} open={!!goalOpen} goalId={goalOpen} onClose={() => setGoalOpen(null)} onOpenTask={onOpen} />
 
-      {/* 篩選：一個字就好、不放數字（今天、全部、重要、緊急、已完成）；選別天時「今」換成那天（明、昨或日期） */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 py-1 lg:mx-0 lg:px-0">
+      {/* 篩選：兩個字、不放數字，五個平均分配一排放得下；選別天時「今天」換成那天（明天、昨天或 10/23） */}
+      <div className="flex gap-1 py-1 lg:max-w-[420px]">
         {(
           [
-            // 一個字：昨／今／明；其他天用日期數字（例：23）
-            ["day", day === today ? "今" : day === addDays(today, 1) ? "明" : day === addDays(today, -1) ? "昨" : String(toDay(day).getDate()), shortDay],
-            ["all", "全", "全部"],
-            ["flagged", "重", "重要"],
-            ["urgent", "急", "緊急"],
-            ["done", "完", "已完成"],
+            // 昨天／今天／明天；其他天用月/日（例：10/23）
+            ["day", day === today ? "今天" : day === addDays(today, 1) ? "明天" : day === addDays(today, -1) ? "昨天" : `${toDay(day).getMonth() + 1}/${toDay(day).getDate()}`, shortDay],
+            ["all", "全部", "全部"],
+            ["flagged", "重要", "重要"],
+            ["urgent", "緊急", "緊急"],
+            ["done", "完成", "已完成"],
           ] as [Smart, string, string][]
         ).map(([k, label, full]) => (
           <span key={k} title={full} aria-label={full} className="contents">
             <Chip
               variant="tab"
+              fill
               on={smart === k && view === "list"}
               onClick={() => {
                 if (k === "day") return pick(day);
@@ -546,7 +551,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
                 setView("list");
               }}
             >
-              <span className="min-w-[1.25em] text-center">{label}</span>
+              <span className="tabular-nums">{label}</span>
             </Chip>
           </span>
         ))}

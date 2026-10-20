@@ -2,18 +2,22 @@
 
 import React, { useEffect, useState } from "react";
 import { addDays, diffDays, toDay, WEEKDAYS } from "@/lib/project-ops";
-import { isAssignee } from "@/lib/pm/model";
+import { isAssignee, type Task } from "@/lib/pm/model";
+import { endOf, predecessorOf, startAfter, wouldCycle } from "@/lib/pm/deps";
+import type { TaskMeta } from "@/lib/pm/tags";
 import { Sheet, SheetActions } from "./Sheet";
 import { DateField, FieldGroup, Row } from "./fields";
 import { Icon } from "./ui";
 import { dateShortcuts, RED } from "./kit";
 import { canEditProject, type Pm } from "./usePm";
+import { treeOrder } from "./tree";
 
 /* ══════════════════════════════════════════════════════════
    時間安排：只管開始日、期限、天數（甘特圖點時間軸、清單長按「自訂日期…」）
    - 改開始日：天數不變，整段平移
    - 改天數：從開始日往後算期限（沒有開始日就從期限往前推）
    - 期限早於開始日時，開始日一起拿掉
+   - 接在哪個任務之後開始（WBS 前置任務）：選了就從它結束的隔天開始；它之後改日期，這個跟著平移
    完整的任務細節（指派、狀態、備註…）在任務名稱那邊打開
    ══════════════════════════════════════════════════════════ */
 
@@ -26,11 +30,17 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
   const task = taskId ? pm.tasks.find((t) => t.id === taskId) : undefined;
   const [start, setStart] = useState<string | undefined>();
   const [due, setDue] = useState<string | undefined>();
+  const [after, setAfter] = useState<string | undefined>();
+  const [picking, setPicking] = useState(false);
+  const [q, setQ] = useState("");
 
   useEffect(() => {
     if (!open || !task) return;
     setStart(task.start);
     setDue(task.due);
+    setAfter(task.meta?.after);
+    setPicking(false);
+    setQ("");
     // 只在打開時讀一次，編輯中自動更新不會蓋掉
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, taskId]);
@@ -40,7 +50,18 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
   const me = pm.me?.email;
   const canEdit = canEditProject(pm, task.code) || (task.createdBy === me && isAssignee(task, me));
   const days = start && due ? diffDays(start, due) + 1 : start || due ? 1 : undefined;
-  const dirty = (start ?? "") !== (task.start ?? "") || (due ?? "") !== (task.due ?? "");
+  const dirty = (start ?? "") !== (task.start ?? "") || (due ?? "") !== (task.due ?? "") || (after ?? "") !== (task.meta?.after ?? "");
+  // 前一個任務：同專案、還在的才算
+  const pred = after ? predecessorOf(pm.tasks, { ...task, meta: { ...(task.meta ?? {}), after } }) : undefined;
+  const predEnd = pred ? endOf(pred) : undefined;
+  const snapStart = pred ? startAfter(pred) : undefined;
+  const gap = snapStart && start ? diffDays(snapStart, start) : 0;
+  // 可以選的：同專案、不是自己、不會繞成一圈；照清單順序
+  const sameProject = pm.tasks.filter((t) => t.code === task.code && t.id !== task.id);
+  const candidates = treeOrder(sameProject)
+    .map((r) => r.task)
+    .filter((t) => !wouldCycle(pm.tasks, task.id, t.id))
+    .filter((t) => !q.trim() || t.title.toLowerCase().includes(q.trim().toLowerCase()));
   const bad = !!(start && due && due < start);
 
   const changeStart = (v: string | undefined) => {
@@ -62,13 +83,28 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
     }
   };
 
+  /** 選前一個任務：從它結束的隔天開始，天數不變 */
+  const pick = (p: Task) => {
+    setAfter(p.id);
+    setPicking(false);
+    setQ("");
+    const s = startAfter(p);
+    if (!s) return;
+    const n = days ?? task.meta?.days ?? 1;
+    setStart(s);
+    setDue(addDays(s, Math.max(1, n) - 1));
+  };
+
   const save = () => {
     if (bad) return;
     const n = start && due ? diffDays(start, due) + 1 : undefined;
-    // 有區間就同步標籤裡的「預計完工天數」，兩邊不會對不起來
-    const meta = task.meta?.days !== undefined || n ? { ...(task.meta ?? {}), ...(n ? { days: n } : {}) } : undefined;
-    if (meta && !n) delete meta.days;
-    pm.saveTask({ id: task.id, start, due, ...(meta && JSON.stringify(meta) !== JSON.stringify(task.meta ?? {}) ? { meta } : {}) });
+    // 有區間就同步標籤裡的「預計完工天數」，兩邊不會對不起來；前置任務也存在 meta
+    const meta: TaskMeta = { ...(task.meta ?? {}) };
+    if (n) meta.days = n;
+    else delete meta.days;
+    if (after) meta.after = after;
+    else delete meta.after;
+    pm.saveTask({ id: task.id, start, due, ...(JSON.stringify(meta) !== JSON.stringify(task.meta ?? {}) ? { meta } : {}) });
     onClose();
   };
 
@@ -124,6 +160,79 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
               </div>
               <p className="mt-1.5 text-[12px] text-[#A1A1AA]">改天數會從開始日往後算期限</p>
             </Row>
+          </FieldGroup>
+
+          <FieldGroup title="接在哪個任務之後開始" hint={pred ? "前一個任務改日期時，這個任務會跟著平移同樣的天數。" : "選了就從那個任務結束的隔天開始，之後也會跟著它移動。"}>
+            {pred && (
+              <div className="px-4 py-3 flex items-center gap-3">
+                <span className="w-9 h-9 rounded-[10px] bg-[#F2F2F4] flex items-center justify-center shrink-0 text-[#52525B]">
+                  <Icon name="subdirectory_arrow_right" weight={300} className="text-[20px]" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold text-[#18181B] truncate">{pred.title}</p>
+                  <p className="text-[13px] text-[#71717A] tabular-nums">
+                    {predEnd ? `${md(predEnd)} 結束` : "還沒排日期"}
+                    {predEnd && start ? (gap === 0 ? "・隔天接著開始" : gap > 0 ? `・隔 ${gap} 天開始` : `・重疊 ${-gap} 天`) : ""}
+                  </p>
+                </div>
+                <button type="button" onClick={() => setAfter(undefined)} aria-label="不接在這個任務後面" className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F2F2F4]">
+                  <Icon name="close" className="text-[20px]" />
+                </button>
+              </div>
+            )}
+            {pred && snapStart && gap !== 0 && (
+              <button type="button" onClick={() => pick(pred)} className="w-full px-4 h-11 text-left text-[15px] text-[var(--accent)] active:bg-[#F7F7F8]">
+                改成 {md(snapStart)} 接著開始
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setPicking((v) => !v)}
+              aria-expanded={picking}
+              className="w-full px-4 h-12 flex items-center gap-2 text-left active:bg-[#F7F7F8]"
+            >
+              <span className={`flex-1 text-[15px] ${pred ? "text-[#3F3F46]" : "text-[var(--accent)] font-semibold"}`}>{pred ? "換一個任務" : "選擇前一個任務"}</span>
+              <Icon name={picking ? "expand_less" : "expand_more"} className="text-[20px] text-[#A1A1AA]" />
+            </button>
+            {picking && (
+              <div>
+                {sameProject.length > 8 && (
+                  <div className="px-3 pt-2.5 pb-1">
+                    <input
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder="搜尋任務"
+                      className="w-full h-10 rounded-[10px] bg-[#F2F2F4] px-3 text-[16px] outline-none placeholder:text-[#A1A1AA]"
+                    />
+                  </div>
+                )}
+                <div className="max-h-[280px] overflow-y-auto overscroll-contain py-1">
+                  {candidates.length === 0 ? (
+                    <p className="px-4 py-3 text-[14px] text-[#A1A1AA]">{q ? "找不到這個任務" : "這個專案沒有其他任務"}</p>
+                  ) : (
+                    candidates.map((t) => {
+                      const e = endOf(t);
+                      const on = t.id === after;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => pick(t)}
+                          aria-pressed={on}
+                          className="w-full px-4 min-h-[48px] py-2 flex items-center gap-3 text-left active:bg-[#F7F7F8]"
+                        >
+                          <span className={`flex-1 min-w-0 text-[15px] truncate ${t.parentId ? "pl-4" : ""} ${t.status === "done" ? "text-[#A1A1AA] line-through" : "text-[#18181B]"}`}>
+                            {t.title || "（未命名）"}
+                          </span>
+                          <span className="text-[13px] text-[#8E8E93] tabular-nums shrink-0">{e ? `${md(e)} 結束` : "未排程"}</span>
+                          {on && <Icon name="check" weight={500} className="text-[18px] text-[var(--accent)]" />}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </FieldGroup>
 
           <FieldGroup title="期限快選">

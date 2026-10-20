@@ -43,6 +43,8 @@ export interface TaskMeta {
   vendor?: string;
   /** 緊急（‼）：和「重要」（旗子）分開，篩選「急」看得到 */
   urgent?: boolean;
+  /** 前置任務（WBS）：接在這個任務（id）之後開始；它的結束日移動，這個任務跟著平移 */
+  after?: string;
 }
 
 /** 緊急的顏色（‼） */
@@ -213,5 +215,7 @@ export function cleanMeta(raw: unknown): TaskMeta {
   const vendor = str(r.vendor, 40);
   if (vendor) out.vendor = vendor;
   if (r.urgent === true) out.urgent = true;
+  const after = str(r.after, 64);
+  if (after) out.after = after;
   return out;
 }

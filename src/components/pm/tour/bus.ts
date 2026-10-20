@@ -24,10 +24,12 @@ export function onTour(f: (e: TourEvent) => void): () => void {
 }
 
 /** 目前教學用的練習專案代碼（沒在教學中＝null）；任務首頁會把它固定顯示出來 */
-export const tourState: { code: string | null; nav: string | null; pendingView: string | null; pendingProject: string | null; pendingOpen: string | null } = {
+export const tourState: { code: string | null; nav: string | null; route: string | null; pendingView: string | null; pendingProject: string | null; pendingOpen: string | null } = {
   code: null,
   /** 現在在哪個主頁（已經在那一頁時，「點房子」這類步驟直接算做到） */
   nav: null,
+  /** 任務追蹤現在打開的清單（專案代碼，或 home／smart／tag） */
+  route: null,
   // 「帶我過去」時目標頁面可能還沒畫出來：先記著，頁面一出現就套用
   pendingView: null,
   pendingProject: null,

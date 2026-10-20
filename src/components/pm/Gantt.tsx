@@ -12,6 +12,7 @@ import { ACCENT, STATUS, TRACK } from "./ui";
    - 今天：一條品牌橘的細線，貫穿表頭與每一列
    - 桌機滑過長條有提示；手機點整列開啟細節
    - 列數多時改成框內上下捲動，表頭固定在上面（捲到後面還看得到日期）
+   - 前置任務（links）：從前一列長條的尾端，折線箭頭接到後一列長條的開頭
 
    排程（有傳 onChange／onPickDay 才開啟）：
    - 拖曳長條＝整段平移；拖左右兩端＝改開始／結束日；放開才存
@@ -139,6 +140,7 @@ export default function Gantt({
   anchor = 0.3,
   corner,
   markers = [],
+  links = [],
 }: {
   rows: GanttRow[];
   today: string;
@@ -156,6 +158,8 @@ export default function Gantt({
   corner?: React.ReactNode;
   /** 貫穿所有列的直線（畫在那天的結束處）：例如專案的預計完工（虛線）、實際完工 */
   markers?: { date: string; color: string; dashed?: boolean; label: string }[];
+  /** 前置任務：from 列結束後接 to 列（列的 id），畫一條折線箭頭 */
+  links?: { from: string; to: string }[];
 }) {
   const days = Math.max(1, diffDays(from, to) + 1);
   const scroller = useRef<HTMLDivElement>(null);
@@ -695,6 +699,65 @@ export default function Gantt({
                 </div>
               </div>
             ))}
+
+            {/* 前置任務：中間有空隔＝從前一條尾端往右、上下、再接到後一條開頭；
+                首尾相接或重疊＝在交接處從前一條下緣直直往下，箭頭指著後一條的上緣（不壓到兩端的拖曳把手）；
+                後一條比前一條還早開始＝繞到兩列中間再折回來 */}
+            {links.length > 0 && (
+              <svg
+                className="absolute top-0 z-[3] pointer-events-none overflow-visible"
+                style={{ left: labelWidth }}
+                width={width + TAIL}
+                height={rows.length * ROW_H}
+                aria-hidden
+              >
+                {links.map((l) => {
+                  const i = rows.findIndex((r) => r.id === l.from);
+                  const j = rows.findIndex((r) => r.id === l.to);
+                  if (i < 0 || j < 0 || i === j) return null;
+                  const barAt = (row: GanttRow) => {
+                    const b = row.bars[0];
+                    if (!b) return null;
+                    const p = preview?.key === `${row.id}:0` ? preview : null;
+                    return p ? { start: p.start, end: p.end } : b;
+                  };
+                  const a = barAt(rows[i]);
+                  const b = barAt(rows[j]);
+                  if (!a || !b) return null;
+                  const x1 = x(a.start) + Math.max(dayWidth, (diffDays(a.start, a.end) + 1) * dayWidth);
+                  const y1 = i * ROW_H + ROW_H / 2;
+                  const x2 = x(b.start);
+                  const y2 = j * ROW_H + ROW_H / 2;
+                  const out = x1 + 6;
+                  const down = j > i ? 1 : -1;
+                  const ax = x(a.start);
+                  const bEnd = x(b.end) + dayWidth;
+                  let d: string;
+                  let head: string;
+                  if (out <= x2 - 6) {
+                    d = `M${x1} ${y1} H${out} V${y2} H${x2 - 1}`;
+                    head = `M${x2 - 5} ${y2 - 3.5} L${x2} ${y2} L${x2 - 5} ${y2 + 3.5} Z`;
+                  } else if (x2 >= ax) {
+                    // 交接處：兩條都碰得到的那個位置
+                    const vx = Math.max(ax + 2, Math.min(x1, x2 + 3, bEnd - 2));
+                    const y0 = y1 + (down * BAR_H) / 2;
+                    const tip = y2 - (down * BAR_H) / 2 - down;
+                    d = `M${vx} ${y0} V${tip - down * 4}`;
+                    head = `M${vx - 3.5} ${tip - down * 5} L${vx} ${tip} L${vx + 3.5} ${tip - down * 5} Z`;
+                  } else {
+                    const mid = j > i ? j * ROW_H : (j + 1) * ROW_H;
+                    d = `M${x1} ${y1} H${out} V${mid} H${x2 - 8} V${y2} H${x2 - 1}`;
+                    head = `M${x2 - 5} ${y2 - 3.5} L${x2} ${y2} L${x2 - 5} ${y2 + 3.5} Z`;
+                  }
+                  return (
+                    <g key={`${l.from}>${l.to}`}>
+                      <path d={d} fill="none" stroke="#A1A1AA" strokeWidth={1.25} strokeLinejoin="round" strokeLinecap="round" />
+                      <path d={head} fill="#A1A1AA" />
+                    </g>
+                  );
+                })}
+              </svg>
+            )}
 
             {/* 專案日期：預計完工（虛線）、實際完工 */}
             {markers
