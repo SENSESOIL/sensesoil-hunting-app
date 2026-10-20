@@ -37,6 +37,55 @@ export const T = {
   stat: "text-[22px] leading-[26px] font-bold tabular-nums",
 } as const;
 
+/**
+ * 緊急圖示（驚嘆號）：和旗子同一種畫法——平常是空心外框、標了緊急是實心。
+ * Material 的 priority_high 只是一條細線，和旗子放在一起不協調，所以自己畫。
+ */
+export function UrgentIcon({ size = 24, filled = false, className = "", style }: { size?: number; filled?: boolean; className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round" className={className} style={style} aria-hidden>
+      <path d="M10.4 3.6h3.2a.9.9 0 0 1 .9.95l-.62 10.1a.9.9 0 0 1-.9.85h-.96a.9.9 0 0 1-.9-.85l-.62-10.1a.9.9 0 0 1 .9-.95Z" />
+      <circle cx="12" cy="19.2" r="1.75" />
+    </svg>
+  );
+}
+
+/** 廠商圖示：戴安全帽的人（和「指派」的人像同一種線條） */
+export function VendorIcon({ size = 24, className = "", style }: { size?: number; className?: string; style?: React.CSSProperties }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} style={style} aria-hidden>
+      <path d="M7.4 10h9.2" />
+      <path d="M8.7 10V9.3a3.3 3.3 0 0 1 6.6 0V10" />
+      <path d="M12 6v1.6" />
+      <path d="M9.4 10.6a2.6 2.6 0 0 0 5.2 0" />
+      <path d="M5.8 19.6v-.8a3.3 3.3 0 0 1 3.3-3.3h5.8a3.3 3.3 0 0 1 3.3 3.3v.8Z" />
+    </svg>
+  );
+}
+
+/**
+ * 期限捷徑的日曆圖示：同一個日曆外框，裡面的記號不同，一眼分得出是哪一天
+ *   today＝一個實心點、tomorrow＝兩個點、saturday＝空心圓、monday＝往右的箭頭（下週）、none＝小叉（無期限）
+ */
+export function DueIcon({ kind, size = 22 }: { kind: "today" | "tomorrow" | "saturday" | "monday" | "none"; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="4.25" y="5.5" width="15.5" height="14.5" rx="2.2" />
+      <path d="M4.25 9.75h15.5M8.5 3.75v3.5M15.5 3.75v3.5" />
+      {kind === "today" && <circle cx="15" cy="15.6" r="1.6" fill="currentColor" stroke="none" />}
+      {kind === "tomorrow" && (
+        <>
+          <circle cx="10.2" cy="15.6" r="1.45" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="15.6" r="1.45" fill="currentColor" stroke="none" />
+        </>
+      )}
+      {kind === "saturday" && <circle cx="15" cy="15.6" r="1.75" />}
+      {kind === "monday" && <path d="M9 15.6h6.2M12.9 13.3l2.3 2.3-2.3 2.3" />}
+      {kind === "none" && <path d="M10 13.4l4 4M14 13.4l-4 4" />}
+    </svg>
+  );
+}
+
 /** 區塊標題：左邊標題（＋一行說明），右邊放圖示鈕 */
 export function SectionTitle({ title, sub, children, color }: { title: React.ReactNode; sub?: React.ReactNode; children?: React.ReactNode; color?: string }) {
   return (

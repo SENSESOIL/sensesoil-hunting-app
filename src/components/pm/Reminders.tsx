@@ -7,7 +7,7 @@ import { addDays, fmtDate, toDay } from "@/lib/project-ops";
 import { isAssignee, newSectionId, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { URGENT, metaChips, tagKeys } from "@/lib/pm/tags";
 import { Icon } from "./ui";
-import { Avatar, CheckCircle, dueLabel, ORANGE, RED, SectionTitle, T } from "./kit";
+import { Avatar, CheckCircle, dueLabel, ORANGE, RED, DueIcon, SectionTitle, T, UrgentIcon, VendorIcon } from "./kit";
 import { Sheet, toast } from "./Sheet";
 import { TaskGantt } from "./TaskGantt";
 import { ProjectScreen } from "./ProjectScreen";
@@ -532,7 +532,7 @@ export function primeKeyboard() {
   setTimeout(() => tmp.remove(), 1000);
 }
 
-function MenuItem({ icon, label, onClick, checked, danger, disabled }: { icon: string; label: string; onClick: () => void; checked?: boolean; danger?: boolean; disabled?: boolean }) {
+function MenuItem({ icon, label, onClick, checked, danger, disabled }: { icon: string | React.ReactNode; label: string; onClick: () => void; checked?: boolean; danger?: boolean; disabled?: boolean }) {
   return (
     <button
       type="button"
@@ -542,7 +542,7 @@ function MenuItem({ icon, label, onClick, checked, danger, disabled }: { icon: s
     >
       <span className="w-5 flex justify-center">{checked && <Icon name="check" weight={600} className="text-[18px]" />}</span>
       <span className="flex-1">{label}</span>
-      <Icon name={icon} className="text-[20px] opacity-80" />
+      {typeof icon === "string" ? <Icon name={icon} className="text-[20px] opacity-80" /> : <span className="flex opacity-80">{icon}</span>}
     </button>
   );
 }
@@ -1224,7 +1224,7 @@ function TaskRow({
           )}
           {onUrgent && (
             <button type="button" data-no-gesture onClick={onUrgent} className="flex-1 flex flex-col items-center justify-center gap-0.5 text-white text-[12px] font-semibold" style={{ background: URGENT }}>
-              <Icon name="priority_high" weight={700} className="text-[20px]" />
+              <UrgentIcon size={20} filled={!task.meta?.urgent} />
               {task.meta?.urgent ? "取消緊急" : "緊急"}
             </button>
           )}
@@ -1299,7 +1299,11 @@ function TaskRow({
                 <Icon name="info" className="text-[22px]" />
               </button>
             )}
-            {task.meta?.urgent && !editing && <Icon name="priority_high" weight={700} className="text-[18px] -mx-0.5" style={{ color: URGENT }} aria-label="緊急" />}
+            {task.meta?.urgent && !editing && (
+              <span role="img" aria-label="緊急" className="flex" style={{ color: URGENT }}>
+                <UrgentIcon size={18} filled />
+              </span>
+            )}
             {task.flagged && !editing && <Icon name="flag" fill={1} className="text-[18px]" style={{ color: ORANGE }} />}
             {childCount > 0 && (
               <button type="button" onClick={onCollapse} aria-label={collapsed ? "展開子任務" : "收合子任務"} aria-expanded={!collapsed} className="w-7 h-7 flex items-center justify-center text-[#8E8E93]">
@@ -1441,12 +1445,13 @@ function RowMenu({
   const left = Math.max(12, Math.min(rect.left + 8, vw - 292));
   const today = pm.today;
   const dow = toDay(today).getDay();
-  const dues: [string, string | undefined][] = [
-    ["今天", today],
-    ["明天", addDays(today, 1)],
-    ["這週末", addDays(today, (6 - dow + 7) % 7 || 7)],
-    ["下週一", addDays(today, ((1 - dow + 7) % 7) || 7)],
-    ["無期限", undefined],
+  // 每個捷徑的日曆圖示記號都不一樣（點、兩點、空心圓、箭頭），不會四個長一樣
+  const dues: [string, string | undefined, React.ReactNode][] = [
+    ["今天", today, <DueIcon key="d" kind="today" />],
+    ["明天", addDays(today, 1), <DueIcon key="d" kind="tomorrow" />],
+    [dow === 6 ? "下週六" : "這週六", addDays(today, (6 - dow + 7) % 7 || 7), <DueIcon key="d" kind="saturday" />],
+    ["下週一", addDays(today, ((1 - dow + 7) % 7) || 7), <DueIcon key="d" kind="monday" />],
+    ["無期限", undefined, <DueIcon key="d" kind="none" />],
   ];
 
   return createPortal(
@@ -1470,7 +1475,7 @@ function RowMenu({
             <div className="grid grid-cols-3 border-b border-[#E4E4E7]">
               <TopAction icon="info" label="詳細" onClick={run(onOpen)} />
               <TopAction icon="flag" label={task.flagged ? "取消重要" : "重要"} onClick={run(onFlag)} disabled={!edit} fill={task.flagged} />
-              <TopAction icon="priority_high" label={task.meta?.urgent ? "取消緊急" : "緊急"} onClick={run(onUrgent)} disabled={!edit} color={task.meta?.urgent ? URGENT : undefined} />
+              <TopAction icon={<UrgentIcon size={24} filled={!!task.meta?.urgent} />} label={task.meta?.urgent ? "取消緊急" : "緊急"} onClick={run(onUrgent)} disabled={!edit} color={task.meta?.urgent ? URGENT : undefined} />
             </div>
             <div className="py-1">
               <MenuItem icon="event" label="期限 ›" onClick={() => setPage("due")} disabled={!edit} />
@@ -1478,7 +1483,7 @@ function RowMenu({
               <MenuItem icon="donut_large" label={`完成度 ${task.progress}% ›`} onClick={() => setPage("progress")} disabled={!canToggle(pm, task)} />
               <MenuItem icon="sell" label="標籤 ›" onClick={run(onTags)} disabled={!edit} />
               {pm.isManager && <MenuItem icon="person" label="指派 ›" onClick={() => setPage("assign")} />}
-              <MenuItem icon="storefront" label={task.meta?.vendor ? `廠商：${task.meta.vendor} ›` : "廠商 ›"} onClick={() => setPage("vendor")} disabled={!edit} />
+              <MenuItem icon={<VendorIcon size={22} />} label={task.meta?.vendor ? `廠商：${task.meta.vendor} ›` : "廠商 ›"} onClick={() => setPage("vendor")} disabled={!edit} />
             </div>
             <div className="h-px bg-[#E4E4E7]" />
             <div className="py-1">
@@ -1532,10 +1537,10 @@ function RowMenu({
               <Icon name="chevron_left" className="text-[22px]" />
               期限
             </button>
-            {dues.map(([label, v]) => (
+            {dues.map(([label, v, icon]) => (
               <MenuItem
                 key={label}
-                icon={v ? "event" : "event_busy"}
+                icon={icon}
                 label={label}
                 checked={task.due === v}
                 onClick={run(() => {
@@ -1681,7 +1686,7 @@ function RowMenu({
   );
 }
 
-function TopAction({ icon, label, onClick, disabled, danger, fill, color }: { icon: string; label: string; onClick: () => void; disabled?: boolean; danger?: boolean; fill?: boolean; color?: string }) {
+function TopAction({ icon, label, onClick, disabled, danger, fill, color }: { icon: string | React.ReactNode; label: string; onClick: () => void; disabled?: boolean; danger?: boolean; fill?: boolean; color?: string }) {
   return (
     <button
       type="button"
@@ -1690,7 +1695,7 @@ function TopAction({ icon, label, onClick, disabled, danger, fill, color }: { ic
       className={`flex flex-col items-center justify-center gap-1 h-[68px] text-[13px] active:bg-[#EDEDF0] disabled:opacity-35 ${danger ? "text-[#E5484D]" : "text-[#18181B]"}`}
       style={color ? { color } : undefined}
     >
-      <Icon name={icon} fill={fill ? 1 : 0} className="text-[24px]" />
+      {typeof icon === "string" ? <Icon name={icon} fill={fill ? 1 : 0} className="text-[24px]" /> : icon}
       {label}
     </button>
   );

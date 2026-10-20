@@ -510,11 +510,12 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
       />
       <GoalSheet pm={pm} open={!!goalOpen} goalId={goalOpen} onClose={() => setGoalOpen(null)} onOpenTask={onOpen} />
 
-      {/* 篩選：一個字就好、不放數字（今天、全部、重要、緊急、已完成）；選別天時「今」換成那天 */}
+      {/* 篩選：一個字就好、不放數字（今天、全部、重要、緊急、已完成）；選別天時「今」換成那天（明、昨或日期） */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 py-1 lg:mx-0 lg:px-0">
         {(
           [
-            ["day", day === today ? "今" : shortDay, "今天"],
+            // 一個字：昨／今／明；其他天用日期數字（例：23）
+            ["day", day === today ? "今" : day === addDays(today, 1) ? "明" : day === addDays(today, -1) ? "昨" : String(toDay(day).getDate()), shortDay],
             ["all", "全", "全部"],
             ["flagged", "重", "重要"],
             ["urgent", "急", "緊急"],
