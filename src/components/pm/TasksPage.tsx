@@ -14,6 +14,7 @@ import { SetupNotice } from "./SetupNotice";
 import { isAssignee, taskAssignees } from "@/lib/pm/model";
 import { canEditProject, isLate, usePm, type GoalItem, type Pm } from "./usePm";
 import { ImportSheet } from "./ImportSheet";
+import { onTour, tourEmit, tourState } from "./tour/bus";
 import { GoalSheet } from "./Goals";
 import { ReminderPage, RemindersHome, ReminderTasks, SMART, smartTasks, TaskSearchResults, type ListRoute } from "./Reminders";
 import { SearchOverlay } from "@/components/team/TeamPage";
@@ -94,6 +95,19 @@ export default function TasksPage({
   const [sheet, setSheet] = useState<{ id: string | null; preset?: Partial<Task> } | null>(null);
   const [personFilter, setPersonFilter] = useState<string | null | undefined>(undefined);
   const [route, setRoute] = useState<ListRoute>({ kind: "home" });
+  // 新手教學：現在打開哪個專案的清單；「帶我過去」直接打開
+  useEffect(() => tourEmit("route", route.kind === "project" ? route.code : route.kind), [route]);
+  useEffect(() => {
+    const take = (code: string) => {
+      tourState.pendingProject = null;
+      setRoute({ kind: "project", code });
+    };
+    if (tourState.pendingProject) take(tourState.pendingProject);
+    return onTour((e) => {
+      const g = e.type === "goto" ? (e.data as { project?: string }) : null;
+      if (g?.project) take(g.project);
+    });
+  }, []);
   // 從提醒事項截圖匯入：按鈕放在標題列分頁那一排的右邊（#pm-header-slot）
   const [importOpen, setImportOpen] = useState(false);
   const [slot, setSlot] = useState<HTMLElement | null>(null);
@@ -524,6 +538,7 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
         ).map(([k, label, full]) => (
           <span key={k} title={full} aria-label={full} className="contents">
             <Chip
+              variant="tab"
               on={smart === k && view === "list"}
               onClick={() => {
                 if (k === "day") return pick(day);

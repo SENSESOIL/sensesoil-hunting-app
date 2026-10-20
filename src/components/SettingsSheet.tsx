@@ -10,6 +10,7 @@ import { PortraitSheet } from "@/components/team/PortraitSheet";
 import { teamPost, useTeam } from "@/components/team/useTeam";
 import { mutate as swrMutate } from "swr";
 import { PM_KEY } from "@/components/pm/usePm";
+import { tourEmit } from "@/components/pm/tour/bus";
 import { defaultMark, markOptions } from "@/lib/pm/model";
 import { setThemeMode, useThemeMode, type ThemeMode } from "@/lib/theme";
 
@@ -240,6 +241,27 @@ export function SettingsSheet({
                 canTogglePush && <Switch on={push === "on"} onChange={togglePush} label="通知" />
               )}
             </div>
+          </Section>
+
+          {/* 新手教學：一步一步帶你用專案情報、任務追蹤 */}
+          <Section title="說明">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                setTimeout(() => tourEmit("tour-start"), 350);
+              }}
+              className="w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F4F4F5]"
+            >
+              <span className="w-9 h-9 rounded-full bg-[var(--accent-soft)] flex items-center justify-center shrink-0">
+                <Icon name="school" weight={400} className="text-[20px] text-[var(--accent-strong)]" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[15px] text-[#18181B]">新手教學</span>
+                <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5">5 分鐘學會專案情報與任務追蹤</span>
+              </span>
+              <Icon name="chevron_right" className="text-[20px] text-[#C7C7CC]" />
+            </button>
           </Section>
 
           {/* 切換帳號：直接跳 Google 選帳號，選好回到狩獵管理（不用先登出、再點 Logo）。

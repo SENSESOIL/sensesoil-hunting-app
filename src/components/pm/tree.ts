@@ -38,7 +38,11 @@ export function sectionOf(t: Task, all: Map<string, Task>, valid: Set<string>): 
   return s && valid.has(s) ? s : "";
 }
 
-/** 「其他」（沒分組的任務）的名稱也能改：存在分組清單裡這個特殊 id，不是真的分組 */
+/**
+ * 舊版：「其他」（沒分組的任務）的名稱可以改，存在分組清單裡這個特殊 id。
+ * 現在不用了（每個分組都一樣、沒分組的任務放最上面不加標題）；
+ * 管理者打開專案時，舊的這筆會自動轉成真正的分組（Reminders.tsx）。
+ */
 export const OTHER_SECTION = "_other";
 
 /** 真正的分組（不含「其他」的名稱設定） */
@@ -51,11 +55,18 @@ export function otherName(sections: Section[]): string {
   return sections.find((s) => s.id === OTHER_SECTION)?.name || "其他";
 }
 
-/** 依分組切開：分組照專案設定的順序，最後是「其他」 */
+/**
+ * 依分組切開（像提醒事項）：沒分組的任務放最上面、不加標題（name 是空字串），
+ * 接著是各分組，照專案設定的順序。
+ * 還沒轉換的舊資料（「其他」改過名字）：維持在最後、用那個名字當標題。
+ */
 export function splitBySection(tasks: Task[], sections: Section[], all: Map<string, Task>): { id: string; name: string; tasks: Task[] }[] {
   const real = realSections(sections);
   const valid = new Set(real.map((s) => s.id));
-  const groups = [...real.map((s) => ({ id: s.id, name: s.name, tasks: [] as Task[] })), { id: "", name: otherName(sections), tasks: [] as Task[] }];
+  const legacy = sections.some((s) => s.id === OTHER_SECTION);
+  const loose = { id: "", name: legacy ? otherName(sections) : "", tasks: [] as Task[] };
+  const named = real.map((s) => ({ id: s.id, name: s.name, tasks: [] as Task[] }));
+  const groups = legacy ? [...named, loose] : [loose, ...named];
   const at = new Map(groups.map((g) => [g.id, g]));
   for (const t of tasks) at.get(sectionOf(t, all, valid))!.tasks.push(t);
   return groups;

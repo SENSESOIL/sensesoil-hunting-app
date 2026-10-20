@@ -10,6 +10,7 @@ import { fmtDateLong } from "./fields";
 import { DeleteProject, folderIdFrom } from "./ProjectInfoSheet";
 import { toast } from "./Sheet";
 import type { Pm, ProjectItem } from "./usePm";
+import { tourEmit } from "./tour/bus";
 
 /* ══════════════════════════════════════════════════════════
    專案頁：看一眼就知道專案的狀況，資料直接在這頁改
@@ -35,6 +36,8 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
   const [save, setSave] = useState<SaveState>("idle");
   const savedTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  // 新手教學：專案頁打開了哪個專案（關掉＝null）
+  useEffect(() => tourEmit("project-screen", p ? code : null), [!!p, code]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     setSection("info");
     setShowPeople(false);
@@ -77,6 +80,7 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
       {shown && (
         <div className="px-4 sm:px-5 pt-4 pb-10 max-w-2xl mx-auto flex flex-col gap-4">
           {/* 摘要：只看 */}
+          <div data-tour="project-summary">
           <Group className="p-4">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="h-8 px-3 rounded-full bg-[#F4F4F5] text-[14px] font-semibold text-[#18181B] inline-flex items-center">{shown.stage ?? "未設定階段"}</span>
@@ -126,6 +130,7 @@ export function ProjectScreen({ pm, code, onClose }: { pm: Pm; code: string | nu
               </div>
             )}
           </Group>
+          </div>
 
           {/* 資料｜照片 */}
           <div role="tablist" className="grid grid-cols-2 p-[3px] rounded-[12px] bg-[#EEEEF0]">

@@ -37,15 +37,19 @@ export const T = {
   stat: "text-[22px] leading-[26px] font-bold tabular-nums",
 } as const;
 
+/** 自己畫的線條圖示的粗細（24 格裡）：和 Material Symbols weight 200 看起來一樣粗 */
+const ICON_STROKE = 1.3;
+
 /**
  * 緊急圖示（驚嘆號）：和旗子同一種畫法——平常是空心外框、標了緊急是實心。
  * Material 的 priority_high 只是一條細線，和旗子放在一起不協調，所以自己畫。
  */
 export function UrgentIcon({ size = 24, filled = false, className = "", style }: { size?: number; filled?: boolean; className?: string; style?: React.CSSProperties }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round" className={className} style={style} aria-hidden>
-      <path d="M10.4 3.6h3.2a.9.9 0 0 1 .9.95l-.62 10.1a.9.9 0 0 1-.9.85h-.96a.9.9 0 0 1-.9-.85l-.62-10.1a.9.9 0 0 1 .9-.95Z" />
-      <circle cx="12" cy="19.2" r="1.75" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth={ICON_STROKE} strokeLinejoin="round" className={className} style={style} aria-hidden>
+      {/* 左右對稱：圓角長條＋圓點，都以 x=12 為中心 */}
+      <rect x="10.35" y="3.4" width="3.3" height="11.4" rx="1.65" />
+      <circle cx="12" cy="19.15" r="1.7" />
     </svg>
   );
 }
@@ -53,7 +57,7 @@ export function UrgentIcon({ size = 24, filled = false, className = "", style }:
 /** 廠商圖示：戴安全帽的人（和「指派」的人像同一種線條） */
 export function VendorIcon({ size = 24, className = "", style }: { size?: number; className?: string; style?: React.CSSProperties }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className} style={style} aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" className={className} style={style} aria-hidden>
       <path d="M7.4 10h9.2" />
       <path d="M8.7 10V9.3a3.3 3.3 0 0 1 6.6 0V10" />
       <path d="M12 6v1.6" />
@@ -67,9 +71,9 @@ export function VendorIcon({ size = 24, className = "", style }: { size?: number
  * 期限捷徑的日曆圖示：同一個日曆外框，裡面的記號不同，一眼分得出是哪一天
  *   today＝一個實心點、tomorrow＝兩個點、saturday＝空心圓、monday＝往右的箭頭（下週）、none＝小叉（無期限）
  */
-export function DueIcon({ kind, size = 22 }: { kind: "today" | "tomorrow" | "saturday" | "monday" | "none"; size?: number }) {
+export function DueIcon({ kind, size = 20 }: { kind: "today" | "tomorrow" | "saturday" | "monday" | "none"; size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={ICON_STROKE} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <rect x="4.25" y="5.5" width="15.5" height="14.5" rx="2.2" />
       <path d="M4.25 9.75h15.5M8.5 3.75v3.5M15.5 3.75v3.5" />
       {kind === "today" && <circle cx="15" cy="15.6" r="1.6" fill="currentColor" stroke="none" />}
@@ -101,7 +105,11 @@ export function SectionTitle({ title, sub, children, color }: { title: React.Rea
   );
 }
 
-/** 圓形圖示鈕（36px）：一般＝白底細線圖示；on＝切換中（淡橘底）；primary＝主要動作（橘底白色） */
+/**
+ * 圓形圖示鈕（36px），和標題列的搜尋、通知同一種：
+ * 平常只有細線圖示（沒有底色、沒有陰影），按下時出現淡灰圓；
+ * on＝切換中：圖示變橘色；primary＝主要動作（新增）：橘色的 ＋
+ */
 export function IconButton({
   icon,
   label,
@@ -124,20 +132,19 @@ export function IconButton({
       aria-label={label}
       aria-pressed={on === undefined ? undefined : on}
       title={title ?? label}
-      className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center transition-colors ${
-        primary
-          ? "bg-[var(--accent)] text-white active:opacity-85"
-          : on
-            ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]"
-            : "bg-white shadow-card text-[#52525B] active:bg-[#F4F4F5]"
+      className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center transition-colors hover:bg-[#F2F2F4] active:bg-[#E9E9EC] ${
+        primary || on ? "text-[var(--accent)]" : "text-[#52525B]"
       }`}
     >
-      <Icon name={icon} weight={primary ? 500 : 300} className={primary ? "text-[22px]" : "text-[20px]"} />
+      <Icon name={icon} weight={primary ? 300 : 200} className={primary ? "text-[28px]" : "text-[22px]"} />
     </button>
   );
 }
 
-/** 篩選膠囊（高 34）：選中＝橘底白字；dot＝前面的色點；count＝後面的數字 */
+/**
+ * 篩選膠囊（高 34）：選中＝橘底白字；dot＝前面的色點；count＝後面的數字
+ * variant="tab"：和標題列「行事曆｜任務」分頁同一種——沒選的只有字，選中的是白色圓角塊＋很淡的陰影
+ */
 export function Chip({
   on,
   onClick,
@@ -145,6 +152,7 @@ export function Chip({
   count,
   dot,
   tone,
+  variant = "pill",
 }: {
   on: boolean;
   onClick: () => void;
@@ -153,14 +161,29 @@ export function Chip({
   dot?: string;
   /** 數字的顏色（例如逾期紅） */
   tone?: string;
+  variant?: "pill" | "tab";
 }) {
+  if (variant === "tab") {
+    return (
+      <button
+        type="button"
+        aria-pressed={on}
+        onClick={onClick}
+        className={`h-[32px] px-3.5 rounded-[9px] text-[14px] font-semibold whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
+          on ? "bg-white text-[#18181B] shadow-[0_1px_3px_rgba(0,0,0,0.08)]" : "text-[#71717A] active:bg-black/[0.04]"
+        }`}
+      >
+        {children}
+      </button>
+    );
+  }
   return (
     <button
       type="button"
       aria-pressed={on}
       onClick={onClick}
       className={`h-[34px] px-3.5 rounded-full text-[14px] whitespace-nowrap inline-flex items-center gap-1.5 shrink-0 transition-colors ${
-        on ? "bg-[var(--accent)] text-white font-semibold" : "bg-white shadow-card text-[#3F3F46] active:bg-[#F4F4F5]"
+        on ? "bg-[var(--accent)] text-white font-semibold" : "bg-white ring-1 ring-inset ring-black/[0.07] text-[#3F3F46] active:bg-[#F4F4F5]"
       }`}
     >
       {/* 選中時底色是橘色：圓點改白色（橘點才看得到） */}
@@ -413,9 +436,9 @@ export function SegmentedIcons<T extends string>({
       onClick={() => onChange(next.value)}
       aria-label={`${label}：${cur.label}，點一下換成${next.label}`}
       title={`換成${next.label}`}
-      className="w-9 h-9 rounded-full bg-white shadow-card flex items-center justify-center text-[#52525B] active:bg-[#F4F4F5] transition-colors"
+      className="w-9 h-9 rounded-full flex items-center justify-center text-[#52525B] hover:bg-[#F2F2F4] active:bg-[#E9E9EC] transition-colors"
     >
-      <Icon name={cur.icon} weight={300} className="text-[20px]" />
+      <Icon name={cur.icon} weight={200} className="text-[22px]" />
     </button>
   );
 }
@@ -508,9 +531,9 @@ export function DoneToggle({ on, onChange, count }: { on: boolean; onChange: (v:
       aria-pressed={on}
       aria-label={on ? `隱藏已完成${n}` : `顯示已完成${n}`}
       title={on ? "隱藏已完成" : `顯示已完成${n}`}
-      className="w-9 h-9 rounded-full bg-white shadow-card flex items-center justify-center text-[#52525B] active:bg-[#F4F4F5] transition-colors"
+      className="w-9 h-9 rounded-full flex items-center justify-center text-[#52525B] hover:bg-[#F2F2F4] active:bg-[#E9E9EC] transition-colors"
     >
-      <Icon name={on ? "visibility" : "visibility_off"} weight={300} className="text-[20px]" />
+      <Icon name={on ? "visibility" : "visibility_off"} weight={200} className="text-[22px]" />
     </button>
   );
 }

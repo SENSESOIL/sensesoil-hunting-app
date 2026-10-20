@@ -12,6 +12,7 @@ import { GoalPicker } from "./Goals";
 import { TagSheet } from "./TagSheet";
 import { metaChips } from "@/lib/pm/tags";
 import { VendorList } from "./VendorPicker";
+import { tourEmit } from "./tour/bus";
 
 /* ══════════════════════════════════════════════════════════
    任務細節（新增／編輯），和專案頁同一套 iPhone「設定」樣式：
@@ -309,7 +310,10 @@ export function TaskSheet({
           </button>
           {row === "assign" && pm.isManager && (
             <div className="px-3 pb-3">
-              <AssigneeGrid pm={pm} value={people} onChange={(list) => change(assigneePatch(pm, list), true)} />
+              <AssigneeGrid pm={pm} value={people} onChange={(list) => {
+                change(assigneePatch(pm, list), true);
+                tourEmit("assigned");
+              }} />
             </div>
           )}
           {/* 廠商：協力廠商名單（廠商CRM）；既有任務才有，新任務存好後再選 */}

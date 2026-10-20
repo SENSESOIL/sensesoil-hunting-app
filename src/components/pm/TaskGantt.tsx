@@ -90,7 +90,8 @@ export function TaskGantt({
         : [{ id: null as string | null, name: "", tasks: byCode.get(c)! }];
       for (const g of groups) {
       const rows = treeOrder(g.tasks);
-      if (g.id !== null && rows.length) headBefore.set(rows[0].task.id, { key: `${c}:${g.id}`, name: g.name, tasks: g.tasks });
+      // 沒分組的任務（放最上面）沒有標題列
+      if (g.id !== null && g.name && rows.length) headBefore.set(rows[0].task.id, { key: `${c}:${g.id}`, name: g.name, tasks: g.tasks });
       for (const r of rows) {
         depthOf.set(r.task.id, r.depth);
         if (r.childCount > 0 && !(r.task.start || r.task.due)) {

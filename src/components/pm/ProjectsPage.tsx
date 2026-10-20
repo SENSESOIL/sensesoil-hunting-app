@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { onTour, tourState } from "./tour/bus";
 import { ACTIVE_STAGES, fmtDate, fmtWan, healthRank, type Stage } from "@/lib/project-ops";
 import { personColor } from "@/lib/pm/model";
 import { HEALTH_META, Icon } from "./ui";
@@ -63,6 +64,18 @@ export default function ProjectsPage({
 }) {
   const pm = usePm();
   const [open, setOpen] = useState<string | null>(null);
+  // 新手教學「帶我過去」：打開練習專案
+  useEffect(() => {
+    const take = (code: string) => {
+      tourState.pendingOpen = null;
+      setOpen(code);
+    };
+    if (tourState.pendingOpen) take(tourState.pendingOpen);
+    return onTour((e) => {
+      const g = e.type === "goto" ? (e.data as { openProject?: string }) : null;
+      if (g?.openProject) take(g.openProject);
+    });
+  }, []);
   const [creating, setCreating] = useState(false);
   // 目標／團隊分頁點任務：打開任務細節；團隊分頁的「＋」：新增任務
   const [taskId, setTaskId] = useState<string | null>(null);
@@ -381,7 +394,7 @@ function ProjectRow({ p, pm, last, showStage, onOpen }: { p: ProjectItem; pm: Pm
   const stageText = p.stage && STAGE_COLOR[p.stage] !== "#D4D4D8" ? STAGE_COLOR[p.stage] : "#A1A1AA";
 
   return (
-    <button onClick={onOpen} className="relative w-full flex items-center gap-3.5 pl-4 pr-3 py-3.5 text-left active:bg-[#F7F7F8]">
+    <button onClick={onOpen} data-tour={`project-${p.code}`} className="relative w-full flex items-center gap-3.5 pl-4 pr-3 py-3.5 text-left active:bg-[#F7F7F8]">
       <span
         className="w-11 h-11 rounded-[14px] flex items-center justify-center shrink-0 text-white text-[12px] font-bold tracking-tight tabular-nums"
         style={{ background: personColor(p.code) }}

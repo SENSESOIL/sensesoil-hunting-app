@@ -20,6 +20,8 @@ import { PhotoUpload } from "@/components/pm/PhotoUpload";
 import { ToastHost } from "@/components/pm/Sheet";
 import { Avatar } from "@/components/pm/kit";
 import { SettingsSheet, START_NAV_KEY } from "@/components/SettingsSheet";
+import { TourHost } from "@/components/pm/tour/TourHost";
+import { onTour, tourEmit } from "@/components/pm/tour/bus";
 import { enableAppTheme } from "@/lib/theme";
 import { disablePush, refreshPush } from "@/components/pm/push-client";
 import { isManagerRoles } from "@/lib/pm/model";
@@ -736,6 +738,21 @@ export default function HuntingManagementPage() {
     if (commandTabs.length && !commandTabs.includes(commandTab)) setCommandTab(commandTabs[0]);
   }, [permsLoading, commandTabs, commandTab]);
   const [intelTab, setIntelTab] = useState(PROJECT_TABS[0]);
+  // 新手教學：告訴教學現在在哪一頁、搜尋了什麼；教學的「帶我過去」也從這裡換頁
+  useEffect(() => tourEmit("nav", activeNav), [activeNav]);
+  useEffect(() => tourEmit("search", teamQuery), [teamQuery]);
+  useEffect(
+    () =>
+      onTour((e) => {
+        if (e.type !== "goto") return;
+        const g = e.data as { nav?: string; tab?: string; intelTab?: string };
+        if (g.nav) setActiveNav(g.nav);
+        if (g.tab) setScheduleTab(g.tab);
+        if (g.intelTab) setIntelTab(g.intelTab);
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
   // 專案情報：管理者多了「團隊」「工作量」
   const INTEL_TABS = isPmManager ? PROJECT_TABS_MANAGER : PROJECT_TABS;
   const TASK_TABS = isPmManager ? TASK_TABS_MANAGER : TASK_TABS_MEMBER;
@@ -1389,6 +1406,7 @@ export default function HuntingManagementPage() {
               type="text"
               ref={deskSearchRef}
               value={searchMode ? teamQuery : ""}
+              data-tour="search"
               onChange={(e) => searchMode && setTeamQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
@@ -1422,12 +1440,13 @@ export default function HuntingManagementPage() {
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto scrollbar-hide overflow-x-hidden flex flex-col">
           {/* Navigation */}
-          <nav className="pt-4 flex flex-col gap-0.5 px-4 pb-4 relative w-full">
+          <nav data-tour="nav" className="pt-4 flex flex-col gap-0.5 px-4 pb-4 relative w-full">
             {navItems.map((item) => {
               const isActive = activeNav === item.id;
               return (
                 <button
                   key={item.id}
+                  data-tour={`nav-${item.id}`}
                   onClick={() => setActiveNav(item.id)}
                   className={`w-full flex items-center h-9 rounded-[12px] transition-colors relative outline-none shrink-0 ${
                     isActive
@@ -1551,6 +1570,7 @@ export default function HuntingManagementPage() {
                       setTimeout(() => tmp.remove(), 1000);
                       setTeamSearchOpen(true);
                     }}
+                    data-tour="search"
                     className="md:hidden w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-[#F4F4F5] text-[#71717A]"
                     title="搜尋"
                     aria-label={searchLabel}
@@ -1830,12 +1850,13 @@ export default function HuntingManagementPage() {
         className={`md:hidden fixed bottom-6 left-0 right-0 z-50 flex items-center justify-center gap-4 pointer-events-none transition-transform duration-300 ${showNav ? "translate-y-0" : "translate-y-[150%]"} ${activeNav === "tasks" && taskSubPage ? "hidden" : ""}`}
       >
         {/* Navigation Pill */}
-        <div className="bg-white/90 backdrop-blur-xl border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.12)] rounded-full p-1.5 flex items-center gap-1 pointer-events-auto">
+        <div data-tour="nav" className="bg-white/90 backdrop-blur-xl border border-[#E4E4E7] shadow-[0_8px_30px_rgba(0,0,0,0.12)] rounded-full p-1.5 flex items-center gap-1 pointer-events-auto">
           {navItems.map((item) => {
             const isActive = activeNav === item.id;
             return (
               <button
                 key={item.id}
+                data-tour={`nav-${item.id}`}
                 onClick={() => setActiveNav(item.id)}
                 className={`w-[42px] h-[42px] flex items-center justify-center rounded-full transition-all outline-none ${
                   isActive
@@ -1947,6 +1968,7 @@ export default function HuntingManagementPage() {
           </div>
         )}
 
+        <TourHost />
         <SettingsSheet
           open={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}

@@ -331,6 +331,32 @@ export async function POST(req: Request) {
           return json({ error: msg.includes("資料庫還沒建立") ? "刪除專案還沒啟用：請在 Supabase 執行 20261023000000_pm_project_purge.sql" : msg }, 500);
         }
       }
+      // ── 新手教學 ──────────────────────────────────────────
+      // 每個人一個自己的練習專案（代碼由 email 算出，只會動到自己的）：
+      //   tutorial.start  清掉上一次留下的 → 建立「新手練習」→ 把自己設成可編輯的人
+      //   tutorial.end    刪掉練習專案的任務與資料，再封存（清單上看不到）
+      case "tutorial.start": {
+        const code = tutorialCode(user.email);
+        const sys = { ...actor, role: "manager" as const };
+        await rpc("pm_project_purge", { ...sys, code }).catch(() => null);
+        const now = new Date(Date.now() + 8 * 3600_000);
+        const day = (n: number) => new Date(now.getTime() + n * 86400_000).toISOString().slice(0, 10);
+        const r = await rpc<{ status: string }>("pm_project_save", {
+          ...sys,
+          code,
+          base_version: null,
+          patch: projectPatchToRow({ name: `新手練習（${user.name}）`, company: "新手教學", stage: "施工中", startAt: day(0), dueAt: day(14), archived: false }),
+        });
+        await rpc("pm_project_set_editors", { ...sys, code, editors: [user.email] }).catch(() => null);
+        return json({ status: r.status === "conflict" ? "ok" : r.status, code });
+      }
+      case "tutorial.end": {
+        const code = tutorialCode(user.email);
+        const sys = { ...actor, role: "manager" as const };
+        const purged = await rpc("pm_project_purge", { ...sys, code }).then(() => true).catch(() => false);
+        await rpc("pm_project_save", { ...sys, code, base_version: null, patch: projectPatchToRow({ archived: true }) }).catch(() => null);
+        return json({ status: "ok", purged });
+      }
       case "editors.save": {
         if (user.role !== "manager") return json({ error: "只有管理者可以設定可編輯的人" }, 403);
         const code = String(body.code ?? "").trim();
@@ -430,4 +456,11 @@ function statusCode(status: string): number {
   if (status === "forbidden") return 403;
   if (status === "not_found") return 404;
   return 200;
+}
+
+/** 新手教學的練習專案代碼：DEMO-＋email 的短雜湊（每人固定一個，不會撞到正式專案） */
+function tutorialCode(email: string): string {
+  let h = 2166136261;
+  for (const ch of email.toLowerCase()) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  return `DEMO-${h.toString(36).toUpperCase().slice(0, 6)}`;
 }

@@ -323,6 +323,7 @@ export function SubScreen({
       <header className="fixed top-0 left-0 right-0 h-[60px] bg-[#FFFFFF] z-[130] border-b border-[#E4E4E7]/60 flex items-center justify-between px-2">
         <button
           ref={back}
+          data-tour="subscreen-back"
           type="button"
           onClick={onClose}
           className="w-11 h-11 flex items-center justify-center rounded-full text-[#18181B] active:bg-[#F4F4F5] focus-visible:bg-[#F4F4F5] transition-colors"

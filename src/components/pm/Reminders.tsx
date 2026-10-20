@@ -14,6 +14,7 @@ import { ProjectScreen } from "./ProjectScreen";
 import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
 import { VendorList } from "./VendorPicker";
+import { onTour, tourEmit, tourState } from "./tour/bus";
 import { assigneeLabel, assigneePatch, canEditProject, isLate, personLabel, personMark, type Pm } from "./usePm";
 import { OTHER_SECTION, realSections, sectionOf, splitBySection, treeOrder, type TreeRow } from "./tree";
 
@@ -126,14 +127,15 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
   const projects = useMemo(() => {
     const active = (p: (typeof pm.projects)[number]) => p.tasks.length > 0 || (p.stage && ["簽約", "施工中", "驗收"].includes(p.stage));
     return pm.projects
-      .filter((p) => !p.archived && (pm.isManager ? true : p.tasks.length > 0))
+      .filter((p) => !p.archived && (pm.isManager || p.tasks.length > 0 || p.code === tourState.code))
       .sort((a, b) => Number(!!active(b)) - Number(!!active(a)) || b.openCount - a.openCount || b.code.localeCompare(a.code))
       .map((p) => ({ p, active: !!active(p) }));
   }, [pm]);
   // 置頂的排最前面，而且一定顯示（不受「只顯示進行中」限制）
   const pinnedRows = pinned.map((c) => projects.find((x) => x.p.code === c)).filter((x): x is (typeof projects)[number] => !!x);
   const rest = projects.filter((x) => !pinned.includes(x.p.code));
-  const shownProjects = [...pinnedRows, ...(allProjects ? rest : rest.filter((x) => x.active).slice(0, 12))];
+  const tourRow = projects.filter((x) => x.p.code === tourState.code);
+  const shownProjects = [...tourRow, ...pinnedRows.filter((x) => x.p.code !== tourState.code), ...(allProjects ? rest : rest.filter((x) => x.active).slice(0, 12)).filter((x) => x.p.code !== tourState.code)];
   const hiddenCount = projects.length - shownProjects.length;
 
   const tags = useMemo(() => {
@@ -152,6 +154,7 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
                 {shownProjects.map(({ p }) => (
                   <ListRow
                     key={p.code}
+                    tourId={`list-${p.code}`}
                     badge={p.code}
                     color={personColor(p.code)}
                     label={p.name}
@@ -223,7 +226,10 @@ function ListRow({
   pinned,
   onClick,
   onLongPress,
+  tourId,
 }: {
+  /** 新手教學的聚光燈目標 */
+  tourId?: string;
   icon?: string;
   badge?: string;
   color: string;
@@ -247,6 +253,7 @@ function ListRow({
     <button
       ref={ref}
       type="button"
+      data-tour={tourId}
       onClick={() => {
         if (fired.current) {
           fired.current = false;
@@ -396,7 +403,29 @@ export function ReminderPage({
   }, []);
   // 甘特圖：預設閱讀模式，按「編輯」才能拖曳調整（離開甘特圖就回到閱讀）
   const [ganttEdit, setGanttEdit] = useState(false);
+  // 新手教學：檢視換了、甘特圖進出編輯；「帶我過去」可以直接換檢視
+  useEffect(() => tourEmit("gantt-edit", ganttEdit), [ganttEdit]);
+  useEffect(() => {
+    // 教學「帶我過去」時清單頁可能剛打開：補套用還沒套的檢視
+    if (code && tourState.pendingView) {
+      setView(tourState.pendingView as PageView);
+      tourState.pendingView = null;
+    }
+    return onTour((e) => {
+      const g = e.type === "goto" ? (e.data as { view?: PageView }) : null;
+      if (g?.view && code) {
+        setView(g.view);
+        tourState.pendingView = null;
+      }
+    });
+  },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
   const pageView: PageView = code ? view : "list";
+  useEffect(() => {
+    if (code) tourEmit("view", pageView);
+  }, [code, pageView]);
   const doneCount = tasks.filter((t) => t.status === "done").length;
   // 專案頁：清單裡每段最後都有虛線圓點可以直接打字新增，不放右下「＋」；跨專案頁（今天、重要…）才用「＋」開完整表單
   const canAdd = !code && !!onAddFull;
@@ -420,6 +449,7 @@ export function ReminderPage({
       type="button"
       onClick={() => setGanttEdit((v) => !v)}
       aria-pressed={ganttEdit}
+      data-tour="gantt-edit"
       aria-label={ganttEdit ? "完成編輯，回到閱讀模式" : "編輯甘特圖"}
       title={ganttEdit ? "完成編輯" : "編輯"}
       className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${ganttEdit ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5]"}`}
@@ -436,6 +466,7 @@ export function ReminderPage({
         setGanttEdit(false);
         setView(next[0]);
       }}
+      data-tour="view-switch"
       aria-label={`檢視：${cur[2]}，點一下換成${next[2]}`}
       title={`換成${next[2]}`}
       className="w-9 h-9 rounded-full flex items-center justify-center text-[#71717A] hover:bg-[#F4F4F5] active:bg-[#F4F4F5] transition-colors"
@@ -481,7 +512,11 @@ export function ReminderPage({
       {pageView === "list" && (
         <ReminderTasks pm={pm} tasks={tasks} code={code} grouped={grouped} showDone={showDone} onOpen={onOpen} addSignal={addSignal} color={color} tapToAdd />
       )}
-      {pageView === "board" && <TaskBoard pm={pm} tasks={tasks} onOpen={onOpen} onAdd={add} />}
+      {pageView === "board" && (
+        <div data-tour="board">
+          <TaskBoard pm={pm} tasks={tasks} onOpen={onOpen} onAdd={add} />
+        </div>
+      )}
       {code && pageView !== "board" && (
         <button
           type="button"
@@ -492,7 +527,7 @@ export function ReminderPage({
           {showDone ? "隱藏已完成" : `顯示已完成${doneCount ? `（${doneCount}）` : ""}`}
         </button>
       )}
-      {pageView === "gantt" && <TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} editable={ganttEdit && canGantt} project={code} />}
+      {pageView === "gantt" && <div data-tour="gantt"><TaskGantt pm={pm} tasks={tasks.filter((t) => showDone || t.status !== "done")} onOpen={onOpen} editable={ganttEdit && canGantt} project={code} /></div>}
 
       {/* 手機：返回（左下）與新增（右下）放在原本底部導覽列的位置 */}
       <button
@@ -617,6 +652,20 @@ export function ReminderTasks({
   const taskById = useMemo(() => new Map(pm.tasks.map((t) => [t.id, t])), [pm.tasks]);
   const validSec = useMemo(() => new Set(realSections(projSections).map((s) => s.id)), [projSections]);
   const secOf = (t: Task) => sectionOf(t, taskById, validSec);
+  // 舊資料：「其他」改過名字（例：木作）→ 轉成真正的分組，之後就能上移、下移、刪除，和其他分組一樣
+  const migrated = useRef(new Set<string>());
+  useEffect(() => {
+    if (!code || grouped || !pm.isManager || migrated.current.has(code)) return;
+    const legacy = projSections.find((s) => s.id === OTHER_SECTION);
+    if (!legacy) return;
+    migrated.current.add(code);
+    const id = newSectionId();
+    const loose = pm.tasks.filter((t) => t.code === code && !t.parentId && !validSec.has(t.meta?.section ?? ""));
+    (async () => {
+      if (!(await pm.saveSections(code, [...realSections(projSections), { id, name: legacy.name || "其他" }]))) return;
+      for (const t of loose) pm.saveTask({ id: t.id, meta: { ...(t.meta ?? {}), section: id } }, { quiet: true });
+    })();
+  }, [code, grouped, pm, projSections, validSec]);
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -922,6 +971,15 @@ export function ReminderTasks({
         ));
         if (draft && at >= 0) items.splice(at, 0, <DraftRow key={draft.id} depth={draft.parentId ? 1 : 0} color={color} onCommit={commitDraft} />);
         // 有分組的專案：每段一個標題（可收合、管理者可改名）＋最後一列虛線圓點新增
+        // 沒分組的任務：放最上面，不加標題、不放新增列（像提醒事項）
+        if (sec.sectionId === "" && !sec.sectionName) {
+          if (!rows.length && !(draft && (draft.section ?? "") === "")) return null;
+          return (
+            <section key="sec-loose">
+              <div className="overflow-hidden">{items}</div>
+            </section>
+          );
+        }
         if (sec.sectionId !== undefined) {
           const isOther = sec.sectionId === "";
           return (
@@ -957,6 +1015,7 @@ export function ReminderTasks({
                         primeKeyboard();
                         startDraft(undefined, secKey);
                       }}
+                      data-tour="add-row"
                       aria-label={`在「${sec.sectionName}」新增任務`}
                       className="w-full flex items-center gap-3 pl-1 pr-1 h-11 text-left active:bg-[#F2F2F4]"
                     >
@@ -984,6 +1043,7 @@ export function ReminderTasks({
                     primeKeyboard();
                     startDraft();
                   }}
+                  data-tour="add-row"
                   aria-label="新增任務"
                   className="w-full flex items-center gap-3 pl-1 pr-1 h-11 text-left active:bg-[#F2F2F4]"
                 >
@@ -1200,7 +1260,7 @@ function TaskRow({
   const indentReady = offset >= INDENT_AT;
 
   return (
-    <div ref={rowRef} className={`relative overflow-hidden select-none transition-opacity ${linger ? "opacity-60" : ""}`} style={{ WebkitTouchCallout: "none" }}>
+    <div ref={rowRef} data-tour-task={task.id} className={`relative overflow-hidden select-none transition-opacity ${linger ? "opacity-60" : ""}`} style={{ WebkitTouchCallout: "none" }}>
       {/* 右滑：縮排／取消縮排 */}
       {showIndent && (
         <div className="absolute inset-y-0 left-0 flex items-center pl-3" style={{ width: Math.max(offset, 0) }}>
@@ -1422,6 +1482,8 @@ function RowMenu({
   const [page, setPage] = useState<MenuPage>("main");
   const [projQ, setProjQ] = useState("");
   const [shown, setShown] = useState(false);
+  // 新手教學：選單打開了（只在打開那一次說）
+  useEffect(() => tourEmit("menu-open"), []);
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -1467,6 +1529,7 @@ function RowMenu({
       </div>
       {/* 選單 */}
       <div
+        data-tour="row-menu"
         className={`absolute w-[280px] rounded-[16px] bg-[#F7F7F8]/95 shadow-[0_16px_50px_rgba(0,0,0,0.22)] overflow-hidden transition-all duration-200 origin-top-left ${shown ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
         style={{ top: menuTop, left }}
       >
@@ -1483,7 +1546,7 @@ function RowMenu({
               <MenuItem icon="donut_large" label={`完成度 ${task.progress}% ›`} onClick={() => setPage("progress")} disabled={!canToggle(pm, task)} />
               <MenuItem icon="sell" label="標籤 ›" onClick={run(onTags)} disabled={!edit} />
               {pm.isManager && <MenuItem icon="person" label="指派 ›" onClick={() => setPage("assign")} />}
-              <MenuItem icon={<VendorIcon size={22} />} label={task.meta?.vendor ? `廠商：${task.meta.vendor} ›` : "廠商 ›"} onClick={() => setPage("vendor")} disabled={!edit} />
+              <MenuItem icon={<VendorIcon size={20} />} label={task.meta?.vendor ? `廠商：${task.meta.vendor} ›` : "廠商 ›"} onClick={() => setPage("vendor")} disabled={!edit} />
             </div>
             <div className="h-px bg-[#E4E4E7]" />
             <div className="py-1">
@@ -1502,7 +1565,7 @@ function RowMenu({
               <Icon name="chevron_left" className="text-[22px]" />
               移到分組
             </button>
-            <MenuItem icon="block" label="不分組（其他）" checked={!currentSection} onClick={run(() => onSection?.(""))} />
+            <MenuItem icon="block" label="不分組（放最上面）" checked={!currentSection} onClick={run(() => onSection?.(""))} />
             {sections.map((s) => (
               <MenuItem key={s.id} icon="segment" label={s.name} checked={currentSection === s.id} onClick={run(() => onSection?.(s.id))} />
             ))}
@@ -1664,6 +1727,7 @@ function RowMenu({
                   onClick={() => {
                     const next = on ? list.filter((e) => e !== p.email) : [...list, p.email];
                     pm.saveTask({ id: task.id, ...assigneePatch(pm, next) });
+                    tourEmit("assigned");
                     if (!on && p.email !== pm.me?.email) toast(`已指派給 ${p.name}，對方會收到通知`);
                   }}
                   className="w-full flex items-center gap-3 px-4 h-12 text-left active:bg-[#EDEDF0]"
