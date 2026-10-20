@@ -12,11 +12,15 @@ import { Icon } from "./ui";
    ══════════════════════════════════════════════════════════ */
 
 export interface VendorOption {
+  /** 廠商CRM 的列（同一個簡稱可能有好幾列，例如同一家做不同工項），當清單的 key */
+  id: string;
   name: string;
   full?: string;
   trade?: string;
   contact?: string;
   phone?: string;
+  /** 廠商CRM 的備註（例：木地板、益膠泥），也拿來搜尋 */
+  memo?: string;
 }
 
 export function useVendors(enabled = true): { vendors: VendorOption[]; loading: boolean; error?: string } {
@@ -25,7 +29,7 @@ export function useVendors(enabled = true): { vendors: VendorOption[]; loading: 
     () =>
       (data?.contacts ?? [])
         .filter((c) => c.kind === "vendor")
-        .map((c) => ({ name: c.name, full: c.company, trade: c.title, contact: c.note, phone: c.phone })),
+        .map((c) => ({ id: c.id, name: c.name, full: c.company, trade: c.title, contact: c.note, phone: c.phone, memo: c.vendor?.note || undefined })),
     [data?.contacts]
   );
   return { vendors, loading: isLoading && !data, error: error ? String(error.message ?? error) : undefined };
@@ -49,15 +53,15 @@ export function VendorList({
   const [q, setQ] = useState("");
   const list = useMemo(() => {
     const k = q.trim().toLowerCase();
-    // 搜尋時依「符合的地方」排：簡稱 → 工項 → 全名 → 聯絡人（只符合全名時，下面會顯示全名，才看得出為什麼列出來）
+    // 搜尋時依「符合的地方」排：簡稱 → 工項 → 全名 → 聯絡人 → 備註（只符合全名時，下面會顯示全名，才看得出為什麼列出來）
     const has = (x: string | undefined) => !!x && x.toLowerCase().includes(k);
-    const rank = (v: VendorOption) => (!k ? 0 : has(v.name) ? 0 : has(v.trade) ? 1 : has(v.full) ? 2 : has(v.contact) ? 3 : 9);
+    const rank = (v: VendorOption) => (!k ? 0 : has(v.name) ? 0 : has(v.trade) ? 1 : has(v.full) ? 2 : has(v.contact) ? 3 : has(v.memo) ? 4 : 9);
     const sameTrade = (v: VendorOption) => Number(!!trade && !!v.trade?.includes(trade));
     return vendors
       .map((v) => ({ v, r: rank(v) }))
       .filter((x) => x.r < 9)
       .sort((a, b) => a.r - b.r || sameTrade(b.v) - sameTrade(a.v) || (a.v.trade ?? "").localeCompare(b.v.trade ?? "") || a.v.name.localeCompare(b.v.name))
-      .map((x) => ({ ...x.v, viaFull: x.r === 2 }));
+      .map((x) => ({ ...x.v, viaFull: x.r === 2, viaMemo: x.r === 4 }));
   }, [vendors, q, trade]);
   const menu = variant === "menu";
   const row = `w-full flex items-center gap-3 px-4 h-12 text-left ${menu ? "active:bg-[#EDEDF0]" : "active:bg-[#F2F2F4]"}`;
@@ -88,11 +92,11 @@ export function VendorList({
           <p className="px-4 py-4 text-[13px] text-[#71717A]">讀不到協力廠商名單：{error}</p>
         ) : (
           list.map((v) => (
-            <button key={v.name + (v.full ?? "")} type="button" onClick={() => onPick(v.name)} className={row}>
+            <button key={v.id} type="button" onClick={() => onPick(v.name)} className={row}>
               <span className="flex-1 min-w-0">
                 <span className="block text-[16px] text-[#18181B] truncate">{v.name}</span>
-                {(v.trade || v.contact || v.viaFull) && (
-                  <span className="block text-[12px] text-[#8E8E93] truncate">{[v.trade, v.viaFull ? v.full : v.contact].filter(Boolean).join("・")}</span>
+                {(v.trade || v.contact || v.memo || v.viaFull) && (
+                  <span className="block text-[12px] text-[#8E8E93] truncate">{[v.trade, v.viaFull ? v.full : v.viaMemo ? v.memo : v.contact || v.memo].filter(Boolean).join("・")}</span>
                 )}
               </span>
               {value === v.name && <Icon name="check" weight={600} className="text-[18px] text-[var(--accent)]" />}
