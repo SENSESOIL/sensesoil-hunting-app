@@ -13,13 +13,17 @@ import { TagSheet } from "./TagSheet";
 import { metaChips } from "@/lib/pm/tags";
 
 /* ══════════════════════════════════════════════════════════
-   任務細節（新增／編輯）
-   - 管理者：全部欄位；被指派的人：只能改狀態、進度、備註，並按「收到」
-   - 期限用捷徑（今天／明天／週五／下週一），少打字
+   任務細節（新增／編輯），和專案頁同一套 iPhone「設定」樣式：
+   - 最上面：任務名稱＋備註（直接打字）
+   - 下面一組一組：狀態、時間、負責人、分類；左邊項目、右邊目前的值，點一下展開或直接改
+   - 既有任務：改了就自動存（不用按儲存）；指派、完成度停手 1 秒才存，免得點來點去一直通知人
+   - 新任務：填完按下面的「新增」
+   - 管理者：全部欄位；被指派的人：只能改狀態、完成度、備註，並按「收到」
    - 指派紀錄：何時指派、對方何時看到、何時按收到 —— 不用再打電話確認
    ══════════════════════════════════════════════════════════ */
 
 type Draft = Pick<Task, "code" | "title" | "kind" | "status" | "progress" | "flagged" | "assigneeEmail" | "coAssignees" | "start" | "due" | "note" | "goalId">;
+type RowKey = null | "project" | "goal" | "due" | "start" | "assign" | "progress";
 
 const EMPTY: Draft = { code: "", title: "", kind: "施工", status: "todo", progress: 0, flagged: false, coAssignees: [] };
 
@@ -61,24 +65,27 @@ export function TaskSheet({
 
   const initial = useMemo<Draft>(
     () => (task ? toDraft(task) : { ...EMPTY, ...(pm.isManager ? {} : { assigneeEmail: me }), ...preset }),
-    // 以打開當下為準：編輯中資料自動更新也不會蓋掉正在填的內容
+    // 以打開當下為準
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [open, taskId]
   );
+  // 新任務：先填在草稿，按「新增」才存
   const [d, setD] = useState<Draft>(initial);
-  const [pickProject, setPickProject] = useState(false);
-  const [pickGoal, setPickGoal] = useState(false);
+  // 既有任務：停手才存的欄位（指派、完成度）先放這裡，畫面先顯示
+  const [pending, setPending] = useState<Partial<Draft>>({});
+  const pendingRef = useRef<Partial<Draft>>({});
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [row, setRow] = useState<RowKey>(null);
   const [tagsOpen, setTagsOpen] = useState(false);
-  const [showStart, setShowStart] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const titleRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setD(initial);
-    setPickProject(isNew && !initial.code);
-    setPickGoal(false);
-    setShowStart(!!initial.start);
+    setPending({});
+    pendingRef.current = {};
+    setRow(isNew && !initial.code ? "project" : null);
     setConfirmDel(false);
     if (isNew) setTimeout(() => titleRef.current?.focus(), 350);
   }, [open, initial, isNew]);
@@ -88,42 +95,64 @@ export function TaskSheet({
     if (open && task && mine && !task.seenAt) pm.markTask(task.id, "seen");
   }, [open, task, mine, pm]);
 
-  const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((c) => ({ ...c, [k]: v }));
-  const dirty = JSON.stringify(d) !== JSON.stringify(initial);
-  const project = d.code ? pm.projectBy.get(d.code) : undefined;
+  const v: Draft = task ? { ...toDraft(task), ...pending } : d;
+  const project = v.code ? pm.projectBy.get(v.code) : undefined;
+  const late = task && isLate({ ...task, ...v } as Task, pm.today);
+
+  /* ── 存檔 ── */
+  const commit = async (patch: Partial<Draft>) => {
+    if (!task) return;
+    const full: Partial<Task> & { id: string } = { id: task.id, ...patch };
+    if ("assigneeEmail" in patch) full.assigneeName = patch.assigneeEmail ? pm.personBy.get(patch.assigneeEmail)?.name : undefined;
+    const before = task.assigneeEmail;
+    const saved = await pm.saveTask(full);
+    if (saved && "assigneeEmail" in patch && patch.assigneeEmail && patch.assigneeEmail !== before && patch.assigneeEmail !== me) {
+      toast(`已指派給 ${saved.assigneeName}，對方會收到通知`);
+    }
+  };
+  const flush = () => {
+    clearTimeout(timer.current);
+    const p = pendingRef.current;
+    pendingRef.current = {};
+    setPending({});
+    if (task && Object.keys(p).length) commit(p);
+  };
+  /** 改欄位：新任務改草稿；既有任務馬上存（later＝停手 1 秒才存） */
+  const change = (patch: Partial<Draft>, later = false) => {
+    if (!task) return setD((c) => ({ ...c, ...patch }));
+    const next = { ...v, ...patch };
+    if (next.start && next.due && next.due < next.start) return toast("期限早於開始日", { tone: "error" });
+    if (later) {
+      pendingRef.current = { ...pendingRef.current, ...patch };
+      setPending(pendingRef.current);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(flush, 1000);
+      return;
+    }
+    commit(patch);
+  };
+  const close = () => {
+    flush();
+    onClose();
+  };
+  const toggleRow = (k: RowKey) => {
+    if (row === "assign" || row === "progress") flush();
+    setRow((r) => (r === k ? null : k));
+  };
+
+  /* ── 新增 ── */
   const errors: string[] = [];
   if (!d.title.trim()) errors.push("請輸入任務名稱");
   if (!d.code) errors.push("請選擇專案");
   if (d.start && d.due && d.due < d.start) errors.push("期限早於開始日");
-
-  const save = async () => {
-    if (errors.length) {
-      toast(errors[0], { tone: "error" });
-      return;
-    }
-    const patch: Partial<Task> & { id: string } = { id: task?.id ?? newTaskId() };
-    (Object.keys(d) as (keyof Draft)[]).forEach((k) => {
-      if (isNew || JSON.stringify(d[k]) !== JSON.stringify(initial[k])) (patch as Record<string, unknown>)[k] = d[k];
-    });
-    patch.code = d.code;
-    if (!isNew && Object.keys(patch).length <= 2) {
-      onClose();
-      return;
-    }
-    if (patch.title) patch.title = patch.title.trim();
-    // 新任務沒有協作者就不帶（還沒執行多人指派的 SQL 時才不會跳提醒）
-    if (isNew && !d.coAssignees?.length) delete patch.coAssignees;
-    if (patch.assigneeEmail !== undefined || isNew) {
-      patch.assigneeName = d.assigneeEmail ? pm.personBy.get(d.assigneeEmail)?.name : undefined;
-    }
+  const create = async () => {
+    if (errors.length) return toast(errors[0], { tone: "error" });
+    const patch: Partial<Task> & { id: string } = { id: newTaskId(), ...d, title: d.title.trim() };
+    if (!d.coAssignees?.length) delete patch.coAssignees;
+    patch.assigneeName = d.assigneeEmail ? pm.personBy.get(d.assigneeEmail)?.name : undefined;
     onClose();
     const saved = await pm.saveTask(patch);
-    if (saved && isNew) {
-      const who = saved.assigneeEmail && saved.assigneeEmail !== me ? `，已通知 ${saved.assigneeName}` : "";
-      toast(`已新增「${saved.title}」${who}`);
-    } else if (saved && patch.assigneeEmail && patch.assigneeEmail !== me) {
-      toast(`已指派給 ${saved.assigneeName}，對方會收到通知`);
-    }
+    if (saved) toast(`已新增「${saved.title}」${saved.assigneeEmail && saved.assigneeEmail !== me ? `，已通知 ${saved.assigneeName}` : ""}`);
   };
 
   const remove = async () => {
@@ -148,237 +177,75 @@ export function TaskSheet({
     toast("已回覆收到，指派的人會看到");
   };
 
-  const late = task && isLate({ ...task, ...d } as Task, pm.today);
+  const setStatus = (s: TaskStatus) => change({ status: s, progress: s === "done" ? 100 : v.status === "done" ? 0 : v.progress });
+  const setProgress = (p: number) => change({ progress: p, status: p >= 100 ? "done" : p > 0 ? "doing" : v.status === "doing" ? "todo" : v.status }, true);
+  const people = taskAssignees(v);
+  const chips = task ? metaChips(task.meta) : [];
 
   return (
     <Sheet
       open={open}
       title={isNew ? "新增任務" : project?.name ?? "任務"}
-      subtitle={isNew ? undefined : project ? `${project.code}${task?.assigneeEmail ? "　·　" + personLabel(pm, task.assigneeEmail, task.assigneeName) : ""}` : undefined}
-      onClose={onClose}
-      dirty={dirty}
+      subtitle={isNew ? undefined : project?.code}
+      onClose={close}
+      dirty={isNew && JSON.stringify(d) !== JSON.stringify(initial)}
       footer={
-        confirmDel ? (
-          <div className="flex gap-2">
-            <button onClick={() => setConfirmDel(false)} className="flex-1 h-12 rounded-[14px] bg-[#F4F4F5] text-[15px] font-semibold text-[#18181B]">
-              不刪除
-            </button>
-            <button onClick={remove} className="flex-1 h-12 rounded-[14px] text-white text-[15px] font-semibold" style={{ background: RED }}>
-              確定刪除
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            {task && canEditAll && (
-              <button
-                onClick={() => setConfirmDel(true)}
-                className="w-12 h-12 rounded-[14px] bg-white border border-[#E4E4E7] flex items-center justify-center active:bg-[#FEF2F2]"
-                aria-label="刪除任務"
-                style={{ color: RED }}
-              >
-                <Icon name="delete" className="text-[22px]" />
-              </button>
-            )}
-            <button
-              onClick={save}
-              disabled={!isNew && !dirty}
-              className="flex-1 h-12 rounded-[14px] bg-[#18181B] text-white text-[15px] font-semibold active:opacity-85 disabled:opacity-35"
-            >
-              {isNew ? (d.assigneeEmail && d.assigneeEmail !== me ? "新增並通知" : "新增") : dirty ? "儲存" : "沒有變更"}
-            </button>
-          </div>
-        )
+        isNew ? (
+          <button onClick={create} className="w-full h-12 rounded-[14px] bg-[#18181B] text-white text-[15px] font-semibold active:opacity-85 disabled:opacity-35" disabled={!d.title.trim() || !d.code}>
+            {d.assigneeEmail && d.assigneeEmail !== me ? "新增並通知" : "新增"}
+          </button>
+        ) : undefined
       }
     >
-      <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
+      <div className="px-4 pt-4 pb-8 flex flex-col gap-6">
         {/* 被指派的人：先確認收到 */}
         {task && mine && !task.ackAt && task.assignedBy && task.assignedBy !== me && task.status !== "done" && (
-          <div className="rounded-[16px] p-4 flex items-center gap-3" style={{ background: "var(--accent-soft)" }}>
+          <div className="rounded-[14px] p-3.5 flex items-center gap-3" style={{ background: "var(--accent-soft)" }}>
             <Avatar name={task.assignedByName} email={task.assignedBy} size={36} />
             <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-semibold text-[#18181B]">{task.assignedByName ?? "管理者"} 指派給你</p>
+              <p className="text-[15px] font-semibold text-[#18181B]">{task.assignedByName ?? "管理者"} 指派給你</p>
               <p className="text-[12.5px] text-[#71717A]">{task.assignedAt ? fmtTime(task.assignedAt) : ""}　按收到讓對方知道</p>
             </div>
-            <button onClick={ack} className="h-11 px-4 rounded-full text-white text-[15px] font-bold shrink-0 active:opacity-85" style={{ background: ORANGE }}>
+            <button onClick={ack} className="h-10 px-4 rounded-full text-white text-[15px] font-bold shrink-0 active:opacity-85" style={{ background: ORANGE }}>
               收到
             </button>
           </div>
         )}
 
         {/* 名稱＋備註 */}
-        <div className="bg-white rounded-[16px] border border-[#EBEBED] px-4 pt-3 pb-2">
-          {canEditAll ? (
-            <textarea
-              ref={titleRef}
-              value={d.title}
-              onChange={(e) => set("title", e.target.value.replace(/\n/g, ""))}
-              rows={1}
-              maxLength={80}
-              placeholder="任務名稱，例：一樓牆面打底"
-              className="w-full resize-none bg-transparent outline-none text-[20px] font-semibold leading-snug text-[#18181B] placeholder:text-[#C7C7CC] [field-sizing:content]"
-            />
-          ) : (
-            <p className="text-[20px] font-semibold leading-snug text-[#18181B]">{d.title}</p>
-          )}
-          <textarea
-            value={d.note ?? ""}
-            onChange={(e) => set("note", e.target.value || undefined)}
-            rows={2}
-            maxLength={2000}
+        <div className="bg-white rounded-[14px] px-4 pt-3 pb-2">
+          <Editable
+            ref={titleRef}
+            value={v.title}
+            edit={canEditAll}
+            big
+            placeholder="任務名稱，例：一樓牆面打底"
+            onChange={isNew ? (t) => setD((c) => ({ ...c, title: t.replace(/\n/g, "") })) : undefined}
+            onCommit={(t) => (t.trim() ? change({ title: t.trim() }) : toast("名稱不能空白", { tone: "error" }))}
+          />
+          <Editable
+            value={v.note ?? ""}
+            edit
             placeholder="備註（材料、位置、注意事項…）"
-            className="w-full resize-none bg-transparent outline-none text-[16px] leading-relaxed text-[#3F3F46] placeholder:text-[#C7C7CC] mt-1 [field-sizing:content] min-h-[3em]"
+            onChange={isNew ? (t) => setD((c) => ({ ...c, note: t || undefined })) : undefined}
+            onCommit={(t) => change({ note: t.trim() || undefined })}
           />
         </div>
 
-        {/* 專案、指派 */}
-        <div className="bg-white rounded-[16px] border border-[#EBEBED] divide-y divide-[#F2F2F4]">
-          <button
-            type="button"
-            disabled={!canEditAll}
-            onClick={() => setPickProject((v) => !v)}
-            className="w-full flex items-center gap-3 px-4 min-h-[52px] text-left disabled:cursor-default"
-          >
-            <RowIcon icon="folder" color={project ? personColor(project.code) : "#A1A1AA"} />
-            <span className="flex-1 min-w-0">
-              <span className="block text-[15px] text-[#18181B] truncate">{project ? project.name : "選擇專案"}</span>
-              {project && <span className="block text-[12px] text-[#8E8E93]">{project.code}　{project.company}</span>}
-            </span>
-            {canEditAll && <Icon name={pickProject ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC]" />}
-          </button>
-          {pickProject && canEditAll && (
-            <ProjectPicker
-              pm={pm}
-              value={d.code}
-              onPick={(code) => {
-                set("code", code);
-                setPickProject(false);
-              }}
-            />
-          )}
-          {/* 標籤（既有任務才有；新任務存好後再加） */}
-          {task && canEditAll && (
-            <button type="button" onClick={() => setTagsOpen(true)} className="w-full flex items-center gap-3 px-4 min-h-[52px] py-2 text-left">
-              <RowIcon icon="sell" color="#2F7FD8" />
-              <span className="flex-1 min-w-0 flex flex-wrap gap-1.5">
-                {metaChips(task.meta).length ? (
-                  metaChips(task.meta).map((c) => (
-                    <span key={c.text} className="h-[22px] px-2 rounded-[6px] text-[12.5px] leading-[22px] font-medium" style={{ color: c.color, background: c.bg }}>
-                      {c.text}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-[15px] text-[#71717A]">標籤（工種、工項、工審、工料…）</span>
-                )}
-              </span>
-              <Icon name="chevron_right" className="text-[20px] text-[#C7C7CC]" />
-            </button>
-          )}
-          {/* 所屬的公司目標（有目標時才出現） */}
-          {pm.goalsReady && (pm.goals.length > 0 || d.goalId) && (
-            <>
-              <button
-                type="button"
-                disabled={!canEditAll}
-                onClick={() => setPickGoal((v) => !v)}
-                className="w-full flex items-center gap-3 px-4 min-h-[52px] text-left disabled:cursor-default"
-              >
-                <RowIcon icon="flag" color={d.goalId ? pm.goalBy.get(d.goalId)?.color ?? "#A1A1AA" : "#A1A1AA"} />
-                <span className="flex-1 min-w-0">
-                  <span className={`block text-[15px] truncate ${d.goalId ? "text-[#18181B]" : "text-[#71717A]"}`}>
-                    {d.goalId ? pm.goalBy.get(d.goalId)?.title ?? "（目標已刪除）" : "所屬目標"}
-                  </span>
-                  {d.goalId && <span className="block text-[12px] text-[#8E8E93]">公司目標</span>}
-                </span>
-                {canEditAll && <Icon name={pickGoal ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC]" />}
-              </button>
-              {pickGoal && canEditAll && (
-                <GoalPicker
-                  pm={pm}
-                  value={d.goalId}
-                  onPick={(id) => {
-                    set("goalId", id);
-                    setPickGoal(false);
-                  }}
-                />
-              )}
-            </>
-          )}
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3 mb-2.5">
-              {d.assigneeEmail ? (
-                <AvatarStack people={taskAssignees(d).map((e) => ({ email: e, name: pm.personBy.get(e)?.name }))} max={3} size={32} />
-              ) : (
-                <RowIcon icon="person" color="#A1A1AA" />
-              )}
-              <span className="text-[15px] text-[#18181B] min-w-0">
-                {d.assigneeEmail ? `指派給 ${assigneeLabel(pm, d)}` : "未指派"}
-                {pm.isManager && <span className="block text-[12px] text-[#A1A1AA]">可複選；第一位是主要負責人，會收到回條提醒</span>}
-              </span>
-            </div>
-            {pm.isManager ? (
-              <AssigneeGrid
-                pm={pm}
-                value={taskAssignees(d)}
-                onChange={(list) => {
-                  const p = assigneePatch(pm, list);
-                  setD((c) => ({ ...c, assigneeEmail: p.assigneeEmail, coAssignees: p.coAssignees }));
-                }}
-              />
-            ) : null}
-            {task?.assigneeEmail && task.assigneeEmail !== me && <Receipt task={task} pm={pm} />}
-          </div>
-        </div>
-
-        {/* 日期 */}
-        <div className="bg-white rounded-[16px] border border-[#EBEBED] divide-y divide-[#F2F2F4]">
-          <DateRow
-            icon="event"
-            color={late ? RED : ORANGE}
-            label="期限"
-            value={d.due}
-            today={pm.today}
-            min={d.start}
-            disabled={!canEditAll}
-            onChange={(v) => set("due", v)}
-            late={!!late}
-          />
-          {showStart || d.start ? (
-            <DateRow
-              icon="play_circle"
-              color="#71717A"
-              label="開始"
-              value={d.start}
-              today={pm.today}
-              disabled={!canEditAll}
-              onChange={(v) => set("start", v)}
-              hint="排程（甘特圖）的起點；沒填就只顯示期限那一天"
-            />
-          ) : (
-            canEditAll && (
-              <button type="button" onClick={() => setShowStart(true)} className="w-full flex items-center gap-3 px-4 h-12 text-left text-[14px] text-[#71717A]">
-                <RowIcon icon="add" color="#D4D4D8" />
-                加上開始日（排進甘特圖）
-              </button>
-            )
-          )}
-        </div>
-
-        {/* 狀態、進度、類型、重要 */}
-        <div className="bg-white rounded-[16px] border border-[#EBEBED] divide-y divide-[#F2F2F4]">
-          <div className="px-4 py-3">
-            <div role="radiogroup" aria-label="狀態" className="grid grid-cols-3 gap-1.5 p-1 rounded-[12px] bg-[#F2F2F4]">
+        {/* 狀態 */}
+        <List title="狀態">
+          <div className="px-3 py-2.5">
+            <div role="radiogroup" aria-label="狀態" className="grid grid-cols-3 gap-1 p-[3px] rounded-[10px] bg-[#EEEEF0]">
               {TASK_STATUSES.map((s) => {
-                const on = d.status === s;
+                const on = v.status === s;
                 return (
                   <button
                     key={s}
                     type="button"
                     role="radio"
                     aria-checked={on}
-                    onClick={() => setD((c) => ({ ...c, status: s, progress: s === "done" ? 100 : c.status === "done" ? 0 : c.progress }))}
-                    className={`h-10 rounded-[9px] text-[14px] font-semibold transition-all flex items-center justify-center gap-1 ${
-                      on ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] text-[#18181B]" : "text-[#71717A]"
-                    }`}
+                    onClick={() => setStatus(s)}
+                    className={`h-9 rounded-[8px] text-[14px] font-semibold transition-all flex items-center justify-center gap-1 ${on ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.12)] text-[#18181B]" : "text-[#71717A]"}`}
                   >
                     {s === "done" && on && <Icon name="check_circle" fill={1} weight={400} className="text-[17px]" style={{ color: GREEN }} />}
                     {STATUS_LABEL[s as TaskStatus]}
@@ -387,75 +254,325 @@ export function TaskSheet({
               })}
             </div>
           </div>
-          {d.status !== "done" && d.kind === "施工" && (
-            <div className="px-4 py-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[14px] text-[#3F3F46]">完成度</span>
-                <span className="text-[15px] font-semibold tabular-nums text-[#18181B]">{d.progress}%</span>
-              </div>
-              <div className="grid grid-cols-5 gap-1.5">
-                {[0, 25, 50, 75, 100].map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setD((c) => ({ ...c, progress: v, status: v >= 100 ? "done" : v > 0 ? "doing" : c.status === "doing" ? "todo" : c.status }))}
-                    className={`h-10 rounded-[10px] text-[13px] font-semibold tabular-nums ${
-                      d.progress === v ? "bg-[#18181B] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"
-                    }`}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={5}
-                value={d.progress}
-                onChange={(e) => {
-                  const v = +e.target.value;
-                  setD((c) => ({ ...c, progress: v, status: v >= 100 ? "done" : v > 0 ? "doing" : c.status }));
-                }}
-                className="w-full mt-3 accent-[#18181B] h-6"
-                aria-label="完成度"
-              />
-            </div>
+          {v.status !== "done" && v.kind === "施工" && (
+            <>
+              <Line label="完成度" value={`${v.progress}%`} open={row === "progress"} onClick={() => toggleRow("progress")} />
+              {row === "progress" && (
+                <div className="px-4 pb-3.5">
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {[0, 25, 50, 75, 100].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setProgress(n)}
+                        className={`h-9 rounded-[9px] text-[13px] font-semibold tabular-nums ${v.progress === n ? "bg-[#18181B] text-white" : "bg-[#F2F2F4] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  <input type="range" min={0} max={100} step={5} value={v.progress} onChange={(e) => setProgress(+e.target.value)} className="w-full mt-3 accent-[var(--accent)] h-6" aria-label="完成度" />
+                </div>
+              )}
+            </>
           )}
           {canEditAll && (
-            <div className="px-4 py-3">
-              <p className="text-[12.5px] text-[#8E8E93] mb-1.5">類型</p>
-              <div className="grid grid-cols-4 gap-1.5">
-                {WORK_KINDS.map((k) => (
-                  <button
-                    key={k}
-                    type="button"
-                    aria-pressed={d.kind === k}
-                    onClick={() => set("kind", k as WorkKind)}
-                    className={`h-10 rounded-[10px] text-[13px] font-semibold ${
-                      d.kind === k ? "bg-[#18181B] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"
-                    }`}
-                  >
-                    {k === "等待" ? "等待期" : k}
-                  </button>
-                ))}
-              </div>
-              {d.kind === "等待" && <p className="text-[12px] text-[#8E8E93] mt-1.5">養護、乾燥、等料：只要等時間，甘特圖畫虛線，不算工作量</p>}
-            </div>
-          )}
-          {canEditAll && (
-            <label className="flex items-center gap-3 px-4 min-h-[52px] cursor-pointer">
-              <RowIcon icon="flag" color={d.flagged ? ORANGE : "#D4D4D8"} fill />
-              <span className="flex-1 text-[15px] text-[#18181B]">重要</span>
-              <Toggle on={d.flagged} onChange={(v) => set("flagged", v)} label="重要" />
+            <label className={`${lineCls} cursor-pointer`}>
+              <span className={labelCls}>重要</span>
+              <span className="flex-1" />
+              <Toggle on={v.flagged} onChange={(f) => change({ flagged: f })} label="重要" />
             </label>
           )}
-        </div>
+        </List>
+
+        {/* 時間 */}
+        <List title="時間" foot={canEditAll ? "開始日是甘特圖的起點；沒填就只排在期限那一天。" : undefined}>
+          <DateLine label="期限" value={v.due} min={v.start} today={pm.today} late={!!late} edit={canEditAll} open={row === "due"} onToggle={() => toggleRow("due")} onChange={(x) => change({ due: x })} />
+          <DateLine label="開始" value={v.start} today={pm.today} edit={canEditAll} open={row === "start"} onToggle={() => toggleRow("start")} onChange={(x) => change({ start: x })} />
+        </List>
+
+        {/* 負責人 */}
+        <List title="負責人" foot={pm.isManager && row === "assign" ? "可複選；第一位是主要負責人，會收到回條提醒。" : undefined}>
+          <button type="button" disabled={!pm.isManager} onClick={() => toggleRow("assign")} className={`${lineCls} w-full text-left active:bg-[#F2F2F4] disabled:active:bg-transparent`} aria-expanded={row === "assign"}>
+            {people.length ? (
+              <>
+                <AvatarStack people={people.map((e) => ({ email: e, name: pm.personBy.get(e)?.name }))} max={3} size={28} />
+                <span className="flex-1 min-w-0 text-[16px] text-[#18181B] truncate">{assigneeLabel(pm, v)}</span>
+              </>
+            ) : (
+              <span className="flex-1 text-[16px] text-[#C7C7CC]">未指派</span>
+            )}
+            {pm.isManager && <Icon name={row === "assign" ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />}
+          </button>
+          {row === "assign" && pm.isManager && (
+            <div className="px-3 pb-3">
+              <AssigneeGrid pm={pm} value={people} onChange={(list) => change(assigneePatch(pm, list), true)} />
+            </div>
+          )}
+          {task?.assigneeEmail && task.assigneeEmail !== me && task.status !== "done" && (
+            <div className="px-4 py-2.5">
+              <Receipt task={task} pm={pm} />
+            </div>
+          )}
+        </List>
+
+        {/* 分類 */}
+        <List title="分類" foot={v.kind === "等待" ? "等待期：養護、乾燥、等料，只要等時間。甘特圖畫虛線，不算工作量。" : undefined}>
+          <button type="button" disabled={!canEditAll} onClick={() => toggleRow("project")} className={`${lineCls} w-full text-left active:bg-[#F2F2F4] disabled:active:bg-transparent`} aria-expanded={row === "project"}>
+            <span className={labelCls}>專案</span>
+            <span className={`flex-1 min-w-0 text-right text-[16px] truncate ${project ? "text-[#6E6E73]" : "text-[#C7C7CC]"}`}>
+              {project ? (
+                <>
+                  <span className="inline-block w-2 h-2 rounded-full mr-1.5 align-middle" style={{ background: personColor(project.code) }} />
+                  {project.code} {project.name}
+                </>
+              ) : (
+                "選擇專案"
+              )}
+            </span>
+            {canEditAll && <Icon name={row === "project" ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />}
+          </button>
+          {row === "project" && canEditAll && (
+            <ProjectPicker
+              pm={pm}
+              value={v.code}
+              onPick={(code) => {
+                if (code !== v.code) change({ code });
+                setRow(null);
+              }}
+            />
+          )}
+          <PickLine
+            label="類型"
+            value={v.kind}
+            options={WORK_KINDS.map((k) => [k, k === "等待" ? "等待期" : k])}
+            edit={canEditAll}
+            onChange={(k) => change({ kind: k as WorkKind })}
+          />
+          {task && canEditAll && (
+            <button type="button" onClick={() => setTagsOpen(true)} className={`${lineCls} w-full text-left active:bg-[#F2F2F4] py-2`}>
+              <span className={labelCls}>標籤</span>
+              <span className="flex-1 min-w-0 flex flex-wrap justify-end gap-1">
+                {chips.length ? (
+                  chips.slice(0, 4).map((c) => (
+                    <span key={c.text} className="h-[22px] px-2 rounded-[6px] text-[12.5px] leading-[22px] font-medium" style={{ color: c.color, background: c.bg }}>
+                      {c.text}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[16px] text-[#C7C7CC]">工種、工項、工審…</span>
+                )}
+                {chips.length > 4 && <span className="text-[13px] leading-[22px] text-[#A1A1AA]">+{chips.length - 4}</span>}
+              </span>
+              <Icon name="chevron_right" className="text-[20px] text-[#C7C7CC] -ml-1" />
+            </button>
+          )}
+          {pm.goalsReady && (pm.goals.length > 0 || v.goalId) && (
+            <>
+              <button type="button" disabled={!canEditAll} onClick={() => toggleRow("goal")} className={`${lineCls} w-full text-left active:bg-[#F2F2F4] disabled:active:bg-transparent`} aria-expanded={row === "goal"}>
+                <span className={labelCls}>公司目標</span>
+                <span className={`flex-1 min-w-0 text-right text-[16px] truncate ${v.goalId ? "text-[#6E6E73]" : "text-[#C7C7CC]"}`}>
+                  {v.goalId ? pm.goalBy.get(v.goalId)?.title ?? "（目標已刪除）" : "不連結"}
+                </span>
+                {canEditAll && <Icon name={row === "goal" ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />}
+              </button>
+              {row === "goal" && canEditAll && (
+                <GoalPicker
+                  pm={pm}
+                  value={v.goalId}
+                  onPick={(id) => {
+                    change({ goalId: id });
+                    setRow(null);
+                  }}
+                />
+              )}
+            </>
+          )}
+        </List>
 
         {task && <History task={task} pm={pm} />}
+
+        {task && canEditAll && (
+          <div className="bg-white rounded-[14px] overflow-hidden">
+            {confirmDel ? (
+              <div className="flex gap-2 p-3">
+                <button onClick={() => setConfirmDel(false)} className="flex-1 h-11 rounded-[12px] bg-[#F2F2F4] text-[15px] font-semibold text-[#18181B]">
+                  不刪除
+                </button>
+                <button onClick={remove} className="flex-1 h-11 rounded-[12px] text-white text-[15px] font-semibold" style={{ background: RED }}>
+                  確定刪除
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirmDel(true)} className="w-full h-12 text-[16px] active:bg-[#F2F2F4]" style={{ color: RED }}>
+                刪除任務
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <TagSheet pm={pm} taskId={task?.id ?? null} open={tagsOpen} onClose={() => setTagsOpen(false)} />
     </Sheet>
+  );
+}
+
+/* ── 設定風格的列（和專案頁一樣） ── */
+
+function List({ title, foot, children }: { title?: string; foot?: string; children: React.ReactNode }) {
+  return (
+    <section>
+      {title && <h3 className="px-4 pb-1.5 text-[13px] text-[#8E8E93]">{title}</h3>}
+      <div className="bg-white rounded-[14px] overflow-hidden divide-y divide-[#F0F0F2]">{children}</div>
+      {foot && <p className="px-4 pt-1.5 text-[12.5px] leading-relaxed text-[#8E8E93]">{foot}</p>}
+    </section>
+  );
+}
+
+const lineCls = "relative flex items-center gap-3 pl-4 pr-3 min-h-[48px]";
+const labelCls = "text-[16px] text-[#18181B] shrink-0";
+
+/** 一列：左邊項目、右邊值、⌄ 展開 */
+function Line({ label, value, open, onClick }: { label: string; value: string; open: boolean; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className={`${lineCls} w-full text-left active:bg-[#F2F2F4]`} aria-expanded={open}>
+      <span className={labelCls}>{label}</span>
+      <span className="flex-1 text-right text-[16px] text-[#6E6E73] tabular-nums">{value}</span>
+      <Icon name={open ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />
+    </button>
+  );
+}
+
+/** 名稱、備註：直接打字；新任務即時改草稿，既有任務離開輸入框才存 */
+const Editable = React.forwardRef<
+  HTMLTextAreaElement,
+  { value: string; edit: boolean; big?: boolean; placeholder: string; onChange?: (t: string) => void; onCommit: (t: string) => void }
+>(function Editable({ value, edit, big, placeholder, onChange, onCommit }, ref) {
+  const [t, setT] = useState(value);
+  const focused = useRef(false);
+  useEffect(() => {
+    if (!focused.current) setT(value);
+  }, [value]);
+  const cls = big ? "text-[20px] font-semibold leading-snug text-[#18181B]" : "text-[16px] leading-relaxed text-[#3F3F46] mt-1 min-h-[3em]";
+  if (!edit) return <p className={cls}>{value}</p>;
+  return (
+    <textarea
+      ref={ref}
+      value={onChange ? value : t}
+      onChange={(e) => (onChange ? onChange(e.target.value) : setT(big ? e.target.value.replace(/\n/g, "") : e.target.value))}
+      onFocus={() => (focused.current = true)}
+      onBlur={() => {
+        focused.current = false;
+        if (!onChange && t !== value) {
+          if (big && !t.trim()) setT(value);
+          onCommit(t);
+        }
+      }}
+      onKeyDown={(e) => big && e.key === "Enter" && !e.nativeEvent.isComposing && (e.preventDefault(), (e.target as HTMLTextAreaElement).blur())}
+      rows={big ? 1 : 2}
+      maxLength={big ? 80 : 2000}
+      placeholder={placeholder}
+      enterKeyHint={big ? "done" : undefined}
+      className={`w-full resize-none bg-transparent outline-none placeholder:text-[#C7C7CC] [field-sizing:content] ${cls}`}
+    />
+  );
+});
+
+/** 日期：右邊顯示日期（逾期紅字），點開是捷徑（今天、明天、週五、下週一、選日期） */
+function DateLine({
+  label,
+  value,
+  min,
+  today,
+  late,
+  edit,
+  open,
+  onToggle,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  min?: string;
+  today: string;
+  late?: boolean;
+  edit: boolean;
+  open: boolean;
+  onToggle: () => void;
+  onChange: (v: string | undefined) => void;
+}) {
+  const shortcuts = dateShortcuts(today);
+  const custom = value && !shortcuts.some((s) => s.value === value);
+  return (
+    <div>
+      <div className={lineCls}>
+        <button type="button" disabled={!edit} onClick={onToggle} className="absolute inset-0 active:bg-[#F2F2F4] disabled:active:bg-transparent" aria-expanded={open} aria-label={`${label}：${value ? fmtDateLong(value, today) : "未設定"}`} />
+        <span className={`${labelCls} relative pointer-events-none`}>{label}</span>
+        <span className={`relative pointer-events-none flex-1 text-right text-[16px] tabular-nums ${late ? "text-[#E5484D]" : value ? "text-[var(--accent-ink)]" : "text-[#C7C7CC]"}`}>
+          {value ? fmtDateLong(value, today) + (late ? "　逾期" : "") : "未設定"}
+        </span>
+        {value && edit && (
+          <button type="button" onClick={() => onChange(undefined)} aria-label={`清除${label}`} className="relative -mr-1 w-8 h-8 rounded-full flex items-center justify-center text-[#C7C7CC] active:bg-[#F2F2F4]">
+            <Icon name="cancel" fill={1} className="text-[19px]" />
+          </button>
+        )}
+      </div>
+      {open && edit && (
+        <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto scrollbar-hide">
+          {shortcuts.map((s) => (
+            <button
+              key={s.label}
+              type="button"
+              onClick={() => onChange(s.value)}
+              disabled={!!min && s.value < min}
+              className={`shrink-0 h-9 px-3.5 rounded-full text-[14px] font-medium disabled:opacity-30 ${value === s.value ? "bg-[#18181B] text-white" : "bg-[#F2F2F4] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
+            >
+              {s.label}
+            </button>
+          ))}
+          <label className={`relative shrink-0 h-9 px-3.5 rounded-full text-[14px] font-medium inline-flex items-center gap-1 cursor-pointer ${custom ? "bg-[#18181B] text-white" : "bg-[#F2F2F4] text-[#3F3F46]"}`}>
+            <Icon name="calendar_month" className="text-[16px]" />
+            {custom ? fmtDate(value, today) : "選日期"}
+            <input
+              type="date"
+              value={value ?? ""}
+              min={min}
+              onChange={(e) => onChange(e.target.value || undefined)}
+              onClick={(e) => {
+                try {
+                  (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
+                } catch {
+                  /* 不支援就用原生行為 */
+                }
+              }}
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              style={{ colorScheme: "light" }}
+              aria-label={`${label}：選日期`}
+            />
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 選一個：右邊目前的值 ⌃⌄，點了跳出系統選單 */
+function PickLine({ label, value, options, edit, onChange }: { label: string; value: string; options: [string, string][]; edit: boolean; onChange: (v: string) => void }) {
+  return (
+    <div className={lineCls}>
+      <span className={labelCls}>{label}</span>
+      <span className="flex-1 text-right text-[16px] text-[#6E6E73]">{options.find(([k]) => k === value)?.[1] ?? value}</span>
+      {edit && (
+        <>
+          <Icon name="unfold_more" className="text-[18px] text-[#C7C7CC] -ml-1.5" />
+          <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            {options.map(([k, l]) => (
+              <option key={k} value={k}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -505,14 +622,6 @@ function AssigneeGrid({ pm, value, onChange }: { pm: Pm; value: string[]; onChan
   );
 }
 
-function RowIcon({ icon, color, fill }: { icon: string; color: string; fill?: boolean }) {
-  return (
-    <span className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: color }}>
-      <Icon name={icon} fill={fill ? 1 : 0} weight={400} className="text-[18px] text-white" />
-    </span>
-  );
-}
-
 function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
@@ -535,93 +644,6 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
-function DateRow({
-  icon,
-  color,
-  label,
-  value,
-  today,
-  min,
-  onChange,
-  disabled,
-  late,
-  hint,
-}: {
-  icon: string;
-  color: string;
-  label: string;
-  value?: string;
-  today: string;
-  min?: string;
-  onChange: (v: string | undefined) => void;
-  disabled?: boolean;
-  late?: boolean;
-  hint?: string;
-}) {
-  const shortcuts = dateShortcuts(today);
-  const custom = value && !shortcuts.some((s) => s.value === value);
-  return (
-    <div className="px-4 py-3">
-      <div className="flex items-center gap-3">
-        <RowIcon icon={icon} color={color} />
-        <span className="flex-1 min-w-0">
-          <span className="block text-[15px] text-[#18181B]">{label}</span>
-          <span className="block text-[13px] tabular-nums" style={{ color: late ? RED : value ? "#3F3F46" : "#A1A1AA" }}>
-            {value ? fmtDateLong(value, today) + (late ? "　已逾期" : "") : "未設定"}
-          </span>
-        </span>
-        {value && !disabled && (
-          <button type="button" onClick={() => onChange(undefined)} className="w-9 h-9 rounded-full flex items-center justify-center text-[#A1A1AA] active:bg-[#F4F4F5]" aria-label={`清除${label}`}>
-            <Icon name="close" className="text-[18px]" />
-          </button>
-        )}
-      </div>
-      {!disabled && (
-        <div className="flex gap-1.5 mt-2.5 overflow-x-auto scrollbar-hide -mx-4 px-4">
-          {shortcuts.map((s) => (
-            <button
-              key={s.label}
-              type="button"
-              onClick={() => onChange(s.value)}
-              disabled={!!min && s.value < min}
-              className={`shrink-0 h-9 px-3.5 rounded-full text-[13px] font-medium disabled:opacity-30 ${
-                value === s.value ? "bg-[#18181B] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-          <label
-            className={`relative shrink-0 h-9 px-3.5 rounded-full text-[13px] font-medium inline-flex items-center gap-1 cursor-pointer ${
-              custom ? "bg-[#18181B] text-white" : "bg-[#F4F4F5] text-[#3F3F46]"
-            }`}
-          >
-            <Icon name="calendar_month" className="text-[16px]" />
-            {custom ? fmtDate(value, today) : "選日期"}
-            <input
-              type="date"
-              value={value ?? ""}
-              min={min}
-              onChange={(e) => onChange(e.target.value || undefined)}
-              onClick={(e) => {
-                try {
-                  (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
-                } catch {
-                  /* 不支援就用原生行為 */
-                }
-              }}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-              style={{ colorScheme: "light" }}
-              aria-label={`${label}：選日期`}
-            />
-          </label>
-        </div>
-      )}
-      {hint && !disabled && <p className="text-[12px] text-[#A1A1AA] mt-1.5">{hint}</p>}
-    </div>
-  );
-}
-
 function fmtTime(iso: string): string {
   const d = new Date(iso);
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -637,7 +659,7 @@ function Receipt({ task, pm }: { task: Task; pm: Pm }) {
     ? ["visibility", "#71717A", `${name} 已讀，還沒按收到　${fmtTime(task.seenAt)}`]
     : ["schedule", ORANGE, `${name} 還沒打開`];
   return (
-    <p className="mt-2.5 text-[13px] flex items-center gap-1.5" style={{ color }}>
+    <p className="text-[13px] flex items-center gap-1.5" style={{ color }}>
       <Icon name={icon} weight={500} className="text-[16px]" />
       {text}
     </p>
@@ -654,8 +676,8 @@ function History({ task, pm }: { task: Task; pm: Pm }) {
   if (task.doneAt) lines.push(`${fmtTime(task.doneAt)}　完成`);
   if (!lines.length) return null;
   return (
-    <div className="px-1">
-      <p className="text-[12.5px] font-semibold text-[#8E8E93] mb-1">紀錄</p>
+    <div className="px-4 -mt-2">
+      <p className="text-[13px] text-[#8E8E93] mb-1">紀錄</p>
       {lines.map((l) => (
         <p key={l} className="text-[12.5px] text-[#A1A1AA] tabular-nums leading-relaxed">
           {l}

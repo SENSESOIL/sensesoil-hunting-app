@@ -351,7 +351,8 @@ export function usePm() {
         { revalidate: false }
       );
       const res = await enqueue(`project:${code}`, () =>
-        pmPost({ op: "project.save", code, patch, baseVersion: prev?.hasRow ? prev.version : undefined })
+        // 要清空的欄位送 null（JSON 會把 undefined 整個拿掉，伺服器就不知道要清空，重新整理後又跑回來）
+        pmPost({ op: "project.save", code, patch: Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v === undefined ? null : v])), baseVersion: prev?.hasRow ? prev.version : undefined })
       );
       if (!res.ok) {
         toast(res.status === 409 ? "有人剛改過這個專案，已換成最新的內容" : res.data.error || "儲存失敗", { tone: "error" });
