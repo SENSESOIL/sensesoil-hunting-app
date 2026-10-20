@@ -75,8 +75,6 @@ function tagsOf(t: Task): string[] {
     .filter((x) => x !== t.meta?.vendor);
 }
 
-const STATUS_MARK: Record<Task["status"], string> = { todo: "☐", doing: "◐", done: "☑" };
-
 /* ── 大綱：照清單的順序（分組 → 任務 → 子任務），每列有編號 ── */
 
 export function buildOutline(pm: Pm, code: string, tasks: Task[]): Outline {
@@ -138,30 +136,43 @@ function header(o: Outline, kind: string): string[] {
 
 /* ── 文字 ── */
 
-/** 清單：分組標題、編號、勾選框、日期｜負責人｜廠商｜標籤、前置任務、備註 */
+/**
+ * 一個任務一段，每種資料自己一行（手機上看才不會擠成一長串）：
+ *   ○ 任務名稱（完成＝●，兩個同一套字型裡的圓，一樣大）
+ *     日期（進行中的完成度、逾期接在後面）
+ *     負責人
+ *     廠商
+ *     標籤
+ *     接在「前一個任務」之後
+ *     備註
+ */
+function taskBlock(o: Outline, t: Task, pad = ""): string[] {
+  const ind = `${pad}    `;
+  const flags = `${t.meta?.urgent ? "‼" : ""}${t.flagged ? "⚑" : ""}`;
+  const lines = [`${pad}${t.status === "done" ? "●" : "○"} ${flags}${t.title || "（未命名）"}`];
+  const late = t.status !== "done" && !!t.due && t.due < o.today && t.kind !== "等待";
+  lines.push(`${ind}${spanText(t)}${t.status === "doing" && t.progress > 0 ? `・${t.progress}%` : ""}${late ? "・逾期" : ""}`);
+  const people = peopleOf(o.pm, t);
+  if (people.length) lines.push(`${ind}${people.join("、")}`);
+  if (t.meta?.vendor) lines.push(`${ind}廠商：${t.meta.vendor}`);
+  const tags = tagsOf(t);
+  if (tags.length) lines.push(`${ind}${tags.join("、")}`);
+  const pred = predecessorOf(o.pm.tasks, t);
+  if (pred) lines.push(`${ind}接在「${pred.title}」之後`);
+  if (t.note?.trim()) lines.push(`${ind}備註：${t.note.trim().replace(/\s*\n\s*/g, " / ")}`);
+  return lines;
+}
+
+/** 清單：分組標題【1 水電】，任務一段一段，子任務往內縮 */
 export function listText(o: Outline): string {
   const out = header(o, "任務清單");
   for (const g of o.groups) {
     out.push("");
-    if (g.name) out.push(`【${g.wbs} ${g.name}】${g.rows.length} 項`);
-    for (const r of g.rows) {
-      const t = r.task;
-      const pad = r.depth ? "    " : "";
-      const flags = `${t.meta?.urgent ? "‼" : ""}${t.flagged ? "⚑" : ""}`;
-      out.push(`${pad}${r.wbs} ${STATUS_MARK[t.status]} ${flags}${t.title || "（未命名）"}`);
-      const info = [spanText(t)];
-      const people = peopleOf(o.pm, t);
-      if (people.length) info.push(people.join("、"));
-      if (t.meta?.vendor) info.push(`廠商 ${t.meta.vendor}`);
-      if (t.status === "doing" && t.progress > 0) info.push(`${t.progress}%`);
-      if (t.status !== "done" && t.due && t.due < o.today && t.kind !== "等待") info.push("逾期");
-      const tags = tagsOf(t);
-      if (tags.length) info.push(tags.join("、"));
-      out.push(`${pad}    ${info.join("｜")}`);
-      const pred = predecessorOf(o.pm.tasks, t);
-      if (pred) out.push(`${pad}    接在 ${o.byId.get(pred.id)?.wbs ?? ""}「${pred.title}」之後`);
-      if (t.note?.trim()) out.push(`${pad}    備註：${t.note.trim().replace(/\s*\n\s*/g, " / ")}`);
-    }
+    if (g.name) out.push(`【${g.wbs} ${g.name}】`);
+    g.rows.forEach((r, k) => {
+      if (k > 0) out.push("");
+      out.push(...taskBlock(o, r.task, r.depth ? "    " : ""));
+    });
   }
   return out.join("\n");
 }
@@ -171,16 +182,12 @@ export function boardText(o: Outline): string {
   const out = header(o, "看板");
   for (const s of ["todo", "doing", "done"] as const) {
     const rows = o.rows.filter((r) => r.task.status === s);
-    out.push("", `【${STATUS_LABEL[s]}】${rows.length} 項`);
+    out.push("", `【${STATUS_LABEL[s]}】`);
     if (!rows.length) out.push("（無）");
-    for (const r of rows) {
-      const t = r.task;
-      const info = [spanText(t)];
-      const people = peopleOf(o.pm, t);
-      if (people.length) info.push(people.join("、"));
-      if (s === "doing" && t.progress > 0) info.push(`${t.progress}%`);
-      out.push(`・${r.wbs} ${t.title || "（未命名）"}`, `    ${info.join("｜")}`);
-    }
+    rows.forEach((r, k) => {
+      if (k > 0) out.push("");
+      out.push(...taskBlock(o, r.task));
+    });
   }
   return out.join("\n");
 }

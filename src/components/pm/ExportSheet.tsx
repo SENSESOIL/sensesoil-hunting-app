@@ -160,7 +160,7 @@ export function ExportSheet({
         </FieldGroup>
 
         {/* 文字 */}
-        <FieldGroup title={view === "gantt" ? "文字排程表" : "文字"} hint="貼到 LINE、Email 也排得整齊：編號、分組、日期、負責人。">
+        <FieldGroup title={view === "gantt" ? "文字排程表" : "文字"} hint="貼到 LINE、Email 也排得整齊：分組、日期、負責人、標籤一行一行分開。">
           <div className="p-3">
             <pre className="max-h-[220px] overflow-auto overscroll-contain rounded-[12px] bg-[#F7F7F8] px-3.5 py-3 text-[13px] leading-[1.6] text-[#3F3F46] whitespace-pre-wrap break-words font-sans">{text}</pre>
             <div className="mt-3 grid grid-cols-2 gap-2">

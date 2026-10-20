@@ -3,52 +3,71 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { mutate } from "swr";
-import type { Task } from "@/lib/pm/model";
-import { addDays } from "@/lib/project-ops";
+import { newSectionId, type Section, type Task } from "@/lib/pm/model";
+import { addDays, diffDays } from "@/lib/project-ops";
 import { toast } from "../Sheet";
 import { Icon } from "../ui";
-import { PM_KEY, pmPost, usePm } from "../usePm";
-import { onTour, tourEmit, tourState, type TourEvent } from "./bus";
+import { realSections } from "../tree";
+import { PM_KEY, pmPost, usePm, type Pm } from "../usePm";
+import { onTour, tourEmit, tourState, TOUR_PREFIX, type TourEvent } from "./bus";
 
 /* ══════════════════════════════════════════════════════════
-   新手教學：專案情報＋任務追蹤
+   新手教學：專案情報＋任務追蹤，教完可以接「實戰教學」
    - 從頭像設定「新手教學」開始；新的裝置第一次打開時會邀請一次
-   - 每個人一個自己的「新手練習」專案（伺服器建立），教學結束或中途離開都會刪掉
-   - 每一步：聚光燈圈住真的按鈕，提示卡說明要做什麼；做到了自動進下一步（也可以略過這步）
-   - 不擋操作：暗色遮罩只是視覺，畫面上什麼都能點
+   - 每個人一個自己的「新手練習」專案（伺服器建立），新手教學結束或中途離開都會刪掉
+   - 每一步：圈住真的按鈕，提示卡說明要做什麼；做到了自動進下一步
+   - 畫面凍結：暗下來的地方點不到（只有圈起來的東西、打開的選單／抽屜、提示卡可以點），
+     不會誤觸跳到別的頁面（例如左上的返回），提示卡和畫面對不起來
+   - ← 上一步：回去再看一次（回來的步驟不會因為「已經做過」就自動跳走）
+   - → 略過這步：先幫你做到（例如自動建好任務、換到正確的頁面），後面的步驟才接得上
+   - 人在別的頁面、找不到要圈的東西：自動帶過去
+   實戰教學：用正式的專案（從「展開其他專案」找）新增任務、排日期、截圖匯入，最後說明刪除專案不會動到 CRM
    ══════════════════════════════════════════════════════════ */
 
 interface Ctx {
   code: string;
   isManager: boolean;
-  /** 練習專案裡的任務 */
+  /** 這次操作的專案（練習專案，或實戰選的專案）裡的任務 */
   tasks: Task[];
+  sections: Section[];
   today: string;
+  pm: Pm;
+  /** 正在打字（虛線圓圈打開了輸入列） */
+  typing: boolean;
+  /** 實戰：選的專案原本沒有任何資料（可以放心示範刪除） */
+  fresh: boolean;
 }
 
 interface Step {
   id: string;
   title: string;
   body: string | ((c: Ctx) => string);
-  /** 聚光燈要圈的東西 */
+  /** 要圈的東西（只有它可以點） */
   target?: (c: Ctx) => Element | null;
+  /** 除了目標，還可以點的東西（例如分組改名的輸入框） */
+  allow?: string;
   /** 做到才往下：收到 app 的事件且符合就前進 */
-  until?: (e: TourEvent, c: Ctx) => boolean;
-  /** 做到才往下：資料變成這樣就前進（每 0.2 秒檢查一次） */
+  until?: (e: TourEvent, c: Ctx, snap: unknown) => boolean;
+  /** 做到才往下：畫面或資料變成這樣就前進（每 0.2 秒檢查一次） */
   done?: (c: Ctx, snap: unknown) => boolean;
-  /** 進到這一步時記下的狀態（給 done 比較） */
+  /** 進到這一步時記下的狀態（給 done、until 比較） */
   snapshot?: (c: Ctx) => unknown;
-  /** 找不到聚光燈的目標時，「帶我過去」 */
+  /** 人在別的頁面：自動帶過去 */
   goto?: (c: Ctx) => void;
   /** 只有符合的人才有這一步 */
   when?: (c: Ctx) => boolean;
-  /** 進到這一步時已經是這個狀態（例如本來就在那一頁）：直接算做到 */
-  already?: (c: Ctx) => boolean;
-  /** 這一步要在清單上操作：進來時先把還開著的抽屜、長按選單關掉（上一步可能還開著） */
+  /** 這一步要在清單上操作：進來時先把還開著的抽屜、長按選單關掉 */
   clear?: boolean;
+  /** 進來時先收起鍵盤（上一步還在打字） */
+  blur?: boolean;
+  /** 按「略過這步」：先幫忙做到，後面的步驟才有東西可以操作 */
+  skip?: (c: Ctx) => void;
 }
 
-const LAYERS = '[data-pm-sheet], [role="dialog"][aria-label="任務選單"]';
+/** 蓋在清單上的東西：抽屜、長按選單、搜尋層 */
+const LAYERS = '[data-pm-sheet], [role="dialog"][aria-label="任務選單"], [data-tour-layer]';
+/** 打開了就可以點的地方（長按選單只開放選單本身：點背景會關掉選單，跟提示卡對不起來） */
+const OPEN_LAYERS = '[data-pm-sheet], [data-tour="row-menu"], [data-tour-layer], [data-tour-card]';
 /** 關掉抽屜、長按選單（它們都聽 Esc） */
 function closeLayers() {
   window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
@@ -67,6 +86,8 @@ const taskRow = (c: Ctx, i: number) => {
   const t = tops(c)[i];
   return t ? pick(`[data-tour-task="${t.id}"]`) : null;
 };
+/** 甘特圖上某個任務那一列 */
+const ganttRow = (t?: Task) => (t ? pick(`[data-tour="gantt"] [role="button"][aria-label^="${CSS.escape(t.title)}"]`) : null);
 const go = (g: Record<string, unknown>) => {
   // 要換的檢視先記著：專案清單頁可能這時候才開始畫，等它畫好再套用
   if (typeof g.view === "string") tourState.pendingView = g.view;
@@ -74,14 +95,48 @@ const go = (g: Record<string, unknown>) => {
   if (typeof g.openProject === "string") tourState.pendingOpen = g.openProject;
   tourEmit("goto", g);
 };
-const toProject = (c: Ctx) => go({ nav: "tasks", tab: "任務", project: c.code, view: "list" });
+const toProject = (view = "list") => (c: Ctx) => {
+  if (c.code) go({ nav: "tasks", tab: "任務", project: c.code, view });
+};
+const toTasksHome = () => go({ nav: "tasks", tab: "任務", home: true });
+const toIntel = () => go({ nav: "project_info", intelTab: "專案" });
+const sheetOpen = () => !!pick("[data-pm-sheet]");
+
+/* 略過時幫忙做的事 */
+const addTasks = (c: Ctx, n: number) => {
+  const names = ["放樣", "打底", "粉光"];
+  for (let k = tops(c).length; k < n; k++) c.pm.saveTask({ code: c.code, title: names[k] ?? `任務 ${k + 1}`, seq: k }, { quiet: true });
+};
+const patchMeta = (c: Ctx, t: Task | undefined, m: Partial<NonNullable<Task["meta"]>>) => {
+  if (t) c.pm.saveTask({ id: t.id, meta: { ...(t.meta ?? {}), ...m } }, { quiet: true });
+};
+const shift = (c: Ctx, t: Task | undefined, s: number, e: number) => {
+  if (t && (t.start || t.due)) c.pm.saveTask({ id: t.id, start: addDays(t.start ?? t.due!, s), due: addDays(t.due ?? t.start!, e) }, { quiet: true });
+};
+const addSection = (c: Ctx, name: string) => {
+  c.pm.saveSections(c.code, [...c.sections, { id: newSectionId(), name }]);
+};
+/** 有幾個分組裡面有任務 */
+const sectionsUsed = (c: Ctx) => {
+  const valid = new Set(realSections(c.sections).map((s) => s.id));
+  return new Set(c.tasks.filter((t) => !t.parentId && valid.has(t.meta?.section ?? "")).map((t) => t.meta!.section)).size;
+};
+const renaming = () => !!pick('input[aria-label="分組名稱"]');
+const firstOpen = (c: Ctx) => tops(c).find((t) => t.status !== "done");
+/** WBS：最後一個任務（粉光）接在哪個後面——挑還沒完成的（完成的在甘特圖上藏起來了，看不到箭頭） */
+const wbsPair = (c: Ctx) => {
+  const list = tops(c);
+  const b = list[list.length - 1];
+  const a = c.tasks.find((t) => t.status !== "done" && t.id !== b?.id && t.parentId) ?? c.tasks.find((t) => t.status !== "done" && t.id !== b?.id);
+  return { a, b };
+};
 
 const STEPS: Step[] = [
   /* ── 介面 ── */
   {
     id: "nav",
     title: "四個主頁",
-    body: "這一排切換主頁。新手先學兩個：「專案情報」看專案的狀況，「任務追蹤」排任務、打勾完成。",
+    body: "這一排切換主頁。新手先學兩個：「專案情報」看專案的狀況，「任務追蹤」排任務和打勾完成。",
     target: () => pick('[data-tour="nav"]'),
   },
   {
@@ -89,9 +144,34 @@ const STEPS: Step[] = [
     title: "打開專案情報",
     body: "點房子圖示，到「專案情報」。",
     target: () => pick('[data-tour="nav-project_info"]'),
+    // 一定要真的點（就算現在已經在專案情報），不然一下子就跳到下一步，看不懂發生什麼事
     until: (e) => e.type === "nav" && e.data === "project_info",
-    already: () => tourState.nav === "project_info",
-    goto: () => go({ nav: "project_info", intelTab: "專案" }),
+    skip: toIntel,
+    goto: toTasksHome,
+  },
+  {
+    id: "intel-all",
+    title: "篩選：全部",
+    body: "這一排是篩選。點「全部」，看拾壤CRM 名冊上所有的專案。",
+    target: () => pick('[data-tour="intel-all"]'),
+    until: (e) => e.type === "intel-filter" && e.data === "all",
+    goto: toIntel,
+  },
+  {
+    id: "intel-build",
+    title: "篩選：施工中",
+    body: "點「施工」，只看施工中的專案。「注意」是有風險標記的專案；上面色條下的階段名稱（驗收、簽約…）也可以點。",
+    target: () => pick('[data-tour="intel-build"]'),
+    until: (e) => e.type === "intel-filter" && e.data === "build",
+    goto: toIntel,
+  },
+  {
+    id: "intel-active",
+    title: "回到進行中",
+    body: "點「進行」，回到平常看的進行中專案。",
+    target: () => pick('[data-tour="intel-active"]'),
+    until: (e) => e.type === "intel-filter" && e.data === "active",
+    goto: toIntel,
   },
   {
     id: "open-project",
@@ -106,6 +186,7 @@ const STEPS: Step[] = [
     title: "專案頁",
     body: "上面是摘要：階段、進度、開工與完工、還剩幾天。下面的「資料」直接點右邊就能改，改完自動存。",
     target: () => pick('[data-tour="project-summary"]'),
+    goto: (c) => go({ nav: "project_info", intelTab: "專案", openProject: c.code }),
   },
   {
     id: "back",
@@ -113,6 +194,7 @@ const STEPS: Step[] = [
     body: "按左上角的返回。",
     target: () => pick('[data-tour="subscreen-back"]'),
     until: (e) => e.type === "project-screen" && !e.data,
+    skip: closeLayers,
   },
   /* ── 建立任務 ── */
   {
@@ -121,8 +203,8 @@ const STEPS: Step[] = [
     body: "點勾勾清單圖示，到「任務追蹤」。每天的工作都在這裡。",
     target: () => pick('[data-tour="nav-tasks"]'),
     until: (e) => e.type === "nav" && e.data === "tasks",
-    already: () => tourState.nav === "tasks",
-    goto: () => go({ nav: "tasks", tab: "任務" }),
+    skip: toTasksHome,
+    goto: toTasksHome,
   },
   {
     id: "open-list",
@@ -130,25 +212,47 @@ const STEPS: Step[] = [
     body: "右邊的數字是還沒完成的件數。點「新手練習」。",
     target: (c) => pick(`[data-tour="list-${c.code}"]`),
     until: (e, c) => e.type === "route" && e.data === c.code,
-    already: (c) => tourState.nav === "tasks" && tourState.route === c.code,
-    goto: toProject,
+    goto: toTasksHome,
+    skip: toProject(),
   },
   {
-    id: "add",
-    title: "建立兩個任務",
-    body: "點虛線圓圈直接打字，按 Enter 會接著下一個。打兩個，例如「放樣」「打底」。",
-    target: () => pick('[data-tour="add-row"]'),
+    id: "add-1",
+    title: "第一個任務",
+    body: (c) => (c.typing ? "打「放樣」，打完按鍵盤右下角的打勾（換行鍵）存起來。" : "點虛線圓圈，開始打第一個任務。"),
+    target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
+    done: (c) => tops(c).length >= 1,
+    goto: toProject(),
+    skip: (c) => addTasks(c, 1),
+  },
+  {
+    id: "add-2",
+    title: "接著打第二個",
+    body: (c) =>
+      c.typing ? "存好後，下面自動多了一列。打「打底」，再按鍵盤右下角的打勾。" : "點虛線圓圈，打第二個任務「打底」，打完按鍵盤右下角的打勾。",
+    target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 2,
-    goto: toProject,
+    goto: toProject(),
+    skip: (c) => addTasks(c, 2),
+  },
+  {
+    id: "add-3",
+    title: "再一個",
+    body: (c) =>
+      c.typing ? "再打「粉光」，按右下角的打勾。最後多出來的空白列不用管，下一步會自動收起鍵盤。" : "點虛線圓圈，打第三個任務「粉光」。",
+    target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
+    done: (c) => tops(c).length >= 3,
+    goto: toProject(),
+    skip: (c) => addTasks(c, 3),
   },
   /* ── 長按與滑動 ── */
   {
     id: "longpress",
+    blur: true,
     title: "長按叫出選單",
-    body: "長按一個任務（電腦按右鍵）。期限、完成度、指派、廠商、標籤都在這個選單裡。",
+    body: "長按「放樣」（電腦按右鍵）。期限、完成度、指派、廠商、標籤都在這個選單裡。",
     target: (c) => taskRow(c, 0),
     until: (e) => e.type === "menu-open",
-    goto: toProject,
+    goto: toProject(),
   },
   {
     id: "assign",
@@ -158,6 +262,16 @@ const STEPS: Step[] = [
     when: (c) => c.isManager,
     // 在指派名單點了人才算做到（直接打字新增的任務本來就掛在自己身上，不能看資料判斷）
     until: (e) => e.type === "assigned",
+    goto: toProject(),
+  },
+  {
+    id: "menu-back",
+    title: "回到選單",
+    body: "指派好了。按選單上方的「‹ 指派」回到選單，接著設定廠商。",
+    target: () => pick('[data-tour="menu-back"]'),
+    when: (c) => c.isManager,
+    // 回到選單第一頁（或選單已經關了）就算做到
+    done: () => !pick('[data-tour="menu-back"]'),
   },
   {
     id: "assign-info",
@@ -169,18 +283,20 @@ const STEPS: Step[] = [
   {
     id: "vendor",
     title: "指定廠商",
-    body: "長按任務 →「廠商 ›」，可以搜尋，選一家協力廠商。名單和指揮中心的協力廠商同一份。",
+    body: "在選單點「廠商 ›」，可以搜尋，選一家協力廠商。選單關掉了的話，再長按任務打開。",
     target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.meta?.vendor),
-    goto: toProject,
+    goto: toProject(),
+    skip: (c) => patchMeta(c, tops(c)[0], { vendor: "練習廠商" }),
   },
   {
     id: "tag",
     title: "加上標籤",
-    body: "長按任務 →「標籤 ›」→「工種」，選一個，例如「泥作」。之後可以依標籤找任務。",
-    target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
+    body: "按選單上方的「‹ 廠商」回到選單，點「標籤 ›」→「工種」，選一個，例如「泥作」。之後可以依標籤找任務。",
+    target: (c) => pick('[data-tour="menu-back"]') ?? pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!(t.meta?.trade || t.meta?.areas?.length || t.meta?.tags?.length)),
-    goto: toProject,
+    goto: toProject(),
+    skip: (c) => patchMeta(c, tops(c)[0], { trade: "泥作" }),
   },
   {
     id: "swipe-left",
@@ -189,18 +305,67 @@ const STEPS: Step[] = [
     body: "把任務往左滑，出現「重要｜緊急｜刪除」。按「緊急」試試。",
     target: (c) => taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.meta?.urgent || t.flagged),
-    goto: toProject,
+    goto: toProject(),
+    skip: (c) => patchMeta(c, tops(c)[0], { urgent: true }),
   },
   {
     id: "swipe-right",
     clear: true,
     title: "往右滑：變成子任務",
-    body: "把第二個任務往右滑，它會縮排，變成上一個任務的子任務。再往右滑一次就取消。",
+    body: "把「打底」往右滑，它會縮排，變成「放樣」的子任務。再往右滑一次就取消。",
     target: (c) => taskRow(c, 1) ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.parentId),
-    goto: toProject,
+    goto: toProject(),
+    skip: (c) => {
+      const [a, b] = tops(c);
+      if (a && b) c.pm.saveTask({ id: b.id, parentId: a.id }, { quiet: true });
+    },
   },
-  /* ── 看板與甘特 ── */
+  /* ── 分組（管理者才能建分組） ── */
+  {
+    id: "section-add",
+    clear: true,
+    blur: true,
+    title: "新增分組",
+    body: "工程通常分好幾個工種。點清單最下面的「新增分組」，取名「泥作」，按鍵盤的完成。",
+    target: () => pick('[data-tour="add-section"]'),
+    allow: 'input[aria-label="分組名稱"]',
+    when: (c) => c.isManager,
+    done: (c) => realSections(c.sections).length >= 1 && !renaming(),
+    goto: toProject(),
+    skip: (c) => addSection(c, "泥作"),
+  },
+  {
+    id: "section-add-2",
+    title: "再一個分組",
+    body: "再點一次「新增分組」，取名「油漆」。",
+    target: () => pick('[data-tour="add-section"]'),
+    allow: 'input[aria-label="分組名稱"]',
+    when: (c) => c.isManager,
+    done: (c) => realSections(c.sections).length >= 2 && !renaming(),
+    goto: toProject(),
+    skip: (c) => addSection(c, "油漆"),
+  },
+  {
+    id: "section-move",
+    blur: true,
+    title: "把任務放進分組",
+    body: "長按「放樣」→「移到分組 ›」選「泥作」（子任務會跟著走）；再長按「粉光」放進「油漆」。兩組都有任務，甘特圖才看得出分組。",
+    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, sectionsUsed(c) ? tops(c).length - 1 : 0),
+    when: (c) => c.isManager,
+    done: (c) => sectionsUsed(c) >= 2,
+    goto: toProject(),
+    skip: (c) => {
+      const secs = realSections(c.sections);
+      const list = tops(c);
+      if (secs.length < 2 || list.length < 2) return;
+      [list[0], list[list.length - 1]].forEach((t, k) => {
+        patchMeta(c, t, { section: secs[k].id });
+        for (const kid of c.tasks.filter((x) => x.parentId === t.id)) patchMeta(c, kid, { section: secs[k].id });
+      });
+    },
+  },
+  /* ── 看板 ── */
   {
     id: "board",
     clear: true,
@@ -208,15 +373,34 @@ const STEPS: Step[] = [
     body: "右上這顆切換檢視：清單 → 看板 → 甘特圖。點一下換成看板。",
     target: () => pick('[data-tour="view-switch"]'),
     until: (e) => e.type === "view" && e.data === "board",
-    goto: (c) => go({ nav: "tasks", tab: "任務", project: c.code, view: "board" }),
+    goto: toProject("list"),
+    skip: toProject("board"),
   },
   {
-    id: "board-drag",
-    title: "拖曳卡片",
-    body: "按住一張卡片，拖到「進行中」。完成的拖到「完成」。",
+    id: "board-doing",
+    title: "拖到進行中",
+    body: "按住「待辦」的一張卡片（手機先長按一下），拖到「進行中」。",
     target: () => pick('[data-tour="board"]'),
     done: (c) => c.tasks.some((t) => t.status !== "todo"),
+    goto: toProject("board"),
+    skip: (c) => {
+      const t = firstOpen(c);
+      if (t) c.pm.saveTask({ id: t.id, status: "doing" }, { quiet: true });
+    },
   },
+  {
+    id: "board-done",
+    title: "再拖到完成",
+    body: "做完了：把「進行中」那張再拖到「完成」。",
+    target: () => pick('[data-tour="board"]'),
+    done: (c) => c.tasks.some((t) => t.status === "done"),
+    goto: toProject("board"),
+    skip: (c) => {
+      const t = c.tasks.find((x) => x.status === "doing") ?? tops(c)[0];
+      if (t) c.pm.saveTask({ id: t.id, status: "done" }, { quiet: true });
+    },
+  },
+  /* ── 甘特圖 ── */
   {
     id: "gantt",
     clear: true,
@@ -224,22 +408,155 @@ const STEPS: Step[] = [
     body: "再點一下右上那顆，換成甘特圖。",
     target: () => pick('[data-tour="view-switch"]'),
     until: (e) => e.type === "view" && e.data === "gantt",
-    goto: (c) => go({ nav: "tasks", tab: "任務", project: c.code, view: "gantt" }),
+    goto: toProject("board"),
+    skip: toProject("gantt"),
+  },
+  {
+    id: "gantt-read",
+    title: "看懂甘特圖",
+    body: (c) =>
+      (realSections(c.sections).length
+        ? "淺灰底、深灰長條的是分組（泥作、油漆），從組內最早畫到最晚的任務；下面一般的列是任務，"
+        : "每一列是一個任務，") + "灰＝待辦、橘＝進行中、綠＝完成；橘色直線是今天。已完成的任務先藏起來了，下方「顯示已完成」可以打開。",
+    target: () => pick('[data-tour="gantt"]'),
+    goto: toProject("gantt"),
+  },
+  {
+    id: "gantt-zoom",
+    title: "日／週／月",
+    body: "左上這顆是時間刻度。點一下換成「月」，再點換成「日」，再點一次回到「週」。",
+    target: () => pick('[data-tour="gantt-zoom"]'),
+    snapshot: () => new Set<string>(),
+    until: (e, _c, snap) => {
+      if (e.type !== "gantt-zoom") return false;
+      const seen = snap as Set<string>;
+      seen.add(String(e.data));
+      return seen.has("day") && seen.has("month") && e.data === "week";
+    },
+    goto: toProject("gantt"),
   },
   {
     id: "gantt-edit",
     title: "進入編輯",
-    body: "甘特圖平常只看不改。按鉛筆進入編輯。",
+    body: "甘特圖平常只看不改，避免手滑。按右上的鉛筆進入編輯。",
     target: () => pick('[data-tour="gantt-edit"]'),
     until: (e) => e.type === "gantt-edit" && e.data === true,
+    goto: toProject("gantt"),
   },
   {
-    id: "gantt-drag",
-    title: "排日期",
-    body: "拖曳色條換日期，拉左右兩端改天數（手機先長按一下再拖）。左上「週」可以換成日、月。改好按右上打勾。",
+    id: "gantt-move",
+    title: "整條平移",
+    body: "按住一條色條的中間（手機先長按一下，震一下再拖），左右拖：開始和結束一起移，天數不變。",
     target: () => pick('[data-tour="gantt"]'),
-    snapshot: (c) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])),
-    done: (c, snap) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])) !== snap,
+    until: (e) => e.type === "gantt-drag" && e.data === "move",
+    goto: toProject("gantt"),
+    skip: (c) => shift(c, firstOpen(c), 1, 1),
+  },
+  {
+    id: "gantt-start",
+    title: "拉開始日",
+    body: "拖色條「左端」的小把手：只改開始日，結束日不動。",
+    target: () => pick('[data-tour="gantt"]'),
+    until: (e) => e.type === "gantt-drag" && e.data === "start",
+    goto: toProject("gantt"),
+    skip: (c) => shift(c, firstOpen(c), -1, 0),
+  },
+  {
+    id: "gantt-end",
+    title: "拉結束日",
+    body: "拖色條「右端」的小把手：只改結束日，天數跟著變。",
+    target: () => pick('[data-tour="gantt"]'),
+    until: (e) => e.type === "gantt-drag" && e.data === "end",
+    goto: toProject("gantt"),
+    skip: (c) => shift(c, firstOpen(c), 0, 1),
+  },
+  {
+    id: "wbs-open",
+    title: "前後任務（WBS）",
+    body: "很多工序要等上一個做完才能開始。點「粉光」那一列的色條，打開時間安排。",
+    target: (c) => ganttRow(tops(c)[tops(c).length - 1]) ?? pick('[data-tour="gantt"]'),
+    until: (e) => e.type === "schedule-open",
+    goto: toProject("gantt"),
+  },
+  {
+    id: "wbs-pick",
+    title: "接在哪個任務之後",
+    body: (c) => {
+      const a = wbsPair(c).a?.title ?? "上一個任務";
+      return `在「接在哪個任務之後開始」點「選擇前一個任務」，選「${a}」，再按下面的「儲存」。它會從${a}結束的隔天開始。`;
+    },
+    target: () => pick('[data-tour="wbs"]'),
+    until: (e) => e.type === "wbs-set",
+    skip: (c) => {
+      const { a, b } = wbsPair(c);
+      closeLayers();
+      if (!a || !b || a === b) return;
+      const end = a.due ?? a.start;
+      const n = b.start && b.due ? diffDays(b.start, b.due) : 0;
+      c.pm.saveTask({ id: b.id, meta: { ...(b.meta ?? {}), after: a.id }, ...(end ? { start: addDays(end, 1), due: addDays(end, 1 + n) } : {}) }, { quiet: true });
+    },
+  },
+  {
+    id: "wbs-line",
+    clear: true,
+    title: "連起來了",
+    body: (c) => {
+      const { a, b } = wbsPair(c);
+      return `灰色箭頭把兩個任務連起來。之後「${a?.title ?? "前一個"}」改日期，「${b?.title ?? "後一個"}」會自動跟著移，不用一個一個改。`;
+    },
+    target: () => pick('[data-tour="gantt"]'),
+    goto: toProject("gantt"),
+  },
+  {
+    id: "gantt-done",
+    title: "改好了",
+    body: "按右上的打勾，回到閱讀模式。",
+    target: () => pick('[data-tour="gantt-edit"]'),
+    until: (e) => e.type === "gantt-edit" && e.data === false,
+    goto: toProject("gantt"),
+  },
+  /* ── 分享 ── */
+  {
+    id: "export-gantt",
+    title: "分享甘特圖",
+    body: "點最上面的分享鍵。甘特圖可以存成整張圖片，或轉成 MS Project、Excel、行事曆檔，傳給業主、廠商。",
+    target: () => pick('[data-tour="export"]'),
+    until: (e) => e.type === "export-open" && e.data === "gantt",
+    goto: toProject("gantt"),
+  },
+  {
+    id: "export-gantt-see",
+    title: "選格式",
+    body: "上面是圖片預覽，按「存成圖片」就能傳 LINE；往下滑是文字排程表和「排程軟體」的檔案。看完按右上的 ✕ 關掉。",
+    target: () => pick("[data-pm-sheet]"),
+    done: () => !sheetOpen(),
+    skip: closeLayers,
+  },
+  {
+    id: "export-list-view",
+    clear: true,
+    title: "回到清單",
+    body: "點右上的切換鍵，換回清單。",
+    target: () => pick('[data-tour="view-switch"]'),
+    until: (e) => e.type === "view" && e.data === "list",
+    goto: toProject("gantt"),
+    skip: toProject("list"),
+  },
+  {
+    id: "export-list",
+    title: "分享清單",
+    body: "再點一次分享鍵，這次是清單。",
+    target: () => pick('[data-tour="export"]'),
+    until: (e) => e.type === "export-open" && e.data === "list",
+    goto: toProject("list"),
+  },
+  {
+    id: "export-list-see",
+    title: "文字也能分享",
+    body: "清單一樣可以存成圖片；「複製文字」貼到 LINE，分組、日期、負責人一行一行排好，對方一看就懂。看完按 ✕ 關掉。",
+    target: () => pick("[data-pm-sheet]"),
+    done: () => !sheetOpen(),
+    skip: closeLayers,
   },
   /* ── 搜尋 ── */
   {
@@ -252,7 +569,120 @@ const STEPS: Step[] = [
   },
 ];
 
-type Phase = "idle" | "welcome" | "starting" | "running" | "finish";
+/* ── 實戰教學：正式的專案 ── */
+/** 實戰選的專案（只在這次教學用） */
+const realPick: { code: string | null; fresh: boolean } = { code: null, fresh: false };
+const toProjectScreen = (c: Ctx) => {
+  if (c.code) go({ nav: "project_info", intelTab: "專案", openProject: c.code });
+};
+const REAL_STEPS: Step[] = [
+  {
+    id: "real-nav",
+    title: "實戰：專案情報",
+    body: "接下來用正式的專案。先點房子圖示，到「專案情報」。",
+    target: () => pick('[data-tour="nav-project_info"]'),
+    until: (e) => e.type === "nav" && e.data === "project_info",
+    skip: toIntel,
+    goto: toTasksHome,
+  },
+  {
+    id: "real-newproj",
+    title: "不用按「新專案」",
+    body: "這顆是給拾壤CRM 名冊上沒有的案子用的，建了也不會回到 CRM。公司的專案都已經從 CRM 帶進來了，要排任務請到「任務追蹤」找那個專案。",
+    target: () => pick('[data-tour="new-project"]'),
+    when: (c) => c.isManager,
+    goto: toIntel,
+  },
+  {
+    id: "real-nav-tasks",
+    title: "到任務追蹤",
+    body: "點勾勾清單圖示，到「任務追蹤」。",
+    target: () => pick('[data-tour="nav-tasks"]'),
+    until: (e) => e.type === "nav" && e.data === "tasks",
+    skip: toTasksHome,
+    goto: toTasksHome,
+  },
+  {
+    id: "real-expand",
+    title: "展開其他專案",
+    body: "這裡平常只列有任務的專案。點「展開其他專案新增任務排程」，名冊上還沒排任務的專案都在這裡。",
+    target: () => pick('[data-tour="expand-projects"]'),
+    until: (e) => e.type === "home-expand" && e.data === true,
+    goto: toTasksHome,
+  },
+  {
+    id: "real-pick",
+    title: "選一個專案",
+    body: "點一個你要排程的專案（還沒有任務的最好），進去之後就跟剛剛練習的一樣。",
+    target: () => pick('[data-tour="home-projects"]'),
+    until: (e, c) => {
+      if (e.type !== "route" || typeof e.data !== "string" || e.data.startsWith(TOUR_PREFIX) || ["home", "smart", "tag"].includes(e.data)) return false;
+      const p = c.pm.projectBy.get(e.data);
+      realPick.code = e.data;
+      // 原本完全沒有資料（沒有任務、APP 裡也沒存過專案資料）：最後可以放心示範刪除
+      realPick.fresh = !!p && !p.hasRow && !c.pm.tasks.some((t) => t.code === e.data);
+      return true;
+    },
+    goto: toTasksHome,
+  },
+  {
+    id: "real-add",
+    title: "新增任務",
+    body: (c) =>
+      c.typing ? "打好按鍵盤右下角的打勾，會接著出現下一列；全部打完，點一下空白處收起鍵盤。" : "點虛線圓圈，把這個專案接下來要做的事一項一項打進去。",
+    target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
+    snapshot: (c) => c.tasks.length,
+    done: (c, snap) => c.tasks.length > (snap as number) && !c.typing,
+    goto: toProject(),
+  },
+  {
+    id: "real-date",
+    blur: true,
+    title: "排日期",
+    body: "長按任務 →「期限 ›」選一天。要排區間的話，右上換成甘特圖、按鉛筆，點日期排入再拖拉。",
+    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
+    snapshot: (c) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])),
+    done: (c, snap) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])) !== snap,
+    goto: toProject(),
+  },
+  {
+    id: "real-import",
+    clear: true,
+    title: "截圖匯入",
+    body: "原本用 iPhone「提醒事項」記工作的話：先到提醒事項截下清單（太長就分幾張，上下重疊一點），回到這裡點這顆，選截圖、選這個專案，就能整批匯入。現在沒有截圖就按 → 略過。",
+    target: () => pick('[data-tour="import"]'),
+    until: (e) => e.type === "import-done",
+    goto: toTasksHome,
+  },
+  {
+    id: "real-delete-try",
+    clear: true,
+    title: "刪除專案",
+    body: "「刪除專案」只會清掉任務追蹤裡的任務、排程、分組；拾壤CRM 名冊上的案名、業主、合約都不會動，案名也會留著。這個專案是剛剛才開始排的，按「刪除專案」→「刪除」試試。",
+    target: () => pick('[data-tour="project-delete"]'),
+    when: (c) => c.isManager && c.fresh,
+    until: (e) => e.type === "project-purged",
+    goto: toProjectScreen,
+  },
+  {
+    id: "real-delete-info",
+    clear: true,
+    title: "刪除專案",
+    body: "在專案頁最下面。「刪除專案」只會清掉任務追蹤裡的任務、排程、分組；拾壤CRM 名冊上的案名、業主、合約都不會動。這個專案原本就有資料，這次不要真的刪，看過位置就好。",
+    target: () => pick('[data-tour="project-delete"]'),
+    when: (c) => c.isManager && !c.fresh,
+    goto: toProjectScreen,
+  },
+  {
+    id: "real-delete-member",
+    title: "刪除專案",
+    body: "專案的任務要全部清掉時，請管理者在專案頁最下面按「刪除專案」。它只清掉任務追蹤裡的內容，拾壤CRM 名冊上的專案資料不會動。",
+    when: (c) => !c.isManager,
+  },
+];
+
+type Phase = "idle" | "welcome" | "starting" | "running" | "finish" | "real-intro" | "real-finish";
+type Mode = "practice" | "real";
 const INVITED = "pm:tour:invited";
 const ACTIVE = "pm:tour:active";
 const store = {
@@ -272,31 +702,56 @@ const store = {
     }
   },
 };
+/** 畫面凍結時擋的事件：只擋「開始」的那一下（放開、移動不擋，拖曳放到框外才不會卡住） */
+const BLOCK_EVENTS = ["pointerdown", "mousedown", "touchstart", "click", "dblclick", "contextmenu"] as const;
 
 export function TourHost() {
   const pm = usePm();
   const [phase, setPhase] = useState<Phase>("idle");
+  const [mode, setMode] = useState<Mode>("practice");
   const [invite, setInvite] = useState(false);
   const [code, setCode] = useState<string | null>(null);
+  const [realCode, setRealCode] = useState<string | null>(null);
   const [i, setI] = useState(0);
   const [success, setSuccess] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [covered, setCovered] = useState(false);
   const [lost, setLost] = useState(false);
+  const [typing, setTyping] = useState(false);
   // 按了提示卡的 ✕：先問一次，免得想關抽屜卻把教學整個關掉
   const [askEnd, setAskEnd] = useState(false);
   const missingSince = useRef<number | null>(null);
+  const autoWent = useRef(false);
   const scrolled = useRef<string | null>(null);
   const snap = useRef<unknown>(undefined);
   const busy = useRef(false);
   // 一步只算一次做到（開發模式下事件可能連發兩次，會一口氣跳兩步）
   const completing = useRef(false);
+  // 按「上一步」回來的：不因為「已經做過」就自動跳走，看完自己按 →
+  const revisit = useRef(false);
+  // 現在可以點的東西（畫面凍結用）
+  const allowEls = useRef<Element[]>([]);
+  const allowSel = useRef<string | undefined>(undefined);
 
-  const ctx: Ctx | null = useMemo(
-    () => (code ? { code, isManager: pm.isManager, tasks: pm.tasks.filter((t) => t.code === code), today: pm.today } : null),
-    [code, pm.isManager, pm.tasks, pm.today]
-  );
-  const steps = useMemo(() => (ctx ? STEPS.filter((s) => !s.when || s.when(ctx)) : STEPS), [ctx]);
+  const activeCode = mode === "real" ? realCode : code;
+  const ctx: Ctx | null = useMemo(() => {
+    if (phase !== "running" || (mode === "practice" && !code)) return null;
+    const c = activeCode ?? "";
+    return {
+      code: c,
+      isManager: pm.isManager,
+      tasks: c ? pm.tasks.filter((t) => t.code === c) : [],
+      sections: (c && pm.projectBy.get(c)?.sections) || [],
+      today: pm.today,
+      pm,
+      typing,
+      fresh: realPick.fresh,
+    };
+    // pm 每次重繪都是新物件：只看用得到的欄位
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, mode, code, activeCode, pm.isManager, pm.tasks, pm.projectBy, pm.today, typing]);
+  const all = mode === "real" ? REAL_STEPS : STEPS;
+  const steps = useMemo(() => (ctx ? all.filter((s) => !s.when || s.when(ctx)) : all), [ctx, all]);
   const step = phase === "running" ? steps[i] : undefined;
 
   /* 從頭像設定開始；新的裝置第一次打開時邀請一次 */
@@ -335,37 +790,81 @@ export function TourHost() {
     tourState.pendingView = "list";
     store.set(ACTIVE, r.data.code);
     setCode(r.data.code);
+    setMode("practice");
     await mutate(PM_KEY);
+    revisit.current = false;
+    completing.current = false;
     setI(0);
     setPhase("running");
   };
 
-  const end = async (finished: boolean) => {
-    completing.current = false;
-    setPhase("idle");
+  /** 刪掉練習專案（新手教學結束，或要接實戰教學時） */
+  const dropPractice = async () => {
     setCode(null);
     tourState.code = null;
     store.set(ACTIVE, null);
-    setRect(null);
     const r = await pmPost<{ purged?: boolean }>({ op: "tutorial.end" });
     await mutate(PM_KEY);
-    toast(finished ? "教學完成，練習專案已刪除" : r.ok ? "已結束教學，練習專案已刪除" : "已結束教學");
+    return r.ok;
+  };
+
+  const end = async (finished: boolean) => {
+    completing.current = false;
+    const wasReal = mode === "real";
+    setPhase("idle");
+    setRect(null);
+    setMode("practice");
+    setRealCode(null);
+    realPick.code = null;
+    if (wasReal) {
+      toast(finished ? "實戰教學完成" : "已結束實戰教學");
+      return;
+    }
+    const ok = await dropPractice();
+    toast(finished ? "教學完成，練習專案已刪除" : ok ? "已結束教學，練習專案已刪除" : "已結束教學");
+  };
+
+  const startReal = async () => {
+    await dropPractice();
+    realPick.code = null;
+    realPick.fresh = false;
+    setRealCode(null);
+    setMode("real");
+    revisit.current = false;
+    completing.current = false;
+    setI(0);
+    setPhase("running");
   };
 
   const advance = () => {
     completing.current = false;
+    revisit.current = false;
     setSuccess(false);
+    // 實戰：選好專案了，之後的步驟都用它
+    if (mode === "real" && realPick.code && realPick.code !== realCode) setRealCode(realPick.code);
     if (i + 1 >= steps.length) {
-      setPhase("finish");
+      setPhase(mode === "real" ? "real-finish" : "finish");
       return;
     }
     setI((n) => n + 1);
+  };
+  const back = () => {
+    if (i === 0 || completing.current) return;
+    setSuccess(false);
+    revisit.current = true;
+    setI((n) => n - 1);
   };
   const complete = () => {
     if (completing.current) return;
     completing.current = true;
     setSuccess(true);
     setTimeout(advance, 650);
+  };
+  /** →：看完的步驟＝下一步；要動手的步驟＝略過（先幫忙做到，後面才接得上） */
+  const next = () => {
+    if (completing.current || !step || !ctx) return;
+    if (!revisit.current && (step.until || step.done)) step.skip?.(ctx);
+    advance();
   };
 
   // 進到新的一步：記下狀態、重設「找不到」
@@ -374,24 +873,26 @@ export function TourHost() {
     snap.current = step.snapshot?.(ctx);
     setAskEnd(false);
     missingSince.current = null;
+    autoWent.current = false;
     scrolled.current = null;
     setLost(false);
+    // 收起還開著的輸入列（空白的那一列按 Esc 就消失、鍵盤收起）
+    if (step.blur) {
+      const ta = document.querySelector<HTMLTextAreaElement>('[data-tour="draft-row"] textarea');
+      if (ta && !ta.value.trim()) ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      (document.activeElement as HTMLElement | null)?.blur?.();
+    }
     // 要在清單上操作：上一步的標籤、廠商抽屜或選單還開著就先關掉（關不掉的，提示卡會請人自己關）
     if (step.clear) {
       const timers = [150, 450, 800].map((ms) => setTimeout(() => document.querySelector(LAYERS) && closeLayers(), ms));
       return () => timers.forEach(clearTimeout);
     }
-    // 本來就在那一頁：停一下讓人看到提示，再自動往下
-    if (step.already?.(ctx)) {
-      const t = setTimeout(complete, 900);
-      return () => clearTimeout(t);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step?.id]);
+  }, [step?.id, mode]);
 
-  // 建好兩個任務之後：幫還沒有日期的任務排上日期，看板、甘特圖才有東西可以拖
+  // 建好任務之後：幫還沒有日期的任務排上日期，看板、甘特圖才有東西可以拖
   useEffect(() => {
-    if (!ctx || step?.id !== "longpress") return;
+    if (!ctx || mode !== "practice" || step?.id !== "longpress") return;
     tops(ctx).forEach((t, n) => {
       if (!t.start && !t.due) pm.saveTask({ id: t.id, start: addDays(ctx.today, n * 2), due: addDays(ctx.today, n * 2 + 2) }, { quiet: true });
     });
@@ -401,29 +902,48 @@ export function TourHost() {
   // 事件：做到了
   useEffect(() => {
     if (!step?.until || !ctx || success) return;
-    return onTour((e) => step.until!(e, ctx) && complete());
+    return onTour((e) => step.until!(e, ctx, snap.current) && complete());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, ctx, success]);
 
-  // 資料：做到了
+  // 畫面凍結：暗下來的地方點不到（在最前面攔下來，app 收不到）
   useEffect(() => {
-    if (!step?.done || !ctx || success) return;
-    if (step.done(ctx, snap.current)) complete();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, ctx, success]);
+    if (phase !== "running") return;
+    const ok = (t: EventTarget | null) => {
+      const el = t instanceof Element ? t : t instanceof Node ? t.parentElement : null;
+      if (!el) return true;
+      if (el.closest(OPEN_LAYERS)) return true;
+      if (allowSel.current && el.closest(allowSel.current)) return true;
+      return allowEls.current.some((a) => a.contains(el));
+    };
+    const block = (e: Event) => {
+      if (ok(e.target)) return;
+      e.stopPropagation();
+      if (e.cancelable) e.preventDefault();
+    };
+    for (const t of BLOCK_EVENTS) window.addEventListener(t, block, { capture: true, passive: false });
+    return () => {
+      for (const t of BLOCK_EVENTS) window.removeEventListener(t, block, { capture: true });
+    };
+  }, [phase]);
 
-  // 聚光燈跟著目標走（捲動、換頁、選單打開都會變）
+  // 聚光燈跟著目標走（捲動、換頁、選單打開都會變）；畫面／資料條件也在這裡檢查
   useEffect(() => {
     if (phase !== "running" || !step || !ctx) return;
     const tick = () => {
       const el = step.target?.(ctx) ?? null;
-      // 抽屜、長按選單打開時：拿掉遮罩，提示卡移到上面，不要蓋住選單
-      setCovered(!!document.querySelector(LAYERS));
+      allowEls.current = el ? [el] : [];
+      allowSel.current = step.allow;
+      setTyping(!!pick('[data-tour="draft-row"]'));
+      const layer = document.querySelector(LAYERS);
+      // 抽屜、長按選單打開、目標不在裡面：拿掉圈圈，提示卡移到上面，不要蓋住選單
+      setCovered(!!layer && !(el && el.closest(LAYERS)));
+      if (step.done && !revisit.current && !completing.current && step.done(ctx, snap.current)) complete();
       if (el) {
         missingSince.current = null;
         setLost(false);
         const r = el.getBoundingClientRect();
-        if ((r.top < 60 || r.bottom > window.innerHeight - 40) && scrolled.current !== step.id) {
+        if ((r.top < 60 || r.bottom > window.innerHeight - 40) && scrolled.current !== step.id && !el.closest(LAYERS)) {
           scrolled.current = step.id;
           el.scrollIntoView({ block: "center", behavior: "smooth" });
         }
@@ -432,37 +952,71 @@ export function TourHost() {
         setRect(null);
         if (step.target) {
           missingSince.current ??= Date.now();
-          if (Date.now() - missingSince.current > 1200) setLost(true);
+          const gone = Date.now() - missingSince.current;
+          // 人在別的頁面：自動帶過去（抽屜、選單開著時不動，可能正在操作）
+          if (gone > 900 && step.goto && !autoWent.current && !layer) {
+            autoWent.current = true;
+            step.goto(ctx);
+          }
+          if (gone > 2500) setLost(true);
         }
       }
     };
     tick();
     const t = setInterval(tick, 180);
     return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, step, ctx]);
 
   if (typeof document === "undefined" || phase === "idle") return null;
 
   /* ── 開始前、結束後：深色卡片（和步驟提示同一種） ── */
-  if (phase === "welcome" || phase === "starting" || phase === "finish") {
-    const fin = phase === "finish";
+  if (phase !== "running") {
+    const done = phase === "finish" || phase === "real-finish";
+    const title = phase === "finish" ? "新手教學完成" : phase === "real-intro" ? "實戰教學" : phase === "real-finish" ? "實戰完成" : "新手教學";
+    const text =
+      phase === "finish"
+        ? "你已經會篩選專案、建立任務、長按、滑動、分組、看板、甘特圖、前後任務、分享和搜尋。\n接著可以做「實戰教學」：用正式的專案排任務、截圖匯入，再看刪除專案會刪掉什麼。"
+        : phase === "real-intro"
+          ? "用公司正式的專案練習（不是練習專案，做的都會留下來）：從「展開其他專案」找到專案、新增任務、排日期、截圖匯入，最後說明刪除專案不會動到 CRM。"
+          : phase === "real-finish"
+            ? "以後排程就照這樣：任務追蹤 → 找到專案 → 新增任務、排日期。之後隨時可以從頭像 →「新手教學」再看一次。"
+            : "大約 8 分鐘，一步一步帶你用「專案情報」和「任務追蹤」：篩選、建立任務、長按與滑動、分組、看板、甘特圖、前後任務、分享、搜尋。";
     return createPortal(
-      <div className="fixed inset-0 z-[175] flex items-end sm:items-center justify-center p-3 bg-[rgba(17,17,20,0.55)] tour-fade font-sans" role="dialog" aria-modal="true" aria-label="新手教學">
+      <div data-tour-card className="fixed inset-0 z-[175] flex items-end sm:items-center justify-center p-3 bg-[rgba(17,17,20,0.55)] tour-fade font-sans" role="dialog" aria-modal="true" aria-label={title}>
         <div className="w-full max-w-[400px] bg-[#1C1C22] rounded-[20px] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.55)] p-5 pb-4 tour-rise">
           <div className="w-11 h-11 rounded-[13px] bg-[color-mix(in_srgb,var(--accent)_18%,transparent)] flex items-center justify-center">
-            <Icon name={fin ? "task_alt" : "school"} weight={300} className="text-[26px] text-[var(--accent)]" />
+            <Icon name={done ? "task_alt" : phase === "real-intro" ? "construction" : "school"} weight={300} className="text-[26px] text-[var(--accent)]" />
           </div>
-          <h2 className="mt-3 text-[22px] leading-[28px] font-bold tracking-tight text-white">{fin ? "完成了" : "新手教學"}</h2>
-          <p className="mt-1.5 text-[15px] leading-[22px] text-white/75">
-            {fin
-              ? "你已經會建立任務、長按、滑動、看板、甘特圖、指派、廠商、標籤和搜尋。之後隨時可以從頭像 →「新手教學」再看一次。"
-              : "大約 5 分鐘，一步一步帶你用「專案情報」和「任務追蹤」：建立任務、長按與滑動、看板、甘特圖、指派、廠商、標籤、搜尋。"}
-          </p>
-          {!fin && <p className="mt-3 rounded-[12px] bg-white/[0.07] px-3 py-2.5 text-[13px] leading-[19px] text-white/60">會建立一個只給你練習的專案，結束或中途離開都會自動刪掉，不會動到正式資料。</p>}
+          <h2 className="mt-3 text-[22px] leading-[28px] font-bold tracking-tight text-white">{title}</h2>
+          <p className="mt-1.5 text-[15px] leading-[22px] text-white/75 whitespace-pre-line">{text}</p>
+          {(phase === "welcome" || phase === "starting") && (
+            <p className="mt-3 rounded-[12px] bg-white/[0.07] px-3 py-2.5 text-[13px] leading-[19px] text-white/60">會建立一個只給你練習的專案，結束或中途離開都會自動刪掉，不會動到正式資料。</p>
+          )}
           <div className="mt-5 flex gap-2">
-            {fin ? (
+            {phase === "finish" ? (
+              <>
+                <button type="button" onClick={() => end(true)} className="h-12 px-4 rounded-[14px] bg-white/10 text-[15px] font-semibold text-white active:bg-white/15">
+                  先到這裡
+                </button>
+                <button type="button" onClick={() => setPhase("real-intro")} className="flex-1 h-12 rounded-[14px] bg-[var(--accent)] text-white text-[16px] font-semibold active:opacity-85 inline-flex items-center justify-center gap-2">
+                  實戰教學
+                  <Icon name="arrow_forward" weight={400} className="text-[20px]" />
+                </button>
+              </>
+            ) : phase === "real-intro" ? (
+              <>
+                <button type="button" onClick={() => end(true)} className="h-12 px-4 rounded-[14px] bg-white/10 text-[15px] font-semibold text-white active:bg-white/15">
+                  之後再說
+                </button>
+                <button type="button" onClick={startReal} className="flex-1 h-12 rounded-[14px] bg-[var(--accent)] text-white text-[16px] font-semibold active:opacity-85 inline-flex items-center justify-center gap-2">
+                  開始
+                  <Icon name="arrow_forward" weight={400} className="text-[20px]" />
+                </button>
+              </>
+            ) : phase === "real-finish" ? (
               <button type="button" onClick={() => end(true)} className="flex-1 h-12 rounded-[14px] bg-white text-[#18181B] text-[16px] font-semibold active:opacity-85">
-                結束並刪除練習專案
+                完成
               </button>
             ) : (
               <>
@@ -477,7 +1031,8 @@ export function TourHost() {
               </>
             )}
           </div>
-          {invite && !fin && <p className="mt-3 text-center text-[12px] text-white/40">之後可以從頭像 →「新手教學」開始</p>}
+          {phase === "finish" && <p className="mt-3 text-center text-[12px] text-white/40">不管選哪個，練習專案都會刪掉</p>}
+          {invite && phase === "welcome" && <p className="mt-3 text-center text-[12px] text-white/40">之後可以從頭像 →「新手教學」開始</p>}
         </div>
         <TourStyles />
       </div>,
@@ -487,18 +1042,19 @@ export function TourHost() {
 
   if (!step || !ctx) return null;
 
-  /* ── 進行中：暗化畫面、目標保持亮白、深色提示卡帶小箭頭指著目標 ── */
+  /* ── 進行中：暗化畫面（點不到）、目標保持亮白、深色提示卡帶小箭頭指著目標 ── */
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const pad = 6;
   const hole = rect && !covered ? { x: rect.left - pad, y: rect.top - pad, w: rect.width + pad * 2, h: rect.height + pad * 2 } : null;
-  const waits = !!(step.until || step.done);
+  const waits = !!(step.until || step.done) && !revisit.current;
   const body = typeof step.body === "function" ? step.body(ctx) : step.body;
-  const chapter = chapterOf(steps, i);
+  const chapters = CHAPTERS.filter((c) => steps.some((s) => s.id === c));
+  const chapter = chapterOf(steps, i, chapters);
 
-  // 提示卡位置：放在目標的上面或下面，小箭頭指著目標；上下都放不下（目標很大）就貼在畫面底部
+  // 提示卡位置：放在目標的上面或下面，小箭頭指著目標；上下都放不下（目標很大）就貼在畫面上緣或底部
   const cardW = Math.min(vw - 24, 400);
-  const NEED = 190;
+  const NEED = 200;
   let place: { top?: number; bottom?: number; left: number; caret?: { side: "top" | "bottom"; x: number } } = { left: (vw - cardW) / 2 };
   if (hole) {
     const cx = hole.x + hole.w / 2;
@@ -511,23 +1067,27 @@ export function TourHost() {
     else if (below >= NEED) place = { top: hole.y + hole.h + 12, left, caret: { side: "top", x: caretX } };
   }
   if (place.top === undefined && place.bottom === undefined) {
-    if (covered) place.top = 12;
+    // 目標貼著畫面底部（例如抽屜）：卡片放上面，不要蓋住
+    if (covered || (hole && hole.y + hole.h > vh - NEED)) place.top = 12;
     else place.bottom = 16;
   }
 
   return createPortal(
     <>
-      {/* 暗化：一個圓角的洞（目標保持原本的亮度），只是視覺，不擋點擊 */}
-      {hole && (
-        <div className="fixed inset-0 z-[135] pointer-events-none overflow-hidden tour-fade" aria-hidden>
+      {/* 暗化：圓角的洞（目標保持原本的亮度）。點擊由「畫面凍結」擋，這層只是視覺 */}
+      {hole ? (
+        <div className="fixed inset-0 z-[170] pointer-events-none overflow-hidden tour-fade" aria-hidden>
           <div
             className="absolute rounded-[16px] transition-all duration-300 ease-out"
             style={{ left: hole.x, top: hole.y, width: hole.w, height: hole.h, boxShadow: "0 0 0 9999px rgba(17,17,20,0.55), inset 0 0 0 1.5px rgba(255,255,255,0.9)" }}
           />
         </div>
+      ) : (
+        !covered && <div className="fixed inset-0 z-[170] pointer-events-none bg-[rgba(17,17,20,0.55)] tour-fade" aria-hidden />
       )}
       <div
-        key={step.id}
+        key={`${mode}-${step.id}`}
+        data-tour-card
         role="dialog"
         aria-live="polite"
         aria-label={`新手教學：${step.title}`}
@@ -550,7 +1110,7 @@ export function TourHost() {
           <div className="flex items-start gap-2">
             <h3 className="flex-1 text-[15px] leading-[21px] font-semibold text-[var(--accent)] flex items-center gap-1.5">
               {success && <Icon name="check_circle" fill={1} weight={500} className="text-[18px]" />}
-              {success ? "做到了" : askEnd ? "要結束新手教學嗎？" : step.title}
+              {success ? "做到了" : askEnd ? `要結束${mode === "real" ? "實戰" : "新手"}教學嗎？` : step.title}
             </h3>
             {!askEnd && !success && (
               <button type="button" onClick={() => setAskEnd(true)} aria-label="結束教學" title="結束教學" className="-mr-1.5 -mt-1 w-8 h-8 rounded-full flex items-center justify-center text-white/45 active:bg-white/10">
@@ -561,7 +1121,9 @@ export function TourHost() {
 
           {askEnd ? (
             <>
-              <p className="mt-1 text-[15px] leading-[22px] text-white/85">練習專案會一起刪掉。只是想關掉後面的視窗的話，按「繼續教學」再關。</p>
+              <p className="mt-1 text-[15px] leading-[22px] text-white/85">
+                {mode === "real" ? "剛剛新增的任務會留著。" : "練習專案會一起刪掉。"}只是想關掉後面的視窗的話，按「繼續教學」再關。
+              </p>
               <div className="mt-3 flex justify-end gap-2">
                 <button type="button" onClick={() => end(false)} className="h-9 px-3.5 rounded-full text-[14px] text-[#FF6B6E] active:bg-white/10">
                   結束教學
@@ -579,9 +1141,20 @@ export function TourHost() {
                   {step.clear && covered && <span className="block mt-1 text-[13px] text-[var(--accent)]">先關掉後面的視窗（右上的 ✕ 或往下拉），再繼續。</span>}
                 </p>
                 <div className="mt-3.5 flex items-center gap-2">
+                  {/* ←：回上一步再看一次 */}
+                  <button
+                    type="button"
+                    onClick={back}
+                    disabled={i === 0}
+                    aria-label="上一步"
+                    title="上一步"
+                    className="w-9 h-9 rounded-[11px] flex items-center justify-center text-white ring-1 ring-inset ring-white/20 active:bg-white/10 disabled:opacity-25"
+                  >
+                    <Icon name="arrow_back" weight={500} className="text-[20px]" />
+                  </button>
                   {/* 進度：每一章一個點，現在這一章是長條 */}
-                  <span className="mr-auto flex items-center gap-1.5" aria-label={`第 ${i + 1} 步，共 ${steps.length} 步`}>
-                    {CHAPTERS.map((c, n) => (
+                  <span className="mx-auto flex items-center gap-1.5" aria-label={`第 ${i + 1} 步，共 ${steps.length} 步`}>
+                    {chapters.map((c, n) => (
                       <span key={c} className={`h-[5px] rounded-full transition-all duration-300 ${n === chapter ? "w-5 bg-white" : n < chapter ? "w-[5px] bg-white/70" : "w-[5px] bg-white/25"}`} />
                     ))}
                   </span>
@@ -590,10 +1163,10 @@ export function TourHost() {
                       帶我過去
                     </button>
                   )}
-                  {/* 箭頭：下一步（要動手的步驟＝略過這步，所以是淡一點的外框） */}
+                  {/* →：下一步（要動手的步驟＝略過這步：先幫你做到再往下，所以是淡一點的外框） */}
                   <button
                     type="button"
-                    onClick={() => !completing.current && advance()}
+                    onClick={next}
                     aria-label={waits ? "略過這步" : i + 1 >= steps.length ? "完成" : "下一步"}
                     title={waits ? "略過這步" : "下一步"}
                     className={`w-9 h-9 rounded-[11px] flex items-center justify-center transition-opacity active:opacity-75 ${waits ? "bg-white/12 text-white ring-1 ring-inset ring-white/25" : "bg-white text-[#18181B]"}`}
@@ -612,12 +1185,12 @@ export function TourHost() {
   );
 }
 
-/** 章：介面、建立任務、長按與滑動、看板與甘特、搜尋（每章第一步的 id） */
-const CHAPTERS = ["nav", "nav-tasks", "longpress", "board", "search"];
-function chapterOf(steps: Step[], i: number): number {
+/** 章（每章第一步的 id）。新手：介面、建立任務、長按與滑動、分組、看板、甘特圖、分享、搜尋；實戰：專案情報、任務追蹤、匯入、刪除 */
+const CHAPTERS = ["nav", "nav-tasks", "longpress", "section-add", "board", "gantt", "export-gantt", "search", "real-nav", "real-nav-tasks", "real-import", "real-delete-try", "real-delete-info", "real-delete-member"];
+function chapterOf(steps: Step[], i: number, chapters: string[]): number {
   let c = 0;
   for (let n = 0; n <= i && n < steps.length; n++) {
-    const k = CHAPTERS.indexOf(steps[n].id);
+    const k = chapters.indexOf(steps[n].id);
     if (k >= 0) c = k;
   }
   return c;
