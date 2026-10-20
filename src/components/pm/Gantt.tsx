@@ -397,7 +397,14 @@ export default function Gantt({
                   className={`absolute top-2 text-[11px] whitespace-nowrap tabular-nums ${
                     m.strong ? "font-semibold text-[#52525B]" : "text-[#71717A]"
                   }`}
-                  style={m.center ? { left: m.x, transform: "translateX(-50%)" } : { left: m.x + 4 }}
+                  style={
+                    m.center
+                      ? { left: m.x, transform: "translateX(-50%)" }
+                      : dense && (m.x > 0 || dayWidth >= 36)
+                        ? // 日／週：日期數字置中在那一天的格子上，和下面的星期字對齊（最左邊那個：格子太窄就靠左，才不會被名稱欄蓋住）
+                          { left: m.x + dayWidth / 2, transform: "translateX(-50%)" }
+                        : { left: m.x + 4 }
+                  }
                 >
                   {m.label}
                 </span>
