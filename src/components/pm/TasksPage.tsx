@@ -35,7 +35,7 @@ export const TASK_TABS_MANAGER = ["行事曆", "任務"];
 export const TASK_TABS_MEMBER = ["行事曆", "任務"];
 
 type View = "list" | "board" | "gantt";
-type Smart = "day" | "scheduled" | "all" | "done";
+type Smart = "day" | "all" | "flagged" | "urgent" | "done";
 
 const VIEWS: { value: View; icon: string; label: string }[] = [
   { value: "list", icon: "format_list_bulleted", label: "清單" },
@@ -383,9 +383,10 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
   const sets = useMemo(() => {
     const open = mine.filter((t) => t.status !== "done");
     const onDay = tasksOn(mine, day, today);
-    const scheduled = open.filter((t) => t.due && t.due > today);
+    const flagged = open.filter((t) => t.flagged);
+    const urgent = open.filter((t) => t.meta?.urgent);
     const done = mine.filter((t) => t.status === "done" && (t.doneAt ?? "") >= addDays(today, -30));
-    return { day: onDay, scheduled, all: open, done };
+    return { day: onDay, all: open, flagged, urgent, done };
   }, [mine, day, today]);
 
   // 今日進度：今天要做的＋今天完成的
@@ -411,7 +412,8 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
     if (view !== "list") setView("list");
   };
 
-  const list = view === "list" ? sets[smart] : view === "board" ? [...sets.all, ...sets.done] : smart === "done" ? sets.done : sets.all;
+  // 以前存的篩選（例如已拿掉的「排程」）找不到時，回到「今」
+  const list = view === "list" ? sets[smart] ?? sets.day : view === "board" ? [...sets.all, ...sets.done] : smart === "done" ? sets.done : sets.all;
   const title =
     view === "board"
       ? "我的看板"
@@ -419,59 +421,58 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
         ? "我的排程"
         : smart === "day"
           ? dayLabel(day, today)
-          : smart === "scheduled"
-            ? "排程"
-            : smart === "all"
-              ? "全部任務"
-              : "已完成";
+          : smart === "all"
+            ? "全部任務"
+            : smart === "flagged"
+              ? "重要"
+              : smart === "urgent"
+                ? "緊急"
+                : smart === "done"
+                  ? "已完成"
+                  : dayLabel(day, today);
   const shortDay = dayLabel(day, today).split("　")[0];
 
   return (
     <>
-      {/* 問候 */}
-      <header className="pt-1">
-        <p className={`${T.foot} font-semibold`} style={{ color: ORANGE }}>
-          {MONTH_DAY(today)}　{WEEKDAY(today)}
-        </p>
-        <h1 className={`mt-0.5 ${T.largeTitle} text-[#18181B]`}>
-          {greeting()}
-          {callName ? `，${callName}` : ""}
-        </h1>
-        <p className={`mt-1 ${T.sub} text-[#6E6E73]`}>
-          {todayOpen.length === 0 ? (doneToday ? `今天的事都完成了，共 ${doneToday} 件` : "今天沒有排定的任務") : `今天還有 ${todayOpen.length} 件`}
-          {lateCount > 0 && <span style={{ color: RED }}>，其中 {lateCount} 件已逾期</span>}
-        </p>
-      </header>
-
-      {/* 今日進度 */}
-      <button
-        type="button"
-        onClick={() => {
-          setWeekStart(mondayOf(today));
-          pick(today);
-        }}
-        className="w-full bg-white rounded-[20px] shadow-card p-4 pr-5 flex items-center gap-4 text-left active:scale-[0.99] transition-transform"
-      >
-        <Ring value={totalToday ? doneToday / totalToday : 0}>
-          <span className="text-[17px] font-bold tabular-nums text-[#18181B]">{totalToday ? Math.round((doneToday / totalToday) * 100) : 0}%</span>
-        </Ring>
-        <span className="flex-1 min-w-0">
-          <span className={`block ${T.foot} text-[#8E8E93]`}>今日進度</span>
-          <span className={`block ${T.stat} text-[#18181B] mt-0.5`}>
-            {doneToday}
-            <span className={`${T.sub} font-normal text-[#8E8E93]`}> / {totalToday} 完成</span>
-          </span>
-          {next ? (
-            <span className="mt-1.5 flex items-center gap-1.5 min-w-0 text-[13px] text-[#52525B]">
+      {/* 問候＋今日進度：左邊打招呼、今天還有幾件、下一件；右邊小圓環（點一下回到今天） */}
+      <header className="pt-1 flex items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <p className={`${T.foot} font-semibold`} style={{ color: ORANGE }}>
+            {MONTH_DAY(today)}　{WEEKDAY(today)}
+          </p>
+          <h1 className={`mt-0.5 ${T.largeTitle} text-[#18181B] truncate`}>
+            {greeting()}
+            {callName ? `，${callName}` : ""}
+          </h1>
+          <p className={`mt-1 ${T.sub} text-[#6E6E73]`}>
+            {todayOpen.length === 0 ? (doneToday ? `今天的事都完成了，共 ${doneToday} 件` : "今天沒有排定的任務") : `今天還有 ${todayOpen.length} 件`}
+            {lateCount > 0 && <span style={{ color: RED }}>，其中 {lateCount} 件已逾期</span>}
+          </p>
+          {next && (
+            <p className={`mt-1 flex items-center gap-1.5 min-w-0 ${T.foot} text-[#52525B]`}>
               <span className="w-2 h-2 rounded-full shrink-0" style={{ background: personColor(next.code) }} aria-hidden />
               <span className="shrink-0 text-[#A1A1AA]">下一件</span>
               <span className="truncate">{next.title}</span>
-            </span>
-          ) : (
-            <span className="mt-1.5 block text-[13px] text-[#A1A1AA]">{pm.isManager ? "到「任務」分頁安排工作，指派給同事" : "有新任務會通知你"}</span>
+            </p>
           )}
-        </span>
-      </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setWeekStart(mondayOf(today));
+            pick(today);
+          }}
+          aria-label={`今日進度：${doneToday} / ${totalToday} 完成`}
+          className="shrink-0 flex flex-col items-center gap-1 active:scale-95 transition-transform"
+        >
+          <Ring value={totalToday ? doneToday / totalToday : 0} size={72} stroke={7}>
+            <span className="text-[16px] font-bold tabular-nums text-[#18181B]">{totalToday ? Math.round((doneToday / totalToday) * 100) : 0}%</span>
+          </Ring>
+          <span className={`${T.caption} text-[#8E8E93] tabular-nums`}>
+            {doneToday} / {totalToday} 完成
+          </span>
+        </button>
+      </header>
 
       {newCount > 0 && (
         <button
@@ -509,41 +510,30 @@ function MyTasks({ pm, onOpen, onAdd }: { pm: Pm; onOpen: (t: Task) => void; onA
       />
       <GoalSheet pm={pm} open={!!goalOpen} goalId={goalOpen} onClose={() => setGoalOpen(null)} onOpenTask={onOpen} />
 
-      {/* 篩選 */}
+      {/* 篩選：一個字就好、不放數字（今天、全部、重要、緊急、已完成）；選別天時「今」換成那天 */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5 py-1 lg:mx-0 lg:px-0">
-        <Chip on={smart === "day" && view === "list"} onClick={() => pick(day)} count={sets.day.length} tone={lateCount && day === today ? RED : undefined}>
-          {shortDay}
-        </Chip>
-        <Chip
-          on={smart === "scheduled" && view === "list"}
-          onClick={() => {
-            setSmart("scheduled");
-            setView("list");
-          }}
-          count={sets.scheduled.length}
-        >
-          排程
-        </Chip>
-        <Chip
-          on={smart === "all" && view === "list"}
-          onClick={() => {
-            setSmart("all");
-            setView("list");
-          }}
-          count={sets.all.length}
-        >
-          全部
-        </Chip>
-        <Chip
-          on={smart === "done" && view === "list"}
-          onClick={() => {
-            setSmart("done");
-            setView("list");
-          }}
-          count={sets.done.length}
-        >
-          已完成
-        </Chip>
+        {(
+          [
+            ["day", day === today ? "今" : shortDay, "今天"],
+            ["all", "全", "全部"],
+            ["flagged", "重", "重要"],
+            ["urgent", "急", "緊急"],
+            ["done", "完", "已完成"],
+          ] as [Smart, string, string][]
+        ).map(([k, label, full]) => (
+          <span key={k} title={full} aria-label={full} className="contents">
+            <Chip
+              on={smart === k && view === "list"}
+              onClick={() => {
+                if (k === "day") return pick(day);
+                setSmart(k);
+                setView("list");
+              }}
+            >
+              <span className="min-w-[1.25em] text-center">{label}</span>
+            </Chip>
+          </span>
+        ))}
       </div>
 
       <SectionTitle title={title} />

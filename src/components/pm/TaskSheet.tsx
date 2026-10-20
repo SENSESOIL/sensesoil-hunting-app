@@ -270,6 +270,22 @@ export function TaskSheet({
               <Toggle on={v.flagged} onChange={(f) => change({ flagged: f })} label="重要" />
             </label>
           )}
+          {task && canEditAll && (
+            <label className={`${lineCls} cursor-pointer`}>
+              <span className={labelCls}>緊急</span>
+              <span className="flex-1" />
+              <Toggle
+                on={!!task.meta?.urgent}
+                onChange={(on) => {
+                  const meta = { ...(task.meta ?? {}) };
+                  if (on) meta.urgent = true;
+                  else delete meta.urgent;
+                  pm.saveTask({ id: task.id, meta });
+                }}
+                label="緊急"
+              />
+            </label>
+          )}
         </List>
 
         {/* 時間 */}

@@ -41,7 +41,12 @@ export interface TaskMeta {
   section?: string;
   /** 廠商：協力廠商（廠商CRM）的簡稱 */
   vendor?: string;
+  /** 緊急（‼）：和「重要」（旗子）分開，篩選「急」看得到 */
+  urgent?: boolean;
 }
+
+/** 緊急的顏色（‼） */
+export const URGENT = "#D6336C";
 
 export const TRADES = ["打除", "水電", "泥作", "防水", "木作", "系統櫃", "油漆", "鐵件", "玻璃", "空調", "地板", "石材", "燈具", "衛浴", "清潔", "景觀", "其他"];
 export const AREAS = ["天", "地", "壁", "燈", "設備", "櫃", "衛浴", "傢俱", "景觀"];
@@ -207,5 +212,6 @@ export function cleanMeta(raw: unknown): TaskMeta {
   if (section) out.section = section;
   const vendor = str(r.vendor, 40);
   if (vendor) out.vendor = vendor;
+  if (r.urgent === true) out.urgent = true;
   return out;
 }

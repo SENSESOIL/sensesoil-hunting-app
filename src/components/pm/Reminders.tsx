@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, 
 import { createPortal } from "react-dom";
 import { addDays, fmtDate, toDay } from "@/lib/project-ops";
 import { isAssignee, newSectionId, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
-import { metaChips, tagKeys } from "@/lib/pm/tags";
+import { URGENT, metaChips, tagKeys } from "@/lib/pm/tags";
 import { Icon } from "./ui";
 import { Avatar, CheckCircle, dueLabel, ORANGE, RED, SectionTitle, T } from "./kit";
 import { Sheet, toast } from "./Sheet";
@@ -843,6 +843,14 @@ export function ReminderTasks({
     setSwiped(null);
     pm.saveTask({ id: t.id, flagged: !t.flagged });
   };
+  /** 緊急（‼）：存在 meta.urgent */
+  const urgent = (t: Task) => {
+    setSwiped(null);
+    const meta = { ...(t.meta ?? {}) };
+    if (meta.urgent) delete meta.urgent;
+    else meta.urgent = true;
+    pm.saveTask({ id: t.id, meta });
+  };
 
   /* ── 畫面 ── */
 
@@ -906,6 +914,7 @@ export function ReminderTasks({
             onSwipeOpen={(open) => setSwiped(open ? r.task.id : null)}
             onIndent={code && canEditAll(pm, r.task) ? () => (r.depth ? outdent(r.task) : indent(r.task)) : undefined}
             onFlag={canEditAll(pm, r.task) ? () => flag(r.task) : undefined}
+            onUrgent={canEditAll(pm, r.task) ? () => urgent(r.task) : undefined}
             onDelete={canEditAll(pm, r.task) ? () => remove(r.task) : undefined}
             onLongPress={(rect) => setMenu({ task: r.task, rect, depth: r.depth })}
             linger={linger.has(r.task.id)}
@@ -1013,6 +1022,7 @@ export function ReminderTasks({
           onOpen={() => onOpen(menu.task)}
           onToggle={() => toggleDone(menu.task)}
           onFlag={() => flag(menu.task)}
+          onUrgent={() => urgent(menu.task)}
           onDelete={() => remove(menu.task)}
           onTags={() => setTagFor(menu.task.id)}
           onMove={(c) => moveTask(menu.task, c)}
@@ -1043,7 +1053,7 @@ export function ReminderTasks({
 
 /* ── 一列任務 ─────────────────────────────────────────── */
 
-const SWIPE_OPEN = 144;
+const SWIPE_OPEN = 216;
 const INDENT_AT = 64;
 
 function TaskRow({
@@ -1063,6 +1073,7 @@ function TaskRow({
   onSwipeOpen,
   onIndent,
   onFlag,
+  onUrgent,
   onDelete,
   onLongPress,
   linger,
@@ -1084,6 +1095,7 @@ function TaskRow({
   onSwipeOpen: (open: boolean) => void;
   onIndent?: () => void;
   onFlag?: () => void;
+  onUrgent?: () => void;
   onDelete?: () => void;
   onLongPress: (rect: DOMRect) => void;
   linger: boolean;
@@ -1201,13 +1213,19 @@ function TaskRow({
           </span>
         </div>
       )}
-      {/* 左滑：重要、刪除 */}
+      {/* 左滑：重要、緊急、刪除 */}
       {offset < 0 && (
         <div className="absolute inset-y-0 right-0 flex" style={{ width: SWIPE_OPEN }}>
           {onFlag && (
             <button type="button" data-no-gesture onClick={onFlag} className="flex-1 flex flex-col items-center justify-center gap-0.5 text-white text-[12px] font-semibold" style={{ background: ORANGE }}>
               <Icon name="flag" fill={task.flagged ? 0 : 1} className="text-[20px]" />
               {task.flagged ? "取消重要" : "重要"}
+            </button>
+          )}
+          {onUrgent && (
+            <button type="button" data-no-gesture onClick={onUrgent} className="flex-1 flex flex-col items-center justify-center gap-0.5 text-white text-[12px] font-semibold" style={{ background: URGENT }}>
+              <Icon name="priority_high" weight={700} className="text-[20px]" />
+              {task.meta?.urgent ? "取消緊急" : "緊急"}
             </button>
           )}
           {onDelete && (
@@ -1281,6 +1299,7 @@ function TaskRow({
                 <Icon name="info" className="text-[22px]" />
               </button>
             )}
+            {task.meta?.urgent && !editing && <Icon name="priority_high" weight={700} className="text-[18px] -mx-0.5" style={{ color: URGENT }} aria-label="緊急" />}
             {task.flagged && !editing && <Icon name="flag" fill={1} className="text-[18px]" style={{ color: ORANGE }} />}
             {childCount > 0 && (
               <button type="button" onClick={onCollapse} aria-label={collapsed ? "展開子任務" : "收合子任務"} aria-expanded={!collapsed} className="w-7 h-7 flex items-center justify-center text-[#8E8E93]">
@@ -1369,6 +1388,7 @@ function RowMenu({
   onOpen,
   onToggle,
   onFlag,
+  onUrgent,
   onDelete,
   onTags,
   onMove,
@@ -1385,6 +1405,7 @@ function RowMenu({
   onOpen: () => void;
   onToggle: () => void;
   onFlag: () => void;
+  onUrgent: () => void;
   onDelete: () => void;
   onTags: () => void;
   /** 選好專案後呼叫 */
@@ -1449,7 +1470,7 @@ function RowMenu({
             <div className="grid grid-cols-3 border-b border-[#E4E4E7]">
               <TopAction icon="info" label="詳細" onClick={run(onOpen)} />
               <TopAction icon="flag" label={task.flagged ? "取消重要" : "重要"} onClick={run(onFlag)} disabled={!edit} fill={task.flagged} />
-              <TopAction icon="delete" label="刪除" onClick={run(onDelete)} disabled={!edit} danger />
+              <TopAction icon="priority_high" label={task.meta?.urgent ? "取消緊急" : "緊急"} onClick={run(onUrgent)} disabled={!edit} color={task.meta?.urgent ? URGENT : undefined} />
             </div>
             <div className="py-1">
               <MenuItem icon="event" label="期限 ›" onClick={() => setPage("due")} disabled={!edit} />
@@ -1463,6 +1484,10 @@ function RowMenu({
             <div className="py-1">
               {sections && (sections.length > 0 || pm.isManager) && <MenuItem icon="segment" label="移到分組 ›" onClick={() => setPage("section")} disabled={!edit} />}
               <MenuItem icon="drive_file_move" label="移到專案 ›" onClick={() => setPage("project")} disabled={!edit} />
+            </div>
+            <div className="h-px bg-[#E4E4E7]" />
+            <div className="py-1">
+              <MenuItem icon="delete" label="刪除" onClick={run(onDelete)} disabled={!edit} danger />
             </div>
           </>
         )}
@@ -1656,13 +1681,14 @@ function RowMenu({
   );
 }
 
-function TopAction({ icon, label, onClick, disabled, danger, fill }: { icon: string; label: string; onClick: () => void; disabled?: boolean; danger?: boolean; fill?: boolean }) {
+function TopAction({ icon, label, onClick, disabled, danger, fill, color }: { icon: string; label: string; onClick: () => void; disabled?: boolean; danger?: boolean; fill?: boolean; color?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       className={`flex flex-col items-center justify-center gap-1 h-[68px] text-[13px] active:bg-[#EDEDF0] disabled:opacity-35 ${danger ? "text-[#E5484D]" : "text-[#18181B]"}`}
+      style={color ? { color } : undefined}
     >
       <Icon name={icon} fill={fill ? 1 : 0} className="text-[24px]" />
       {label}
