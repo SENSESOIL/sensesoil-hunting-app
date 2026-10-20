@@ -801,6 +801,7 @@ export function TourHost() {
   // 提示卡要讓開的區塊、提示卡實際的高度（決定放上面還是下面）
   const [clearRect, setClearRect] = useState<DOMRect | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const cardBody = useRef<HTMLDivElement>(null);
   const [cardH, setCardH] = useState(170);
   // 按了提示卡的 ✕：先問一次，免得想關抽屜卻把教學整個關掉
   const [askEnd, setAskEnd] = useState(false);
@@ -1031,7 +1032,7 @@ export function TourHost() {
       setLandscape(window.innerWidth > window.innerHeight);
       const cr = step.clearOf?.()?.getBoundingClientRect() ?? null;
       setClearRect((p) => (!cr ? null : p && p.top === cr.top && p.bottom === cr.bottom ? p : cr));
-      const ch = cardRef.current?.offsetHeight;
+      const ch = cardBody.current?.scrollHeight;
       if (ch) setCardH((p) => (Math.abs(p - ch) > 2 ? ch : p));
       const layer = document.querySelector(LAYERS);
       // 抽屜、長按選單打開、目標不在裡面：拿掉圈圈，提示卡移到上面，不要蓋住選單
@@ -1157,35 +1158,41 @@ export function TourHost() {
 
   // 提示卡位置：放在目標的上面或下面，小箭頭指著目標；上下都放不下（目標很大）就貼在畫面上緣或底部
   const cardW = Math.min(vw - 24, 400);
-  const NEED = 200;
-  let place: { top?: number; bottom?: number; left: number; caret?: { side: "top" | "bottom"; x: number } } = { left: (vw - cardW) / 2 };
-  const avoid = clearRect && !covered ? clearRect : null;
-  if (hole && avoid) {
-    // 要讓開的區塊（含圈圈）：先放上面，放不下放下面；都放不下貼在空間比較大的那一邊
+  // 用提示卡「實際的高度」決定放哪（鍵盤打開時可見範圍很矮，用固定的 200 會判斷成上下都放不下，卡片就蓋到圈圈上）
+  const GAP = 12;
+  const need = cardH + 4;
+  let place: { top?: number; bottom?: number; left: number; caret?: { side: "top" | "bottom"; x: number }; maxH?: number } = { left: (vw - cardW) / 2 };
+  if (hole) {
     const cx = hole.x + hole.w / 2;
     const left = Math.max(12, Math.min(cx - cardW / 2, vw - cardW - 12));
     const caretX = Math.max(22, Math.min(cx - left, cardW - 22));
-    const top = Math.min(avoid.top, hole.y);
-    const bottom = Math.max(avoid.bottom, hole.y + hole.h);
-    const above = top - vTop - 12;
-    const below = vTop + vh - bottom - 12;
-    if (above >= cardH) place = { bottom: top - 12, left, ...(hole.y - top < 40 ? { caret: { side: "bottom" as const, x: caretX } } : {}) };
-    else if (below >= cardH) place = { top: bottom + 12, left, ...(bottom - (hole.y + hole.h) < 40 ? { caret: { side: "top" as const, x: caretX } } : {}) };
-    else if (above > below) place = { top: vTop + 12, left: (vw - cardW) / 2 };
-    else place = { bottom: vTop + vh - 16, left: (vw - cardW) / 2 };
-  } else if (hole) {
-    const cx = hole.x + hole.w / 2;
-    const left = Math.max(12, Math.min(cx - cardW / 2, vw - cardW - 12));
-    const caretX = Math.max(22, Math.min(cx - left, cardW - 22));
-    const above = hole.y - vTop - 12;
-    const below = vTop + vh - (hole.y + hole.h) - 12;
-    const preferAbove = hole.y - vTop + hole.h / 2 > vh / 2;
-    if ((preferAbove && above >= NEED) || (!preferAbove && below < NEED && above >= NEED)) place = { bottom: hole.y - 12, left, caret: { side: "bottom", x: caretX } };
-    else if (below >= NEED) place = { top: hole.y + hole.h + 12, left, caret: { side: "top", x: caretX } };
+    const avoid = clearRect && !covered ? clearRect : null;
+    // 先試「連要讓開的區塊（整張甘特圖）一起讓開」，放不下再只讓開圈圈
+    const tryPlace = (top: number, bottom: number, preferAbove: boolean, strict: boolean) => {
+      const above = top - vTop - GAP - 8;
+      const below = vTop + vh - bottom - GAP - 8;
+      const caretDown = hole.y - top < 40 ? { caret: { side: "bottom" as const, x: caretX } } : {};
+      const caretUp = bottom - (hole.y + hole.h) < 40 ? { caret: { side: "top" as const, x: caretX } } : {};
+      if (preferAbove ? above >= need : below < need && above >= need) return { bottom: top - GAP, left, ...caretDown };
+      if (below >= need) return { top: bottom + GAP, left, ...caretUp };
+      if (!preferAbove && above >= need) return { bottom: top - GAP, left, ...caretDown };
+      if (strict) return null;
+      // 上下都放不下：放在空間大的那一邊、緊貼圈圈（不蓋住它），卡片內容自己捲動
+      return above > below
+        ? { bottom: top - GAP, left, maxH: Math.max(110, above), ...caretDown }
+        : { top: bottom + GAP, left, maxH: Math.max(110, below), ...caretUp };
+    };
+    const lower = hole.y - vTop + hole.h / 2 > vh / 2;
+    const big = hole.h > vh * 0.45;
+    place =
+      (avoid && tryPlace(Math.min(avoid.top, hole.y), Math.max(avoid.bottom, hole.y + hole.h), true, true)) ||
+      (big
+        ? // 圈的東西很大（整個看板、抽屜）：卡片貼在畫面上緣或下緣，蓋住它的一小角
+          (tryPlace(hole.y, hole.y + hole.h, lower, true) ?? (lower ? { top: vTop + 12, left: (vw - cardW) / 2 } : { bottom: vTop + vh - 16, left: (vw - cardW) / 2 }))
+        : tryPlace(hole.y, hole.y + hole.h, lower, false)!);
   }
   if (place.top === undefined && place.bottom === undefined) {
-    // 目標貼著畫面底部（例如抽屜）：卡片放上面，不要蓋住
-    if (covered || (hole && hole.y + hole.h > vTop + vh - NEED)) place.top = vTop + 12;
+    if (covered) place.top = vTop + 12;
     else place.bottom = vTop + vh - 16;
   }
   // 換成整頁座標；bottom＝卡片的下緣（往上長）
@@ -1229,7 +1236,7 @@ export function TourHost() {
             }
           />
         )}
-        <div className="bg-[#1C1C22] rounded-[18px] shadow-[0_18px_44px_-12px_rgba(0,0,0,0.55)] px-4 pt-3.5 pb-3">
+        <div ref={cardBody} className="bg-[#1C1C22] rounded-[18px] shadow-[0_18px_44px_-12px_rgba(0,0,0,0.55)] px-4 pt-3.5 pb-3 overflow-y-auto overscroll-contain" style={place.maxH ? { maxHeight: place.maxH } : undefined}>
           <div className="flex items-start gap-2">
             <h3 className="flex-1 text-[15px] leading-[21px] font-semibold text-[var(--accent)] flex items-center gap-1.5">
               {success && <Icon name="check_circle" fill={1} weight={500} className="text-[18px]" />}
