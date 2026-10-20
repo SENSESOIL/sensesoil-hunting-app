@@ -9,7 +9,6 @@ import { metaChips, tagKeys } from "@/lib/pm/tags";
 import { Icon } from "./ui";
 import { Avatar, CheckCircle, dueLabel, ORANGE, RED, SectionTitle, T } from "./kit";
 import { Sheet, toast } from "./Sheet";
-import { ProjectPicker } from "./TaskSheet";
 import { TaskGantt } from "./TaskGantt";
 import { ProjectScreen } from "./ProjectScreen";
 import { TaskBoard } from "./TaskBoard";
@@ -603,7 +602,14 @@ export function ReminderTasks({
   const [menu, setMenu] = useState<{ task: Task; rect: DOMRect; depth: 0 | 1 } | null>(null);
   // 長按 → 期限 → 自訂日期…：時間安排
   const [tagFor, setTagFor] = useState<string | null>(null);
-  const [moveFor, setMoveFor] = useState<Task | null>(null);
+  /** 移到另一個專案：子任務一起搬 */
+  const moveTask = (t: Task, c: string) => {
+    if (c === t.code) return;
+    const kids = pm.tasks.filter((x) => x.parentId === t.id);
+    pm.saveTask({ id: t.id, code: c, parentId: null });
+    for (const k of kids) pm.saveTask({ id: k.id, code: c });
+    toast(`已移到「${pm.projectBy.get(c)?.name ?? c}」${kids.length ? `（含 ${kids.length} 個子任務）` : ""}`);
+  };
   // 分組：收合、改名中
   const [foldSec, setFoldSec] = useState<Set<string>>(new Set());
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -1009,7 +1015,7 @@ export function ReminderTasks({
           onFlag={() => flag(menu.task)}
           onDelete={() => remove(menu.task)}
           onTags={() => setTagFor(menu.task.id)}
-          onMove={() => setMoveFor(menu.task)}
+          onMove={(c) => moveTask(menu.task, c)}
           sections={code && !grouped ? realSections(projSections) : undefined}
           currentSection={secOf(menu.task)}
           onSection={(sid) => moveToSection(pm.tasks.find((t) => t.id === menu.task.id) ?? menu.task, sid)}
@@ -1030,25 +1036,6 @@ export function ReminderTasks({
             </PopMenu>
           );
         })()}
-      <Sheet open={!!moveFor} title="移到專案" subtitle={moveFor?.title} onClose={() => setMoveFor(null)}>
-        {moveFor && (
-          <div className="pb-4">
-            <ProjectPicker
-              pm={pm}
-              value={moveFor.code}
-              onPick={(c) => {
-                const t = moveFor;
-                setMoveFor(null);
-                if (c === t.code) return;
-                const kids = pm.tasks.filter((x) => x.parentId === t.id);
-                pm.saveTask({ id: t.id, code: c, parentId: null });
-                for (const k of kids) pm.saveTask({ id: k.id, code: c });
-                toast(`已移到「${pm.projectBy.get(c)?.name ?? c}」${kids.length ? `（含 ${kids.length} 個子任務）` : ""}`);
-              }}
-            />
-          </div>
-        )}
-      </Sheet>
     </div>
     </RowBg.Provider>
   );
@@ -1370,7 +1357,7 @@ function DraftRow({ depth, color, onCommit }: { depth: 0 | 1; color: string; onC
 
 /* ── 長按選單（像提醒事項） ─────────────────────────────── */
 
-type MenuPage = "main" | "due" | "progress" | "assign" | "vendor" | "section";
+type MenuPage = "main" | "due" | "progress" | "assign" | "vendor" | "project" | "section";
 
 function RowMenu({
   pm,
@@ -1400,13 +1387,15 @@ function RowMenu({
   onFlag: () => void;
   onDelete: () => void;
   onTags: () => void;
-  onMove: () => void;
+  /** 選好專案後呼叫 */
+  onMove: (code: string) => void;
   /** 專案頁：分組清單（沒有＝不顯示「移到分組」） */
   sections?: { id: string; name: string }[];
   currentSection?: string;
   onSection?: (id: string) => void;
 }) {
   const [page, setPage] = useState<MenuPage>("main");
+  const [projQ, setProjQ] = useState("");
   const [shown, setShown] = useState(false);
   useEffect(() => {
     requestAnimationFrame(() => setShown(true));
@@ -1424,7 +1413,7 @@ function RowMenu({
   };
   const vh = window.innerHeight;
   const vw = window.innerWidth;
-  const MENU_H = page === "assign" || page === "vendor" ? 400 : 420;
+  const MENU_H = page === "assign" || page === "vendor" || page === "project" ? 400 : 420;
   // 預覽卡停在原位；下面放不下選單時整組往上移
   const previewTop = Math.max(16, Math.min(rect.top, vh - MENU_H - 90));
   const menuTop = previewTop + Math.min(rect.height, 90) + 10;
@@ -1473,7 +1462,7 @@ function RowMenu({
             <div className="h-px bg-[#E4E4E7]" />
             <div className="py-1">
               {sections && (sections.length > 0 || pm.isManager) && <MenuItem icon="segment" label="移到分組 ›" onClick={() => setPage("section")} disabled={!edit} />}
-              <MenuItem icon="drive_file_move" label="移到專案 ›" onClick={run(onMove)} disabled={!edit} />
+              <MenuItem icon="drive_file_move" label="移到專案 ›" onClick={() => setPage("project")} disabled={!edit} />
             </div>
           </>
         )}
@@ -1562,6 +1551,49 @@ function RowMenu({
             })()}
           </div>
         )}
+        {page === "project" && (() => {
+          // 和「廠商」一樣在選單裡直接選：上面搜尋，進行中的專案排前面
+          const k = projQ.trim().toLowerCase();
+          const active = (p: (typeof pm.projects)[number]) => (p.openCount > 0 ? 0 : 1) + (p.stage && ["簽約", "施工中", "驗收"].includes(p.stage) ? 0 : 1);
+          const list = pm.projects
+            .filter((p) => !p.archived && (!k || `${p.code} ${p.name} ${p.company}`.toLowerCase().includes(k)))
+            .sort((a, b) => Number(b.code === task.code) - Number(a.code === task.code) || active(a) - active(b) || b.code.localeCompare(a.code))
+            .slice(0, k ? 50 : 30);
+          return (
+            <div className="py-1 max-h-[380px] overflow-y-auto">
+              <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 z-[1] bg-[#F7F7F8]">
+                <Icon name="chevron_left" className="text-[22px]" />
+                移到專案
+              </button>
+              <div className="relative px-3 py-2">
+                <Icon name="search" className="absolute left-6 top-1/2 -translate-y-1/2 text-[18px] text-[#A1A1AA]" />
+                <input
+                  value={projQ}
+                  onChange={(e) => setProjQ(e.target.value)}
+                  placeholder="搜尋代碼或名稱"
+                  className="w-full h-10 rounded-[10px] bg-white border border-[#E4E4E7] pl-9 pr-3 text-[16px] text-[#18181B] outline-none focus:border-[var(--accent)]"
+                />
+              </div>
+              {list.map((p) => (
+                <button
+                  key={p.code}
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onMove(p.code);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 h-12 text-left active:bg-[#EDEDF0]"
+                >
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: personColor(p.code) }} />
+                  <span className="text-[12px] text-[#8E8E93] w-9 shrink-0 tabular-nums">{p.code}</span>
+                  <span className="flex-1 min-w-0 text-[16px] text-[#18181B] truncate">{p.name}</span>
+                  {p.code === task.code && <Icon name="check" weight={600} className="text-[18px] text-[var(--accent)]" />}
+                </button>
+              ))}
+              {!list.length && <p className="px-4 py-4 text-[13px] text-[#A1A1AA]">找不到「{projQ}」</p>}
+            </div>
+          );
+        })()}
         {page === "vendor" && (
           <div className="py-1 max-h-[380px] overflow-y-auto">
             <button type="button" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 z-[1] bg-[#F7F7F8]">
