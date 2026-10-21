@@ -78,6 +78,8 @@ interface Step {
   backTo?: (c: Ctx) => void;
   /** 按 ← 時不停在這一步，再往前一步（例如要先打開選單、抽屜才做得了的步驟） */
   passBack?: boolean;
+  /** 一定要自己做，不能按 → 略過（例如選哪個正式專案）：按 → 只跳出這句提醒 */
+  must?: string;
 }
 
 /** 蓋在清單上的東西：抽屜、長按選單、搜尋層 */
@@ -316,6 +318,7 @@ const STEPS_RAW: Step[] = [
     target: () => pick('[data-tour="intel-active"]'),
     until: (e) => e.type === "intel-filter" && e.data === "active",
     goto: toIntel,
+    skip: () => tap('[data-tour="intel-active"]'),
   },
   {
     id: "open-project",
@@ -324,6 +327,7 @@ const STEPS_RAW: Step[] = [
     target: (c) => pick(`[data-tour="project-${c.code}"]`),
     until: (e, c) => e.type === "project-screen" && e.data === c.code,
     goto: (c) => go({ nav: "project_info", intelTab: "專案", openProject: c.code }),
+    skip: (c) => go({ nav: "project_info", intelTab: "專案", openProject: c.code }),
   },
   {
     id: "summary",
@@ -842,6 +846,7 @@ const REAL_STEPS_RAW: Step[] = [
     target: () => pick('[data-tour="expand-projects"]'),
     until: (e) => e.type === "home-expand" && e.data === true,
     goto: toTasksHome,
+    skip: () => tap('[data-tour="expand-projects"]'),
   },
   {
     id: "real-pick",
@@ -857,6 +862,7 @@ const REAL_STEPS_RAW: Step[] = [
       return true;
     },
     goto: toTasksHome,
+    must: "先點一個專案，後面的步驟都用它",
   },
   {
     id: "real-add",
@@ -1104,18 +1110,19 @@ export function TourHost() {
     setPhase("running");
   };
 
-  const advance = () => {
+  /** by：一次往下跳幾步（略過時，連後面「要先打開選單才做得了」的步驟一起帶過） */
+  const advance = (by = 1) => {
     completing.current = false;
     revisit.current = false;
     setSuccess(false);
     // 實戰：選好專案了，之後的步驟都用它
     if (mode === "real" && realPick.code && realPick.code !== realCode) setRealCode(realPick.code);
-    if (i + 1 >= steps.length) {
+    if (i + by >= steps.length) {
       if (mode === "practice") store.set(DONE, "1");
       setPhase(mode === "real" ? "real-finish" : "real-intro");
       return;
     }
-    setI((n) => n + 1);
+    setI((n) => n + by);
   };
   /** ←：撤銷上一步做的事、回到它開始的畫面，重做一次 */
   const back = () => {
@@ -1144,8 +1151,21 @@ export function TourHost() {
   /** →：看完的步驟＝下一步；要動手的步驟＝略過（先幫忙做到，後面才接得上） */
   const next = () => {
     if (completing.current || !step || !ctx) return;
-    if (!revisit.current && (step.until || step.done)) step.skip?.(ctx);
-    advance();
+    if (revisit.current || !(step.until || step.done)) return advance();
+    if (step.must) {
+      toast(step.must);
+      return;
+    }
+    // 略過時幫忙做到的事可能也會觸發這一步的「做到了」：先擋著，不然一次跳兩步
+    completing.current = true;
+    step.skip?.(ctx);
+    // 下一步要靠這一步打開的選單、抽屜才做得了（例如長按後的「指派」、打開時間安排後的「選前一個任務」）：一起略過
+    let by = 1;
+    while (i + by < steps.length && steps[i + by].passBack) {
+      steps[i + by].skip?.(ctx);
+      by++;
+    }
+    advance(by);
   };
 
   // 進到新的一步：記下狀態、重設「找不到」
