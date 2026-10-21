@@ -21,7 +21,7 @@ import { onTour, tourEmit, tourState, TOUR_PREFIX, type TourEvent } from "./bus"
    - ← 上一步：撤銷那一步做的事（例如刪掉剛打的任務），回到那一步開始的畫面，重做一次
    - → 略過這步：先幫你做到（例如自動建好任務、換到正確的頁面），後面的步驟才接得上
    - 人在別的頁面、找不到要圈的東西：自動帶過去
-   實戰教學：用正式的專案（從「展開其他專案」找）新增任務、排日期、截圖匯入，最後說明刪除專案不會動到 CRM
+   實戰教學：用正式的專案（從「展開其他專案」找）新增任務、截圖匯入、設定專案期限，最後說明刪除專案不會動到 CRM
    ══════════════════════════════════════════════════════════ */
 
 interface Ctx {
@@ -328,10 +328,10 @@ const BACK: Record<string, Pick<Step, "undo" | "backTo" | "passBack">> = {
   "real-nav-tasks": { backTo: toIntel },
   "real-expand": { backTo: toTasksHome },
   "real-pick": { backTo: toTasksHome },
-  "real-date": { backTo: closeThen(toProject()) },
   "real-press": { backTo: closeThen(toTasksHome) },
   // 要先長按叫出專案選單：直接回到「長按專案」
   "real-edit": { passBack: true },
+  "real-dates": { passBack: true },
 };
 
 /** 時間安排裡剛選好、還沒儲存的前一個任務（沒選＝空） */
@@ -953,16 +953,6 @@ const REAL_STEPS_RAW: Step[] = [
     goto: toProject(),
   },
   {
-    id: "real-date",
-    blur: true,
-    title: "排日期",
-    body: () => byMenu("期限", "期限", "任務", "在月曆點開始日、再點結束日（只做一天就同一天點兩下）。"),
-    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
-    snapshot: (c) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])),
-    done: (c, snap) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])) !== snap,
-    goto: toProject(),
-  },
-  {
     id: "real-import",
     clear: true,
     title: "截圖匯入",
@@ -1003,9 +993,22 @@ const REAL_STEPS_RAW: Step[] = [
     when: (c) => c.isManager,
   },
   {
+    id: "real-dates",
+    title: "專案期限",
+    // 實戰教專案的工期（開工 → 預計完工），不是單一任務的期限
+    body: () =>
+      pick('[data-tour="menu-back"]')
+        ? "在月曆點開工日，再點預計完工日，中間會出現色帶。存好會回到選單。"
+        : "點「專案期限 ›」，設定這個專案的開工日到預計完工日。甘特圖最上面的「預定工期」就是它。",
+    target: () => pick('[data-tour="project-menu"]'),
+    until: (e, c) => e.type === "project-dates" && e.data === c.code,
+    goto: toTasksHome,
+    when: (c) => c.isManager,
+  },
+  {
     id: "real-edit",
     title: "編輯專案",
-    body: "點「編輯專案…」。專案的資料、權限、刪除都在裡面。",
+    body: "接著點「編輯專案…」。專案的資料、權限、刪除都在裡面。",
     target: () => pick('[data-tour="project-menu"]'),
     until: (e, c) => e.type === "project-screen" && e.data === c.code,
     goto: toTasksHome,
@@ -1024,11 +1027,12 @@ const REAL_STEPS_RAW: Step[] = [
   },
   {
     id: "real-delete-info",
-    look: true,
     clear: true,
     title: "刪除專案",
-    body: "往下滑到最下面就是「刪除專案」：只清掉任務、排程、分組，CRM 的資料不會動。這個專案原本就有資料，看位置就好。",
+    // 可以點（會再問一次「確定刪除」）；這個專案原本就有資料，不想刪就按 →
+    body: "往下滑到最下面就是「刪除專案」：只清掉任務、排程、分組，CRM 的資料不會動。按下去會再問一次，確定才會刪。這個專案原本就有資料，不想刪就按 →。",
     target: () => pick('[data-tour="project-delete"]'),
+    until: (e) => e.type === "project-purged",
     when: (c) => c.isManager && !c.fresh,
     goto: toProjectScreen,
   },
@@ -1420,9 +1424,9 @@ export function TourHost() {
             : "建議先做「介面導覽」，學會每個按鈕，再用正式專案實戰。\n你已經做過介面導覽了嗎？"
           : phase === "real-intro"
           ? (afterPractice ? "練習專案會刪掉。接下來" : "") +
-            "用公司正式的專案（做的都會留下來）：從「展開其他專案」找到專案、新增任務、排日期、截圖匯入，最後說明刪除專案不會動到 CRM。"
+            "用公司正式的專案（做的都會留下來）：從「展開其他專案」找到專案、新增任務、截圖匯入、設定專案期限，最後說明刪除專案不會動到 CRM。"
           : phase === "real-finish"
-            ? "以後排程就照這樣：任務追蹤 → 找到專案 → 新增任務、排日期。之後隨時可以從頭像 →「說明」再看一次。"
+            ? "以後排程就照這樣：任務追蹤 → 找到專案 → 新增任務、設定專案期限。之後隨時可以從頭像 →「說明」再看一次。"
             : "大約 8 分鐘，一步一步帶你用「專案情報」和「任務追蹤」：篩選、建立任務、長按與滑動、分組、看板、甘特圖、前後任務、分享、搜尋。";
     return createPortal(
       <div data-tour-card className="fixed inset-0 z-[175] flex items-end sm:items-center justify-center p-3 bg-[rgba(17,17,20,0.55)] tour-fade font-sans" role="dialog" aria-modal="true" aria-label={title}>

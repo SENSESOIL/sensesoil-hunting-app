@@ -217,6 +217,19 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
           onClose={() => setProjMenu(null)}
           onPin={() => togglePin(projMenu.code)}
           onEdit={() => setEditCode(projMenu.code)}
+          dates={(() => {
+            const p = pm.projectBy.get(projMenu.code);
+            const code = projMenu.code;
+            return {
+              start: p?.startAt,
+              due: p?.dueAt,
+              today: pm.today,
+              onChange: (s: string, e: string) => {
+                pm.saveProject(code, { startAt: s, dueAt: e }).then((ok) => ok && toast(`專案期限：${rangeLabel(s, e)}`));
+                tourEmit("project-dates", code);
+              },
+            };
+          })()}
         />
       )}
       {/* 編輯專案：和專案情報點進專案是同一頁（資料直接改、自動存） */}
@@ -1930,6 +1943,7 @@ function ProjectMenu({
   onClose,
   onPin,
   onEdit,
+  dates,
 }: {
   rect: DOMRect;
   pinned: boolean;
@@ -1937,8 +1951,11 @@ function ProjectMenu({
   onClose: () => void;
   onPin: () => void;
   onEdit: () => void;
+  /** 專案期限（開工 → 預計完工）：同一個月曆點兩下 */
+  dates?: { start?: string; due?: string; today: string; onChange: (start: string, due: string) => void };
 }) {
   const [shown, setShown] = useState(false);
+  const [page, setPage] = useState<"main" | "dates">("main");
   useEffect(() => {
     const id = requestAnimationFrame(() => setShown(true));
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -1948,11 +1965,13 @@ function ProjectMenu({
       window.removeEventListener("keydown", onKey);
     };
   }, [onClose]);
-  const W = 240;
+  // 月曆頁寬一點（但不超過畫面）
+  const W = page === "dates" ? Math.min(300, window.innerWidth - 24) : 240;
   const left = Math.min(Math.max(12, rect.left + 24), window.innerWidth - W - 12);
-  const h = canEdit ? 108 : 56;
+  const h = page === "dates" ? 430 : canEdit ? (dates ? 156 : 108) : 56;
   const below = rect.bottom + 8 + h < window.innerHeight - 12;
-  const top = below ? rect.bottom + 8 : Math.max(12, rect.top - 8 - h);
+  // 月曆比較高：下面放不下也上面放不下時，貼著畫面下緣
+  const top = below ? rect.bottom + 8 : Math.max(12, Math.min(rect.top - 8 - h, window.innerHeight - h - 12));
   const run = (f: () => void) => () => {
     onClose();
     f();
@@ -1965,8 +1984,37 @@ function ProjectMenu({
         className={`absolute rounded-[16px] bg-[#F7F7F8]/95 shadow-[0_16px_50px_rgba(0,0,0,0.22)] overflow-hidden py-1 transition-all duration-200 ${shown ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
         style={{ top, left, width: W }}
       >
-        <MenuItem icon="keep" label={pinned ? "取消置頂" : "置頂"} onClick={run(onPin)} />
-        {canEdit && <MenuItem icon="edit" label="編輯專案…" onClick={run(onEdit)} />}
+        {page === "main" ? (
+          <>
+            <MenuItem icon="keep" label={pinned ? "取消置頂" : "置頂"} onClick={run(onPin)} />
+            {canEdit && dates && (
+              <MenuItem icon="date_range" label={dates.start || dates.due ? `專案期限 ${rangeLabel(dates.start, dates.due)} ›` : "專案期限 ›"} onClick={() => setPage("dates")} />
+            )}
+            {canEdit && <MenuItem icon="edit" label="編輯專案…" onClick={run(onEdit)} />}
+          </>
+        ) : (
+          dates && (
+            <div>
+              <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7]">
+                <Icon name="chevron_left" className="text-[22px]" />
+                專案期限
+                <span className="ml-auto pr-1 text-[12px] font-normal text-[#71717A]">開工 → 預計完工</span>
+              </button>
+              <div className="px-2 pt-2 pb-1">
+                <RangeCalendar
+                  start={dates.start}
+                  end={dates.due}
+                  today={dates.today}
+                  onChange={(s, e) => {
+                    dates.onChange(s, e);
+                    // 存好回到選單第一頁（還可以接著點「編輯專案…」）
+                    setPage("main");
+                  }}
+                />
+              </div>
+            </div>
+          )
+        )}
       </div>
     </div>,
     document.body
