@@ -68,21 +68,21 @@ export function RangeCalendar({
         <button type="button" onClick={() => shift(-1)} aria-label="上個月" className="w-9 h-9 rounded-full flex items-center justify-center text-[#52525B] active:bg-[#F2F2F4]">
           <Icon name="chevron_left" className="text-[22px]" />
         </button>
-        <span className="text-[15px] font-semibold text-[#18181B] tabular-nums">
+        <span className="text-[16px] font-semibold text-[#18181B] tabular-nums">
           {y} 年 {m} 月
         </span>
         <button type="button" onClick={() => shift(1)} aria-label="下個月" className="w-9 h-9 rounded-full flex items-center justify-center text-[#52525B] active:bg-[#F2F2F4]">
           <Icon name="chevron_right" className="text-[22px]" />
         </button>
       </div>
-      <div className="grid grid-cols-7 text-center text-[12px] text-[#A1A1AA] pb-1">
+      <div className="grid grid-cols-7 text-center text-[13px] text-[#A1A1AA] pb-1">
         {WEEKDAYS.map((w) => (
           <span key={w}>{w}</span>
         ))}
       </div>
       <div className="grid grid-cols-7">
         {cells.map((d, i) => {
-          if (!d) return <span key={`x${i}`} className="h-10" />;
+          if (!d) return <span key={`x${i}`} className="h-11" />;
           const col = i % 7;
           const inRange = !!(lo && hi && d >= lo && d <= hi);
           const isEnd = d === lo || d === hi;
@@ -91,14 +91,14 @@ export function RangeCalendar({
           const roundL = d === lo || col === 0 || d.endsWith("-01");
           const roundR = d === hi || col === 6 || addDays(d, 1).endsWith("-01");
           return (
-            <button key={d} type="button" onClick={() => tap(d)} aria-label={d} aria-pressed={isEnd} className="relative h-10 flex items-center justify-center">
+            <button key={d} type="button" onClick={() => tap(d)} aria-label={d} aria-pressed={isEnd} className="relative h-11 flex items-center justify-center">
               {inRange && !single && (
                 <span
-                  className={`absolute inset-y-[5px] bg-[var(--accent-soft)] ${roundL ? "left-[3px] rounded-l-full" : "left-0"} ${roundR ? "right-[3px] rounded-r-full" : "right-0"}`}
+                  className={`absolute inset-y-[4px] bg-[var(--accent-soft)] ${roundL ? "left-[3px] rounded-l-full" : "left-0"} ${roundR ? "right-[3px] rounded-r-full" : "right-0"}`}
                 />
               )}
               <span
-                className={`relative w-[34px] h-[34px] rounded-full flex items-center justify-center text-[15px] tabular-nums ${
+                className={`relative w-[38px] h-[38px] rounded-full flex items-center justify-center text-[16px] tabular-nums ${
                   isEnd ? "bg-[var(--accent)] text-white font-semibold" : d === today ? "text-[var(--accent)] font-semibold" : "text-[#18181B]"
                 }`}
               >

@@ -1551,11 +1551,13 @@ function RowMenu({
   };
   const vh = window.innerHeight;
   const vw = window.innerWidth;
-  const MENU_H = page === "due" ? 470 : page === "assign" || page === "vendor" || page === "project" ? 400 : 420;
+  const MENU_H = page === "due" ? 510 : page === "assign" || page === "vendor" || page === "project" ? 400 : 420;
   // 預覽卡停在原位；下面放不下選單時整組往上移
   const previewTop = Math.max(16, Math.min(rect.top, vh - MENU_H - 90));
   const menuTop = previewTop + Math.min(rect.height, 90) + 10;
-  const left = Math.max(12, Math.min(rect.left + 8, vw - 292));
+  // 期限頁有月曆：選單放寬（不超出畫面）
+  const menuW = page === "due" ? Math.min(360, vw - 24) : 280;
+  const left = Math.max(12, Math.min(rect.left + 8, vw - menuW - 12));
   const today = pm.today;
   const dow = toDay(today).getDay();
   // 每個捷徑的日曆圖示記號都不一樣（點、兩點、空心圓、箭頭），不會四個長一樣
@@ -1564,7 +1566,7 @@ function RowMenu({
     ["明天", addDays(today, 1), <DueIcon key="d" kind="tomorrow" />],
     [dow === 6 ? "下週六" : "這週六", addDays(today, (6 - dow + 7) % 7 || 7), <DueIcon key="d" kind="saturday" />],
     ["下週一", addDays(today, ((1 - dow + 7) % 7) || 7), <DueIcon key="d" kind="monday" />],
-    ["無期限", undefined, <DueIcon key="d" kind="none" />],
+    ["無", undefined, <DueIcon key="d" kind="none" />],
   ];
 
   return createPortal(
@@ -1581,8 +1583,8 @@ function RowMenu({
       {/* 選單 */}
       <div
         data-tour="row-menu"
-        className={`absolute w-[280px] rounded-[16px] bg-[#F7F7F8]/95 shadow-[0_16px_50px_rgba(0,0,0,0.22)] overflow-hidden transition-all duration-200 origin-top-left ${shown ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
-        style={{ top: menuTop, left }}
+        className={`absolute rounded-[16px] bg-[#F7F7F8]/95 shadow-[0_16px_50px_rgba(0,0,0,0.22)] overflow-hidden transition-all duration-200 origin-top-left ${shown ? "opacity-100 scale-100" : "opacity-0 scale-90"}`}
+        style={{ top: menuTop, left, width: menuW }}
       >
         {page === "main" && (
           <>
@@ -1646,14 +1648,14 @@ function RowMenu({
           </div>
         )}
         {page === "due" && (
-          <div className="py-1 max-h-[440px] overflow-y-auto">
+          <div className="py-1 max-h-[480px] overflow-y-auto">
             <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 bg-[#F7F7F8] z-10">
               <Icon name="chevron_left" className="text-[22px]" />
               期限
               {(task.start || task.due) && <span className="ml-auto pr-1 text-[13px] font-normal text-[#71717A] tabular-nums">{rangeLabel(task.start, task.due)}</span>}
             </button>
             {/* 快選：只設期限（一天） */}
-            <div className="flex flex-wrap gap-1.5 px-3 pt-2.5">
+            <div className="flex gap-1.5 px-3 pt-2.5">
               {dues.map(([label, v]) => (
                 <button
                   key={label}
@@ -1662,7 +1664,7 @@ function RowMenu({
                     // 快選是「期限」那一天：開始日比它晚就一起拿掉
                     pm.saveTask({ id: task.id, due: v, ...(v === undefined ? { start: undefined } : task.start && v < task.start ? { start: undefined } : {}) });
                   })}
-                  className={`h-8 px-3 rounded-full text-[13px] font-medium ${task.due === v && !(v && task.start && task.start !== v) ? "bg-[var(--accent)] text-white" : "bg-[#EDEDF0] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
+                  className={`flex-1 min-w-0 h-9 px-1 whitespace-nowrap rounded-full text-[14px] font-medium ${task.due === v && !(v && task.start && task.start !== v) ? "bg-[var(--accent)] text-white" : "bg-[#EDEDF0] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
                 >
                   {label}
                 </button>
