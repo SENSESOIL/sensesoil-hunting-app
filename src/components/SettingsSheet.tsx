@@ -225,6 +225,39 @@ export function SettingsSheet({
             </div>
           </Section>
 
+          {/* 說明：左邊「介面導覽」用練習專案一步一步學按鈕；右邊「實戰操演」用正式專案排任務 */}
+          <section>
+            <div className="px-1 pb-2">
+              <h3 className="text-[14px] font-semibold text-[#52525B]">說明</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {(
+                [
+                  ["tour-start", "school", "介面導覽", "用練習專案學會每個按鈕"],
+                  ["tour-start-real", "construction", "實戰操演", "用正式專案排任務、匯入截圖"],
+                ] as const
+              ).map(([ev, icon, title, sub]) => (
+                <button
+                  key={ev}
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    setTimeout(() => tourEmit(ev), 350);
+                  }}
+                  className="bg-white rounded-[22px] shadow-card p-4 flex flex-col items-start gap-3 text-left active:bg-[#F4F4F5]"
+                >
+                  <span className="w-9 h-9 rounded-full bg-[var(--accent-soft)] flex items-center justify-center shrink-0">
+                    <Icon name={icon} weight={400} className="text-[20px] text-[var(--accent-strong)]" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold text-[#18181B]">{title}</span>
+                    <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5">{sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
           {/* 通知 */}
           <Section title="通知">
             <div className="px-4 py-3.5 flex items-center gap-3">
@@ -241,27 +274,6 @@ export function SettingsSheet({
                 canTogglePush && <Switch on={push === "on"} onChange={togglePush} label="通知" />
               )}
             </div>
-          </Section>
-
-          {/* 新手教學：一步一步帶你用專案情報、任務追蹤 */}
-          <Section title="說明">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                setTimeout(() => tourEmit("tour-start"), 350);
-              }}
-              className="w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F4F4F5]"
-            >
-              <span className="w-9 h-9 rounded-full bg-[var(--accent-soft)] flex items-center justify-center shrink-0">
-                <Icon name="school" weight={400} className="text-[20px] text-[var(--accent-strong)]" />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block text-[15px] text-[#18181B]">新手教學</span>
-                <span className="block text-[13px] leading-[18px] text-[#A1A1AA] mt-0.5">5 分鐘學會專案情報與任務追蹤</span>
-              </span>
-              <Icon name="chevron_right" className="text-[20px] text-[#C7C7CC]" />
-            </button>
           </Section>
 
           {/* 切換帳號：直接跳 Google 選帳號，選好回到狩獵管理（不用先登出、再點 Logo）。

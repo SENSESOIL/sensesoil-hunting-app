@@ -842,7 +842,21 @@ export function TourHost() {
   const step = phase === "running" ? steps[i] : undefined;
 
   /* 從頭像設定開始；新的裝置第一次打開時邀請一次 */
-  useEffect(() => onTour((e) => e.type === "tour-start" && phase === "idle" && (setInvite(false), setPhase("welcome"))), [phase]);
+  // 設定裡的「介面導覽」＝新手教學；「實戰操演」直接進實戰教學（不建練習專案）
+  useEffect(
+    () =>
+      onTour((e) => {
+        if (phase !== "idle") return;
+        if (e.type === "tour-start") {
+          setInvite(false);
+          setPhase("welcome");
+        } else if (e.type === "tour-start-real") {
+          setInvite(false);
+          setPhase("real-intro");
+        }
+      }),
+    [phase]
+  );
   useEffect(() => {
     if (!pm.data || phase !== "idle") return;
     // 上次教學沒結束就關掉了：把留下的練習專案清掉
@@ -1105,7 +1119,7 @@ export function TourHost() {
               </>
             ) : phase === "real-intro" ? (
               <>
-                <button type="button" onClick={() => end(true)} className="h-12 px-4 rounded-[14px] bg-white/10 text-[15px] font-semibold text-white active:bg-white/15">
+                <button type="button" onClick={() => (code ? end(true) : setPhase("idle"))} className="h-12 px-4 rounded-[14px] bg-white/10 text-[15px] font-semibold text-white active:bg-white/15">
                   之後再說
                 </button>
                 <button type="button" onClick={startReal} className="flex-1 h-12 rounded-[14px] bg-[var(--accent)] text-white text-[16px] font-semibold active:opacity-85 inline-flex items-center justify-center gap-2">
