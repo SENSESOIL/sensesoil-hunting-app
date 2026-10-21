@@ -756,9 +756,11 @@ const REAL_STEPS: Step[] = [
   },
 ];
 
-type Phase = "idle" | "welcome" | "starting" | "running" | "finish" | "real-intro" | "real-finish";
+type Phase = "idle" | "welcome" | "starting" | "running" | "finish" | "real-ask" | "real-intro" | "real-finish";
 type Mode = "practice" | "real";
 const INVITED = "pm:tour:invited";
+/** 介面導覽做完過：從設定點「實戰操演」就不再問「做過介面導覽了嗎」 */
+const DONE = "pm:tour:done";
 const ACTIVE = "pm:tour:active";
 const store = {
   get: (k: string) => {
@@ -852,7 +854,8 @@ export function TourHost() {
           setPhase("welcome");
         } else if (e.type === "tour-start-real") {
           setInvite(false);
-          setPhase("real-intro");
+          // 還沒做過介面導覽：先問一下（建議先做）
+          setPhase(store.get(DONE) ? "real-intro" : "real-ask");
         }
       }),
     [phase]
@@ -947,7 +950,8 @@ export function TourHost() {
     // 實戰：選好專案了，之後的步驟都用它
     if (mode === "real" && realPick.code && realPick.code !== realCode) setRealCode(realPick.code);
     if (i + 1 >= steps.length) {
-      setPhase(mode === "real" ? "real-finish" : "finish");
+      if (mode === "practice") store.set(DONE, "1");
+      setPhase(mode === "real" ? "real-finish" : "real-intro");
       return;
     }
     setI((n) => n + 1);
@@ -1086,20 +1090,26 @@ export function TourHost() {
   /* ── 開始前、結束後：深色卡片（和步驟提示同一種） ── */
   if (phase !== "running") {
     const done = phase === "finish" || phase === "real-finish";
-    const title = phase === "finish" ? "新手教學完成" : phase === "real-intro" ? "實戰教學" : phase === "real-finish" ? "實戰完成" : "新手教學";
+    // code 還在＝剛做完介面導覽，直接接實戰
+    const afterPractice = phase === "real-intro" && !!code;
+    const title =
+      phase === "finish" ? "介面導覽完成" : afterPractice ? "介面導覽完成！接著實戰操演" : phase === "real-intro" || phase === "real-ask" ? "實戰操演" : phase === "real-finish" ? "實戰完成" : "介面導覽";
     const text =
       phase === "finish"
         ? "你已經會篩選專案、建立任務、長按、滑動、分組、看板、甘特圖、前後任務、分享和搜尋。\n接著可以做「實戰教學」：用正式的專案排任務、截圖匯入，再看刪除專案會刪掉什麼。"
-        : phase === "real-intro"
-          ? "用公司正式的專案練習（不是練習專案，做的都會留下來）：從「展開其他專案」找到專案、新增任務、排日期、截圖匯入，最後說明刪除專案不會動到 CRM。"
+        : phase === "real-ask"
+          ? "建議先做「介面導覽」，學會每個按鈕，再用正式專案實戰。\n你已經做過介面導覽了嗎？"
+          : phase === "real-intro"
+          ? (afterPractice ? "練習專案會刪掉。接下來" : "") +
+            "用公司正式的專案（做的都會留下來）：從「展開其他專案」找到專案、新增任務、排日期、截圖匯入，最後說明刪除專案不會動到 CRM。"
           : phase === "real-finish"
-            ? "以後排程就照這樣：任務追蹤 → 找到專案 → 新增任務、排日期。之後隨時可以從頭像 →「新手教學」再看一次。"
+            ? "以後排程就照這樣：任務追蹤 → 找到專案 → 新增任務、排日期。之後隨時可以從頭像 →「說明」再看一次。"
             : "大約 8 分鐘，一步一步帶你用「專案情報」和「任務追蹤」：篩選、建立任務、長按與滑動、分組、看板、甘特圖、前後任務、分享、搜尋。";
     return createPortal(
       <div data-tour-card className="fixed inset-0 z-[175] flex items-end sm:items-center justify-center p-3 bg-[rgba(17,17,20,0.55)] tour-fade font-sans" role="dialog" aria-modal="true" aria-label={title}>
         <div className="w-full max-w-[400px] bg-[#1C1C22] rounded-[20px] shadow-[0_24px_60px_-12px_rgba(0,0,0,0.55)] p-5 pb-4 tour-rise">
           <div className="w-11 h-11 rounded-[13px] bg-[color-mix(in_srgb,var(--accent)_18%,transparent)] flex items-center justify-center">
-            <Icon name={done ? "task_alt" : phase === "real-intro" ? "construction" : "school"} weight={300} className="text-[26px] text-[var(--accent)]" />
+            <Icon name={done || afterPractice ? "task_alt" : phase === "real-intro" || phase === "real-ask" ? "construction" : "school"} weight={300} className="text-[26px] text-[var(--accent)]" />
           </div>
           <h2 className="mt-3 text-[22px] leading-[28px] font-bold tracking-tight text-white">{title}</h2>
           <p className="mt-1.5 text-[15px] leading-[22px] text-white/75 whitespace-pre-line">{text}</p>
@@ -1114,6 +1124,16 @@ export function TourHost() {
                 </button>
                 <button type="button" onClick={() => setPhase("real-intro")} className="flex-1 h-12 rounded-[14px] bg-[var(--accent)] text-white text-[16px] font-semibold active:opacity-85 inline-flex items-center justify-center gap-2">
                   實戰教學
+                  <Icon name="arrow_forward" weight={400} className="text-[20px]" />
+                </button>
+              </>
+            ) : phase === "real-ask" ? (
+              <>
+                <button type="button" onClick={startReal} className="h-12 px-4 rounded-[14px] bg-white/10 text-[15px] font-semibold text-white active:bg-white/15">
+                  已完成，直接開始
+                </button>
+                <button type="button" onClick={() => setPhase("welcome")} className="flex-1 h-12 rounded-[14px] bg-[var(--accent)] text-white text-[16px] font-semibold active:opacity-85 inline-flex items-center justify-center gap-2">
+                  先做介面導覽
                   <Icon name="arrow_forward" weight={400} className="text-[20px]" />
                 </button>
               </>
@@ -1145,7 +1165,8 @@ export function TourHost() {
             )}
           </div>
           {phase === "finish" && <p className="mt-3 text-center text-[12px] text-white/40">不管選哪個，練習專案都會刪掉</p>}
-          {invite && phase === "welcome" && <p className="mt-3 text-center text-[12px] text-white/40">之後可以從頭像 →「新手教學」開始</p>}
+          {invite && phase === "welcome" && <p className="mt-3 text-center text-[12px] text-white/40">之後可以從頭像 →「說明」開始</p>}
+          {phase === "real-ask" && <p className="mt-3 text-center text-[12px] text-white/40">建議：先做介面導覽，大約 8 分鐘</p>}
         </div>
         <TourStyles />
       </div>,
