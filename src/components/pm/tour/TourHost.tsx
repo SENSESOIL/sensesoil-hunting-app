@@ -473,11 +473,15 @@ const STEPS_RAW: Step[] = [
     id: "swipe-left",
     clear: true,
     title: "往左滑",
-    body: "把「泥作」往左滑，按「緊急」。",
-    target: (c) => taskRow(c, 0),
-    done: (c) => c.tasks.some((t) => !!t.meta?.urgent || t.flagged),
+    // 一樣在「打底」上操作（泥作是大項）
+    body: "把「打底」往左滑，按「緊急」。",
+    target: (c) => taskRow(c, 1) ?? taskRow(c, 0),
+    done: (c) => {
+      const t = tops(c)[1] ?? tops(c)[0];
+      return !!t?.meta?.urgent || !!t?.flagged;
+    },
     goto: toProject(),
-    skip: (c) => patchMeta(c, tops(c)[0], { urgent: true }),
+    skip: (c) => patchMeta(c, tops(c)[1] ?? tops(c)[0], { urgent: true }),
   },
   {
     id: "swipe-right",
