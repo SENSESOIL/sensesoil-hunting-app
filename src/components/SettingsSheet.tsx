@@ -180,7 +180,8 @@ export function SettingsSheet({
           <Section title="偏好">
             <div className="px-4 py-3.5">
               <p className="text-[15px] text-[#18181B]">開啟 APP 時先看</p>
-              <div className="mt-2.5 flex flex-wrap gap-2">
+              {/* 一排放得下：每個兩個字（專案、任務、狩獵、指揮），平均分配寬度 */}
+              <div className="mt-2.5 flex gap-1.5">
                 {[{ id: "", label: "自動" }, ...pages].map((p) => {
                   const on = start === p.id;
                   return (
@@ -192,9 +193,11 @@ export function SettingsSheet({
                         write(START_NAV_KEY, p.id);
                       }}
                       aria-pressed={on}
-                      className={`h-9 px-3.5 rounded-full text-[14px] transition-colors ${on ? "bg-[var(--accent)] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
+                      aria-label={p.label}
+                      title={p.label}
+                      className={`flex-1 min-w-0 h-9 px-1 rounded-full text-[14px] whitespace-nowrap transition-colors ${on ? "bg-[var(--accent)] text-white" : "bg-[#F4F4F5] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
                     >
-                      {p.label}
+                      {p.label.slice(0, 2)}
                     </button>
                   );
                 })}

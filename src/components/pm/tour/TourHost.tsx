@@ -145,6 +145,20 @@ const sectionsUsed = (c: Ctx) => {
   const valid = new Set(realSections(c.sections).map((s) => s.id));
   return new Set(c.tasks.filter((t) => !t.parentId && valid.has(t.meta?.section ?? "")).map((t) => t.meta!.section)).size;
 };
+/** 第 i 個主任務在哪個分組（沒有＝undefined） */
+const sectionOfTop = (c: Ctx, i: number) => {
+  const valid = new Set(realSections(c.sections).map((x) => x.id));
+  const sec = tops(c)[i]?.meta?.section;
+  return sec && valid.has(sec) ? sec : undefined;
+};
+/** 略過時：把第 i 個主任務（連子任務）放進第 k 個分組 */
+const moveTop = (c: Ctx, i: number, k: number) => {
+  const secs = realSections(c.sections);
+  const t = tops(c)[i];
+  if (!t || !secs[k]) return;
+  patchMeta(c, t, { section: secs[k].id });
+  for (const kid of c.tasks.filter((x) => x.parentId === t.id)) patchMeta(c, kid, { section: secs[k].id });
+};
 const renaming = () => !!pick('input[aria-label="分組名稱"]');
 /** 還沒排日期的任務（甘特圖教「點日期排入」用） */
 const undated = (c: Ctx) => tops(c).find((t) => !t.start && !t.due && t.status !== "done");
@@ -312,7 +326,13 @@ const STEPS_RAW: Step[] = [
   {
     id: "vendor",
     title: "指定廠商",
-    body: "在選單點「廠商 ›」，可以搜尋，選一家協力廠商。選單關掉了的話，再長按任務打開。",
+    // 說明跟著畫面：選單開著／在別的子頁／選單關了，各說各的
+    body: () =>
+      pick('[data-tour="menu-back"]')
+        ? "按選單上方的「‹」回到選單，再點「廠商 ›」，搜尋並選一家協力廠商。"
+        : pick('[data-tour="row-menu"]')
+          ? "在選單點「廠商 ›」，可以搜尋，選一家協力廠商。"
+          : "長按「放樣」叫出選單，點「廠商 ›」，搜尋並選一家協力廠商。",
     target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.meta?.vendor),
     goto: toProject(),
@@ -321,7 +341,12 @@ const STEPS_RAW: Step[] = [
   {
     id: "tag",
     title: "加上標籤",
-    body: "按選單上方的「‹ 廠商」回到選單，點「標籤 ›」→「工種」，選一個，例如「泥作」。之後可以依標籤找任務。",
+    body: () =>
+      (pick('[data-tour="menu-back"]')
+        ? "按選單上方的「‹」回到選單，點「標籤 ›」→「工種」，選一個，例如「泥作」。"
+        : pick('[data-tour="row-menu"]')
+          ? "在選單點「標籤 ›」→「工種」，選一個，例如「泥作」。"
+          : "廠商設好了。再長按「放樣」叫出選單，點「標籤 ›」→「工種」，選一個，例如「泥作」。") + "之後可以依標籤找任務。",
     target: (c) => pick('[data-tour="menu-back"]') ?? pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!(t.meta?.trade || t.meta?.areas?.length || t.meta?.tags?.length)),
     goto: toProject(),
@@ -356,7 +381,7 @@ const STEPS_RAW: Step[] = [
     clear: true,
     blur: true,
     title: "新增分組",
-    body: () => (renaming() ? "打「售票亭」，打完按鍵盤上方的 ✓。" : "分組用來分區域，例如售票亭、展售區、餐廳（工種用剛剛的標籤）。點清單最下面的「新增分組」。"),
+    body: () => (renaming() ? "打「售票亭」，打完按鍵盤上方的 ✓。" : "分組用來分區域，例如售票亭、展售區、餐廳。點清單最下面的「新增分組」。"),
     // 點了「新增分組」之後：圈改名的輸入框（不然被暗掉、被提示卡蓋住）
     target: () => pick('input[aria-label="分組名稱"]')?.parentElement ?? pick('[data-tour="add-section"]'),
     allow: 'input[aria-label="分組名稱"]',
@@ -377,24 +402,41 @@ const STEPS_RAW: Step[] = [
     goto: toProject(),
     skip: (c) => addSection(c, "展售區"),
   },
+  // 一次只教一件事：先把「放樣」放進第一組，再把「粉光」放進第二組
   {
     id: "section-move",
     blur: true,
-    title: "把任務放進分組",
-    body: "長按「放樣」→「移到分組 ›」選「售票亭」（子任務會跟著走）；再長按「粉光」放進「展售區」。兩組都有任務，甘特圖才看得出分組。",
-    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, sectionsUsed(c) ? tops(c).length - 1 : 0),
+    title: "把任務放進分組（1/2）",
+    body: (c) => {
+      const t = tops(c)[0]?.title ?? "放樣";
+      const sec = realSections(c.sections)[0]?.name ?? "售票亭";
+      return pick('[data-tour="row-menu"]') || pick('[data-tour="menu-back"]')
+        ? `點「移到分組 ›」，選「${sec}」。它底下的子任務會一起移過去。`
+        : `長按「${t}」叫出選單，點「移到分組 ›」，選「${sec}」。`;
+    },
+    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
+    when: (c) => c.isManager,
+    done: (c) => !!sectionOfTop(c, 0),
+    goto: toProject(),
+    skip: (c) => moveTop(c, 0, 0),
+  },
+  {
+    id: "section-move-2",
+    blur: true,
+    title: "把任務放進分組（2/2）",
+    body: (c) => {
+      const list = tops(c);
+      const t = list[list.length - 1]?.title ?? "粉光";
+      const sec = realSections(c.sections)[1]?.name ?? "展售區";
+      return pick('[data-tour="row-menu"]') || pick('[data-tour="menu-back"]')
+        ? `點「移到分組 ›」，選「${sec}」。兩組都有任務，甘特圖才看得出分組。`
+        : `長按「${t}」叫出選單，點「移到分組 ›」，選「${sec}」。`;
+    },
+    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, tops(c).length - 1),
     when: (c) => c.isManager,
     done: (c) => sectionsUsed(c) >= 2,
     goto: toProject(),
-    skip: (c) => {
-      const secs = realSections(c.sections);
-      const list = tops(c);
-      if (secs.length < 2 || list.length < 2) return;
-      [list[0], list[list.length - 1]].forEach((t, k) => {
-        patchMeta(c, t, { section: secs[k].id });
-        for (const kid of c.tasks.filter((x) => x.parentId === t.id)) patchMeta(c, kid, { section: secs[k].id });
-      });
-    },
+    skip: (c) => moveTop(c, tops(c).length - 1, 1),
   },
   /* ── 看板 ── */
   {
