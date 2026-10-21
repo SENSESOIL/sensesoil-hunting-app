@@ -136,7 +136,7 @@ const ensureEdit = () => tap('[data-tour="gantt-edit"][aria-pressed="false"]');
 
 /* 略過時幫忙做的事 */
 const addTasks = (c: Ctx, n: number) => {
-  const names = ["放樣", "打底", "粉光"];
+  const names = ["泥作", "打底", "粉光"];
   for (let k = tops(c).length; k < n; k++) c.pm.saveTask({ code: c.code, title: names[k] ?? `任務 ${k + 1}`, seq: k }, { quiet: true });
 };
 const patchMeta = (c: Ctx, t: Task | undefined, m: Partial<NonNullable<Task["meta"]>>) => {
@@ -166,6 +166,23 @@ const moveTop = (c: Ctx, i: number, k: number) => {
   if (!t || !secs[k]) return;
   patchMeta(c, t, { section: secs[k].id });
   for (const kid of c.tasks.filter((x) => x.parentId === t.id)) patchMeta(c, kid, { section: secs[k].id });
+};
+/**
+ * 長按選單現在在哪：在某個子頁（廠商、指派、移到分組…）＝子頁名稱；在第一頁＝"main"；沒打開＝null。
+ * 提示卡的說明跟著它走，才不會人已經在「廠商」子頁了還叫他「回到選單點廠商」
+ */
+const menuAt = (): string | null => {
+  const b = pick('[data-tour="menu-back"]');
+  if (b) return (b.textContent ?? "").replace("chevron_left", "").trim();
+  return pick('[data-tour="row-menu"]') ? "main" : null;
+};
+/** 照選單的位置給說明：已經在 page 子頁／在別的子頁／在第一頁／選單沒開 */
+const byMenu = (page: string, item: string, task: string, there: string) => {
+  const at = menuAt();
+  if (at && at.includes(page)) return there;
+  if (at && at !== "main") return `按上方的「‹」回到選單，點「${item} ›」，${there}`;
+  if (at === "main") return `點「${item} ›」，${there}`;
+  return `長按「${task}」，點「${item} ›」，${there}`;
 };
 const renaming = () => !!pick('input[aria-label="分組名稱"]');
 /** 還沒排日期的任務（甘特圖教「點日期排入」用） */
@@ -366,7 +383,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "add-1",
     title: "第一個任務",
-    body: (c) => (c.typing ? "打「放樣」，按鍵盤上方的 ✓ 存起來。" : "點虛線圓圈，新增第一個任務「放樣」。"),
+    body: (c) => (c.typing ? "打「泥作」，按鍵盤上方的 ✓ 存起來。" : "點虛線圓圈，新增第一個任務「泥作」。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 1,
     goto: toProject(),
@@ -395,7 +412,7 @@ const STEPS_RAW: Step[] = [
     id: "longpress",
     blur: true,
     title: "長按叫出選單",
-    body: "長按「放樣」（電腦按右鍵）叫出選單。期限、指派、廠商、標籤都在這裡。",
+    body: "長按「泥作」（電腦按右鍵）叫出選單。期限、指派、廠商、標籤都在這裡。",
     target: (c) => taskRow(c, 0),
     until: (e) => e.type === "menu-open",
     goto: toProject(),
@@ -403,7 +420,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "assign",
     title: "指派給同事",
-    body: "點「指派 ›」，選一位同事（選自己也行）。對方會收到通知。",
+    body: () => byMenu("指派", "指派", "泥作", "選一位同事（選自己也行）。對方會收到通知。"),
     target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     when: (c) => c.isManager,
     // 在指派名單點了人才算做到（直接打字新增的任務本來就掛在自己身上，不能看資料判斷）
@@ -431,12 +448,7 @@ const STEPS_RAW: Step[] = [
     id: "vendor",
     title: "指定廠商",
     // 說明跟著畫面：選單開著／在別的子頁／選單關了，各說各的
-    body: () =>
-      pick('[data-tour="menu-back"]')
-        ? "按上方的「‹」回到選單，點「廠商 ›」選一家。"
-        : pick('[data-tour="row-menu"]')
-          ? "點「廠商 ›」，搜尋並選一家廠商。"
-          : "長按「放樣」，點「廠商 ›」選一家廠商。",
+    body: () => byMenu("廠商", "廠商", "泥作", "搜尋或往下找，點一家廠商。"),
     target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.meta?.vendor),
     goto: toProject(),
@@ -445,22 +457,22 @@ const STEPS_RAW: Step[] = [
   {
     id: "tag",
     title: "加上標籤",
-    body: () =>
-      pick('[data-tour="menu-back"]')
-        ? "按上方的「‹」回到選單，點「標籤 ›」→「工種」，選「泥作」。"
-        : pick('[data-tour="row-menu"]')
-          ? "點「標籤 ›」→「工種」，選「泥作」。"
-          : "長按「放樣」，點「標籤 ›」→「工種」，選「泥作」。",
-    target: (c) => pick('[data-tour="menu-back"]') ?? pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
-    done: (c) => c.tasks.some((t) => !!(t.meta?.trade || t.meta?.areas?.length || t.meta?.tags?.length)),
+    // 標「打底」（第二個任務）：上一步的選單開在第一個任務上，進來先關掉
+    clear: true,
+    body: () => (sheetOpen() ? "點「工種」，選「泥作」。" : byMenu("標籤", "標籤", "打底", "點「工種」，選「泥作」。")),
+    target: (c) => pick('[data-tour="menu-back"]') ?? pick('[data-tour="row-menu"]') ?? taskRow(c, 1) ?? taskRow(c, 0),
+    done: (c) => {
+      const t = tops(c)[1] ?? tops(c)[0];
+      return !!(t?.meta?.trade || t?.meta?.areas?.length || t?.meta?.tags?.length);
+    },
     goto: toProject(),
-    skip: (c) => patchMeta(c, tops(c)[0], { trade: "泥作" }),
+    skip: (c) => patchMeta(c, tops(c)[1] ?? tops(c)[0], { trade: "泥作" }),
   },
   {
     id: "swipe-left",
     clear: true,
     title: "往左滑",
-    body: "把「放樣」往左滑，按「緊急」。",
+    body: "把「泥作」往左滑，按「緊急」。",
     target: (c) => taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.meta?.urgent || t.flagged),
     goto: toProject(),
@@ -470,7 +482,7 @@ const STEPS_RAW: Step[] = [
     id: "swipe-right",
     clear: true,
     title: "往右滑：變成子任務",
-    body: "把「打底」往右滑，變成「放樣」的子任務。再滑一次可取消。",
+    body: "把「打底」往右滑，變成「泥作」的子任務。再滑一次可取消。",
     target: (c) => taskRow(c, 1) ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.parentId),
     goto: toProject(),
@@ -506,15 +518,15 @@ const STEPS_RAW: Step[] = [
     goto: toProject(),
     skip: (c) => addSection(c, "展售區"),
   },
-  // 一次只教一件事：先把「放樣」放進第一組，再把「粉光」放進第二組
+  // 一次只教一件事：先把「泥作」放進第一組，再把「粉光」放進第二組
   {
     id: "section-move",
     blur: true,
     title: "把任務放進分組（1/2）",
     body: (c) => {
-      const t = tops(c)[0]?.title ?? "放樣";
       const sec = realSections(c.sections)[0]?.name ?? "售票亭";
-      return pick('[data-tour="row-menu"]') || pick('[data-tour="menu-back"]') ? `點「移到分組 ›」，選「${sec}」。子任務會一起移。` : `長按「${t}」，點「移到分組 ›」，選「${sec}」。`;
+      const there = `選「${sec}」。子任務會一起移。`;
+      return byMenu("移到分組", "移到分組", tops(c)[0]?.title ?? "泥作", there);
     },
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
     when: (c) => c.isManager,
@@ -528,9 +540,8 @@ const STEPS_RAW: Step[] = [
     title: "把任務放進分組（2/2）",
     body: (c) => {
       const list = tops(c);
-      const t = list[list.length - 1]?.title ?? "粉光";
       const sec = realSections(c.sections)[1]?.name ?? "展售區";
-      return pick('[data-tour="row-menu"]') || pick('[data-tour="menu-back"]') ? `點「移到分組 ›」，選「${sec}」。` : `長按「${t}」，點「移到分組 ›」，選「${sec}」。`;
+      return byMenu("移到分組", "移到分組", list[list.length - 1]?.title ?? "粉光", `選「${sec}」。`);
     },
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, tops(c).length - 1),
     when: (c) => c.isManager,
@@ -877,7 +888,7 @@ const REAL_STEPS_RAW: Step[] = [
     id: "real-date",
     blur: true,
     title: "排日期",
-    body: "長按任務 →「期限 ›」選一天。要排區間就換成甘特圖編輯。",
+    body: () => byMenu("期限", "期限", "任務", "選一天。") + "要排區間就換成甘特圖編輯。",
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
     snapshot: (c) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])),
     done: (c, snap) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])) !== snap,
