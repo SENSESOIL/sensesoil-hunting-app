@@ -1141,8 +1141,8 @@ export function TourHost() {
           setPhase("welcome");
         } else if (e.type === "tour-start-real") {
           setInvite(false);
-          // 還沒做過介面導覽：先問一下（建議先做）
-          setPhase(store.get(DONE) ? "real-intro" : "real-ask");
+          // 每次都先問：建議先做完介面導覽，確定做過了才進實戰
+          setPhase("real-ask");
         }
       }),
     [phase]
@@ -1415,7 +1415,9 @@ export function TourHost() {
       phase === "finish"
         ? "你已經會篩選專案、建立任務、長按、滑動、分組、看板、甘特圖、前後任務、分享和搜尋。\n接著可以做「實戰教學」：用正式的專案排任務、截圖匯入，再看刪除專案會刪掉什麼。"
         : phase === "real-ask"
-          ? "建議先做「介面導覽」，學會每個按鈕，再用正式專案實戰。\n你已經做過介面導覽了嗎？"
+          ? store.get(DONE)
+            ? "建議先做完「介面導覽」再實戰。這台裝置做過了：記得每個按鈕就按「已完成，繼續」，想複習就先做介面導覽。"
+            : "建議先做「介面導覽」，學會每個按鈕，再用正式專案實戰。\n你已經做過介面導覽了嗎？"
           : phase === "real-intro"
           ? (afterPractice ? "練習專案會刪掉。接下來" : "") +
             "用公司正式的專案（做的都會留下來）：從「展開其他專案」找到專案、新增任務、排日期、截圖匯入，最後說明刪除專案不會動到 CRM。"
@@ -1446,8 +1448,8 @@ export function TourHost() {
               </>
             ) : phase === "real-ask" ? (
               <>
-                <button type="button" onClick={startReal} className="h-12 px-4 rounded-[14px] bg-white/10 text-[15px] font-semibold text-white active:bg-white/15">
-                  已完成，直接開始
+                <button type="button" onClick={() => setPhase("real-intro")} className="h-12 px-4 rounded-[14px] bg-white/10 text-[15px] font-semibold text-white active:bg-white/15">
+                  已完成，繼續
                 </button>
                 <button type="button" onClick={() => setPhase("welcome")} className="flex-1 h-12 rounded-[14px] bg-[var(--accent)] text-white text-[16px] font-semibold active:opacity-85 inline-flex items-center justify-center gap-2">
                   先做介面導覽
