@@ -447,18 +447,19 @@ const STEPS_RAW: Step[] = [
   {
     id: "vendor",
     title: "指定廠商",
+    // 廠商給「打底」（實際發包的工序），「泥作」是大項不放廠商；上一步的選單開在「泥作」上，進來先關掉
+    clear: true,
     // 說明跟著畫面：選單開著／在別的子頁／選單關了，各說各的
-    body: () => byMenu("廠商", "廠商", "泥作", "搜尋或往下找，點一家廠商。"),
-    target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
-    done: (c) => c.tasks.some((t) => !!t.meta?.vendor),
+    body: () => byMenu("廠商", "廠商", "打底", "搜尋或往下找，點一家廠商。"),
+    target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 1) ?? taskRow(c, 0),
+    done: (c) => !!(tops(c)[1] ?? tops(c)[0])?.meta?.vendor,
     goto: toProject(),
-    skip: (c) => patchMeta(c, tops(c)[0], { vendor: "練習廠商" }),
+    skip: (c) => patchMeta(c, tops(c)[1] ?? tops(c)[0], { vendor: "練習廠商" }),
   },
   {
     id: "tag",
     title: "加上標籤",
-    // 標「打底」（第二個任務）：上一步的選單開在第一個任務上，進來先關掉
-    clear: true,
+    // 一樣標「打底」：上一步選完廠商，選單還開在它上面就接著用
     body: () => (sheetOpen() ? "點「工種」，選「泥作」。" : byMenu("標籤", "標籤", "打底", "點「工種」，選「泥作」。")),
     target: (c) => pick('[data-tour="menu-back"]') ?? pick('[data-tour="row-menu"]') ?? taskRow(c, 1) ?? taskRow(c, 0),
     done: (c) => {
