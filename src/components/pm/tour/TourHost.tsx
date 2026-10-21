@@ -18,7 +18,7 @@ import { onTour, tourEmit, tourState, TOUR_PREFIX, type TourEvent } from "./bus"
    - 每一步：圈住真的按鈕，提示卡說明要做什麼；做到了自動進下一步
    - 畫面凍結：暗下來的地方點不到（只有圈起來的東西、打開的選單／抽屜、提示卡可以點），
      不會誤觸跳到別的頁面（例如左上的返回），提示卡和畫面對不起來
-   - ← 上一步：回去再看一次（回來的步驟不會因為「已經做過」就自動跳走）
+   - ← 上一步：撤銷那一步做的事（例如刪掉剛打的任務），回到那一步開始的畫面，重做一次
    - → 略過這步：先幫你做到（例如自動建好任務、換到正確的頁面），後面的步驟才接得上
    - 人在別的頁面、找不到要圈的東西：自動帶過去
    實戰教學：用正式的專案（從「展開其他專案」找）新增任務、排日期、截圖匯入，最後說明刪除專案不會動到 CRM
@@ -72,6 +72,12 @@ interface Step {
   enter?: () => void;
   /** 提示卡不要蓋住這一塊（例如整張甘特圖）：放它上面，放不下才放下面 */
   clearOf?: () => Element | null;
+  /** 按 ← 回到這一步：撤銷這一步做的事（例如刪掉剛打的任務），才能重做一次 */
+  undo?: (c: Ctx) => void;
+  /** 按 ← 回到這一步：先帶到這一步開始時的畫面（沒寫就用 goto） */
+  backTo?: (c: Ctx) => void;
+  /** 按 ← 時不停在這一步，再往前一步（例如要先打開選單、抽屜才做得了的步驟） */
+  passBack?: boolean;
 }
 
 /** 蓋在清單上的東西：抽屜、長按選單、搜尋層 */
@@ -171,6 +177,102 @@ const wbsPair = (c: Ctx) => {
   return { a, b };
 };
 
+/* 按「上一步」時撤銷的事 */
+/** 只留前 n 個主任務（連子任務），後面的刪掉 */
+const keepTops = (c: Ctx, n: number) => {
+  for (const t of tops(c).slice(n)) {
+    for (const kid of c.tasks.filter((x) => x.parentId === t.id)) c.pm.deleteTask(kid.id);
+    c.pm.deleteTask(t.id);
+  }
+};
+/** 所有任務都拿掉這些欄位 */
+const clearMeta = (c: Ctx, keys: string[], test: (t: Task) => boolean) => {
+  for (const t of c.tasks.filter(test)) {
+    const m = { ...(t.meta ?? {}) } as Record<string, unknown>;
+    for (const k of keys) delete m[k];
+    c.pm.saveTask({ id: t.id, meta: m as Task["meta"], ...(keys.includes("urgent") ? { flagged: false } : {}) }, { quiet: true });
+  }
+};
+/** 只留前 n 個分組 */
+const keepSections = (c: Ctx, n: number) => {
+  const real = realSections(c.sections);
+  if (real.length <= n) return;
+  const keep = new Set(real.slice(0, n).map((x) => x.id));
+  c.pm.saveSections(
+    c.code,
+    c.sections.filter((x) => !real.includes(x) || keep.has(x.id))
+  );
+};
+/** 第 i 個主任務（連子任務）移出分組 */
+const unmoveTop = (c: Ctx, i: number) => {
+  const t = tops(c)[i];
+  if (t) clearMeta(c, ["section"], (x) => x.id === t.id || x.parentId === t.id);
+};
+const setStatus = (c: Ctx, from: Task["status"], to: Task["status"]) => {
+  for (const t of c.tasks.filter((x) => x.status === from)) c.pm.saveTask({ id: t.id, status: to }, { quiet: true });
+};
+const closeThen = (g: (c: Ctx) => void) => (c: Ctx) => {
+  closeLayers();
+  g(c);
+};
+const toIntelList = () => {
+  closeLayers();
+  toIntel();
+};
+const BACK: Record<string, Pick<Step, "undo" | "backTo" | "passBack">> = {
+  "open-project": { backTo: toIntelList },
+  back: { backTo: (c) => go({ nav: "project_info", intelTab: "專案", openProject: c.code }) },
+  "nav-tasks": { backTo: toIntel },
+  "open-list": { backTo: toTasksHome },
+  "add-1": { undo: (c) => keepTops(c, 0) },
+  "add-2": { undo: (c) => keepTops(c, 1) },
+  "add-3": { undo: (c) => keepTops(c, 2) },
+  longpress: { backTo: closeThen(toProject()) },
+  // 指派、回到選單要先長按打開選單：直接回到「長按」
+  assign: { passBack: true },
+  "menu-back": { passBack: true },
+  "assign-info": { backTo: closeThen(toProject()) },
+  vendor: { undo: (c) => clearMeta(c, ["vendor"], (t) => !!t.meta?.vendor), backTo: closeThen(toProject()) },
+  tag: { undo: (c) => clearMeta(c, ["trade", "areas", "tags"], (t) => !!(t.meta?.trade || t.meta?.areas?.length || t.meta?.tags?.length)), backTo: closeThen(toProject()) },
+  "swipe-left": { undo: (c) => clearMeta(c, ["urgent"], (t) => !!t.meta?.urgent || t.flagged) },
+  "swipe-right": {
+    undo: (c) => {
+      for (const t of c.tasks.filter((x) => x.parentId)) c.pm.saveTask({ id: t.id, parentId: undefined }, { quiet: true });
+    },
+  },
+  "section-add": { undo: (c) => keepSections(c, 0) },
+  "section-add-2": { undo: (c) => keepSections(c, 1) },
+  "section-move": { undo: (c) => unmoveTop(c, 0), backTo: closeThen(toProject()) },
+  "section-move-2": { undo: (c) => unmoveTop(c, tops(c).length - 1), backTo: closeThen(toProject()) },
+  board: { backTo: toProject("list") },
+  "board-doing": { undo: (c) => setStatus(c, "doing", "todo") },
+  "board-done": { undo: (c) => setStatus(c, "done", "doing") },
+  gantt: { backTo: toProject("board") },
+  // 回到這步：先收起已完成，才能再點一次
+  "gantt-show-done": { undo: () => tap('[data-tour="show-done"][aria-pressed="true"]') },
+  "gantt-edit": { undo: () => tap('[data-tour="gantt-edit"][aria-pressed="true"]') },
+  "gantt-pick": {
+    undo: (c) => {
+      const list = tops(c);
+      const t = list.length > 2 ? list[list.length - 1] : undefined;
+      if (t && (t.start || t.due)) c.pm.saveTask({ id: t.id, start: undefined, due: undefined }, { quiet: true });
+    },
+  },
+  "wbs-open": { backTo: closeThen(toProject("gantt")) },
+  // 要先打開時間安排：直接回到「點色條」
+  "wbs-pick": { passBack: true, undo: (c) => clearMeta(c, ["after"], (t) => !!t.meta?.after) },
+  "gantt-done": { undo: ensureEdit },
+  "export-gantt": { backTo: closeThen(toProject("gantt")) },
+  "export-gantt-see": { passBack: true },
+  "export-list": { backTo: closeThen(toProject("list")) },
+  "export-list-see": { passBack: true },
+  // 實戰：正式專案的資料不幫忙刪，只帶回畫面
+  "real-nav-tasks": { backTo: toIntel },
+  "real-expand": { backTo: toTasksHome },
+  "real-pick": { backTo: toTasksHome },
+  "real-date": { backTo: closeThen(toProject()) },
+};
+
 const ganttEl = () => pick('[data-tour="gantt"]');
 const STEPS_RAW: Step[] = [
   /* ── 介面 ── */
@@ -178,7 +280,7 @@ const STEPS_RAW: Step[] = [
     id: "nav",
     look: true,
     title: "四個主頁",
-    body: "這一排切換主頁。新手先學兩個：「專案情報」看專案的狀況，「任務追蹤」排任務和打勾完成。",
+    body: "這一排切換主頁。先學兩個：「專案情報」看專案狀況，「任務追蹤」排任務、打勾完成。",
     target: () => pick('[data-tour="nav"]'),
   },
   {
@@ -194,7 +296,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "intel-all",
     title: "篩選：全部",
-    body: "這一排是篩選。點「全部」，看拾壤CRM 名冊上所有的專案。",
+    body: "這排是篩選。點「全部」，看 CRM 上所有的專案。",
     target: () => pick('[data-tour="intel-all"]'),
     until: (e) => e.type === "intel-filter" && e.data === "all",
     goto: toIntel,
@@ -202,7 +304,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "intel-build",
     title: "篩選：施工中",
-    body: "點「施工」，只看施工中的專案。「注意」是有風險標記的專案；上面色條下的階段名稱（驗收、簽約…）也可以點。",
+    body: "點「施工」，只看施工中的專案。",
     target: () => pick('[data-tour="intel-build"]'),
     until: (e) => e.type === "intel-filter" && e.data === "build",
     goto: toIntel,
@@ -210,7 +312,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "intel-active",
     title: "回到進行中",
-    body: "點「進行」，回到平常看的進行中專案。",
+    body: "點「進行」，回到平常看的專案。",
     target: () => pick('[data-tour="intel-active"]'),
     until: (e) => e.type === "intel-filter" && e.data === "active",
     goto: toIntel,
@@ -218,7 +320,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "open-project",
     title: "你的練習專案",
-    body: "這是只給你練習的「新手練習」，教學結束會自動刪掉。點它看看專案頁。",
+    body: "這是你的練習專案，教學結束會自動刪掉。點它看看。",
     target: (c) => pick(`[data-tour="project-${c.code}"]`),
     until: (e, c) => e.type === "project-screen" && e.data === c.code,
     goto: (c) => go({ nav: "project_info", intelTab: "專案", openProject: c.code }),
@@ -226,7 +328,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "summary",
     title: "專案頁",
-    body: "上面是摘要：階段、進度、開工與完工、還剩幾天。下面的「資料」直接點右邊就能改，改完自動存。",
+    body: "上面是摘要：階段、進度、工期。下面的資料點右邊就能改，自動存。",
     target: () => pick('[data-tour="project-summary"]'),
     goto: (c) => go({ nav: "project_info", intelTab: "專案", openProject: c.code }),
   },
@@ -242,7 +344,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "nav-tasks",
     title: "任務追蹤",
-    body: "點勾勾清單圖示，到「任務追蹤」。每天的工作都在這裡。",
+    body: "點勾勾圖示，到「任務追蹤」。每天的工作都在這裡。",
     target: () => pick('[data-tour="nav-tasks"]'),
     until: (e) => e.type === "nav" && e.data === "tasks",
     skip: toTasksHome,
@@ -251,7 +353,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "open-list",
     title: "每個專案一張清單",
-    body: "右邊的數字是還沒完成的件數。點「新手練習」。",
+    body: "每個專案一張清單，數字是還沒完成的件數。點「新手練習」。",
     target: (c) => pick(`[data-tour="list-${c.code}"]`),
     until: (e, c) => e.type === "route" && e.data === c.code,
     goto: toTasksHome,
@@ -260,7 +362,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "add-1",
     title: "第一個任務",
-    body: (c) => (c.typing ? "打「放樣」，打完按鍵盤上方右邊的 ✓ 存起來。" : "點虛線圓圈，打第一個任務「放樣」。"),
+    body: (c) => (c.typing ? "打「放樣」，按鍵盤上方的 ✓ 存起來。" : "點虛線圓圈，新增第一個任務「放樣」。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 1,
     goto: toProject(),
@@ -269,8 +371,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "add-2",
     title: "接著打第二個",
-    body: (c) =>
-      c.typing ? "打「打底」，打完按鍵盤上方右邊的 ✓。" : "存好了。再點虛線圓圈，打第二個任務「打底」。",
+    body: (c) => (c.typing ? "打「打底」，按 ✓。" : "再點虛線圓圈，新增「打底」。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 2,
     goto: toProject(),
@@ -279,8 +380,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "add-3",
     title: "再一個",
-    body: (c) =>
-      c.typing ? "打「粉光」，打完按鍵盤上方右邊的 ✓。" : "再點虛線圓圈，打第三個任務「粉光」。",
+    body: (c) => (c.typing ? "打「粉光」，按 ✓。" : "再點虛線圓圈，新增「粉光」。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     done: (c) => tops(c).length >= 3,
     goto: toProject(),
@@ -291,7 +391,7 @@ const STEPS_RAW: Step[] = [
     id: "longpress",
     blur: true,
     title: "長按叫出選單",
-    body: "長按「放樣」（電腦按右鍵）。期限、完成度、指派、廠商、標籤都在這個選單裡。",
+    body: "長按「放樣」（電腦按右鍵）叫出選單。期限、指派、廠商、標籤都在這裡。",
     target: (c) => taskRow(c, 0),
     until: (e) => e.type === "menu-open",
     goto: toProject(),
@@ -299,7 +399,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "assign",
     title: "指派給同事",
-    body: "在選單點「指派 ›」，選一位同事（選自己也可以）。對方會收到通知，打開任務按「收到」回覆你。",
+    body: "點「指派 ›」，選一位同事（選自己也行）。對方會收到通知。",
     target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     when: (c) => c.isManager,
     // 在指派名單點了人才算做到（直接打字新增的任務本來就掛在自己身上，不能看資料判斷）
@@ -309,7 +409,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "menu-back",
     title: "回到選單",
-    body: "指派好了。按選單上方的「‹ 指派」回到選單，接著設定廠商。",
+    body: "按上方的「‹ 指派」回到選單。",
     target: () => pick('[data-tour="menu-back"]'),
     when: (c) => c.isManager,
     // 回到選單第一頁（或選單已經關了）就算做到
@@ -319,7 +419,7 @@ const STEPS_RAW: Step[] = [
     id: "assign-info",
     look: true,
     title: "被指派的任務",
-    body: "主管會用選單裡的「指派」把任務交給你。收到通知後打開任務、按「收到」，對方就知道你看到了。",
+    body: "主管會把任務指派給你。收到通知後打開任務、按「收到」就好。",
     target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     when: (c) => !c.isManager,
   },
@@ -329,10 +429,10 @@ const STEPS_RAW: Step[] = [
     // 說明跟著畫面：選單開著／在別的子頁／選單關了，各說各的
     body: () =>
       pick('[data-tour="menu-back"]')
-        ? "按選單上方的「‹」回到選單，再點「廠商 ›」，搜尋並選一家協力廠商。"
+        ? "按上方的「‹」回到選單，點「廠商 ›」選一家。"
         : pick('[data-tour="row-menu"]')
-          ? "在選單點「廠商 ›」，可以搜尋，選一家協力廠商。"
-          : "長按「放樣」叫出選單，點「廠商 ›」，搜尋並選一家協力廠商。",
+          ? "點「廠商 ›」，搜尋並選一家廠商。"
+          : "長按「放樣」，點「廠商 ›」選一家廠商。",
     target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.meta?.vendor),
     goto: toProject(),
@@ -342,11 +442,11 @@ const STEPS_RAW: Step[] = [
     id: "tag",
     title: "加上標籤",
     body: () =>
-      (pick('[data-tour="menu-back"]')
-        ? "按選單上方的「‹」回到選單，點「標籤 ›」→「工種」，選一個，例如「泥作」。"
+      pick('[data-tour="menu-back"]')
+        ? "按上方的「‹」回到選單，點「標籤 ›」→「工種」，選「泥作」。"
         : pick('[data-tour="row-menu"]')
-          ? "在選單點「標籤 ›」→「工種」，選一個，例如「泥作」。"
-          : "廠商設好了。再長按「放樣」叫出選單，點「標籤 ›」→「工種」，選一個，例如「泥作」。") + "之後可以依標籤找任務。",
+          ? "點「標籤 ›」→「工種」，選「泥作」。"
+          : "長按「放樣」，點「標籤 ›」→「工種」，選「泥作」。",
     target: (c) => pick('[data-tour="menu-back"]') ?? pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!(t.meta?.trade || t.meta?.areas?.length || t.meta?.tags?.length)),
     goto: toProject(),
@@ -356,7 +456,7 @@ const STEPS_RAW: Step[] = [
     id: "swipe-left",
     clear: true,
     title: "往左滑",
-    body: "把任務往左滑，出現「重要｜緊急｜刪除」。按「緊急」試試。",
+    body: "把「放樣」往左滑，按「緊急」。",
     target: (c) => taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.meta?.urgent || t.flagged),
     goto: toProject(),
@@ -366,7 +466,7 @@ const STEPS_RAW: Step[] = [
     id: "swipe-right",
     clear: true,
     title: "往右滑：變成子任務",
-    body: "把「打底」往右滑，它會縮排，變成「放樣」的子任務。再往右滑一次就取消。",
+    body: "把「打底」往右滑，變成「放樣」的子任務。再滑一次可取消。",
     target: (c) => taskRow(c, 1) ?? taskRow(c, 0),
     done: (c) => c.tasks.some((t) => !!t.parentId),
     goto: toProject(),
@@ -381,7 +481,7 @@ const STEPS_RAW: Step[] = [
     clear: true,
     blur: true,
     title: "新增分組",
-    body: () => (renaming() ? "打「售票亭」，打完按鍵盤上方的 ✓。" : "分組用來分區域，例如售票亭、展售區、餐廳。點清單最下面的「新增分組」。"),
+    body: () => (renaming() ? "打「售票亭」，按 ✓。" : "分組用來分區域，例如售票亭、展售區。點最下面的「新增分組」。"),
     // 點了「新增分組」之後：圈改名的輸入框（不然被暗掉、被提示卡蓋住）
     target: () => pick('input[aria-label="分組名稱"]')?.parentElement ?? pick('[data-tour="add-section"]'),
     allow: 'input[aria-label="分組名稱"]',
@@ -393,7 +493,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "section-add-2",
     title: "再一個分組",
-    body: () => (renaming() ? "打「展售區」，打完按鍵盤上方的 ✓。" : "再點一次「新增分組」，這個叫「展售區」。"),
+    body: () => (renaming() ? "打「展售區」，按 ✓。" : "再點「新增分組」，新增「展售區」。"),
     // 點了「新增分組」之後：圈改名的輸入框（不然被暗掉、被提示卡蓋住）
     target: () => pick('input[aria-label="分組名稱"]')?.parentElement ?? pick('[data-tour="add-section"]'),
     allow: 'input[aria-label="分組名稱"]',
@@ -410,9 +510,7 @@ const STEPS_RAW: Step[] = [
     body: (c) => {
       const t = tops(c)[0]?.title ?? "放樣";
       const sec = realSections(c.sections)[0]?.name ?? "售票亭";
-      return pick('[data-tour="row-menu"]') || pick('[data-tour="menu-back"]')
-        ? `點「移到分組 ›」，選「${sec}」。它底下的子任務會一起移過去。`
-        : `長按「${t}」叫出選單，點「移到分組 ›」，選「${sec}」。`;
+      return pick('[data-tour="row-menu"]') || pick('[data-tour="menu-back"]') ? `點「移到分組 ›」，選「${sec}」。子任務會一起移。` : `長按「${t}」，點「移到分組 ›」，選「${sec}」。`;
     },
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
     when: (c) => c.isManager,
@@ -428,9 +526,7 @@ const STEPS_RAW: Step[] = [
       const list = tops(c);
       const t = list[list.length - 1]?.title ?? "粉光";
       const sec = realSections(c.sections)[1]?.name ?? "展售區";
-      return pick('[data-tour="row-menu"]') || pick('[data-tour="menu-back"]')
-        ? `點「移到分組 ›」，選「${sec}」。兩組都有任務，甘特圖才看得出分組。`
-        : `長按「${t}」叫出選單，點「移到分組 ›」，選「${sec}」。`;
+      return pick('[data-tour="row-menu"]') || pick('[data-tour="menu-back"]') ? `點「移到分組 ›」，選「${sec}」。` : `長按「${t}」，點「移到分組 ›」，選「${sec}」。`;
     },
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, tops(c).length - 1),
     when: (c) => c.isManager,
@@ -443,7 +539,7 @@ const STEPS_RAW: Step[] = [
     id: "board",
     clear: true,
     title: "換成看板",
-    body: "右上這顆切換檢視：清單 → 看板 → 甘特圖。點一下換成看板。",
+    body: "右上這顆切換清單、看板、甘特圖。點一下換成看板。",
     target: () => pick('[data-tour="view-switch"]'),
     until: (e) => e.type === "view" && e.data === "board",
     goto: toProject("list"),
@@ -452,7 +548,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "board-doing",
     title: "拖到進行中",
-    body: "按住「待辦」的一張卡片（手機先長按一下），拖到「進行中」。",
+    body: "把「待辦」的一張卡片拖到「進行中」（手機先長按）。",
     target: () => pick('[data-tour="board"]'),
     done: (c) => c.tasks.some((t) => t.status !== "todo"),
     goto: toProject("board"),
@@ -464,7 +560,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "board-done",
     title: "再拖到完成",
-    body: "做完了：把「進行中」那張再拖到「完成」。",
+    body: "再把它拖到「完成」。",
     target: () => pick('[data-tour="board"]'),
     done: (c) => c.tasks.some((t) => t.status === "done"),
     goto: toProject("board"),
@@ -478,7 +574,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt",
     clear: true,
     title: "換成甘特圖",
-    body: "再點一下右上那顆，換成甘特圖。",
+    body: "再點右上那顆，換成甘特圖。",
     target: () => pick('[data-tour="view-switch"]'),
     until: (e) => e.type === "view" && e.data === "gantt",
     goto: toProject("board"),
@@ -488,17 +584,24 @@ const STEPS_RAW: Step[] = [
     id: "gantt-read",
     title: "看懂甘特圖",
     body: (c) =>
-      (realSections(c.sections).length
-        ? "淺灰底、深灰長條的是分組（售票亭、展售區），從組內最早畫到最晚的任務；下面一般的列是任務，"
-        : "每一列是一個任務，") + "灰＝待辦、橘＝進行中、綠＝完成；橘色直線是今天。已完成的任務先藏起來了，下方「顯示已完成」可以打開。",
+      (realSections(c.sections).length ? "灰底的列是分組，下面是任務。" : "每一列是一個任務。") +
+      "灰＝待辦、橘＝進行中，橘色直線是今天。",
     target: () => pick('[data-tour="gantt"]'),
     goto: toProject("gantt"),
   },
   {
+    id: "gantt-show-done",
+    title: "顯示已完成",
+    body: "完成的任務先藏起來了。點甘特圖下面的「顯示已完成」打開。",
+    target: () => pick('[data-tour="show-done"]'),
+    until: (e) => e.type === "show-done" && e.data === true,
+    goto: toProject("gantt"),
+    skip: () => tap('[data-tour="show-done"][aria-pressed="false"]'),
+  },
+  {
     id: "gantt-landscape",
     title: "轉橫的看",
-    body: (c) =>
-      c.landscape ? "橫的一次看得到更多天、更多任務。看完把手機轉回直的。" : "甘特圖比較寬：把手機轉成橫的看看（先把手機的直向鎖定關掉）。",
+    body: (c) => (c.landscape ? "橫的看得更多。看完轉回直的。" : "把手機轉成橫的看看（先關掉直向鎖定）。"),
     target: () => pick('[data-tour="gantt"]'),
     // 只有手機（觸控、窄螢幕）才教；電腦直接跳過
     when: (c) => c.phone,
@@ -513,7 +616,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "gantt-zoom",
     title: "日／週／月",
-    body: "左上這顆是時間刻度。點一下換成「月」，再點換成「日」，再點一次回到「週」。",
+    body: "左上這顆切換日／週／月。依序點成「月」、「日」，再回到「週」。",
     target: () => pick('[data-tour="gantt-zoom"]'),
     snapshot: () => new Set<string>(),
     until: (e, _c, snap) => {
@@ -527,7 +630,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "gantt-edit",
     title: "進入編輯",
-    body: "甘特圖平常只看不改，避免手滑。按右上的鉛筆進入編輯。",
+    body: "平常只能看，避免手滑。按右上的鉛筆進入編輯。",
     target: () => pick('[data-tour="gantt-edit"]'),
     until: (e) => e.type === "gantt-edit" && e.data === true,
     goto: toProject("gantt"),
@@ -538,7 +641,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-pick",
     enter: ensureEdit,
     title: "點日期排入",
-    body: (c) => `「${undated(c)?.title ?? "粉光"}」還沒排日期。在它那一列的時間軸上，點你要開始的那一天，就排進去了。`,
+    body: (c) => `「${undated(c)?.title ?? "粉光"}」還沒排日期。在它那一列點要開始的那天。`,
     target: (c) => ganttRow(undated(c)) ?? pick('[data-tour="gantt"]'),
     snapshot: (c) => undated(c)?.id,
     done: (c, snap) => !snap || !!c.tasks.find((t) => t.id === snap && (t.start || t.due)),
@@ -552,7 +655,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-start",
     enter: ensureEdit,
     title: "拉開始日",
-    body: "按住色條「左端」的小把手，左右拖：只改開始日，結束日不動。（手機要先按住一下再拖，直接滑會變成捲動）",
+    body: "按住色條左端拖：只改開始日。（手機先按住一下再拖）",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "start",
     goto: toProject("gantt"),
@@ -562,7 +665,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-end",
     enter: ensureEdit,
     title: "拉結束日",
-    body: "按住色條「右端」的小把手，左右拖：只改結束日，天數跟著變。",
+    body: "按住右端拖：只改結束日。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "end",
     goto: toProject("gantt"),
@@ -572,7 +675,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-move",
     enter: ensureEdit,
     title: "整條移動",
-    body: "按住色條的中間，左右拖：開始和結束一起移，天數不變。",
+    body: "按住中間拖：整條一起移，天數不變。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "move",
     goto: toProject("gantt"),
@@ -582,7 +685,7 @@ const STEPS_RAW: Step[] = [
     id: "wbs-open",
     enter: ensureEdit,
     title: "前後任務（WBS）",
-    body: "很多工序要等上一個做完才能開始。點「粉光」那一列的色條，打開時間安排。",
+    body: "有些工序要等前一個做完。點「粉光」的色條，打開時間安排。",
     // 只圈時間軸那一段（點名稱會打開任務細節，不是時間安排）
     target: (c) => ganttRow(tops(c)[tops(c).length - 1])?.children[1] ?? pick('[data-tour="gantt"]'),
     until: (e) => e.type === "schedule-open",
@@ -593,7 +696,7 @@ const STEPS_RAW: Step[] = [
     title: "接在哪個任務之後",
     body: (c) => {
       const a = wbsPair(c).a?.title ?? "上一個任務";
-      return `在「接在哪個任務之後開始」點「選擇前一個任務」，選「${a}」，再按下面的「儲存」。它會從${a}結束的隔天開始。`;
+      return `點「選擇前一個任務」，選「${a}」，再按「儲存」。它會從${a}結束隔天開始。`;
     },
     target: () => pick('[data-tour="wbs"]'),
     until: (e) => e.type === "wbs-set",
@@ -613,7 +716,7 @@ const STEPS_RAW: Step[] = [
     title: "連起來了",
     body: (c) => {
       const { a, b } = wbsPair(c);
-      return `灰色箭頭把兩個任務連起來。之後「${a?.title ?? "前一個"}」改日期，「${b?.title ?? "後一個"}」會自動跟著移，不用一個一個改。`;
+      return `箭頭把兩個任務連起來。「${a?.title ?? "前一個"}」改日期，「${b?.title ?? "後一個"}」會自動跟著移。`;
     },
     target: () => pick('[data-tour="gantt"]'),
     goto: toProject("gantt"),
@@ -621,17 +724,31 @@ const STEPS_RAW: Step[] = [
   {
     id: "gantt-done",
     title: "改好了",
-    body: "按右上的打勾，回到閱讀模式。",
+    body: "按右上的打勾，結束編輯。",
     target: () => pick('[data-tour="gantt-edit"]'),
     until: (e) => e.type === "gantt-edit" && e.data === false,
     goto: toProject("gantt"),
     skip: () => tap('[data-tour="gantt-edit"][aria-pressed="true"]'),
   },
+  {
+    id: "gantt-level",
+    title: "顯示到哪一層",
+    body: "「週」旁邊這顆切換顯示：只看分組 → 分組和主任務 → 全部。點到繞回「全部」。",
+    target: () => pick('[data-tour="gantt-level"]'),
+    snapshot: () => new Set<string>(),
+    until: (e, _c, snap) => {
+      if (e.type !== "gantt-level") return false;
+      const seen = snap as Set<string>;
+      seen.add(String(e.data));
+      return seen.size >= 2 && e.data === "all";
+    },
+    goto: toProject("gantt"),
+  },
   /* ── 分享 ── */
   {
     id: "export-gantt",
     title: "分享甘特圖",
-    body: "點最上面的分享鍵。甘特圖可以存成整張圖片，或轉成 MS Project、Excel、行事曆檔，傳給業主、廠商。",
+    body: "點上方的分享鍵。甘特圖可存成圖片，或轉成 MS Project、Excel、行事曆檔。",
     target: () => pick('[data-tour="export"]'),
     until: (e) => e.type === "export-open" && e.data === "gantt",
     goto: toProject("gantt"),
@@ -639,7 +756,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "export-gantt-see",
     title: "選格式",
-    body: "上面是圖片預覽，和畫面上的甘特圖一樣；按「存成圖片」就能傳 LINE。往下滑是「排程軟體」的檔案，最下面可以選要不要包含預定工期。看完按右上的 ✕ 關掉。",
+    body: "按「存成圖片」就能傳 LINE；往下是排程軟體的檔案。看完按 ✕ 關掉。",
     target: () => pick("[data-pm-sheet]"),
     done: () => !sheetOpen(),
     skip: closeLayers,
@@ -657,7 +774,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "export-list",
     title: "分享清單",
-    body: "再點一次分享鍵，這次是清單。",
+    body: "再點分享鍵，這次分享清單。",
     target: () => pick('[data-tour="export"]'),
     until: (e) => e.type === "export-open" && e.data === "list",
     goto: toProject("list"),
@@ -665,7 +782,7 @@ const STEPS_RAW: Step[] = [
   {
     id: "export-list-see",
     title: "文字也能分享",
-    body: "清單一樣可以存成圖片；「複製文字」貼到 LINE，分組、日期、負責人一行一行排好，對方一看就懂。看完按 ✕ 關掉。",
+    body: "「複製文字」貼到 LINE，分組、日期、負責人都排好了。看完按 ✕ 關掉。",
     target: () => pick("[data-pm-sheet]"),
     done: () => !sheetOpen(),
     skip: closeLayers,
@@ -675,14 +792,14 @@ const STEPS_RAW: Step[] = [
     id: "search",
     clear: true,
     title: "搜尋",
-    body: "點放大鏡，打任務名稱或標籤，例如「打底」，所有專案的任務都找得到。",
+    body: "點放大鏡，打任務名稱或標籤，例如「打底」，所有專案都找得到。",
     target: () => pick('[data-tour="search"]'),
     until: (e) => e.type === "search" && typeof e.data === "string" && e.data.trim().length > 0,
   },
 ];
 
 /** 甘特圖的步驟：提示卡不要蓋住甘特圖 */
-const STEPS: Step[] = STEPS_RAW.map((st) => (st.id.startsWith("gantt") || st.id.startsWith("wbs-") ? { ...st, clearOf: ganttEl } : st));
+const STEPS: Step[] = STEPS_RAW.map((st) => ({ ...st, ...BACK[st.id], ...(st.id.startsWith("gantt") || st.id.startsWith("wbs-") ? { clearOf: ganttEl } : {}) }));
 
 /* ── 實戰教學：正式的專案 ── */
 /** 實戰選的專案（只在這次教學用） */
@@ -690,11 +807,11 @@ const realPick: { code: string | null; fresh: boolean } = { code: null, fresh: f
 const toProjectScreen = (c: Ctx) => {
   if (c.code) go({ nav: "project_info", intelTab: "專案", openProject: c.code });
 };
-const REAL_STEPS: Step[] = [
+const REAL_STEPS_RAW: Step[] = [
   {
     id: "real-nav",
     title: "實戰：專案情報",
-    body: "接下來用正式的專案。先點房子圖示，到「專案情報」。",
+    body: "接下來用正式專案。點房子圖示，到「專案情報」。",
     target: () => pick('[data-tour="nav-project_info"]'),
     until: (e) => e.type === "nav" && e.data === "project_info",
     skip: toIntel,
@@ -703,7 +820,7 @@ const REAL_STEPS: Step[] = [
   {
     id: "real-newproj",
     title: "不用按「新專案」",
-    body: "這顆是給拾壤CRM 名冊上沒有的案子用的，建了也不會回到 CRM。公司的專案都已經從 CRM 帶進來了，要排任務請到「任務追蹤」找那個專案。",
+    body: "「新專案」只給 CRM 上沒有的案子用。公司的專案都已經從 CRM 帶進來，不用按。",
     target: () => pick('[data-tour="new-project"]'),
     look: true,
     when: (c) => c.isManager,
@@ -721,7 +838,7 @@ const REAL_STEPS: Step[] = [
   {
     id: "real-expand",
     title: "展開其他專案",
-    body: "這裡平常只列有任務的專案。點「展開其他專案新增任務排程」，名冊上還沒排任務的專案都在這裡。",
+    body: "點「展開其他專案」，還沒排任務的專案都在這裡。",
     target: () => pick('[data-tour="expand-projects"]'),
     until: (e) => e.type === "home-expand" && e.data === true,
     goto: toTasksHome,
@@ -729,7 +846,7 @@ const REAL_STEPS: Step[] = [
   {
     id: "real-pick",
     title: "選一個專案",
-    body: "點一個你要排程的專案（還沒有任務的最好），進去之後就跟剛剛練習的一樣。",
+    body: "點一個要排程的專案。",
     target: () => pick('[data-tour="home-projects"]'),
     until: (e, c) => {
       if (e.type !== "route" || typeof e.data !== "string" || e.data.startsWith(TOUR_PREFIX) || ["home", "smart", "tag"].includes(e.data)) return false;
@@ -744,8 +861,7 @@ const REAL_STEPS: Step[] = [
   {
     id: "real-add",
     title: "新增任務",
-    body: (c) =>
-      c.typing ? "打完按鍵盤上方右邊的 ✓ 存起來；要再打下一個，再點虛線圓圈。" : "點虛線圓圈，把這個專案接下來要做的事一項一項打進去。",
+    body: (c) => (c.typing ? "打完按 ✓；要再加一個就再點虛線圓圈。" : "點虛線圓圈，把要做的事一項一項打進去。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
     snapshot: (c) => c.tasks.length,
     done: (c, snap) => c.tasks.length > (snap as number) && !c.typing,
@@ -755,7 +871,7 @@ const REAL_STEPS: Step[] = [
     id: "real-date",
     blur: true,
     title: "排日期",
-    body: "長按任務 →「期限 ›」選一天。要排區間的話，右上換成甘特圖、按鉛筆，點日期排入再拖拉。",
+    body: "長按任務 →「期限 ›」選一天。要排區間就換成甘特圖編輯。",
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
     snapshot: (c) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])),
     done: (c, snap) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])) !== snap,
@@ -765,7 +881,7 @@ const REAL_STEPS: Step[] = [
     id: "real-import",
     clear: true,
     title: "截圖匯入",
-    body: "原本用 iPhone「提醒事項」記工作的話：先到提醒事項截下清單（太長就分幾張，上下重疊一點），回到這裡點這顆，選截圖、選這個專案，就能整批匯入。現在沒有截圖就按 → 略過。",
+    body: "用 iPhone「提醒事項」記工作的話：先截圖清單，再點這顆選截圖、選專案，整批匯入。沒有截圖就按 →。",
     target: () => pick('[data-tour="import"]'),
     until: (e) => e.type === "import-done",
     goto: toTasksHome,
@@ -774,7 +890,7 @@ const REAL_STEPS: Step[] = [
     id: "real-delete-try",
     clear: true,
     title: "刪除專案",
-    body: "「刪除專案」只會清掉任務追蹤裡的任務、排程、分組；拾壤CRM 名冊上的案名、業主、合約都不會動，案名也會留著。這個專案是剛剛才開始排的，按「刪除專案」→「刪除」試試。",
+    body: "「刪除專案」只清掉任務、排程、分組，CRM 的資料不會動。這個專案剛開始排，按「刪除專案」→「刪除」試試。",
     target: () => pick('[data-tour="project-delete"]'),
     when: (c) => c.isManager && c.fresh,
     until: (e) => e.type === "project-purged",
@@ -785,7 +901,7 @@ const REAL_STEPS: Step[] = [
     look: true,
     clear: true,
     title: "刪除專案",
-    body: "在專案頁最下面。「刪除專案」只會清掉任務追蹤裡的任務、排程、分組；拾壤CRM 名冊上的案名、業主、合約都不會動。這個專案原本就有資料，這次不要真的刪，看過位置就好。",
+    body: "「刪除專案」在專案頁最下面，只清掉任務、排程、分組，CRM 的資料不會動。這個專案已有資料，看位置就好。",
     target: () => pick('[data-tour="project-delete"]'),
     when: (c) => c.isManager && !c.fresh,
     goto: toProjectScreen,
@@ -793,10 +909,12 @@ const REAL_STEPS: Step[] = [
   {
     id: "real-delete-member",
     title: "刪除專案",
-    body: "專案的任務要全部清掉時，請管理者在專案頁最下面按「刪除專案」。它只清掉任務追蹤裡的內容，拾壤CRM 名冊上的專案資料不會動。",
+    body: "要清掉專案的全部任務，請管理者在專案頁最下面按「刪除專案」。CRM 的資料不會動。",
     when: (c) => !c.isManager,
   },
 ];
+
+const REAL_STEPS: Step[] = REAL_STEPS_RAW.map((st) => ({ ...st, ...BACK[st.id] }));
 
 type Phase = "idle" | "welcome" | "starting" | "running" | "finish" | "real-ask" | "real-intro" | "real-finish";
 type Mode = "practice" | "real";
@@ -858,6 +976,7 @@ export function TourHost() {
   const completing = useRef(false);
   // 按「上一步」回來的：不因為「已經做過」就自動跳走，看完自己按 →
   const revisit = useRef(false);
+  const backAt = useRef(0);
   // 現在可以點的東西（畫面凍結用）
   const allowEls = useRef<Element[]>([]);
   const allowSel = useRef<string | undefined>(undefined);
@@ -998,11 +1117,23 @@ export function TourHost() {
     }
     setI((n) => n + 1);
   };
+  /** ←：撤銷上一步做的事、回到它開始的畫面，重做一次 */
   const back = () => {
-    if (i === 0 || completing.current) return;
+    if (i === 0 || completing.current || !ctx) return;
+    let k = i - 1;
+    steps[k].undo?.(ctx);
+    while (k > 0 && steps[k].passBack) {
+      k--;
+      steps[k].undo?.(ctx);
+    }
+    const to = steps[k];
+    (to.backTo ?? to.goto)?.(ctx);
     setSuccess(false);
-    revisit.current = true;
-    setI((n) => n - 1);
+    // 撤銷了＝要重做才往下；沒辦法撤銷的「做到才往下」：不因為已經做過就跳走
+    revisit.current = !to.undo && !!to.done;
+    // 撤銷還在存：等一下再檢查「做到了沒」，免得拿到舊資料又自動跳走
+    backAt.current = Date.now();
+    setI(k);
   };
   const complete = () => {
     if (completing.current) return;
@@ -1097,7 +1228,7 @@ export function TourHost() {
       const layer = document.querySelector(LAYERS);
       // 抽屜、長按選單打開、目標不在裡面：拿掉圈圈，提示卡移到上面，不要蓋住選單
       setCovered(!!layer && !(el && el.closest(LAYERS)));
-      if (step.done && !revisit.current && !completing.current && step.done(ctx, snap.current)) complete();
+      if (step.done && !revisit.current && !completing.current && Date.now() - backAt.current > 800 && step.done(ctx, snap.current)) complete();
       if (el) {
         missingSince.current = null;
         setLost(false);

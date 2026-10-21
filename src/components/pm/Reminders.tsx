@@ -545,7 +545,12 @@ export function ReminderPage({
       {code && pageView !== "board" && (
         <button
           type="button"
-          onClick={() => setShowDone((v) => !v)}
+          data-tour="show-done"
+          aria-pressed={showDone}
+          onClick={() => {
+            tourEmit("show-done", !showDone);
+            setShowDone((v) => !v);
+          }}
           className="self-center h-9 px-4 rounded-full text-[13px] text-[#8E8E93] active:bg-[#F4F4F5] inline-flex items-center gap-1.5 order-last"
         >
           <Icon name={showDone ? "visibility_off" : "visibility"} className="text-[17px]" />

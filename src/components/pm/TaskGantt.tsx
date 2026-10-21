@@ -440,7 +440,11 @@ function LevelPicker({ value, onChange, skipSection }: { value: Level; onChange:
   return (
     <button
       type="button"
-      onClick={() => onChange(next.value)}
+      onClick={() => {
+        tourEmit("gantt-level", next.value);
+        onChange(next.value);
+      }}
+      data-tour="gantt-level"
       aria-label={`顯示：${cur.label}，點一下換成${next.label}`}
       title={`換成${next.label}`}
       className="h-8 min-w-[40px] px-2.5 rounded-full flex items-center justify-center text-[#18181B] bg-[#F2F2F4] active:bg-[#E4E4E7] transition-colors select-none"
