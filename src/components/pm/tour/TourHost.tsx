@@ -144,6 +144,16 @@ const inOrder = (c: Ctx) => [...c.tasks].sort((a, b) => a.seq - b.seq);
 const T = (c: Ctx, name: Name): Task | undefined => c.tasks.find((t) => t.title.trim() === name) ?? inOrder(c)[NAMES.indexOf(name)];
 /** 清單上某個任務那一列 */
 const rowOf = (t?: Task) => (t ? pick(`[data-tour-task="${t.id}"]`) : null);
+/** 變成「泥作」的子任務／取消 */
+const makeChild = (c: Ctx, name: Name) => {
+  const p = T(c, "泥作");
+  const t = T(c, name);
+  if (p && t && t.parentId !== p.id) c.pm.saveTask({ id: t.id, parentId: p.id }, { quiet: true });
+};
+const unChild = (c: Ctx, name: Name) => {
+  const t = T(c, name);
+  if (t?.parentId) c.pm.saveTask({ id: t.id, parentId: undefined }, { quiet: true });
+};
 /** 有子任務的主任務（甘特圖上跟著子任務走，不能拖） */
 const isParent = (c: Ctx, t: Task) => c.tasks.some((k) => k.parentId === t.id);
 
@@ -216,8 +226,9 @@ const nameSection = (c: Ctx, name: string) => {
 /** 還沒排日期的任務（甘特圖教「點日期排入」用） */
 // 先挑沒完成的；都完成了（例如看板那步把它拖到完成）也照樣用，不然這一步會直接跳過
 const undated = (c: Ctx) => {
-  const list = tops(c).filter((t) => !t.start && !t.due);
-  return list.find((t) => t.status !== "done") ?? list[0];
+  const list = c.tasks.filter((t) => !t.start && !t.due && !isParent(c, t));
+  const f = T(c, "粉光");
+  return (f && list.includes(f) ? f : undefined) ?? list.find((t) => t.status !== "done") ?? list[0];
 };
 /** 「點日期排入」排的是哪個任務（按 ← 回來時清掉它的日期） */
 const picked: { id?: string } = {};
@@ -226,7 +237,7 @@ const firstOpen = (c: Ctx) => c.tasks.find((t) => t.status !== "done" && (t.star
 /** WBS：最後一個任務（粉光）接在哪個後面——挑還沒完成的（完成的在甘特圖上藏起來了，看不到箭頭） */
 const wbsPair = (c: Ctx) => {
   const b = T(c, "粉光");
-  const a = c.tasks.find((t) => t.status !== "done" && t.id !== b?.id && t.parentId) ?? c.tasks.find((t) => t.status !== "done" && t.id !== b?.id);
+  const a = T(c, "打底");
   return { a, b };
 };
 
@@ -285,15 +296,12 @@ const BACK: Record<string, Pick<Step, "undo" | "backTo" | "passBack">> = {
   vendor: { undo: (c) => clearMeta(c, ["vendor"], (t) => !!t.meta?.vendor), backTo: closeThen(toProject()) },
   tag: { undo: (c) => clearMeta(c, ["trade", "areas", "tags"], (t) => !!(t.meta?.trade || t.meta?.areas?.length || t.meta?.tags?.length)), backTo: closeThen(toProject()) },
   "swipe-left": { undo: (c) => clearMeta(c, ["urgent"], (t) => !!t.meta?.urgent || t.flagged) },
-  "swipe-right": {
-    undo: (c) => {
-      for (const t of c.tasks.filter((x) => x.parentId)) c.pm.saveTask({ id: t.id, parentId: undefined }, { quiet: true });
-    },
-  },
+  "swipe-right": { undo: (c) => unChild(c, "打底") },
+  "swipe-right-2": { undo: (c) => unChild(c, "粉光") },
   "section-add": { undo: (c) => keepSections(c, 0) },
   "section-add-2": { undo: (c) => keepSections(c, 1) },
   "section-move": { undo: (c) => unmove(c, T(c, "泥作")), backTo: closeThen(toProject()) },
-  "section-move-2": { undo: (c) => unmove(c, T(c, "粉光")), backTo: closeThen(toProject()) },
+  "section-move-2": { undo: (c) => unmove(c, T(c, "放樣")), backTo: closeThen(toProject()) },
   board: { backTo: toProject("list") },
   "board-doing": { undo: (c) => setStatus(c, T(c, "放樣"), "todo") },
   "board-done": { undo: (c) => setStatus(c, T(c, "放樣"), "doing") },
@@ -533,11 +541,17 @@ const STEPS_RAW: Step[] = [
     target: (c) => rowOf(T(c, "打底")),
     done: (c) => !!T(c, "打底")?.parentId,
     goto: toProject(),
-    skip: (c) => {
-      const a = T(c, "泥作");
-      const b = T(c, "打底");
-      if (a && b) c.pm.saveTask({ id: b.id, parentId: a.id }, { quiet: true });
-    },
+    skip: (c) => makeChild(c, "打底"),
+  },
+  {
+    id: "swipe-right-2",
+    clear: true,
+    title: "再一個子任務",
+    body: "粉光也是泥作的工序：把「粉光」也往右滑，一樣變成「泥作」的子任務。",
+    target: (c) => rowOf(T(c, "粉光")),
+    done: (c) => !!T(c, "粉光")?.parentId,
+    goto: toProject(),
+    skip: (c) => makeChild(c, "粉光"),
   },
   /* ── 分組（管理者才能建分組） ── */
   {
@@ -566,14 +580,14 @@ const STEPS_RAW: Step[] = [
     goto: toProject(),
     skip: (c) => nameSection(c, "展售區"),
   },
-  // 一次只教一件事：先把「泥作」放進第一組，再把「粉光」放進第二組
+  // 一次只教一件事：先把「泥作」（連打底、粉光）放進第一組，再把「放樣」放進第二組
   {
     id: "section-move",
     blur: true,
     title: "把任務放進分組（1/2）",
     body: (c) => {
       const sec = realSections(c.sections)[0]?.name ?? "售票亭";
-      const there = `選「${sec}」。子任務會一起移。`;
+      const there = `選「${sec}」。打底、粉光會一起移。`;
       return byMenu("移到分組", "移到分組", "泥作", there);
     },
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? rowOf(T(c, "泥作")),
@@ -588,13 +602,13 @@ const STEPS_RAW: Step[] = [
     title: "把任務放進分組（2/2）",
     body: (c) => {
       const sec = realSections(c.sections)[1]?.name ?? "展售區";
-      return byMenu("移到分組", "移到分組", "粉光", `選「${sec}」。`);
+      return byMenu("移到分組", "移到分組", "放樣", `選「${sec}」。`);
     },
-    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? rowOf(T(c, "粉光")),
+    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? rowOf(T(c, "放樣")),
     when: (c) => c.isManager,
-    done: (c) => !!sectionOf(c, T(c, "粉光")),
+    done: (c) => !!sectionOf(c, T(c, "放樣")),
     goto: toProject(),
-    skip: (c) => moveTask(c, T(c, "粉光"), 1),
+    skip: (c) => moveTask(c, T(c, "放樣"), 1),
   },
   /* ── 看板 ── */
   {
@@ -746,7 +760,7 @@ const STEPS_RAW: Step[] = [
     id: "wbs-open",
     enter: ensureEdit,
     title: "前後任務（WBS）",
-    body: "有些工序要等前一個做完。點「粉光」的色條，打開時間安排。",
+    body: "粉光要等打底做完才能開始。點「粉光」的色條，打開時間安排。",
     // 只圈時間軸那一段（點名稱會打開任務細節，不是時間安排）
     target: (c) => ganttRow(T(c, "粉光"))?.children[1] ?? pick('[data-tour="gantt"]'),
     until: (e) => e.type === "schedule-open",
