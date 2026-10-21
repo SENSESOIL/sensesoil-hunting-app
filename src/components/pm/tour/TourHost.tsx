@@ -1069,8 +1069,8 @@ const store = {
     }
   },
 };
-/** 畫面凍結時擋的事件：只擋「開始」的那一下（放開、移動不擋，拖曳放到框外才不會卡住） */
-const BLOCK_EVENTS = ["pointerdown", "mousedown", "touchstart", "click", "dblclick", "contextmenu"] as const;
+/** 畫面凍結時擋的事件：按下的那一下（手指按下不擋捲動；沒移動的 touchend＝點一下才擋）、點擊、長按 */
+const BLOCK_EVENTS = ["pointerdown", "mousedown", "touchstart", "touchend", "click", "dblclick", "contextmenu"] as const;
 
 export function TourHost() {
   const pm = usePm();
@@ -1349,9 +1349,22 @@ export function TourHost() {
       if (allowSel.current && el.closest(allowSel.current)) return true;
       return allowEls.current.some((a) => a.contains(el));
     };
+    // 手指按下：app 收不到（不會觸發長按、拖曳），但不擋捲動；沒有移動就放開（＝點一下）才整個擋掉
+    let downAt: { x: number; y: number } | null = null;
     const block = (e: Event) => {
       if (bypass || ok(e.target)) return;
       e.stopPropagation();
+      if (e.type === "touchstart") {
+        const t = (e as TouchEvent).touches[0];
+        downAt = t ? { x: t.clientX, y: t.clientY } : null;
+        return;
+      }
+      if (e.type === "touchend") {
+        const t = (e as TouchEvent).changedTouches[0];
+        const moved = !downAt || !t || Math.hypot(t.clientX - downAt.x, t.clientY - downAt.y) > 10;
+        if (!moved && e.cancelable) e.preventDefault();
+        return;
+      }
       if (e.cancelable) e.preventDefault();
     };
     for (const t of BLOCK_EVENTS) window.addEventListener(t, block, { capture: true, passive: false });
@@ -1381,8 +1394,11 @@ export function TourHost() {
         missingSince.current = null;
         setLost(false);
         const r = el.getBoundingClientRect();
-        if ((r.top < 60 || r.bottom > window.innerHeight - 40) && scrolled.current !== step.id && !el.closest(LAYERS)) {
-          scrolled.current = step.id;
+        // 目標在畫面外：捲過去（抽屜、專案頁裡面的也要，例如最下面的「刪除專案」）；
+        // 目標長大了（例如按了刪除跳出確認）也再捲一次。長按選單是浮在上面的，不用捲
+        const key = `${step.id}:${Math.round(r.height)}`;
+        if ((r.top < 60 || r.bottom > window.innerHeight - 40) && scrolled.current !== key && !el.closest('[data-tour="row-menu"], [data-tour="project-menu"]')) {
+          scrolled.current = key;
           el.scrollIntoView({ block: "center", behavior: "smooth" });
         }
         setRect((p) => (p && p.top === r.top && p.left === r.left && p.width === r.width && p.height === r.height ? p : r));
