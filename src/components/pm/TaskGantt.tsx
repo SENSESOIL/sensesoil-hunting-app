@@ -183,7 +183,7 @@ export function TaskGantt({
       <Empty
         icon="view_timeline"
         title="還沒有任務"
-        hint="按右下角的＋新增任務，再到這裡點日期排程。"
+        hint="點右上角的切換鍵換到「清單」新增任務，再回來這裡點日期排程。"
       />
     );
   }

@@ -185,8 +185,31 @@ const byMenu = (page: string, item: string, task: string, there: string) => {
   return `長按「${task}」，點「${item} ›」，${there}`;
 };
 const renaming = () => !!pick('input[aria-label="分組名稱"]');
+/**
+ * 略過「新增分組」：已經按了「新增分組」、正在改名（框裡是「新分組」）就幫忙打好名字存起來；
+ * 還沒按就直接建一個。不然會多一個叫「新分組」的分組
+ */
+const nameSection = (c: Ctx, name: string) => {
+  const el = pick('input[aria-label="分組名稱"]') as HTMLInputElement | null;
+  if (!el) {
+    // 按 → 的那一下輸入框可能已經失焦、存成「新分組」了：改掉它的名字，不要再多建一個
+    const fresh = [...realSections(c.sections)].reverse().find((x) => x.name === "新分組");
+    if (fresh) return c.pm.saveSections(c.code, c.sections.map((x) => (x.id === fresh.id ? { ...x, name } : x)));
+    return addSection(c, name);
+  }
+  // 用原生的 setter 才會觸發 React 的 onChange；等它更新完再 blur（blur 時才存）
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(el, name);
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  setTimeout(() => el.blur(), 80);
+};
 /** 還沒排日期的任務（甘特圖教「點日期排入」用） */
-const undated = (c: Ctx) => tops(c).find((t) => !t.start && !t.due && t.status !== "done");
+// 先挑沒完成的；都完成了（例如看板那步把它拖到完成）也照樣用，不然這一步會直接跳過
+const undated = (c: Ctx) => {
+  const list = tops(c).filter((t) => !t.start && !t.due);
+  return list.find((t) => t.status !== "done") ?? list[0];
+};
+/** 「點日期排入」排的是哪個任務（按 ← 回來時清掉它的日期） */
+const picked: { id?: string } = {};
 const firstOpen = (c: Ctx) => tops(c).find((t) => t.status !== "done");
 /** WBS：最後一個任務（粉光）接在哪個後面——挑還沒完成的（完成的在甘特圖上藏起來了，看不到箭頭） */
 const wbsPair = (c: Ctx) => {
@@ -271,9 +294,10 @@ const BACK: Record<string, Pick<Step, "undo" | "backTo" | "passBack">> = {
   "gantt-show-done": { undo: () => tap('[data-tour="show-done"][aria-pressed="true"]') },
   "gantt-edit": { undo: () => tap('[data-tour="gantt-edit"][aria-pressed="true"]') },
   "gantt-pick": {
+    // 把這一步排上日期的那個任務（記在 picked）清回沒有日期，才能再點一次
     undo: (c) => {
       const list = tops(c);
-      const t = list.length > 2 ? list[list.length - 1] : undefined;
+      const t = c.tasks.find((x) => x.id === picked.id) ?? list[list.length - 1];
       if (t && (t.start || t.due)) c.pm.saveTask({ id: t.id, start: undefined, due: undefined }, { quiet: true });
     },
   },
@@ -292,6 +316,8 @@ const BACK: Record<string, Pick<Step, "undo" | "backTo" | "passBack">> = {
   "real-date": { backTo: closeThen(toProject()) },
 };
 
+/** 時間安排裡剛選好、還沒儲存的前一個任務（沒選＝空） */
+const wbsChosen = () => pick('[data-tour="wbs"]')?.getAttribute("data-wbs-pick") || "";
 const ganttEl = () => pick('[data-tour="gantt"]');
 const STEPS_RAW: Step[] = [
   /* ── 介面 ── */
@@ -509,7 +535,7 @@ const STEPS_RAW: Step[] = [
     when: (c) => c.isManager,
     done: (c) => realSections(c.sections).length >= 1 && !renaming(),
     goto: toProject(),
-    skip: (c) => addSection(c, "售票亭"),
+    skip: (c) => nameSection(c, "售票亭"),
   },
   {
     id: "section-add-2",
@@ -521,7 +547,7 @@ const STEPS_RAW: Step[] = [
     when: (c) => c.isManager,
     done: (c) => realSections(c.sections).length >= 2 && !renaming(),
     goto: toProject(),
-    skip: (c) => addSection(c, "展售區"),
+    skip: (c) => nameSection(c, "展售區"),
   },
   // 一次只教一件事：先把「泥作」放進第一組，再把「粉光」放進第二組
   {
@@ -663,7 +689,12 @@ const STEPS_RAW: Step[] = [
     title: "點日期排入",
     body: (c) => `「${undated(c)?.title ?? "粉光"}」還沒排日期。在它那一列點要開始的那天。`,
     target: (c) => ganttRow(undated(c)) ?? pick('[data-tour="gantt"]'),
-    snapshot: (c) => undated(c)?.id,
+    // 按 ← 回來時畫面可能還是舊資料（日期還沒清掉）：找不到就用上次記下的那個
+    snapshot: (c) => {
+      const id = undated(c)?.id;
+      if (id) picked.id = id;
+      return id ?? picked.id;
+    },
     done: (c, snap) => !snap || !!c.tasks.find((t) => t.id === snap && (t.start || t.due)),
     goto: toProject("gantt"),
     skip: (c) => {
@@ -675,7 +706,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-start",
     enter: ensureEdit,
     title: "拉開始日",
-    body: "按住色條左端拖：只改開始日。（手機先按住一下再拖）",
+    body: "長按色條左端拖移：只改開始日。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "start",
     goto: toProject("gantt"),
@@ -685,7 +716,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-end",
     enter: ensureEdit,
     title: "拉結束日",
-    body: "按住右端拖：只改結束日。",
+    body: "長按色條右端拖移：只改結束日。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "end",
     goto: toProject("gantt"),
@@ -695,7 +726,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-move",
     enter: ensureEdit,
     title: "整條移動",
-    body: "按住中間拖：整條一起移，天數不變。",
+    body: "長按色條中間拖移：整條一起移，天數不變。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "move",
     goto: toProject("gantt"),
@@ -715,11 +746,16 @@ const STEPS_RAW: Step[] = [
     id: "wbs-pick",
     title: "接在哪個任務之後",
     body: (c) => {
+      const chosen = wbsChosen();
+      if (chosen) return `選好「${chosen}」了，按下面的「儲存」。`;
       const a = wbsPair(c).a?.title ?? "上一個任務";
       return `點「選擇前一個任務」，選「${a}」，再按「儲存」。它會從${a}結束隔天開始。`;
     },
-    target: () => pick('[data-tour="wbs"]'),
+    // 選好了就改圈「儲存」
+    target: () => (wbsChosen() ? pick('[data-tour="schedule-save"]') : null) ?? pick('[data-tour="wbs"]'),
     until: (e) => e.type === "wbs-set",
+    // 之前已經設好、存過了（畫面上「儲存」按不下去）：算做到
+    done: (c) => !!wbsPair(c).b?.meta?.after && !wbsChosen(),
     skip: (c) => {
       const { a, b } = wbsPair(c);
       closeLayers();
@@ -1080,6 +1116,7 @@ export function TourHost() {
     setCode(r.data.code);
     setMode("practice");
     await mutate(PM_KEY);
+    picked.id = undefined;
     revisit.current = false;
     completing.current = false;
     setI(0);

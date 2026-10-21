@@ -117,7 +117,14 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
       subtitle={task.title}
       onClose={onClose}
       dirty={dirty}
-      footer={canEdit ? <SheetActions onCancel={onClose} onSave={save} disabled={!dirty || bad} /> : undefined}
+      footer={
+        canEdit ? (
+          // 教學：選好前一個任務之後圈「儲存」
+          <div data-tour="schedule-save">
+            <SheetActions onCancel={onClose} onSave={save} disabled={!dirty || bad} />
+          </div>
+        ) : undefined
+      }
     >
       <div className="px-4 pt-3 pb-6 flex flex-col gap-4">
         {/* 一眼看懂排在哪 */}
@@ -164,7 +171,7 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
             </Row>
           </FieldGroup>
 
-          <div data-tour="wbs">
+          <div data-tour="wbs" data-wbs-pick={after && after !== task.meta?.after ? pred?.title ?? "" : ""}>
           <FieldGroup title="接在哪個任務之後開始" hint={pred ? "前一個任務改日期時，這個任務會跟著平移同樣的天數。" : "選了就從那個任務結束的隔天開始，之後也會跟著它移動。"}>
             {pred && (
               <div className="px-4 py-3 flex items-center gap-3">
