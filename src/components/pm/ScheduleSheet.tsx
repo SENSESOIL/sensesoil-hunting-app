@@ -7,8 +7,9 @@ import { isAssignee, type Task } from "@/lib/pm/model";
 import { endOf, predecessorOf, startAfter, wouldCycle } from "@/lib/pm/deps";
 import type { TaskMeta } from "@/lib/pm/tags";
 import { Sheet, SheetActions } from "./Sheet";
-import { DateField, FieldGroup, Row } from "./fields";
+import { FieldGroup, Row } from "./fields";
 import { Icon } from "./ui";
+import { RangeCalendar } from "./RangeCalendar";
 import { dateShortcuts, RED } from "./kit";
 import { canEditProject, type Pm } from "./usePm";
 import { treeOrder } from "./tree";
@@ -65,11 +66,6 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
     .filter((t) => !q.trim() || t.title.toLowerCase().includes(q.trim().toLowerCase()));
   const bad = !!(start && due && due < start);
 
-  const changeStart = (v: string | undefined) => {
-    // 天數不變，整段平移
-    if (v && start && due) setDue(addDays(v, diffDays(start, due)));
-    setStart(v);
-  };
   const changeDue = (v: string | undefined) => {
     setDue(v);
     if (v && start && v < start) setStart(undefined);
@@ -155,8 +151,18 @@ export function ScheduleSheet({ pm, taskId, open, onClose }: { pm: Pm; taskId: s
 
         <div className={canEdit ? "" : "pointer-events-none opacity-60"}>
           <FieldGroup title="日期">
-            <DateField label="開始" value={start} onChange={changeStart} today={pm.today} />
-            <DateField label="期限" value={due} onChange={changeDue} today={pm.today} min={start} issues={bad ? [{ field: "due", level: "error", message: "期限早於開始日" }] : undefined} />
+            {/* 同一個月曆點開始、再點結束（中間有色帶）；只做一天就同一天點兩下 */}
+            <div className="px-3 pt-3 pb-2">
+              <RangeCalendar
+                start={start}
+                end={due}
+                today={pm.today}
+                onChange={(s, e) => {
+                  setStart(s);
+                  setDue(e);
+                }}
+              />
+            </div>
             <Row label="天數">
               <div className="flex items-center gap-3">
                 <button type="button" onClick={() => changeDays((days ?? 1) - 1)} disabled={!days || days <= 1} aria-label="少一天" className="w-10 h-10 rounded-full bg-[#F2F2F4] flex items-center justify-center disabled:opacity-35">

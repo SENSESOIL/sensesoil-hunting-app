@@ -3,13 +3,14 @@
 import { IconCheck, IconPencil } from "@tabler/icons-react";
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { addDays, fmtDate, toDay } from "@/lib/project-ops";
+import { addDays, toDay } from "@/lib/project-ops";
 import { isAssignee, newSectionId, newTaskId, personColor, taskAssignees, type Task } from "@/lib/pm/model";
 import { URGENT, metaChips, tagKeys } from "@/lib/pm/tags";
 import { Icon } from "./ui";
 import { Avatar, CheckCircle, dueLabel, ORANGE, RED, DueIcon, SectionTitle, T, UrgentIcon, VendorIcon } from "./kit";
 import { Sheet, toast } from "./Sheet";
 import { TaskGantt } from "./TaskGantt";
+import { RangeCalendar, rangeLabel } from "./RangeCalendar";
 import { ExportSheet } from "./ExportSheet";
 import { ProjectScreen } from "./ProjectScreen";
 import { TaskBoard } from "./TaskBoard";
@@ -1533,7 +1534,7 @@ function RowMenu({
   };
   const vh = window.innerHeight;
   const vw = window.innerWidth;
-  const MENU_H = page === "assign" || page === "vendor" || page === "project" ? 400 : 420;
+  const MENU_H = page === "due" ? 470 : page === "assign" || page === "vendor" || page === "project" ? 400 : 420;
   // 預覽卡停在原位；下面放不下選單時整組往上移
   const previewTop = Math.max(16, Math.min(rect.top, vh - MENU_H - 90));
   const menuTop = previewTop + Math.min(rect.height, 90) + 10;
@@ -1628,53 +1629,40 @@ function RowMenu({
           </div>
         )}
         {page === "due" && (
-          <div className="py-1">
-            <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7]">
+          <div className="py-1 max-h-[440px] overflow-y-auto">
+            <button type="button" data-tour="menu-back" onClick={() => setPage("main")} className="w-full flex items-center gap-1 px-3 h-11 text-[15px] font-semibold text-[#18181B] border-b border-[#E4E4E7] sticky top-0 bg-[#F7F7F8] z-10">
               <Icon name="chevron_left" className="text-[22px]" />
               期限
+              {(task.start || task.due) && <span className="ml-auto pr-1 text-[13px] font-normal text-[#71717A] tabular-nums">{rangeLabel(task.start, task.due)}</span>}
             </button>
-            {dues.map(([label, v, icon]) => (
-              <MenuItem
-                key={label}
-                icon={icon}
-                label={label}
-                checked={task.due === v}
-                onClick={run(() => {
-                  // 有開始日、而且新期限早於開始日時，一起把開始日拿掉
-                  pm.saveTask({ id: task.id, due: v, ...(task.start && v && v < task.start ? { start: undefined } : {}) });
-                })}
+            {/* 快選：只設期限（一天） */}
+            <div className="flex flex-wrap gap-1.5 px-3 pt-2.5">
+              {dues.map(([label, v]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={run(() => {
+                    // 快選是「期限」那一天：開始日比它晚就一起拿掉
+                    pm.saveTask({ id: task.id, due: v, ...(v === undefined ? { start: undefined } : task.start && v < task.start ? { start: undefined } : {}) });
+                  })}
+                  className={`h-8 px-3 rounded-full text-[13px] font-medium ${task.due === v && !(v && task.start && task.start !== v) ? "bg-[var(--accent)] text-white" : "bg-[#EDEDF0] text-[#3F3F46] active:bg-[#E4E4E7]"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* 自訂：同一個月曆點開始、再點結束，中間有色帶 */}
+            <div className="px-2 pt-2 pb-1">
+              <RangeCalendar
+                start={task.start}
+                end={task.due}
+                today={today}
+                onChange={(s, e) => {
+                  onClose();
+                  pm.saveTask({ id: task.id, start: s === e ? undefined : s, due: e });
+                }}
               />
-            ))}
-            {/* 自訂日期：就在這一列叫出系統的日期選擇（不另外開頁面），選好就存 */}
-            {(() => {
-              const custom = !!task.due && !dues.some(([, v]) => v === task.due);
-              return (
-                <label className="relative w-full flex items-center gap-3 px-4 h-11 text-left text-[16px] text-[#18181B] active:bg-[#F4F4F5] cursor-pointer">
-                  <span className="w-5 flex justify-center">{custom && <Icon name="check" weight={600} className="text-[18px]" />}</span>
-                  <span className="flex-1">{custom ? fmtDate(task.due!, today) : "自訂日期…"}</span>
-                  <Icon name="edit_calendar" className="text-[20px] opacity-80" />
-                  <input
-                    type="date"
-                    value={task.due ?? ""}
-                    onChange={(e) => {
-                      const v = e.target.value || undefined;
-                      onClose();
-                      pm.saveTask({ id: task.id, due: v, ...(task.start && v && v < task.start ? { start: undefined } : {}) });
-                    }}
-                    onClick={(e) => {
-                      try {
-                        (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
-                      } catch {
-                        /* 不支援就用原生行為 */
-                      }
-                    }}
-                    aria-label="自訂期限"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    style={{ colorScheme: "light" }}
-                  />
-                </label>
-              );
-            })()}
+            </div>
           </div>
         )}
         {page === "project" && (() => {

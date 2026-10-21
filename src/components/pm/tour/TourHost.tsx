@@ -953,7 +953,7 @@ const REAL_STEPS_RAW: Step[] = [
     id: "real-date",
     blur: true,
     title: "排日期",
-    body: () => byMenu("期限", "期限", "任務", "選一天。") + "要排區間就換成甘特圖編輯。",
+    body: () => byMenu("期限", "期限", "任務", "在月曆點開始日、再點結束日（只做一天就同一天點兩下）。"),
     target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
     snapshot: (c) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])),
     done: (c, snap) => JSON.stringify(c.tasks.map((t) => [t.id, t.start, t.due])) !== snap,
