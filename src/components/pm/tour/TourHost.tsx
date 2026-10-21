@@ -963,7 +963,10 @@ const REAL_STEPS_RAW: Step[] = [
     id: "real-import",
     clear: true,
     title: "截圖匯入",
-    body: "用 iPhone「提醒事項」記工作的話：先截圖清單，再點這顆選截圖、選專案，整批匯入。沒有截圖就按 →。",
+    body: () =>
+      sheetOpen()
+        ? "專案已經幫你選好了。加入截圖，確認預覽後按最下面的「匯入」。"
+        : "用 iPhone「提醒事項」記工作的話：先截圖清單，再點這顆，就能整批匯入這個專案。沒有截圖就按 →。",
     target: () => pick('[data-tour="import"]'),
     until: (e) => e.type === "import-done",
     goto: toTasksHome,
@@ -1160,6 +1163,7 @@ export function TourHost() {
   const end = async (finished: boolean) => {
     completing.current = false;
     tourState.lockSchedule = false;
+    tourState.importCode = null;
     const wasReal = mode === "real";
     setPhase("idle");
     setRect(null);
@@ -1258,6 +1262,7 @@ export function TourHost() {
     if (step.enter) setTimeout(step.enter, 300);
     // 甘特圖的步驟（前後任務那兩步除外）：點長條不打開時間安排
     tourState.lockSchedule = !!step.clearOf && step.id !== "wbs-open" && step.id !== "wbs-pick";
+    tourState.importCode = mode === "real" ? ctx.code || null : null;
     if (step.blur) {
       const ta = document.querySelector<HTMLTextAreaElement>('[data-tour="draft-row"] textarea');
       if (ta && !ta.value.trim()) ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));

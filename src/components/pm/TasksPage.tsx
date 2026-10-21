@@ -255,7 +255,7 @@ export default function TasksPage({
         </>
       )}
       {importButton && slot ? createPortal(importButton, slot) : null}
-      <ImportSheet pm={pm} open={importOpen} onClose={() => setImportOpen(false)} />
+      <ImportSheet pm={pm} open={importOpen} onClose={() => setImportOpen(false)} presetCode={tourState.importCode ?? undefined} />
       <TaskSheet pm={pm} open={!!sheet} taskId={sheet?.id ?? null} preset={sheet?.preset} onClose={() => setSheet(null)} />
     </div>
   );
