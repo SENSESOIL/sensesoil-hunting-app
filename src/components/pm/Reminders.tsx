@@ -150,7 +150,8 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
       <>
           {/* 專案（智慧清單已移到「行事曆」分頁的篩選，這裡直接列專案） */}
           <section>
-            {shownProjects.length ? (
+            {/* 沒有進行中的專案（例如剛刪掉唯一一個）：還是放「展開其他專案」，名冊上的專案點開就能排任務 */}
+            {shownProjects.length || hiddenCount > 0 ? (
               <div data-tour="home-projects" className="bg-white rounded-[20px] shadow-card overflow-hidden">
                 {shownProjects.map(({ p }) => (
                   <ListRow
