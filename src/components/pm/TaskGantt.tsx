@@ -104,8 +104,9 @@ export function TaskGantt({
       /* 無痕模式 */
     }
   };
-  // 依專案分組，組內依清單的層級順序；上層沒有日期時用子任務的期間
-  const { rowsAll: dated, span, depthOf, headBefore } = useMemo(() => {
+  // 依專案分組，組內依清單的層級順序；有子任務的主任務＝子任務的期間（像分組一樣自動算，不能拖）
+  const { rowsAll: dated, span, depthOf, headBefore, parents } = useMemo(() => {
+    const parents = new Set<string>();
     const byCode = new Map<string, Task[]>();
     for (const t of tasks) byCode.set(t.code, [...(byCode.get(t.code) ?? []), t]);
     const codes = [...byCode.keys()].sort((a, b) => a.localeCompare(b));
@@ -126,8 +127,10 @@ export function TaskGantt({
       if (g.id !== null && g.name && rows.length) headBefore.set(rows[0].task.id, { key: `${c}:${g.id}`, name: g.name, tasks: g.tasks });
       for (const r of rows) {
         depthOf.set(r.task.id, r.depth);
-        if (r.childCount > 0 && !(r.task.start || r.task.due)) {
-          const kids = rows.filter((x) => x.task.parentId === r.task.id && (x.task.start || x.task.due)).map((x) => x.task);
+        if (r.childCount > 0) {
+          parents.add(r.task.id);
+          // 用全部的子任務（包含沒顯示的已完成），長條才不會因為「隱藏已完成」縮短
+          const kids = pm.tasks.filter((x) => x.parentId === r.task.id && (x.start || x.due));
           if (kids.length) {
             const starts = kids.map((k) => k.start ?? k.due!);
             const ends = kids.map((k) => k.due ?? k.start!);
@@ -142,9 +145,9 @@ export function TaskGantt({
       }
       }
     }
-    return { rowsAll: out, span, depthOf, headBefore };
+    return { rowsAll: out, span, depthOf, headBefore, parents };
   }, [tasks, pm.tasks, pm.projectBy]);
-  const hasDate = (t: Task) => !!(t.start || t.due || span.has(t.id));
+  const hasDate = (t: Task) => (parents.has(t.id) ? span.has(t.id) : !!(t.start || t.due));
   const undated = dated.filter((t) => !hasDate(t)).length;
 
   // 專案資料裡的開工日、預計完工、實際完工
@@ -280,7 +283,8 @@ export function TaskGantt({
         onClick: () => onOpen(t),
         bars: [],
         // 點哪天就從哪天開始；有填工期天數就一起算出期限
-        onPickDay: !editable ? undefined : (day) => {
+        // 主任務的時間跟著子任務，不能直接排
+        onPickDay: !editable || parents.has(t.id) ? undefined : (day) => {
           const n = t.meta?.days;
           pm.saveTask({ id: t.id, start: day, due: n && n > 1 ? addDays(day, n - 1) : day });
         },

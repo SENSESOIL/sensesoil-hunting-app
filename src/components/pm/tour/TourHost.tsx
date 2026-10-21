@@ -134,10 +134,22 @@ const tap = (sel: string) => {
 /** 甘特圖要在編輯模式（點日期排入、拖曳、時間安排）：還沒進編輯就幫忙按鉛筆 */
 const ensureEdit = () => tap('[data-tour="gantt-edit"][aria-pressed="false"]');
 
+/**
+ * 練習的四個任務：放樣（獨立的一項，教看板拖到完成）、泥作（主任務）、打底（之後變成泥作的子任務）、粉光。
+ * 用名字找；打錯字就照新增的順序找
+ */
+const NAMES = ["放樣", "泥作", "打底", "粉光"] as const;
+type Name = (typeof NAMES)[number];
+const inOrder = (c: Ctx) => [...c.tasks].sort((a, b) => a.seq - b.seq);
+const T = (c: Ctx, name: Name): Task | undefined => c.tasks.find((t) => t.title.trim() === name) ?? inOrder(c)[NAMES.indexOf(name)];
+/** 清單上某個任務那一列 */
+const rowOf = (t?: Task) => (t ? pick(`[data-tour-task="${t.id}"]`) : null);
+/** 有子任務的主任務（甘特圖上跟著子任務走，不能拖） */
+const isParent = (c: Ctx, t: Task) => c.tasks.some((k) => k.parentId === t.id);
+
 /* 略過時幫忙做的事 */
 const addTasks = (c: Ctx, n: number) => {
-  const names = ["泥作", "打底", "粉光"];
-  for (let k = tops(c).length; k < n; k++) c.pm.saveTask({ code: c.code, title: names[k] ?? `任務 ${k + 1}`, seq: k }, { quiet: true });
+  for (let k = c.tasks.length; k < n; k++) c.pm.saveTask({ code: c.code, title: NAMES[k] ?? `任務 ${k + 1}`, seq: k }, { quiet: true });
 };
 const patchMeta = (c: Ctx, t: Task | undefined, m: Partial<NonNullable<Task["meta"]>>) => {
   if (t) c.pm.saveTask({ id: t.id, meta: { ...(t.meta ?? {}), ...m } }, { quiet: true });
@@ -153,16 +165,15 @@ const sectionsUsed = (c: Ctx) => {
   const valid = new Set(realSections(c.sections).map((s) => s.id));
   return new Set(c.tasks.filter((t) => !t.parentId && valid.has(t.meta?.section ?? "")).map((t) => t.meta!.section)).size;
 };
-/** 第 i 個主任務在哪個分組（沒有＝undefined） */
-const sectionOfTop = (c: Ctx, i: number) => {
+/** 這個任務在哪個分組（沒有＝undefined） */
+const sectionOf = (c: Ctx, t?: Task) => {
   const valid = new Set(realSections(c.sections).map((x) => x.id));
-  const sec = tops(c)[i]?.meta?.section;
+  const sec = t?.meta?.section;
   return sec && valid.has(sec) ? sec : undefined;
 };
-/** 略過時：把第 i 個主任務（連子任務）放進第 k 個分組 */
-const moveTop = (c: Ctx, i: number, k: number) => {
+/** 略過時：把任務（連子任務）放進第 k 個分組 */
+const moveTask = (c: Ctx, t: Task | undefined, k: number) => {
   const secs = realSections(c.sections);
-  const t = tops(c)[i];
   if (!t || !secs[k]) return;
   patchMeta(c, t, { section: secs[k].id });
   for (const kid of c.tasks.filter((x) => x.parentId === t.id)) patchMeta(c, kid, { section: secs[k].id });
@@ -210,22 +221,19 @@ const undated = (c: Ctx) => {
 };
 /** 「點日期排入」排的是哪個任務（按 ← 回來時清掉它的日期） */
 const picked: { id?: string } = {};
-const firstOpen = (c: Ctx) => tops(c).find((t) => t.status !== "done");
+/** 甘特圖拖曳略過時：挑一個還沒完成、有日期、不是主任務（主任務跟著子任務走，不能拖）的 */
+const firstOpen = (c: Ctx) => c.tasks.find((t) => t.status !== "done" && (t.start || t.due) && !isParent(c, t));
 /** WBS：最後一個任務（粉光）接在哪個後面——挑還沒完成的（完成的在甘特圖上藏起來了，看不到箭頭） */
 const wbsPair = (c: Ctx) => {
-  const list = tops(c);
-  const b = list[list.length - 1];
+  const b = T(c, "粉光");
   const a = c.tasks.find((t) => t.status !== "done" && t.id !== b?.id && t.parentId) ?? c.tasks.find((t) => t.status !== "done" && t.id !== b?.id);
   return { a, b };
 };
 
 /* 按「上一步」時撤銷的事 */
-/** 只留前 n 個主任務（連子任務），後面的刪掉 */
-const keepTops = (c: Ctx, n: number) => {
-  for (const t of tops(c).slice(n)) {
-    for (const kid of c.tasks.filter((x) => x.parentId === t.id)) c.pm.deleteTask(kid.id);
-    c.pm.deleteTask(t.id);
-  }
+/** 只留前 n 個任務（照新增的順序），後面的刪掉 */
+const keepTasks = (c: Ctx, n: number) => {
+  for (const t of inOrder(c).slice(n)) c.pm.deleteTask(t.id);
 };
 /** 所有任務都拿掉這些欄位 */
 const clearMeta = (c: Ctx, keys: string[], test: (t: Task) => boolean) => {
@@ -245,13 +253,12 @@ const keepSections = (c: Ctx, n: number) => {
     c.sections.filter((x) => !real.includes(x) || keep.has(x.id))
   );
 };
-/** 第 i 個主任務（連子任務）移出分組 */
-const unmoveTop = (c: Ctx, i: number) => {
-  const t = tops(c)[i];
+/** 任務（連子任務）移出分組 */
+const unmove = (c: Ctx, t?: Task) => {
   if (t) clearMeta(c, ["section"], (x) => x.id === t.id || x.parentId === t.id);
 };
-const setStatus = (c: Ctx, from: Task["status"], to: Task["status"]) => {
-  for (const t of c.tasks.filter((x) => x.status === from)) c.pm.saveTask({ id: t.id, status: to }, { quiet: true });
+const setStatus = (c: Ctx, t: Task | undefined, to: Task["status"]) => {
+  if (t && t.status !== to) c.pm.saveTask({ id: t.id, status: to }, { quiet: true });
 };
 const closeThen = (g: (c: Ctx) => void) => (c: Ctx) => {
   closeLayers();
@@ -266,9 +273,10 @@ const BACK: Record<string, Pick<Step, "undo" | "backTo" | "passBack">> = {
   back: { backTo: (c) => go({ nav: "project_info", intelTab: "專案", openProject: c.code }) },
   "nav-tasks": { backTo: toIntel },
   "open-list": { backTo: toTasksHome },
-  "add-1": { undo: (c) => keepTops(c, 0) },
-  "add-2": { undo: (c) => keepTops(c, 1) },
-  "add-3": { undo: (c) => keepTops(c, 2) },
+  "add-1": { undo: (c) => keepTasks(c, 0) },
+  "add-2": { undo: (c) => keepTasks(c, 1) },
+  "add-3": { undo: (c) => keepTasks(c, 2) },
+  "add-4": { undo: (c) => keepTasks(c, 3) },
   longpress: { backTo: closeThen(toProject()) },
   // 指派、回到選單要先長按打開選單：直接回到「長按」
   assign: { passBack: true },
@@ -284,11 +292,11 @@ const BACK: Record<string, Pick<Step, "undo" | "backTo" | "passBack">> = {
   },
   "section-add": { undo: (c) => keepSections(c, 0) },
   "section-add-2": { undo: (c) => keepSections(c, 1) },
-  "section-move": { undo: (c) => unmoveTop(c, 0), backTo: closeThen(toProject()) },
-  "section-move-2": { undo: (c) => unmoveTop(c, tops(c).length - 1), backTo: closeThen(toProject()) },
+  "section-move": { undo: (c) => unmove(c, T(c, "泥作")), backTo: closeThen(toProject()) },
+  "section-move-2": { undo: (c) => unmove(c, T(c, "粉光")), backTo: closeThen(toProject()) },
   board: { backTo: toProject("list") },
-  "board-doing": { undo: (c) => setStatus(c, "doing", "todo") },
-  "board-done": { undo: (c) => setStatus(c, "done", "doing") },
+  "board-doing": { undo: (c) => setStatus(c, T(c, "放樣"), "todo") },
+  "board-done": { undo: (c) => setStatus(c, T(c, "放樣"), "doing") },
   gantt: { backTo: toProject("board") },
   // 回到這步：先收起已完成，才能再點一次
   "gantt-show-done": { undo: () => tap('[data-tour="show-done"][aria-pressed="true"]') },
@@ -296,8 +304,7 @@ const BACK: Record<string, Pick<Step, "undo" | "backTo" | "passBack">> = {
   "gantt-pick": {
     // 把這一步排上日期的那個任務（記在 picked）清回沒有日期，才能再點一次
     undo: (c) => {
-      const list = tops(c);
-      const t = c.tasks.find((x) => x.id === picked.id) ?? list[list.length - 1];
+      const t = c.tasks.find((x) => x.id === picked.id) ?? T(c, "粉光");
       if (t && (t.start || t.due)) c.pm.saveTask({ id: t.id, start: undefined, due: undefined }, { quiet: true });
     },
   },
@@ -409,29 +416,38 @@ const STEPS_RAW: Step[] = [
   {
     id: "add-1",
     title: "第一個任務",
-    body: (c) => (c.typing ? "打「泥作」，按鍵盤上方的 ✓ 存起來。" : "點虛線圓圈，新增第一個任務「泥作」。"),
+    body: (c) => (c.typing ? "打「放樣」，按鍵盤上方的 ✓ 存起來。" : "點虛線圓圈，新增第一個任務「放樣」。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
-    done: (c) => tops(c).length >= 1,
+    done: (c) => c.tasks.length >= 1,
     goto: toProject(),
     skip: (c) => addTasks(c, 1),
   },
   {
     id: "add-2",
     title: "接著打第二個",
-    body: (c) => (c.typing ? "打「打底」，按 ✓。" : "再點虛線圓圈，新增「打底」。"),
+    body: (c) => (c.typing ? "打「泥作」，按 ✓。" : "再點虛線圓圈，新增「泥作」。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
-    done: (c) => tops(c).length >= 2,
+    done: (c) => c.tasks.length >= 2,
     goto: toProject(),
     skip: (c) => addTasks(c, 2),
   },
   {
     id: "add-3",
     title: "再一個",
-    body: (c) => (c.typing ? "打「粉光」，按 ✓。" : "再點虛線圓圈，新增「粉光」。"),
+    body: (c) => (c.typing ? "打「打底」，按 ✓。" : "再點虛線圓圈，新增「打底」。"),
     target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
-    done: (c) => tops(c).length >= 3,
+    done: (c) => c.tasks.length >= 3,
     goto: toProject(),
     skip: (c) => addTasks(c, 3),
+  },
+  {
+    id: "add-4",
+    title: "最後一個",
+    body: (c) => (c.typing ? "打「粉光」，按 ✓。" : "再點虛線圓圈，新增「粉光」。"),
+    target: () => pick('[data-tour="draft-row"]') ?? pick('[data-tour="add-row"]'),
+    done: (c) => c.tasks.length >= 4,
+    goto: toProject(),
+    skip: (c) => addTasks(c, 4),
   },
   /* ── 長按與滑動 ── */
   {
@@ -439,7 +455,7 @@ const STEPS_RAW: Step[] = [
     blur: true,
     title: "長按叫出選單",
     body: "長按「泥作」（電腦按右鍵）叫出選單。期限、指派、廠商、標籤都在這裡。",
-    target: (c) => taskRow(c, 0),
+    target: (c) => rowOf(T(c, "泥作")),
     until: (e) => e.type === "menu-open",
     goto: toProject(),
   },
@@ -447,7 +463,7 @@ const STEPS_RAW: Step[] = [
     id: "assign",
     title: "指派給同事",
     body: () => byMenu("指派", "指派", "泥作", "選一位同事（選自己也行）。對方會收到通知。"),
-    target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
+    target: (c) => pick('[data-tour="row-menu"]') ?? rowOf(T(c, "泥作")),
     when: (c) => c.isManager,
     // 在指派名單點了人才算做到（直接打字新增的任務本來就掛在自己身上，不能看資料判斷）
     until: (e) => e.type === "assigned",
@@ -467,7 +483,7 @@ const STEPS_RAW: Step[] = [
     look: true,
     title: "被指派的任務",
     body: "主管會把任務指派給你。收到通知後打開任務、按「收到」就好。",
-    target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 0),
+    target: (c) => pick('[data-tour="row-menu"]') ?? rowOf(T(c, "泥作")),
     when: (c) => !c.isManager,
   },
   {
@@ -477,23 +493,23 @@ const STEPS_RAW: Step[] = [
     clear: true,
     // 說明跟著畫面：選單開著／在別的子頁／選單關了，各說各的
     body: () => byMenu("廠商", "廠商", "打底", "搜尋或往下找，點一家廠商。"),
-    target: (c) => pick('[data-tour="row-menu"]') ?? taskRow(c, 1) ?? taskRow(c, 0),
-    done: (c) => !!(tops(c)[1] ?? tops(c)[0])?.meta?.vendor,
+    target: (c) => pick('[data-tour="row-menu"]') ?? rowOf(T(c, "打底")),
+    done: (c) => !!T(c, "打底")?.meta?.vendor,
     goto: toProject(),
-    skip: (c) => patchMeta(c, tops(c)[1] ?? tops(c)[0], { vendor: "練習廠商" }),
+    skip: (c) => patchMeta(c, T(c, "打底"), { vendor: "練習廠商" }),
   },
   {
     id: "tag",
     title: "加上標籤",
     // 一樣標「打底」：上一步選完廠商，選單還開在它上面就接著用
     body: () => (sheetOpen() ? "點「工種」，選「泥作」。" : byMenu("標籤", "標籤", "打底", "點「工種」，選「泥作」。")),
-    target: (c) => pick('[data-tour="menu-back"]') ?? pick('[data-tour="row-menu"]') ?? taskRow(c, 1) ?? taskRow(c, 0),
+    target: (c) => pick('[data-tour="menu-back"]') ?? pick('[data-tour="row-menu"]') ?? rowOf(T(c, "打底")),
     done: (c) => {
-      const t = tops(c)[1] ?? tops(c)[0];
+      const t = T(c, "打底");
       return !!(t?.meta?.trade || t?.meta?.areas?.length || t?.meta?.tags?.length);
     },
     goto: toProject(),
-    skip: (c) => patchMeta(c, tops(c)[1] ?? tops(c)[0], { trade: "泥作" }),
+    skip: (c) => patchMeta(c, T(c, "打底"), { trade: "泥作" }),
   },
   {
     id: "swipe-left",
@@ -501,24 +517,25 @@ const STEPS_RAW: Step[] = [
     title: "往左滑",
     // 一樣在「打底」上操作（泥作是大項）
     body: "把「打底」往左滑，按「緊急」。",
-    target: (c) => taskRow(c, 1) ?? taskRow(c, 0),
+    target: (c) => rowOf(T(c, "打底")),
     done: (c) => {
-      const t = tops(c)[1] ?? tops(c)[0];
+      const t = T(c, "打底");
       return !!t?.meta?.urgent || !!t?.flagged;
     },
     goto: toProject(),
-    skip: (c) => patchMeta(c, tops(c)[1] ?? tops(c)[0], { urgent: true }),
+    skip: (c) => patchMeta(c, T(c, "打底"), { urgent: true }),
   },
   {
     id: "swipe-right",
     clear: true,
     title: "往右滑：變成子任務",
-    body: "把「打底」往右滑，變成「泥作」的子任務。再滑一次可取消。",
-    target: (c) => taskRow(c, 1) ?? taskRow(c, 0),
-    done: (c) => c.tasks.some((t) => !!t.parentId),
+    body: "把「打底」往右滑，變成上面「泥作」的子任務。泥作的時間之後就跟著打底走。",
+    target: (c) => rowOf(T(c, "打底")),
+    done: (c) => !!T(c, "打底")?.parentId,
     goto: toProject(),
     skip: (c) => {
-      const [a, b] = tops(c);
+      const a = T(c, "泥作");
+      const b = T(c, "打底");
       if (a && b) c.pm.saveTask({ id: b.id, parentId: a.id }, { quiet: true });
     },
   },
@@ -557,28 +574,27 @@ const STEPS_RAW: Step[] = [
     body: (c) => {
       const sec = realSections(c.sections)[0]?.name ?? "售票亭";
       const there = `選「${sec}」。子任務會一起移。`;
-      return byMenu("移到分組", "移到分組", tops(c)[0]?.title ?? "泥作", there);
+      return byMenu("移到分組", "移到分組", "泥作", there);
     },
-    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, 0),
+    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? rowOf(T(c, "泥作")),
     when: (c) => c.isManager,
-    done: (c) => !!sectionOfTop(c, 0),
+    done: (c) => !!sectionOf(c, T(c, "泥作")),
     goto: toProject(),
-    skip: (c) => moveTop(c, 0, 0),
+    skip: (c) => moveTask(c, T(c, "泥作"), 0),
   },
   {
     id: "section-move-2",
     blur: true,
     title: "把任務放進分組（2/2）",
     body: (c) => {
-      const list = tops(c);
       const sec = realSections(c.sections)[1]?.name ?? "展售區";
-      return byMenu("移到分組", "移到分組", list[list.length - 1]?.title ?? "粉光", `選「${sec}」。`);
+      return byMenu("移到分組", "移到分組", "粉光", `選「${sec}」。`);
     },
-    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? taskRow(c, tops(c).length - 1),
+    target: (c) => pick('[data-tour="row-menu"]') ?? pick('[data-tour="menu-back"]') ?? rowOf(T(c, "粉光")),
     when: (c) => c.isManager,
-    done: (c) => sectionsUsed(c) >= 2,
+    done: (c) => !!sectionOf(c, T(c, "粉光")),
     goto: toProject(),
-    skip: (c) => moveTop(c, tops(c).length - 1, 1),
+    skip: (c) => moveTask(c, T(c, "粉光"), 1),
   },
   /* ── 看板 ── */
   {
@@ -594,26 +610,20 @@ const STEPS_RAW: Step[] = [
   {
     id: "board-doing",
     title: "拖到進行中",
-    body: "把「待辦」的一張卡片拖到「進行中」（手機先長按）。",
+    body: "放樣開工了：長按「放樣」的卡片，拖到「進行中」。",
     target: () => pick('[data-tour="board"]'),
-    done: (c) => c.tasks.some((t) => t.status !== "todo"),
+    done: (c) => !!T(c, "放樣") && T(c, "放樣")!.status !== "todo",
     goto: toProject("board"),
-    skip: (c) => {
-      const t = firstOpen(c);
-      if (t) c.pm.saveTask({ id: t.id, status: "doing" }, { quiet: true });
-    },
+    skip: (c) => setStatus(c, T(c, "放樣"), "doing"),
   },
   {
     id: "board-done",
     title: "再拖到完成",
-    body: "再把它拖到「完成」。",
+    body: "放樣做完了：再把「放樣」拖到「完成」。",
     target: () => pick('[data-tour="board"]'),
-    done: (c) => c.tasks.some((t) => t.status === "done"),
+    done: (c) => T(c, "放樣")?.status === "done",
     goto: toProject("board"),
-    skip: (c) => {
-      const t = c.tasks.find((x) => x.status === "doing") ?? tops(c)[0];
-      if (t) c.pm.saveTask({ id: t.id, status: "done" }, { quiet: true });
-    },
+    skip: (c) => setStatus(c, T(c, "放樣"), "done"),
   },
   /* ── 甘特圖 ── */
   {
@@ -630,8 +640,8 @@ const STEPS_RAW: Step[] = [
     id: "gantt-read",
     title: "看懂甘特圖",
     body: (c) =>
-      (realSections(c.sections).length ? "灰底的列是分組，下面是任務。" : "每一列是一個任務。") +
-      "灰＝待辦、橘＝進行中，橘色直線是今天。",
+      (realSections(c.sections).length ? "灰底的列是分組。" : "") +
+      "深灰長條是分組和「泥作」這種有子任務的主任務，跟著底下的任務自動算，不能直接拖。淺灰＝待辦、橘＝進行中，橘線是今天。",
     target: () => pick('[data-tour="gantt"]'),
     goto: toProject("gantt"),
   },
@@ -706,7 +716,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-start",
     enter: ensureEdit,
     title: "拉開始日",
-    body: "長按色條左端拖移：只改開始日。",
+    body: "長按「打底」色條的左端拖移：只改開始日。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "start",
     goto: toProject("gantt"),
@@ -716,7 +726,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-end",
     enter: ensureEdit,
     title: "拉結束日",
-    body: "長按色條右端拖移：只改結束日。",
+    body: "長按右端拖移：只改結束日。泥作的長條會跟著變。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "end",
     goto: toProject("gantt"),
@@ -726,7 +736,7 @@ const STEPS_RAW: Step[] = [
     id: "gantt-move",
     enter: ensureEdit,
     title: "整條移動",
-    body: "長按色條中間拖移：整條一起移，天數不變。",
+    body: "長按中間拖移：整條一起移，天數不變。",
     target: () => pick('[data-tour="gantt"]'),
     until: (e) => e.type === "gantt-drag" && e.data === "move",
     goto: toProject("gantt"),
@@ -738,7 +748,7 @@ const STEPS_RAW: Step[] = [
     title: "前後任務（WBS）",
     body: "有些工序要等前一個做完。點「粉光」的色條，打開時間安排。",
     // 只圈時間軸那一段（點名稱會打開任務細節，不是時間安排）
-    target: (c) => ganttRow(tops(c)[tops(c).length - 1])?.children[1] ?? pick('[data-tour="gantt"]'),
+    target: (c) => ganttRow(T(c, "粉光"))?.children[1] ?? pick('[data-tour="gantt"]'),
     until: (e) => e.type === "schedule-open",
     goto: toProject("gantt"),
   },
@@ -1247,11 +1257,12 @@ export function TourHost() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step?.id, mode]);
 
-  // 建好任務之後：幫還沒有日期的任務排上日期，看板、甘特圖才有東西可以拖（最後一個留著，教「點日期排入」）
+  // 建好任務之後：幫還沒有日期的任務排上日期，看板、甘特圖才有東西可以拖（「粉光」留著，教「點日期排入」）
   useEffect(() => {
     if (!ctx || mode !== "practice" || step?.id !== "longpress") return;
-    tops(ctx).forEach((t, n, all) => {
-      if (n === all.length - 1 && all.length > 2) return;
+    const keep = ctx.tasks.length > 2 ? T(ctx, "粉光")?.id : undefined;
+    inOrder(ctx).forEach((t, n) => {
+      if (t.id === keep) return;
       if (!t.start && !t.due) pm.saveTask({ id: t.id, start: addDays(ctx.today, n * 2), due: addDays(ctx.today, n * 2 + 2) }, { quiet: true });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
