@@ -164,7 +164,10 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
                     count={p.openCount}
                     pinned={pinned.includes(p.code)}
                     onClick={() => go({ kind: "project", code: p.code })}
-                    onLongPress={(rect) => setProjMenu({ code: p.code, rect })}
+                    onLongPress={(rect) => {
+                      setProjMenu({ code: p.code, rect });
+                      tourEmit("project-menu", p.code);
+                    }}
                   />
                 ))}
                 {(hiddenCount > 0 || allProjects) && (
@@ -565,6 +568,7 @@ export function ReminderPage({
       <button
         type="button"
         onClick={onBack}
+        data-tour="list-back"
         aria-label="返回"
         title="返回"
         className="fixed z-40 w-14 h-14 rounded-full bg-white shadow-[0_6px_20px_rgba(0,0,0,0.14)] flex items-center justify-center active:scale-95 transition-transform"
@@ -1957,6 +1961,7 @@ function ProjectMenu({
     <div className="fixed inset-0 z-[160] font-sans select-none [-webkit-touch-callout:none]" role="dialog" aria-label="專案選單">
       <div className={`absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity duration-200 ${shown ? "opacity-100" : "opacity-0"}`} onClick={onClose} />
       <div
+        data-tour="project-menu"
         className={`absolute rounded-[16px] bg-[#F7F7F8]/95 shadow-[0_16px_50px_rgba(0,0,0,0.22)] overflow-hidden py-1 transition-all duration-200 ${shown ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
         style={{ top, left, width: W }}
       >
