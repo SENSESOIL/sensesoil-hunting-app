@@ -49,7 +49,13 @@ export function PullRefresh({
 
   useEffect(() => {
     if (!enabled) return;
-    const blocked = () => !!document.querySelector('[data-pm-sheet], [role="dialog"], [data-tour-card]');
+    // 只算「真的開著」的：專案頁之類的子頁平常也在畫面外待命（role=dialog、aria-hidden），不能把它當成開著
+    const blocked = () =>
+      [...document.querySelectorAll('[data-pm-sheet], [role="dialog"], [data-tour-card]')].some((el) => {
+        if (el.closest('[aria-hidden="true"], [inert]')) return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.right > 0 && r.left < window.innerWidth && r.bottom > 0 && r.top < window.innerHeight;
+      });
     const start = (e: TouchEvent) => {
       y0.current = !busyRef.current && window.scrollY <= 0 && e.touches.length === 1 && !blocked() && !scrolledInside(e.target) ? e.touches[0].clientY : null;
       dy.current = 0;

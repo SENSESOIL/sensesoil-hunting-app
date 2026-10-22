@@ -299,7 +299,7 @@ const HuntingTasksView = forwardRef<HuntingTasksViewRef, {}>((props, ref) => {
       <div className="bg-[#FFFFFF] p-4 md:p-6 rounded-[24px] shadow-card flex flex-col h-full relative">
         {isLoading && (
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 rounded-[24px] flex items-center justify-center">
-             <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin"></div>
+             {/* 第一次載入只淡淡蓋一層，不放轉圈（會和下拉更新的轉圈重複） */}
           </div>
         )}
         <div className="flex items-center justify-between mb-6">

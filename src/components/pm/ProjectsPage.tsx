@@ -153,7 +153,8 @@ export default function ProjectsPage({
   if (!pm.data) {
     return (
       <div className="flex justify-center py-20">
-        {pm.error ? <p className="text-[14px] text-[#71717A]">{pm.error.message}</p> : <Spinner size={22} />}
+        {/* 第一次載入不放轉圈（會和下拉更新的轉圈重複）；只在出錯時說明 */}
+        {pm.error && <p className="text-[14px] text-[#71717A]">{pm.error.message}</p>}
       </div>
     );
   }
