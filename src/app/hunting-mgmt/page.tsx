@@ -863,6 +863,8 @@ export default function HuntingManagementPage() {
   // 任務追蹤點進專案（清單頁）時收起底部導覽列，返回首頁才出現
   const [taskSubPage, setTaskSubPage] = useState(false);
   const lastScrollY = useRef(0);
+  // 下拉更新：更新中把內容往下推，留位置給轉圈
+  const contentRef = useRef<HTMLDivElement>(null);
   const [showManual, setShowManual] = useState(false);
 
   // 子頁標題列是純白，狀態列要跟著白，否則會出現灰白斷層。
@@ -1240,9 +1242,16 @@ export default function HuntingManagementPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[var(--accent)]/20 flex flex-col md:flex-row relative">
-      {/* 下拉更新：和長流一樣，頂端滑出「↻ 下拉更新／放開更新／更新中…」膠囊。
-          只重新抓、不清掉現有資料：畫面上的內容先留著，不會再跑一次「載入中」 */}
+      {/* 下拉更新：和長流一樣的 iOS「菊花」，從凍結的標題列下緣（118px）冒出來；
+          更新中內容往下留一段給它轉。只重新抓、不清掉現有資料，不會再跑一次「載入中」 */}
       <PullRefresh
+        top={118}
+        hold={(px) => {
+          const el = contentRef.current;
+          if (!el) return;
+          el.style.transition = "margin-top .3s cubic-bezier(.2,.9,.25,1)";
+          el.style.marginTop = px ? px + "px" : "";
+        }}
         onRefresh={async () => {
           await mutate(() => true);
           toast("已更新");
@@ -1684,6 +1693,7 @@ export default function HuntingManagementPage() {
 
         {/* Content Container */}
         <div
+          ref={contentRef}
           className="flex-1 w-full flex flex-col gap-6 pt-6 pb-4"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
