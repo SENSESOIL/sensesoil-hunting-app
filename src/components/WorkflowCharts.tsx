@@ -57,7 +57,6 @@ export default function WorkflowCharts({ flowRole }: { flowRole: FlowRole }) {
             {chevron}
           </button>
         ))}
-        {isLoading && !flows.length && <div className="h-[52px] rounded-[18px] bg-[#FFFFFF] border border-[#E4E4E7]/60 animate-pulse" />}
         {STATIC_FLOWS.map((d) => (
           <button key={d.src} onClick={() => setDiagram(d)} className={row}>
             <p className="flex-1 min-w-0 text-[15px] font-medium text-[#18181B] truncate">

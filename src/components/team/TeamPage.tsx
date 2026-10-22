@@ -145,7 +145,8 @@ export default function TeamPage({
   if (!data) {
     return (
       <div className="flex justify-center py-16">
-        {error ? <p className="text-[14px] text-[#71717A]">{String(error.message)}</p> : isLoading ? <Spinner size={22} /> : null}
+        {/* 載入中不放轉圈（左右滑換分頁時會和下拉更新的轉圈打架）；只在出錯時說明 */}
+        {error && <p className="text-[14px] text-[#71717A]">{String(error.message)}</p>}
       </div>
     );
   }
