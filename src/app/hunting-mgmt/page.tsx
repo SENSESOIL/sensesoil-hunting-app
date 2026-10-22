@@ -17,7 +17,8 @@ import ProjectsPage, { PROJECT_TABS, PROJECT_TABS_MANAGER } from "@/components/p
 import TasksPage, { TASK_TABS_MANAGER, TASK_TABS_MEMBER } from "@/components/pm/TasksPage";
 import { NotificationBell } from "@/components/pm/Notifications";
 import { PhotoUpload } from "@/components/pm/PhotoUpload";
-import { ToastHost } from "@/components/pm/Sheet";
+import { ToastHost, toast } from "@/components/pm/Sheet";
+import { PullRefresh } from "@/components/PullRefresh";
 import { Avatar } from "@/components/pm/kit";
 import { SettingsSheet, START_NAV_KEY } from "@/components/SettingsSheet";
 import { TourHost } from "@/components/pm/tour/TourHost";
@@ -857,13 +858,11 @@ export default function HuntingManagementPage() {
   const [isSwiping, setIsSwiping] = useState(false);
   const swipeLocked = useRef(false); // locks to prevent vertical scroll from triggering swipe
 
-  const [overscrollY, setOverscrollY] = useState(0);
 
   const [showNav, setShowNav] = useState(true);
   // 任務追蹤點進專案（清單頁）時收起底部導覽列，返回首頁才出現
   const [taskSubPage, setTaskSubPage] = useState(false);
   const lastScrollY = useRef(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [showManual, setShowManual] = useState(false);
 
   // 子頁標題列是純白，狀態列要跟著白，否則會出現灰白斷層。
@@ -1173,25 +1172,10 @@ export default function HuntingManagementPage() {
       }
       lastScrollY.current = currentScrollY;
 
-      // In iOS Safari, window.scrollY becomes negative during top bounce (pull-to-refresh)
-      if (currentScrollY < 0) {
-        setOverscrollY(-currentScrollY);
-        // Trigger refresh if pulled down past a threshold
-        if (currentScrollY < -80 && !isRefreshing) {
-          setIsRefreshing(true);
-          setTimeout(() => {
-            // 只重新抓、不清掉現有資料：畫面上的內容先留著，不會再跑一次「載入中」（之前傳 undefined 會把所有快取清空，變成雙重 loading）
-            mutate(() => true);
-            setTimeout(() => setIsRefreshing(false), 500); // Reset spinner after half a second
-          }, 800);
-        }
-      } else {
-        setOverscrollY(0);
-      }
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [isRefreshing]);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1256,36 +1240,14 @@ export default function HuntingManagementPage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] font-sans selection:bg-[var(--accent)]/20 flex flex-col md:flex-row relative">
-      {/* 下拉更新指示器。
-          基準點放在 header 分割線（118px）上，靜止時用負位移把自己藏到 header 底下
-          （z-30 < header 的 z-40，所以被不透明的 header 蓋住），
-          下拉時才從分割線下方滑出來。
-          樣式是極簡細環：淡橘色軌道 + 稍深的弧，無底色無陰影。 */}
-      <div
-        className="fixed left-0 right-0 z-[30] flex items-center justify-center pointer-events-none md:hidden"
-        style={{
-          top: 118,
-          transform: `translateY(${
-            isRefreshing ? 18 : Math.min(overscrollY * 0.7, 56) - 30
-          }px)`,
-          opacity: overscrollY > 6 || isRefreshing ? 1 : 0,
-          transition: isRefreshing
-            ? "transform 0.25s ease, opacity 0.2s ease"
-            : "opacity 0.2s ease",
+      {/* 下拉更新：和長流一樣，頂端滑出「↻ 下拉更新／放開更新／更新中…」膠囊。
+          只重新抓、不清掉現有資料：畫面上的內容先留著，不會再跑一次「載入中」 */}
+      <PullRefresh
+        onRefresh={async () => {
+          await mutate(() => true);
+          toast("已更新");
         }}
-      >
-        <div
-          className={`w-[22px] h-[22px] rounded-full border-2 ${
-            isRefreshing ? "animate-spin" : ""
-          }`}
-          style={{
-            borderColor: "color-mix(in srgb, var(--accent) 18%, transparent)",
-            borderTopColor: "color-mix(in srgb, var(--accent) 70%, transparent)",
-            // 轉圈動畫本身就吃 transform，所以更新中不要再自己設
-            transform: isRefreshing ? undefined : `rotate(${overscrollY * 4}deg)`,
-          }}
-        />
-      </div>
+      />
 
       {/* Left Sidebar (Desktop Only) */}
       <aside
