@@ -126,7 +126,7 @@ export interface PmProject {
 
 export interface PmNotification {
   id: number;
-  type: "assigned" | "updated" | "removed" | "deleted" | "done" | "ack" | "reopened";
+  type: "assigned" | "updated" | "removed" | "deleted" | "done" | "ack" | "reopened" | "editor";
   taskId?: string;
   code?: string;
   title: string;

@@ -364,9 +364,19 @@ export async function POST(req: Request) {
         if (!code || code.length > 32 || !list || list.length > 50) return json({ error: "格式不正確" }, 400);
         const people = await listPeople();
         if (list.some((e) => !people.some((p) => p.email === e))) return json({ error: "有人不在人員名單上" }, 400);
+        // 新加進來的人收到通知：「你可以編輯「案名」了」
+        const reg = await readRegistry();
+        const name = reg.data.find((x) => x.code === code)?.name || code;
         try {
-          const r = await rpc<{ status: string; editors?: string[] }>("pm_project_set_editors", { ...actor, code, editors: list });
-          return json(r, r.status === "forbidden" ? 403 : 200);
+          const r = await rpc<{ status: string; editors?: string[]; notify?: NotifyRow[] }>("pm_project_set_editors", {
+            ...actor,
+            code,
+            editors: list,
+            title: `你可以編輯「${name}」了`,
+            body: `${user.name || user.email} 把你加進可編輯的人：可以排這個專案的甘特圖，新增、修改、指派任務。`,
+          });
+          const pushed = await pushNotifications(r.notify);
+          return json({ status: r.status, editors: r.editors, notified: (r.notify ?? []).length, pushed }, r.status === "forbidden" ? 403 : 200);
         } catch (e) {
           const msg = explainDbError(e);
           return json({ error: msg.includes("資料庫還沒建立") ? "可編輯的人還沒啟用：請在 Supabase 執行 20261022000000_pm_project_editors.sql" : msg }, 500);

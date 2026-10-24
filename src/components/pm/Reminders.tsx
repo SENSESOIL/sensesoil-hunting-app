@@ -129,7 +129,8 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
   const projects = useMemo(() => {
     const active = (p: (typeof pm.projects)[number]) => p.tasks.length > 0 || (p.stage && ["簽約", "施工中", "驗收"].includes(p.stage));
     return pm.projects
-      .filter((p) => !p.archived && (pm.isManager || p.tasks.length > 0 || p.code === tourState.code))
+      // 一般成員：有自己任務的專案，加上被設成「可編輯的人」的專案（還沒有任務也要列出來，才能開始排）
+      .filter((p) => !p.archived && (pm.isManager || p.tasks.length > 0 || p.code === tourState.code || (!!pm.me?.email && !!p.editors?.includes(pm.me.email))))
       .sort((a, b) => Number(!!active(b)) - Number(!!active(a)) || b.openCount - a.openCount || b.code.localeCompare(a.code))
       .map((p) => ({ p, active: !!active(p) }));
   }, [pm]);

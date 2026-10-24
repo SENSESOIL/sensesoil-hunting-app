@@ -8,6 +8,7 @@ import { Icon } from "./ui";
 import { Avatar, Empty, GREEN, ORANGE, RED, Spinner } from "./kit";
 import { enablePush, isIOS, pushState, type PushState } from "./push-client";
 import { pmPost, usePm } from "./usePm";
+import { tourEmit, tourState } from "./tour/bus";
 
 /* ══════════════════════════════════════════════════════════
    通知（右上角鈴鐺）
@@ -24,6 +25,7 @@ const TYPE_META: Record<PmNotification["type"], { icon: string; color: string }>
   done: { icon: "task_alt", color: GREEN },
   ack: { icon: "done_all", color: GREEN },
   reopened: { icon: "undo", color: ORANGE },
+  editor: { icon: "edit_note", color: ORANGE },
 };
 
 const listFetcher = async (): Promise<{ items: PmNotification[]; unread: number }> => {
@@ -82,6 +84,14 @@ function NotificationsSheet({ open, onClose, onOpenTask }: { open: boolean; onCl
     if (!n.readAt) {
       mutate((d) => d && { ...d, items: d.items.map((x) => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)) }, { revalidate: false });
       pmPost({ op: "notifications.read", ids: [n.id] }).then(() => pm.refresh());
+    }
+    // 被加進「可編輯的人」：打開那個專案的任務清單
+    if (n.type === "editor" && n.code) {
+      tourState.pendingProject = n.code;
+      tourState.pendingView = "list";
+      tourEmit("goto", { nav: "tasks", tab: "任務", project: n.code, view: "list" });
+      onClose();
+      return;
     }
     if (n.taskId && n.type !== "deleted") {
       if (pm.tasks.some((t) => t.id === n.taskId)) onOpenTask(n.taskId);
