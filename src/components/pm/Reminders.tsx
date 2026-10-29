@@ -17,7 +17,7 @@ import { TaskBoard } from "./TaskBoard";
 import { TagSheet } from "./TagSheet";
 import { VendorList } from "./VendorPicker";
 import { codeLabel, onTour, tourEmit, tourState } from "./tour/bus";
-import { assigneeLabel, assigneePatch, canEditProject, isLate, personLabel, personMark, type Pm } from "./usePm";
+import { assigneeLabel, assigneePatch, canEditProject, isLate, isProjectViewer, personLabel, personMark, type Pm } from "./usePm";
 import { OTHER_SECTION, realSections, sectionOf, splitBySection, treeOrder, type TreeRow } from "./tree";
 
 export { treeOrder };
@@ -129,8 +129,8 @@ export function RemindersHome({ pm, go }: { pm: Pm; go: (r: ListRoute) => void }
   const projects = useMemo(() => {
     const active = (p: (typeof pm.projects)[number]) => p.tasks.length > 0 || (p.stage && ["簽約", "施工中", "驗收"].includes(p.stage));
     return pm.projects
-      // 一般成員：有自己任務的專案，加上被設成「可編輯的人」的專案（還沒有任務也要列出來，才能開始排）
-      .filter((p) => !p.archived && (pm.isManager || p.tasks.length > 0 || p.code === tourState.code || (!!pm.me?.email && !!p.editors?.includes(pm.me.email))))
+      // 一般成員：有自己任務的專案，加上被設成「可編輯／可閱讀的人」的專案（還沒有任務也要列出來）
+      .filter((p) => !p.archived && (pm.isManager || p.tasks.length > 0 || p.code === tourState.code || (!!pm.me?.email && (!!p.editors?.includes(pm.me.email) || !!p.viewers?.includes(pm.me.email)))))
       .sort((a, b) => Number(!!active(b)) - Number(!!active(a)) || b.openCount - a.openCount || b.code.localeCompare(a.code))
       .map((p) => ({ p, active: !!active(p) }));
   }, [pm]);
@@ -551,6 +551,12 @@ export function ReminderPage({
           {title}
         </h1>
         {subtitle && <p className="text-[13px] text-[#8E8E93] mt-0.5">{subtitle}</p>}
+        {code && isProjectViewer(pm, code) && (
+          <p className="mt-1 inline-flex items-center gap-1 text-[13px] text-[#8E8E93]">
+            <Icon name="visibility" className="text-[16px]" />
+            只能查看：你是這個專案的可閱讀的人
+          </p>
+        )}
       </div>
 
       {pageView === "list" && (
@@ -954,7 +960,9 @@ export function ReminderTasks({
 
   /* ── 畫面 ── */
 
-  const tapEmpty = tapToAdd && !!code;
+  // 只能看的專案（可閱讀的人）：不放新增任務的列
+  const readOnly = isProjectViewer(pm, code);
+  const tapEmpty = tapToAdd && !!code && !readOnly;
 
   /** 草稿要插在第幾列（只在單一專案的清單裡） */
   const draftIndex = (rows: TreeRow[]): number => {
@@ -1059,7 +1067,7 @@ export function ReminderTasks({
               {!folded && (
                 <div className="overflow-hidden">
                   {items}
-                  {code && !(draft && (draft.section ?? "") === secKey) && (
+                  {code && !readOnly && !(draft && (draft.section ?? "") === secKey) && (
                     <button
                       type="button"
                       onClick={() => {
@@ -1087,7 +1095,7 @@ export function ReminderTasks({
             )}
             <div className="overflow-hidden">
               {items}
-              {!addRow && code && !grouped && !draft && (
+              {!addRow && code && !readOnly && !grouped && !draft && (
                 <button
                   type="button"
                   onClick={() => {

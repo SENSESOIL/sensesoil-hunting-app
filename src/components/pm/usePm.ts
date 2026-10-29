@@ -422,6 +422,21 @@ export function usePm() {
     [enqueue, mutate]
   );
 
+  /** 設定專案的「可閱讀的人」（只有管理者） */
+  const saveViewers = useCallback(
+    async (code: string, viewers: string[]): Promise<boolean> => {
+      mutate((x) => x && { ...x, projects: x.projects.map((p) => (p.code === code ? { ...p, viewers } : p)) }, { revalidate: false });
+      const res = await enqueue(`viewers:${code}`, () => pmPost({ op: "viewers.save", code, viewers }));
+      if (!res.ok) {
+        toast(res.data.error || "可閱讀的人儲存失敗", { tone: "error" });
+        await mutate();
+        return false;
+      }
+      return true;
+    },
+    [enqueue, mutate]
+  );
+
   /** 整份覆寫某個專案的清單分組（只有管理者） */
   const saveSections = useCallback(
     async (code: string, sections: Section[]): Promise<boolean> => {
@@ -510,6 +525,7 @@ export function usePm() {
     saveProject,
     saveSections,
     saveEditors,
+    saveViewers,
     purgeProject,
   };
 }
@@ -547,6 +563,12 @@ export function canEditProject(pm: Pm, code?: string): boolean {
   if (pm.isManager) return true;
   const me = pm.me?.email;
   return !!me && !!code && !!pm.projectBy.get(code)?.editors?.includes(me);
+}
+
+/** 只能看的專案：被設成「可閱讀的人」、但不能編輯（不是管理者、也不是可編輯的人） */
+export function isProjectViewer(pm: Pm, code?: string): boolean {
+  const me = pm.me?.email;
+  return !!me && !!code && !canEditProject(pm, code) && !!pm.projectBy.get(code)?.viewers?.includes(me);
 }
 
 export type { Person };

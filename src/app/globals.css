@@ -63,3 +63,12 @@ button:focus-visible,
   box-shadow: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
+
+/* 下拉選單（原生 <select>）的選項：
+   body 的字色是白的（狩獵覺醒是深色頁面），選項會沿用它，白天的白底選單就變成白字看不到。
+   選項一律自己給字色和底色；夜晚模式（dark-mode.css）再換成深底白字 */
+select option,
+select optgroup {
+  color: #18181B;
+  background-color: #FFFFFF;
+}

@@ -114,3 +114,10 @@ html[data-theme="dark"][data-app="mgmt"] .text-\[\#C7C7CC\] { color: #5E5E66; }
 html[data-theme="dark"][data-app="mgmt"] .text-\[\#D4D4D8\] { color: #55555C; }
 html[data-theme="dark"][data-app="mgmt"] .text-\[\#E4E4E7\] { color: #4A4A50; }
 html[data-theme="dark"][data-app="mgmt"] .text-\[\#d03b3b\] { color: #FF8A80; }
+
+/* 下拉選單的選項：深底白字（白天的設定在 globals.css） */
+html[data-theme="dark"][data-app="mgmt"] select option,
+html[data-theme="dark"][data-app="mgmt"] select optgroup {
+  color: #F2F2F4;
+  background-color: #1C1C1F;
+}

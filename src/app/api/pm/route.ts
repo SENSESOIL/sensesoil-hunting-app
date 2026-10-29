@@ -137,11 +137,14 @@ export async function GET() {
     projects.push({ ...row, name: row.name || row.code, company: row.company || "", inCrm: false, photoCount: photoCounts[row.code] ?? 0 } as PmProject);
   }
 
-  // member 看不到金額
+  // member 看不到金額；也只看得到跟自己有關的專案：有指派給自己的任務、或被設成可編輯／可閱讀的人
   if (user.role !== "manager") {
     for (const p of projects) for (const k of PROJECT_MONEY_KEYS) delete p[k];
+    const mine = new Set(base.tasks.map((t) => t.code));
+    base.projects = projects.filter((p) => mine.has(p.code) || !!p.editors?.includes(user.email) || !!p.viewers?.includes(user.email));
+  } else {
+    base.projects = projects;
   }
-  base.projects = projects;
   return json(base);
 }
 
@@ -380,6 +383,30 @@ export async function POST(req: Request) {
         } catch (e) {
           const msg = explainDbError(e);
           return json({ error: msg.includes("資料庫還沒建立") ? "可編輯的人還沒啟用：請在 Supabase 執行 20261022000000_pm_project_editors.sql" : msg }, 500);
+        }
+      }
+      case "viewers.save": {
+        if (user.role !== "manager") return json({ error: "只有管理者可以設定可閱讀的人" }, 403);
+        const code = String(body.code ?? "").trim();
+        const list = Array.isArray(body.viewers) ? [...new Set((body.viewers as unknown[]).map((e) => String(e).trim().toLowerCase()).filter(Boolean))] : null;
+        if (!code || code.length > 32 || !list || list.length > 50) return json({ error: "格式不正確" }, 400);
+        const people = await listPeople();
+        if (list.some((e) => !people.some((p) => p.email === e))) return json({ error: "有人不在人員名單上" }, 400);
+        const reg = await readRegistry();
+        const name = reg.data.find((x) => x.code === code)?.name || code;
+        try {
+          const r = await rpc<{ status: string; viewers?: string[]; notify?: NotifyRow[] }>("pm_project_set_viewers", {
+            ...actor,
+            code,
+            viewers: list,
+            title: `你可以查看「${name}」了`,
+            body: `${user.name || user.email} 把你加進可閱讀的人：看得到這個專案全部的任務和甘特圖（只能看，不能改）。`,
+          });
+          const pushed = await pushNotifications(r.notify);
+          return json({ status: r.status, viewers: r.viewers, notified: (r.notify ?? []).length, pushed }, r.status === "forbidden" ? 403 : 200);
+        } catch (e) {
+          const msg = explainDbError(e);
+          return json({ error: msg.includes("資料庫還沒建立") ? "可閱讀的人還沒啟用：請在 Supabase 執行 20261029000000_pm_project_viewers.sql" : msg }, 500);
         }
       }
       case "sections.save": {

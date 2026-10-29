@@ -226,7 +226,7 @@ function Details({ pm, p, commit, onDeleted }: { pm: Pm; p: ProjectItem; commit:
         <NoteLine value={p.note} edit={edit} onCommit={(v) => commit({ note: v })} />
       </List>
 
-      {pm.isManager && <EditorsLine pm={pm} p={p} />}
+      {pm.isManager && <AccessList pm={pm} p={p} />}
 
       <List title="雲端資料夾" foot={edit ? "工程照會上傳到這個資料夾裡的「工程照」。沒填的話，第一次上傳時會依代碼自動尋找。" : undefined}>
         {folder && (
@@ -565,24 +565,65 @@ function NoteLine({ value, edit, onCommit }: { value?: string; edit: boolean; on
   );
 }
 
-/** 可以編輯的人：點開是頭像，點一下勾選／取消，馬上存 */
-function EditorsLine({ pm, p }: { pm: Pm; p: ProjectItem }) {
-  const [open, setOpen] = useState(false);
+/**
+ * 權限：可以編輯的人、可以閱讀的人。點開是頭像，點一下勾選／取消，馬上存。
+ * 同一個人只會在其中一邊：勾成可編輯就從可閱讀拿掉，反之亦然
+ */
+function AccessList({ pm, p }: { pm: Pm; p: ProjectItem }) {
+  const [open, setOpen] = useState<"edit" | "view" | null>(null);
   const editors = p.editors ?? [];
-  const names = editors.map((e) => pm.personBy.get(e)?.name ?? e.split("@")[0]);
-  const toggle = (email: string) => {
-    const next = editors.includes(email) ? editors.filter((e) => e !== email) : [...editors, email];
-    pm.saveEditors(p.code, next);
+  const viewers = p.viewers ?? [];
+  const toggle = (kind: "edit" | "view", email: string) => {
+    if (kind === "edit") {
+      const on = !editors.includes(email);
+      pm.saveEditors(p.code, on ? [...editors, email] : editors.filter((e) => e !== email));
+      if (on && viewers.includes(email)) pm.saveViewers(p.code, viewers.filter((e) => e !== email));
+    } else {
+      const on = !viewers.includes(email);
+      pm.saveViewers(p.code, on ? [...viewers, email] : viewers.filter((e) => e !== email));
+      if (on && editors.includes(email)) pm.saveEditors(p.code, editors.filter((e) => e !== email));
+    }
   };
   return (
-    <List title="權限" foot="勾選的人可以調整這個專案的甘特圖排程，也能修改、指派這個專案的任務。管理者本來就可以。">
-      <button type="button" onClick={() => setOpen((o) => !o)} className={`${lineCls} w-full text-left active:bg-[#F2F2F4]`} aria-expanded={open}>
-        <span className={labelCls}>可以編輯的人</span>
-        <span className={`flex-1 min-w-0 text-right text-[16px] truncate ${names.length ? "text-[#6E6E73]" : "text-[#C7C7CC]"}`}>{names.length ? names.join("、") : "只有管理者"}</span>
+    <List
+      title="權限"
+      foot="可以編輯的人：調整甘特圖排程，修改、指派這個專案的任務。可以閱讀的人：看得到這個專案全部的任務和甘特圖，但不能改。管理者本來就可以；其他人只看得到指派給自己的任務。"
+    >
+      <AccessLine pm={pm} label="可以編輯的人" empty="只有管理者" list={editors} open={open === "edit"} onOpen={() => setOpen((o) => (o === "edit" ? null : "edit"))} onToggle={(e) => toggle("edit", e)} />
+      <AccessLine pm={pm} label="可以閱讀的人" empty="沒有" list={viewers} open={open === "view"} onOpen={() => setOpen((o) => (o === "view" ? null : "view"))} onToggle={(e) => toggle("view", e)} />
+    </List>
+  );
+}
+
+function AccessLine({
+  pm,
+  label,
+  empty,
+  list,
+  open,
+  onOpen,
+  onToggle,
+}: {
+  pm: Pm;
+  label: string;
+  empty: string;
+  list: string[];
+  open: boolean;
+  onOpen: () => void;
+  onToggle: (email: string) => void;
+}) {
+  const names = list.map((e) => pm.personBy.get(e)?.name ?? e.split("@")[0]);
+  const editors = list;
+  const toggle = onToggle;
+  return (
+    <>
+      <button type="button" onClick={onOpen} className={`${lineCls} w-full text-left active:bg-[#F2F2F4]`} aria-expanded={open}>
+        <span className={labelCls}>{label}</span>
+        <span className={`flex-1 min-w-0 text-right text-[16px] truncate ${names.length ? "text-[#6E6E73]" : "text-[#C7C7CC]"}`}>{names.length ? names.join("、") : empty}</span>
         <Icon name={open ? "expand_less" : "expand_more"} className="text-[20px] text-[#C7C7CC] -ml-1" />
       </button>
       {open && (
-        <div className="px-3 py-3 grid grid-cols-4 sm:grid-cols-6 gap-y-3 gap-x-1" role="group" aria-label="可以編輯的人">
+        <div className="px-3 py-3 grid grid-cols-4 sm:grid-cols-6 gap-y-3 gap-x-1" role="group" aria-label={label}>
           {pm.people
             .filter((x) => !x.manager)
             .map((x) => {
@@ -605,7 +646,7 @@ function EditorsLine({ pm, p }: { pm: Pm; p: ProjectItem }) {
             })}
         </div>
       )}
-    </List>
+    </>
   );
 }
 

@@ -26,6 +26,7 @@ const TYPE_META: Record<PmNotification["type"], { icon: string; color: string }>
   ack: { icon: "done_all", color: GREEN },
   reopened: { icon: "undo", color: ORANGE },
   editor: { icon: "edit_note", color: ORANGE },
+  viewer: { icon: "visibility", color: "#3B82C4" },
 };
 
 const listFetcher = async (): Promise<{ items: PmNotification[]; unread: number }> => {
@@ -86,7 +87,7 @@ function NotificationsSheet({ open, onClose, onOpenTask }: { open: boolean; onCl
       pmPost({ op: "notifications.read", ids: [n.id] }).then(() => pm.refresh());
     }
     // 被加進「可編輯的人」：打開那個專案的任務清單
-    if (n.type === "editor" && n.code) {
+    if ((n.type === "editor" || n.type === "viewer") && n.code) {
       tourState.pendingProject = n.code;
       tourState.pendingView = "list";
       tourEmit("goto", { nav: "tasks", tab: "任務", project: n.code, view: "list" });

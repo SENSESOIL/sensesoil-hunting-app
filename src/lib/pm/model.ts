@@ -117,6 +117,8 @@ export interface PmProject {
   sections?: Section[];
   /** 可編輯的人（email）：甘特圖「編輯」、這個專案的任務都能改 */
   editors?: string[];
+  /** 可閱讀的人（email）：看得到這個專案全部的任務、甘特圖，但不能改 */
+  viewers?: string[];
   archived: boolean;
   version: number;
   updatedAt?: string;
@@ -126,7 +128,7 @@ export interface PmProject {
 
 export interface PmNotification {
   id: number;
-  type: "assigned" | "updated" | "removed" | "deleted" | "done" | "ack" | "reopened" | "editor";
+  type: "assigned" | "updated" | "removed" | "deleted" | "done" | "ack" | "reopened" | "editor" | "viewer";
   taskId?: string;
   code?: string;
   title: string;
@@ -335,6 +337,7 @@ export function rowToProject(r: Row): Omit<PmProject, "name" | "company" | "inCr
     driveFolderId: s(r.drive_folder_id),
     archived: r.archived === true,
     editors: Array.isArray(r.editors) ? (r.editors as unknown[]).filter((x): x is string => typeof x === "string" && !!x) : [],
+    viewers: Array.isArray(r.viewers) ? (r.viewers as unknown[]).filter((x): x is string => typeof x === "string" && !!x) : [],
     sections: Array.isArray(r.sections)
       ? (r.sections as unknown[])
           .filter((x): x is { id: unknown; name: unknown } => !!x && typeof x === "object")
